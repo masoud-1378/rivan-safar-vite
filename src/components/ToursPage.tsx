@@ -7,8 +7,8 @@ import {
   Users, CheckCircle2, AlertCircle, Building2, Headset, FileCheck2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { SAMPLE_TOURS, TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
-import { GUIDES } from '../data/guidesData';
+import { type TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
+import { useContent } from '@/src/lib/content-context';
 import { submitLead } from '../../app/actions/lead';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
@@ -19,6 +19,7 @@ interface ToursPageProps {
 }
 
 export default function ToursPage({ onGoHome }: ToursPageProps) {
+  const { tours, countries, cities, guides, exhibitions } = useContent();
   const router = useRouter();
 
   /** ناوبری به صفحه واقعی تور (سند ۰۳: لینک به صفحه پکیج) */
@@ -76,7 +77,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
 
   // --- Filter Logic ---
   const filteredTours = useMemo(() => {
-    return SAMPLE_TOURS.filter(tour => {
+    return tours.filter(tour => {
       // Type
       if (selectedType !== 'all') {
         if (selectedType === 'foreign' && tour.type !== 'foreign') return false;
@@ -127,7 +128,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
       return 0; // default order
     });
   }, [
-    selectedType, searchDestination, selectedMonth, visaFreeOnly, 
+    tours, selectedType, searchDestination, selectedMonth, visaFreeOnly,
     priceRange, durationFilter, originFilter, hotelStarFilter, airlineFilter, sortBy
   ]);
 
@@ -545,11 +546,11 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                   </a>
                 </div>
 
-                {/* Alternative destination options */}
-                <div className="mt-8 pt-6 border-t border-border-default text-right">
-                  <span className="text-caption font-bold text-text-heading block mb-3">مقصدهای جایگزین پیشنهادی:</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {SAMPLE_TOURS.slice(0, 3).map(alt => (
+                  {/* Alternative destination options */}
+                  <div className="mt-8 pt-6 border-t border-border-default text-right">
+                    <span className="text-caption font-bold text-text-heading block mb-3">مقصدهای جایگزین پیشنهادی:</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {tours.slice(0, 3).map(alt => (
                       <button
                         key={alt.id}
                         onClick={() => setSelectedDetailTour(alt)}
@@ -628,7 +629,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                     <tr className="border-b border-border-default bg-page-background">
                       <th className="p-3 font-bold text-text-heading">معیار مقایسه</th>
                       {comparedTourIds.map(id => {
-                        const item = SAMPLE_TOURS.find(t => t.id === id);
+                        const item = tours.find(t => t.id === id);
                         return item ? (
                           <th key={id} className="p-3 font-bold text-text-heading min-w-[200px]">
                             {item.title}
@@ -641,35 +642,35 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                     <tr>
                       <td className="p-3 font-bold text-text-secondary bg-page-background/50">قیمت شروع</td>
                       {comparedTourIds.map(id => {
-                        const item = SAMPLE_TOURS.find(t => t.id === id);
+                        const item = tours.find(t => t.id === id);
                         return <td key={id} className="p-3 text-price text-brand-orange">{item?.formattedPrice} تومان</td>;
                       })}
                     </tr>
                     <tr>
                       <td className="p-3 font-bold text-text-secondary bg-page-background/50">مدت سفر</td>
                       {comparedTourIds.map(id => {
-                        const item = SAMPLE_TOURS.find(t => t.id === id);
+                        const item = tours.find(t => t.id === id);
                         return <td key={id} className="p-3 text-text-heading">{item?.duration}</td>;
                       })}
                     </tr>
                     <tr>
                       <td className="p-3 font-bold text-text-secondary bg-page-background/50">ایرلاین / پرواز</td>
                       {comparedTourIds.map(id => {
-                        const item = SAMPLE_TOURS.find(t => t.id === id);
+                        const item = tours.find(t => t.id === id);
                         return <td key={id} className="p-3 text-text-heading">{item?.airline}</td>;
                       })}
                     </tr>
                     <tr>
                       <td className="p-3 font-bold text-text-secondary bg-page-background/50">وضعیت ویزا</td>
                       {comparedTourIds.map(id => {
-                        const item = SAMPLE_TOURS.find(t => t.id === id);
+                        const item = tours.find(t => t.id === id);
                         return <td key={id} className="p-3 text-text-heading">{item?.visaRequired ? 'نیازمند ویزا' : 'بدون نیاز به ویزا'}</td>;
                       })}
                     </tr>
                     <tr>
                       <td className="p-3 font-bold text-text-secondary bg-page-background/50">خدمات شامل</td>
                       {comparedTourIds.map(id => {
-                        const item = SAMPLE_TOURS.find(t => t.id === id);
+                        const item = tours.find(t => t.id === id);
                         return (
                           <td key={id} className="p-3 text-text-primary text-caption leading-relaxed">
                             {item?.includedServices.slice(0, 3).join(' • ')}
@@ -753,7 +754,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Object.values(GUIDES).map(guide => (
+          {Object.values(guides).map(guide => (
             <article key={guide.id} className="bg-surface-primary rounded-card border border-border-default overflow-hidden text-right shadow-subtle flex flex-col justify-between">
               <div>
                 <div className="relative w-full h-40">

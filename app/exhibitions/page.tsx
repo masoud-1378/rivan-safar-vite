@@ -7,15 +7,18 @@ import {
   breadcrumbJsonLd,
   itemListJsonLd,
 } from '../seo-helpers';
-import { EXHIBITION_SERIES } from '@/src/data/exhibitionsData';
+import { getExhibitions } from '@/src/lib/db-content';
+
+export const dynamic = 'force-dynamic';
 
 export function generateMetadata(): Metadata {
   return metadataFor('/exhibitions');
 }
 
-export default function ExhibitionsPage() {
+export default async function ExhibitionsPage() {
   const seo = resolveSeo('/exhibitions');
-  const series = Object.values(EXHIBITION_SERIES).map((s) => ({
+  const exhibitionsData = await getExhibitions();
+  const series = Object.values(exhibitionsData).map((s) => ({
     name: s.title,
     url: `/exhibition/${s.slug}`,
   }));
@@ -23,7 +26,7 @@ export default function ExhibitionsPage() {
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
       <JsonLd data={itemListJsonLd('/exhibitions', series)} />
-      <RouteView type="exhibitions_hub" params={{}} />
+      <RouteView type="exhibitions_hub" params={{}} data={{ exhibitions: exhibitionsData }} />
     </>
   );
 }

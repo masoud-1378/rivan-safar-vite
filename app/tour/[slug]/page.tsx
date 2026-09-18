@@ -8,10 +8,13 @@ import {
   breadcrumbJsonLd,
   tourJsonLd,
 } from '../../seo-helpers';
-import { SAMPLE_TOURS } from '@/src/data/toursData';
+import { getLiveContent, getTours } from '@/src/lib/db-content';
 
-export function generateStaticParams() {
-  return SAMPLE_TOURS.map((tour) => ({ slug: tour.id }));
+export const dynamic = 'force-dynamic';
+
+export async function generateStaticParams() {
+  const tours = await getTours();
+  return tours.map((tour) => ({ slug: tour.id }));
 }
 
 export function generateMetadata({
@@ -28,13 +31,14 @@ export default async function TourPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  if (!SAMPLE_TOURS.some((t) => t.id === slug)) notFound();
+  const content = await getLiveContent();
+  if (!content.tours.some((t) => t.id === slug)) notFound();
   const seo = resolveSeo(`/tour/${slug}`);
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
       <JsonLd data={tourJsonLd(slug)} />
-      <RouteView type="tour_detail" params={{ tourSlug: slug }} />
+      <RouteView type="tour_detail" params={{ tourSlug: slug }} data={content} />
     </>
   );
 }

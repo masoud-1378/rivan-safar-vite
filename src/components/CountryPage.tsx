@@ -17,8 +17,8 @@ import {
   Calendar,
   Building2
 } from 'lucide-react';
-import { COUNTRIES, CITIES, Place } from '../data/destinationsData';
-import { SAMPLE_TOURS } from '../data/toursData';
+import { type Place } from '../data/destinationsData';
+import { useContent } from '@/src/lib/content-context';
 import { submitLead } from '../../app/actions/lead';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
@@ -30,7 +30,8 @@ interface CountryPageProps {
 }
 
 export default function CountryPage({ countrySlug, onNavigate }: CountryPageProps) {
-  const country: Place | undefined = COUNTRIES[countrySlug];
+  const { tours, countries, cities, guides, exhibitions } = useContent();
+  const country: Place | undefined = countries[countrySlug];
 
   // Component state
   const [openFaqIndices, setOpenFaqIndices] = useState<number[]>([0]); // First FAQ open by default
@@ -60,11 +61,11 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
   }
 
   // Find cities belonging to this country
-  const cities = Object.values(CITIES).filter(c => c.parentCountrySlug === country.slug);
+  const countryCities = Object.values(cities).filter(c => c.parentCountrySlug === country.slug);
 
   // Find tours for this country
-  const tours = SAMPLE_TOURS.filter(t => {
-    return cities.some(c => c.name === t.destination) || t.destination.includes(country.name);
+  const countryTours = tours.filter(t => {
+    return countryCities.some(c => c.name === t.destination) || (t.destination?.includes(country.name) ?? false);
   });
 
   // Toggle FAQ accordion item
@@ -189,7 +190,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
       </section>
 
       {/* ---------------- 3. Cities & Destinations Catalog in this Country ---------------- */}
-      {cities.length > 0 && (
+      {countryCities.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 text-right">
             <div>
@@ -201,12 +202,12 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
               </p>
             </div>
             <span className="text-caption font-semibold text-text-muted bg-surface-secondary px-3 py-1.5 rounded-full border border-border-default self-start sm:self-auto">
-              {cities.length} مقصد فعال
+              {countryCities.length} مقصد فعال
             </span>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
-            {cities.map((city) => (
+            {countryCities.map((city) => (
               <a
                 key={city.id}
                 href={`/destination/${country.slug}/${city.slug}`}
@@ -266,9 +267,9 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
           </div>
 
           {/* Tour Items List */}
-          {tours.length > 0 ? (
+          {countryTours.length > 0 ? (
             <div className="space-y-4">
-              {tours.map((tour) => (
+              {countryTours.map((tour) => (
                 <TourListItem
                   key={tour.id}
                   id={tour.id}

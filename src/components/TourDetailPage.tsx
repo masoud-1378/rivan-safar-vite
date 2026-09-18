@@ -4,7 +4,8 @@ import {
   XCircle, Building2, User, Send, Check, AlertCircle, HelpCircle, 
   ChevronLeft, Sparkles, FileText, ArrowRight
 } from 'lucide-react';
-import { SAMPLE_TOURS, TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
+import { type TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
+import { useContent } from '@/src/lib/content-context';
 import { submitLead } from '../../app/actions/lead';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
@@ -15,7 +16,8 @@ interface TourDetailPageProps {
 }
 
 export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageProps) {
-  const tour: TourItem | undefined = SAMPLE_TOURS.find(t => t.id === tourSlug);
+  const { tours, countries, cities, guides, exhibitions } = useContent();
+  const tour: TourItem | undefined = tours.find(t => t.id === tourSlug);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -42,7 +44,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
   }
 
   // Related tours
-  const relatedTours = SAMPLE_TOURS.filter(t => t.id !== tour.id && (t.destination === tour.destination || t.type === tour.type)).slice(0, 3);
+  const relatedTours = tours.filter(t => t.id !== tour.id && (t.destination === tour.destination || t.type === tour.type)).slice(0, 3);
 
   const isDomestic = tour.destination === 'کیش' || 
     tour.destination === 'مشهد' || 

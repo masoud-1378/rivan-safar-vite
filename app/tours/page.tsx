@@ -7,15 +7,18 @@ import {
   breadcrumbJsonLd,
   itemListJsonLd,
 } from '../seo-helpers';
-import { SAMPLE_TOURS } from '@/src/data/toursData';
+import { getLiveContent } from '@/src/lib/db-content';
+
+export const dynamic = 'force-dynamic';
 
 export function generateMetadata(): Metadata {
   return metadataFor('/tours');
 }
 
-export default function ToursPage() {
+export default async function ToursPage() {
   const seo = resolveSeo('/tours');
-  const tours = SAMPLE_TOURS.map((t) => ({
+  const content = await getLiveContent();
+  const tours = content.tours.map((t) => ({
     name: t.title,
     url: `/tour/${t.id}`,
   }));
@@ -23,7 +26,7 @@ export default function ToursPage() {
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
       <JsonLd data={itemListJsonLd('/tours', tours)} />
-      <RouteView type="tours_all" params={{}} />
+      <RouteView type="tours_all" params={{}} data={content} />
     </>
   );
 }

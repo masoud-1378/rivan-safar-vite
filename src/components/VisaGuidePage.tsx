@@ -3,7 +3,8 @@ import {
   FileText, Clock, ShieldCheck, CheckCircle2, AlertCircle, 
   Phone, Globe, ChevronLeft, MapPin, Sparkles, Building2
 } from 'lucide-react';
-import { COUNTRIES, Place } from '../data/destinationsData';
+import { type Place } from '../data/destinationsData';
+import { useContent } from '@/src/lib/content-context';
 
 interface VisaGuidePageProps {
   countrySlug: string;
@@ -11,7 +12,8 @@ interface VisaGuidePageProps {
 }
 
 export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePageProps) {
-  const country: Place | undefined = COUNTRIES[countrySlug];
+  const { tours, countries, cities, guides, exhibitions } = useContent();
+  const country: Place | undefined = countries[countrySlug];
 
   const defaultCountry = {
     name: country ? country.name : 'مقصد انتخابی',

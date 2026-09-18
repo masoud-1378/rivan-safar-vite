@@ -7,10 +7,13 @@ import {
   resolveSeo,
   breadcrumbJsonLd,
 } from '../../../seo-helpers';
-import { EXHIBITION_SERIES } from '@/src/data/exhibitionsData';
+import { getExhibitions } from '@/src/lib/db-content';
 
-export function generateStaticParams() {
-  return Object.values(EXHIBITION_SERIES).map((s) => ({
+export const dynamic = 'force-dynamic';
+
+export async function generateStaticParams() {
+  const exhibitionsData = await getExhibitions();
+  return Object.values(exhibitionsData).map((s) => ({
     series: s.slug,
     edition: s.upcomingEdition.editionSlug,
   }));
@@ -32,7 +35,8 @@ export default async function ExhibitionEditionPage({
   params: Promise<{ series: string; edition: string }>;
 }) {
   const { series, edition } = await params;
-  if (!EXHIBITION_SERIES[series]) notFound();
+  const exhibitionsData = await getExhibitions();
+  if (!exhibitionsData[series]) notFound();
   const seo = resolveSeo(`/exhibition/${series}/${edition}`);
   return (
     <>
@@ -40,6 +44,7 @@ export default async function ExhibitionEditionPage({
       <RouteView
         type="exhibition_detail"
         params={{ eventSeriesSlug: series, editionSlug: edition }}
+        data={{ exhibitions: exhibitionsData }}
       />
     </>
   );

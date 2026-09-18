@@ -3,7 +3,8 @@ import {
   BookOpen, Calendar, Clock, ChevronLeft, Search, 
   FileText, ShieldCheck, Phone, Sparkles 
 } from 'lucide-react';
-import { GUIDES, GuideItem } from '../data/guidesData';
+import { type GuideItem } from '../data/guidesData';
+import { useContent } from '@/src/lib/content-context';
 import SmartImage from './SmartImage';
 
 interface GuidesHubPageProps {
@@ -11,6 +12,7 @@ interface GuidesHubPageProps {
 }
 
 export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
+  const { tours, countries, cities, guides, exhibitions } = useContent();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
@@ -21,7 +23,7 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
     { id: 'comparison', label: 'مقایسه پکیج و هتل' },
   ];
 
-  const allGuides = Object.values(GUIDES);
+  const allGuides = Object.values(guides);
 
   const filteredGuides = allGuides.filter((guide) => {
     const matchCategory = selectedCategory === 'all' || guide.category === selectedCategory;

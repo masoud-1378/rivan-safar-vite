@@ -27,21 +27,24 @@ import TermsPage from '@/src/components/TermsPage';
 import PrivacyPage from '@/src/components/PrivacyPage';
 import NotFoundPage from '@/src/components/NotFoundPage';
 import type { PageType } from '@/src/data/siteRegistry';
+import { ContentProvider, type ContentValue } from '@/src/lib/content-context';
 
 export interface RouteViewProps {
   type: PageType;
   params: Record<string, string>;
+  data?: Partial<ContentValue>;
 }
 
 /** بدنه هر صفحه — جایگزین renderCurrentView در App قبلی؛ ناوبری با Next router */
-export default function RouteView({ type, params }: RouteViewProps) {
+export default function RouteView({ type, params, data }: RouteViewProps) {
   const router = useRouter();
   const navigateTo = (path: string) => {
     router.push(path);
   };
   const goHome = () => router.push('/');
 
-  switch (type) {
+  const body = (() => {
+    switch (type) {
     case 'home':
       return (
         <>
@@ -113,4 +116,7 @@ export default function RouteView({ type, params }: RouteViewProps) {
     default:
       return <NotFoundPage onNavigate={navigateTo} />;
   }
+  })();
+
+  return <ContentProvider value={data}>{body}</ContentProvider>;
 }

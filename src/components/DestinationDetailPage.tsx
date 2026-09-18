@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Phone, MapPin, Globe, Calendar, Clock, ShieldCheck, ChevronLeft, CheckCircle2, FileText, ArrowLeft, HelpCircle, Check, Send, AlertCircle } from 'lucide-react';
-import { CITIES, COUNTRIES, Place } from '../data/destinationsData';
-import { SAMPLE_TOURS } from '../data/toursData';
+import { type Place } from '../data/destinationsData';
+import { useContent } from '@/src/lib/content-context';
 import { submitLead } from '../../app/actions/lead';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
@@ -14,8 +14,9 @@ interface DestinationDetailPageProps {
 }
 
 export default function DestinationDetailPage({ countrySlug, placeSlug, onNavigate }: DestinationDetailPageProps) {
-  const city: Place | undefined = CITIES[placeSlug];
-  const country: Place | undefined = COUNTRIES[countrySlug] || (city?.parentCountrySlug ? COUNTRIES[city.parentCountrySlug] : undefined);
+  const { tours, countries, cities, guides, exhibitions } = useContent();
+  const city: Place | undefined = cities[placeSlug];
+  const country: Place | undefined = countries[countrySlug] || (city?.parentCountrySlug ? countries[city.parentCountrySlug] : undefined);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -41,10 +42,10 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
   }
 
   // Find tours matching this city
-  const destinationTours = SAMPLE_TOURS.filter(t => t.destination.includes(city.name) || t.title.includes(city.name));
+  const destinationTours = tours.filter(t => (t.destination?.includes(city.name) ?? false) || (t.title?.includes(city.name) ?? false));
 
   // Alternative destinations
-  const alternativeCities = Object.values(CITIES).filter(c => c.slug !== city.slug && c.category === city.category).slice(0, 3);
+  const alternativeCities = Object.values(cities).filter(c => c.slug !== city.slug && c.category === city.category).slice(0, 3);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -3,10 +3,13 @@ import { notFound } from 'next/navigation';
 import RouteView from '../../RouteView';
 import JsonLd from '../../JsonLd';
 import { metadataFor, resolveSeo, breadcrumbJsonLd } from '../../seo-helpers';
-import { COUNTRIES } from '@/src/data/destinationsData';
+import { getLiveContent, getCountries } from '@/src/lib/db-content';
 
-export function generateStaticParams() {
-  return Object.keys(COUNTRIES).map((country) => ({ country }));
+export const dynamic = 'force-dynamic';
+
+export async function generateStaticParams() {
+  const countries = await getCountries();
+  return Object.keys(countries).map((country) => ({ country }));
 }
 
 export function generateMetadata({
@@ -23,12 +26,13 @@ export default async function CountryPage({
   params: Promise<{ country: string }>;
 }) {
   const { country } = await params;
-  if (!COUNTRIES[country]) notFound();
+  const content = await getLiveContent();
+  if (!content.countries[country]) notFound();
   const seo = resolveSeo(`/destination/${country}`);
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
-      <RouteView type="country" params={{ countrySlug: country }} />
+      <RouteView type="country" params={{ countrySlug: country }} data={content} />
     </>
   );
 }

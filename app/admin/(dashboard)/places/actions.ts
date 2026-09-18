@@ -2,104 +2,145 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
-import {
-  places,
-  originCities,
-  terminals,
-  carriers,
-  accommodations,
-  auditLogs,
-} from '@/db/schema';
+import { siteDestinations } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 
-export async function listCatalog() {
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface DestinationInput {
+  slug: string;
+  name: string;
+  nameEn: string;
+  type: string;
+  parentCountrySlug: string;
+  parentCountryName: string;
+  category: string;
+  image: string;
+  heroTagline: string;
+  description: string;
+  bestSeason: string;
+  visaRequired: boolean;
+  visaType: string;
+  flightDuration: string;
+  currency: string;
+  startingPrice: string;
+  startingPriceNote: string;
+  lastVerifiedAt: string;
+  activeToursCount: number;
+  popularDistricts: string[];
+  keyHighlights: string[];
+  travelTips: string[];
+  faqs: FaqItem[];
+  relatedGuides: string[];
+}
+
+function asStringArray(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map((x) => String(x)).filter((x) => x.trim() !== '');
+  return [];
+}
+
+function asFaqs(v: unknown): FaqItem[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter((x) => x && typeof x === 'object')
+    .map((x) => {
+      const o = x as Record<string, unknown>;
+      return { question: String(o.question ?? ''), answer: String(o.answer ?? '') };
+    })
+    .filter((f) => f.question.trim() !== '' || f.answer.trim() !== '');
+}
+
+export async function listDestinations() {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const [placeRows, originRows, terminalRows, carrierRows, hotelRows] = await Promise.all([
-    db.select().from(places).orderBy(desc(places.createdAt)).limit(300),
-    db.select().from(originCities).limit(100),
-    db.select().from(terminals).limit(200),
-    db.select().from(carriers).limit(200),
-    db.select().from(accommodations).limit(300),
-  ]);
-  return { places: placeRows, origins: originRows, terminals: terminalRows, carriers: carrierRows, hotels: hotelRows };
+  const rows = await db.select().from(siteDestinations).orderBy(desc(siteDestinations.updatedAt)).limit(300);
+  return rows.map((r) => ({
+    id: r.id,
+    slug: r.slug,
+    name: r.name,
+    nameEn: r.nameEn,
+    type: r.type,
+    parentCountrySlug: r.parentCountrySlug ?? '',
+    parentCountryName: r.parentCountryName ?? '',
+    category: r.category,
+    image: r.image,
+    heroTagline: r.heroTagline,
+    description: r.description,
+    bestSeason: r.bestSeason,
+    visaRequired: r.visaRequired,
+    visaType: r.visaType ?? '',
+    flightDuration: r.flightDuration ?? '',
+    currency: r.currency,
+    startingPrice: r.startingPrice,
+    startingPriceNote: r.startingPriceNote,
+    lastVerifiedAt: r.lastVerifiedAt,
+    activeToursCount: r.activeToursCount,
+    popularDistricts: asStringArray(r.popularDistricts),
+    keyHighlights: asStringArray(r.keyHighlights),
+    travelTips: asStringArray(r.travelTips),
+    faqs: asFaqs(r.faqs),
+    relatedGuides: asStringArray(r.relatedGuides),
+  }));
 }
 
-async function audit(actor: string, action: string, entity: string, entityId: string, reasonFa: string) {
-  const db = getDb();
-  if (!db) return;
-  await db.insert(auditLogs).values({ actor, action, entity, entityId, reasonFa });
-}
+export type DestinationRow = Awaited<ReturnType<typeof listDestinations>>[number];
 
-export async function createPlace(input: { slug: string; nameFa: string; type: 'region' | 'country' | 'city' | 'island' }) {
-  const session = await requireAdmin(['owner', 'editor']);
+export async function saveDestination(id: string | undefined | null, data: DestinationInput) {
+  await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  if (!input.slug.trim() || !input.nameFa.trim()) throw new Error('اسلاگ و نام فارسی لازم است.');
-  const [row] = await db
-    .insert(places)
-    .values({ slug: input.slug.trim(), nameFa: input.nameFa.trim(), type: input.type })
-    .returning({ id: places.id });
-  await audit(session.email, 'catalog.place', 'places', row.id, `ثبت مکان: ${input.nameFa}`);
+  const slug = (data.slug || '').trim();
+  const name = (data.name || '').trim();
+  if (!slug) throw new Error('نامک (slug) لازم است.');
+  if (name.length < 2) throw new Error('نام مقصد لازم است.');
+
+  const values = {
+    slug,
+    name,
+    nameEn: data.nameEn || '',
+    type: data.type || 'city',
+    parentCountrySlug: data.parentCountrySlug || null,
+    parentCountryName: data.parentCountryName || null,
+    category: data.category || '',
+    image: data.image || '',
+    heroTagline: data.heroTagline || '',
+    description: data.description || '',
+    bestSeason: data.bestSeason || '',
+    visaRequired: Boolean(data.visaRequired),
+    visaType: data.visaType || null,
+    flightDuration: data.flightDuration || null,
+    currency: data.currency || '',
+    startingPrice: data.startingPrice || '',
+    startingPriceNote: data.startingPriceNote || '',
+    lastVerifiedAt: data.lastVerifiedAt || '',
+    activeToursCount: Math.max(0, Number(data.activeToursCount) || 0),
+    popularDistricts: data.popularDistricts ?? [],
+    keyHighlights: data.keyHighlights ?? [],
+    travelTips: data.travelTips ?? [],
+    faqs: data.faqs ?? [],
+    relatedGuides: data.relatedGuides ?? [],
+    updatedAt: new Date(),
+  };
+
+  if (id) {
+    await db.update(siteDestinations).set(values).where(eq(siteDestinations.id, id));
+  } else {
+    await db.insert(siteDestinations).values(values);
+  }
   revalidatePath('/admin/places');
   return { ok: true };
 }
 
-export async function createOrigin(input: { slug: string; nameFa: string }) {
-  const session = await requireAdmin(['owner', 'editor']);
+export async function deleteDestination(id: string) {
+  await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  if (!input.slug.trim() || !input.nameFa.trim()) throw new Error('اسلاگ و نام فارسی لازم است.');
-  const [row] = await db
-    .insert(originCities)
-    .values({ slug: input.slug.trim(), nameFa: input.nameFa.trim() })
-    .returning({ id: originCities.id });
-  await audit(session.email, 'catalog.origin', 'origin_cities', row.id, `ثبت مبدأ: ${input.nameFa}`);
-  revalidatePath('/admin/places');
-  return { ok: true };
-}
-
-export async function createCarrier(input: { slug: string; nameFa: string; kind: string }) {
-  const session = await requireAdmin(['owner', 'editor']);
-  const db = getDb();
-  if (!db) throw new Error('DB_NOT_CONFIGURED');
-  if (!input.slug.trim() || !input.nameFa.trim()) throw new Error('اسلاگ و نام فارسی لازم است.');
-  const [row] = await db
-    .insert(carriers)
-    .values({ slug: input.slug.trim(), nameFa: input.nameFa.trim(), kind: input.kind || 'airline' })
-    .returning({ id: carriers.id });
-  await audit(session.email, 'catalog.carrier', 'carriers', row.id, `ثبت شرکت حمل‌ونقل: ${input.nameFa}`);
-  revalidatePath('/admin/places');
-  return { ok: true };
-}
-
-export async function createHotel(input: { slug: string; nameFa: string; stars?: number; placeSlug?: string }) {
-  const session = await requireAdmin(['owner', 'editor']);
-  const db = getDb();
-  if (!db) throw new Error('DB_NOT_CONFIGURED');
-  if (!input.slug.trim() || !input.nameFa.trim()) throw new Error('اسلاگ و نام فارسی لازم است.');
-  const [row] = await db
-    .insert(accommodations)
-    .values({
-      slug: input.slug.trim(),
-      nameFa: input.nameFa.trim(),
-      stars: input.stars || null,
-      placeSlug: input.placeSlug || null,
-    })
-    .returning({ id: accommodations.id });
-  await audit(session.email, 'catalog.hotel', 'accommodations', row.id, `ثبت هتل: ${input.nameFa}`);
-  revalidatePath('/admin/places');
-  return { ok: true };
-}
-
-export async function deletePlace(id: string) {
-  const session = await requireAdmin(['owner']);
-  const db = getDb();
-  if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(places).where(eq(places.id, id));
-  await audit(session.email, 'catalog.place.delete', 'places', id, 'حذف مکان');
+  await db.delete(siteDestinations).where(eq(siteDestinations.id, id));
   revalidatePath('/admin/places');
   return { ok: true };
 }

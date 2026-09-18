@@ -4,7 +4,8 @@ import {
   ChevronLeft, FileText, CheckCircle2, ShieldCheck, ArrowLeft,
   Sparkles, ExternalLink, Send, Check, HelpCircle
 } from 'lucide-react';
-import { EXHIBITION_SERIES, ExhibitionSeries } from '../data/exhibitionsData';
+import { type ExhibitionSeries } from '../data/exhibitionsData';
+import { useContent } from '@/src/lib/content-context';
 import SmartImage from './SmartImage';
 
 interface ExhibitionDetailPageProps {
@@ -14,7 +15,8 @@ interface ExhibitionDetailPageProps {
 }
 
 export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onNavigate }: ExhibitionDetailPageProps) {
-  const ex: ExhibitionSeries | undefined = EXHIBITION_SERIES[eventSeriesSlug];
+  const { tours, countries, cities, guides, exhibitions } = useContent();
+  const ex: ExhibitionSeries | undefined = exhibitions[eventSeriesSlug];
 
   // Form State
   const [formData, setFormData] = useState({

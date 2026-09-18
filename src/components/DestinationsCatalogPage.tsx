@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, MapPin, Globe, ChevronLeft, Phone, ShieldCheck, Sparkles, Filter } from 'lucide-react';
-import { COUNTRIES, CITIES, Place } from '../data/destinationsData';
+import { type Place } from '../data/destinationsData';
+import { useContent } from '@/src/lib/content-context';
 import SmartImage from './SmartImage';
 
 interface DestinationsCatalogPageProps {
@@ -8,6 +9,7 @@ interface DestinationsCatalogPageProps {
 }
 
 export default function DestinationsCatalogPage({ onNavigate }: DestinationsCatalogPageProps) {
+  const { tours, countries, cities, guides, exhibitions } = useContent();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
@@ -21,8 +23,8 @@ export default function DestinationsCatalogPage({ onNavigate }: DestinationsCata
   ];
 
   const allDestinations = useMemo(() => {
-    return Object.values(CITIES);
-  }, []);
+    return Object.values(cities);
+  }, [cities]);
 
   const filteredDestinations = useMemo(() => {
     return allDestinations.filter((dest) => {

@@ -1,17 +1,17 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { ArrowLeft, Clock, Calendar, ChevronLeft } from 'lucide-react';
-import { GUIDES } from '../data/guidesData';
+import { useContent } from '@/src/lib/content-context';
 import SmartImage from './SmartImage';
 
 const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=800&auto=format&fit=crop';
 
-/** کارت‌های صفحه اصلی فقط از رجیستری راهنماهای واقعی تغذیه می‌شوند (سند ۰۴) */
-const guideList = Object.values(GUIDES);
-const MAIN_ARTICLE = guideList[0];
-const SUB_ARTICLES = guideList.slice(1);
-
 export default function TravelGuide() {
+  const { tours, countries, cities, guides, exhibitions } = useContent();
+  /** کارت‌های صفحه اصلی فقط از رجیستری راهنماهای واقعی تغذیه می‌شوند (سند ۰۴) */
+  const guideList = Object.values(guides);
+  const MAIN_ARTICLE = guideList[0];
+  const SUB_ARTICLES = guideList.slice(1);
   return (
     <section id="travel-guides" className="section-standard bg-surface-primary relative overflow-hidden">
       <div className="container-main px-4 sm:px-6 lg:px-8">

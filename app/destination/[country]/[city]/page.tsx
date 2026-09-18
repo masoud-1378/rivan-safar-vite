@@ -7,10 +7,13 @@ import {
   resolveSeo,
   breadcrumbJsonLd,
 } from '../../../seo-helpers';
-import { CITIES } from '@/src/data/destinationsData';
+import { getLiveContent, getCities } from '@/src/lib/db-content';
 
-export function generateStaticParams() {
-  return Object.values(CITIES).map((city) => ({
+export const dynamic = 'force-dynamic';
+
+export async function generateStaticParams() {
+  const cities = await getCities();
+  return Object.values(cities).map((city) => ({
     country: city.parentCountrySlug ?? city.slug,
     city: city.slug,
   }));
@@ -32,7 +35,8 @@ export default async function CityPage({
   params: Promise<{ country: string; city: string }>;
 }) {
   const { country, city } = await params;
-  if (!CITIES[city]) notFound();
+  const content = await getLiveContent();
+  if (!content.cities[city]) notFound();
   const seo = resolveSeo(`/destination/${country}/${city}`);
   return (
     <>
@@ -40,6 +44,7 @@ export default async function CityPage({
       <RouteView
         type="destination_city"
         params={{ countrySlug: country, placeSlug: city }}
+        data={content}
       />
     </>
   );

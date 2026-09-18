@@ -1,7 +1,8 @@
 import React from 'react';
 import { Phone, Globe, MapPin, Calendar, Clock, ShieldCheck, ArrowLeft, CheckCircle2, FileText, ChevronLeft, Sparkles, Filter } from 'lucide-react';
-import { SAMPLE_TOURS, TourItem } from '../data/toursData';
-import { COUNTRIES, CITIES, Place } from '../data/destinationsData';
+import { type TourItem } from '../data/toursData';
+import { type Place } from '../data/destinationsData';
+import { useContent } from '@/src/lib/content-context';
 import SmartImage from './SmartImage';
 import TourListItem from './TourListItem';
 
@@ -11,19 +12,20 @@ interface HubPageProps {
 }
 
 export default function HubPage({ type, onNavigate }: HubPageProps) {
+  const { tours: allTours, countries, cities, guides, exhibitions } = useContent();
   const isForeign = type === 'foreign';
 
   // Filter tours
-  const tours = SAMPLE_TOURS.filter(t => t.type === type);
+  const hubTours = allTours.filter(t => t.type === type);
 
   // Filter destinations
-  const destinations = Object.values(CITIES).filter(c => {
+  const destinations = Object.values(cities).filter(c => {
     if (isForeign) return c.category !== 'domestic';
     return c.category === 'domestic';
   });
 
   // Filter countries
-  const countries = Object.values(COUNTRIES).filter(c => {
+  const hubCountries = Object.values(countries).filter(c => {
     if (isForeign) return c.category !== 'domestic';
     return c.category === 'domestic';
   });
@@ -146,7 +148,7 @@ export default function HubPage({ type, onNavigate }: HubPageProps) {
           </div>
 
           <div className="space-y-4">
-            {tours.map((tour) => (
+            {hubTours.map((tour) => (
               <TourListItem
                 key={tour.id}
                 id={tour.id}

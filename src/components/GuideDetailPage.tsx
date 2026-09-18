@@ -4,9 +4,8 @@ import {
   CheckCircle2, AlertCircle, ShieldCheck, Phone, MapPin, 
   Building2, Sparkles, Share2
 } from 'lucide-react';
-import { GUIDES, GuideItem } from '../data/guidesData';
-import { CITIES } from '../data/destinationsData';
-import { SAMPLE_TOURS } from '../data/toursData';
+import { type GuideItem } from '../data/guidesData';
+import { useContent } from '@/src/lib/content-context';
 import SmartImage from './SmartImage';
 
 interface GuideDetailPageProps {
@@ -15,7 +14,8 @@ interface GuideDetailPageProps {
 }
 
 export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPageProps) {
-  const guide: GuideItem | undefined = GUIDES[guideSlug];
+  const { tours, countries, cities, guides, exhibitions } = useContent();
+  const guide: GuideItem | undefined = guides[guideSlug];
 
   if (!guide) {
     return (
@@ -30,10 +30,10 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
 
   // Related guides (same category first, then others)
   const relatedGuides = [
-    ...Object.values(GUIDES).filter(
+    ...Object.values(guides).filter(
       (g) => g.slug !== guide.slug && g.category === guide.category,
     ),
-    ...Object.values(GUIDES).filter(
+    ...Object.values(guides).filter(
       (g) => g.slug !== guide.slug && g.category !== guide.category,
     ),
   ].slice(0, 2);
@@ -42,12 +42,12 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
   // relatedDestinationSlug ممکن است شهر (istanbul) یا کشور (turkey) باشد
   const moneyPagePath = (() => {
     if (guide.relatedTourId) {
-      const tour = SAMPLE_TOURS.find((t) => t.id === guide.relatedTourId);
+      const tour = tours.find((t) => t.id === guide.relatedTourId);
       if (tour) return { path: `/tour/${tour.id}`, label: tour.title };
     }
     if (guide.relatedDestinationSlug) {
       const slug = guide.relatedDestinationSlug;
-      const cityEntry = Object.entries(CITIES ?? {}).find(([, c]) => c.slug === slug);
+      const cityEntry = Object.entries(cities ?? {}).find(([, c]) => c.slug === slug);
       if (cityEntry) {
         const [, city] = cityEntry;
         const countrySlug = city.parentCountrySlug ?? slug;

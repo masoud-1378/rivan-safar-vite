@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { listProducts } from './actions';
+import { listTours } from './actions';
 import ToursManager from './ToursManager';
 
 export const metadata: Metadata = {
@@ -8,16 +8,6 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminToursPage() {
-  const products = await listProducts();
-  return (
-    <ToursManager
-      initial={products.map((p) => ({
-        id: p.id,
-        titleFa: p.titleFa,
-        slug: p.slug,
-        tourKind: p.tourKind,
-        status: p.status,
-      }))}
-    />
-  );
+  const tours = await listTours();
+  return <ToursManager initial={tours} />;
 }

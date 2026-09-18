@@ -4,7 +4,8 @@ import {
   ChevronLeft, FileText, CheckCircle2, ShieldCheck, ArrowLeft,
   Sparkles, Filter, ExternalLink
 } from 'lucide-react';
-import { EXHIBITION_SERIES, ExhibitionSeries } from '../data/exhibitionsData';
+import { type ExhibitionSeries } from '../data/exhibitionsData';
+import { useContent } from '@/src/lib/content-context';
 import SmartImage from './SmartImage';
 
 interface ExhibitionsHubPageProps {
@@ -12,6 +13,7 @@ interface ExhibitionsHubPageProps {
 }
 
 export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPageProps) {
+  const { tours, countries, cities, guides, exhibitions } = useContent();
   const [selectedIndustry, setSelectedIndustry] = useState<string>('all');
 
   const industries = [
@@ -21,7 +23,7 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
     { id: 'tech-ai', label: 'فناوری اطلاعات و هوش مصنوعی' },
   ];
 
-  const allExhibitions = Object.values(EXHIBITION_SERIES);
+  const allExhibitions = Object.values(exhibitions);
 
   const filteredExhibitions = allExhibitions.filter(ex => {
     return selectedIndustry === 'all' || ex.industrySlug === selectedIndustry;

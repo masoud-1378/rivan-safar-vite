@@ -3,10 +3,13 @@ import { notFound } from 'next/navigation';
 import RouteView from '../../RouteView';
 import JsonLd from '../../JsonLd';
 import { metadataFor, resolveSeo, breadcrumbJsonLd } from '../../seo-helpers';
-import { COUNTRIES } from '@/src/data/destinationsData';
+import { getCountries } from '@/src/lib/db-content';
 
-export function generateStaticParams() {
-  return Object.keys(COUNTRIES).map((country) => ({ country }));
+export const dynamic = 'force-dynamic';
+
+export async function generateStaticParams() {
+  const countries = await getCountries();
+  return Object.keys(countries).map((country) => ({ country }));
 }
 
 export function generateMetadata({
@@ -16,12 +19,6 @@ export function generateMetadata({
 }): Promise<Metadata> {
   return params.then(({ country }) => {
     // محتوای نازک ایندکس نشود (Quality Gate سند ۰۱)
-    if (!COUNTRIES[country]) {
-      return {
-        title: 'صفحه مورد نظر پیدا نشد | ریوان سفر',
-        robots: 'noindex,nofollow',
-      };
-    }
     return metadataFor(`/visa/${country}`);
   });
 }
@@ -32,12 +29,13 @@ export default async function VisaPage({
   params: Promise<{ country: string }>;
 }) {
   const { country } = await params;
-  if (!COUNTRIES[country]) notFound();
+  const countries = await getCountries();
+  if (!countries[country]) notFound();
   const seo = resolveSeo(`/visa/${country}`);
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
-      <RouteView type="visa_country" params={{ countrySlug: country }} />
+      <RouteView type="visa_country" params={{ countrySlug: country }} data={{ countries }} />
     </>
   );
 }

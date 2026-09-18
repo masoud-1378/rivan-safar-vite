@@ -7,15 +7,18 @@ import {
   breadcrumbJsonLd,
   itemListJsonLd,
 } from '../seo-helpers';
-import { GUIDES } from '@/src/data/guidesData';
+import { getGuides } from '@/src/lib/db-content';
+
+export const dynamic = 'force-dynamic';
 
 export function generateMetadata(): Metadata {
   return metadataFor('/guides');
 }
 
-export default function GuidesPage() {
+export default async function GuidesPage() {
   const seo = resolveSeo('/guides');
-  const guides = Object.values(GUIDES).map((g) => ({
+  const guidesData = await getGuides();
+  const guides = Object.values(guidesData).map((g) => ({
     name: g.title,
     url: `/guide/${g.slug}`,
   }));
@@ -23,7 +26,7 @@ export default function GuidesPage() {
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
       <JsonLd data={itemListJsonLd('/guides', guides)} />
-      <RouteView type="guides_hub" params={{}} />
+      <RouteView type="guides_hub" params={{}} data={{ guides: guidesData }} />
     </>
   );
 }

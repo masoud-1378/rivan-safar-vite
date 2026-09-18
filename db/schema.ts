@@ -65,7 +65,78 @@ export const transportKindEnum = pgEnum('transport_kind', [
   'mixed',
 ]);
 
-// ---------- کاتالوگ مرجع ----------
+export const siteTours = pgTable(
+  'site_tours',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    slug: varchar('slug', { length: 160 }).notNull().unique(), // e.g. "istanbul-sep"
+    title: varchar('title', { length: 260 }).notNull(),
+    type: varchar('type', { length: 60 }).notNull(), // 'foreign' | 'domestic' | 'exhibition'
+    typeLabel: varchar('type_label', { length: 120 }).notNull(),
+    destination: varchar('destination', { length: 120 }).notNull(),
+    origin: varchar('origin', { length: 120 }).notNull(),
+    route: varchar('route', { length: 260 }).notNull(),
+    duration: varchar('duration', { length: 120 }).notNull(),
+    nights: integer('nights').notNull(),
+    closestDeparture: varchar('closest_departure', { length: 120 }).notNull(),
+    price: numeric('price', { precision: 15, scale: 0 }).notNull(),
+    formattedPrice: varchar('formatted_price', { length: 60 }).notNull(),
+    priceNote: varchar('price_note', { length: 260 }).notNull(),
+    status: varchar('status', { length: 60 }).notNull(), // 'confirmed' | 'pending' | 'updating' | 'full'
+    statusLabel: varchar('status_label', { length: 120 }).notNull(),
+    image: text('image').notNull(),
+    badge: varchar('badge', { length: 120 }),
+    features: jsonb('features').default('[]').notNull(), // string[]
+    visaRequired: boolean('visa_required').default(false).notNull(),
+    hotelStars: integer('hotel_stars').notNull(),
+    airline: varchar('airline', { length: 120 }).notNull(),
+    includedServices: jsonb('included_services').default('[]').notNull(), // string[]
+    excludedServices: jsonb('excluded_services').default('[]').notNull(), // string[]
+    hotelOptions: jsonb('hotel_options').default('[]').notNull(), // Array<{ name, stars, board, pricePerPerson }>
+    description: text('description').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    slugIdx: index('idx_site_tours_slug').on(table.slug),
+  }),
+);
+
+export const siteDestinations = pgTable(
+  'site_destinations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    slug: varchar('slug', { length: 160 }).notNull().unique(),
+    name: varchar('name', { length: 160 }).notNull(),
+    nameEn: varchar('name_en', { length: 160 }).notNull(),
+    type: varchar('type', { length: 60 }).notNull(), // 'country' | 'city'
+    parentCountrySlug: varchar('parent_country_slug', { length: 160 }),
+    parentCountryName: varchar('parent_country_name', { length: 160 }),
+    category: varchar('category', { length: 120 }).notNull(),
+    image: text('image').notNull(),
+    heroTagline: varchar('hero_tagline', { length: 300 }).notNull(),
+    description: text('description').notNull(),
+    bestSeason: varchar('best_season', { length: 300 }).notNull(),
+    visaRequired: boolean('visa_required').default(false).notNull(),
+    visaType: varchar('visa_type', { length: 160 }),
+    flightDuration: varchar('flight_duration', { length: 160 }),
+    currency: varchar('currency', { length: 160 }).notNull(),
+    startingPrice: varchar('starting_price', { length: 160 }).notNull(),
+    startingPriceNote: varchar('starting_price_note', { length: 300 }).notNull(),
+    lastVerifiedAt: varchar('last_verified_at', { length: 160 }).notNull(),
+    activeToursCount: integer('active_tours_count').default(0).notNull(),
+    popularDistricts: jsonb('popular_districts').default('[]').notNull(), // string[]
+    keyHighlights: jsonb('key_highlights').default('[]').notNull(), // string[]
+    travelTips: jsonb('travel_tips').default('[]').notNull(), // string[]
+    faqs: jsonb('faqs').default('[]').notNull(), // Array<{ question, answer }>
+    relatedGuides: jsonb('related_guides').default('[]').notNull(), // string[]
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    slugIdx: index('idx_site_destinations_slug').on(table.slug),
+  }),
+);
 
 export const places = pgTable(
   'places',
@@ -340,6 +411,8 @@ export const guides = pgTable(
     directAnswer: text('direct_answer'),
     sections: jsonb('sections').notNull().default([]),
     faqs: jsonb('faqs').notNull().default([]),
+    relatedDestinationSlug: varchar('related_destination_slug', { length: 160 }),
+    relatedTourId: varchar('related_tour_id', { length: 160 }),
     status: publishStatusEnum('status').notNull().default('draft'),
     lastReviewedAt: timestamp('last_reviewed_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -365,10 +438,13 @@ export const exhibitions = pgTable(
     titleFa: varchar('title_fa', { length: 260 }).notNull(),
     titleEn: varchar('title_en', { length: 260 }),
     country: varchar('country', { length: 120 }),
+    countrySlug: varchar('country_slug', { length: 160 }),
     city: varchar('city', { length: 120 }),
+    citySlug: varchar('city_slug', { length: 160 }),
     venue: varchar('venue', { length: 220 }),
     officialWebsite: text('official_website'),
     industry: varchar('industry', { length: 220 }),
+    industrySlug: varchar('industry_slug', { length: 160 }),
     heroTagline: text('hero_tagline'),
     description: text('description'),
     image: text('image'),
@@ -378,6 +454,7 @@ export const exhibitions = pgTable(
     phases: jsonb('phases').notNull().default([]),
     visaDeadline: text('visa_deadline'),
     hotelArea: text('hotel_area'),
+    startingPrice: varchar('starting_price', { length: 160 }),
     startingPriceNote: text('starting_price_note'),
     servicesIncluded: jsonb('services_included').notNull().default([]),
     businessTips: jsonb('business_tips').notNull().default([]),

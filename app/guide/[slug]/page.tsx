@@ -3,10 +3,18 @@ import { notFound } from 'next/navigation';
 import RouteView from '../../RouteView';
 import JsonLd from '../../JsonLd';
 import { metadataFor, resolveSeo, breadcrumbJsonLd } from '../../seo-helpers';
-import { GUIDES } from '@/src/data/guidesData';
+import { getLiveContent, getGuides } from '@/src/lib/db-content';
+import type { GuideItem } from '@/src/data/guidesData';
 
-export function generateStaticParams() {
-  return Object.keys(GUIDES).map((slug) => ({ slug }));
+export const dynamic = 'force-dynamic';
+
+export async function generateStaticParams() {
+  try {
+    const guidesData = await getGuides();
+    return Object.keys(guidesData).map((slug) => ({ slug }));
+  } catch {
+    return [];
+  }
 }
 
 export function generateMetadata({
@@ -17,8 +25,7 @@ export function generateMetadata({
   return params.then(({ slug }) => metadataFor(`/guide/${slug}`));
 }
 
-function faqJsonLd(slug: string) {
-  const guide = GUIDES[slug];
+function faqJsonLd(guide?: GuideItem | null) {
   if (!guide || guide.faqs.length === 0) return null;
   return {
     '@context': 'https://schema.org',
@@ -37,13 +44,15 @@ export default async function GuidePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  if (!GUIDES[slug]) notFound();
+  const content = await getLiveContent();
+  const guide = content.guides[slug];
+  if (!guide) notFound();
   const seo = resolveSeo(`/guide/${slug}`);
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
-      <JsonLd data={faqJsonLd(slug)} />
-      <RouteView type="guide_detail" params={{ guideSlug: slug }} />
+      <JsonLd data={faqJsonLd(guide)} />
+      <RouteView type="guide_detail" params={{ guideSlug: slug }} data={content} />
     </>
   );
 }
