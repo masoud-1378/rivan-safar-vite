@@ -309,3 +309,28 @@ export const auditLogs = pgTable('audit_logs', {
   reasonFa: text('reason_fa'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+// ---------- درخواست‌های تماس (Lead) ----------
+
+export const leadStatusEnum = pgEnum('lead_status', [
+  'new',
+  'contacted',
+  'qualified',
+  'won',
+  'lost',
+  'invalid',
+]);
+
+export const leadRequests = pgTable('lead_requests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  fullName: varchar('full_name', { length: 160 }).notNull(),
+  phone: varchar('phone', { length: 20 }).notNull(),
+  sourcePath: varchar('source_path', { length: 300 }).notNull(),
+  tourContext: varchar('tour_context', { length: 220 }),
+  destinationHint: varchar('destination_hint', { length: 120 }),
+  passengers: varchar('passengers', { length: 20 }),
+  notes: text('notes'),
+  status: leadStatusEnum('status').notNull().default('new'),
+  assignee: varchar('assignee', { length: 160 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});

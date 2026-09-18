@@ -2,7 +2,12 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import RouteView from '../../RouteView';
 import JsonLd from '../../JsonLd';
-import { metadataFor, resolveSeo, breadcrumbJsonLd } from '../../seo-helpers';
+import {
+  metadataFor,
+  resolveSeo,
+  breadcrumbJsonLd,
+  tourJsonLd,
+} from '../../seo-helpers';
 import { SAMPLE_TOURS } from '@/src/data/toursData';
 
 export function generateStaticParams() {
@@ -28,6 +33,7 @@ export default async function TourPage({
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
+      <JsonLd data={tourJsonLd(slug)} />
       <RouteView type="tour_detail" params={{ tourSlug: slug }} />
     </>
   );

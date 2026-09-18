@@ -4,6 +4,7 @@ import {
   FileText, ShieldCheck, Phone, Sparkles 
 } from 'lucide-react';
 import { GUIDES, GuideItem } from '../data/guidesData';
+import SmartImage from './SmartImage';
 
 interface GuidesHubPageProps {
   onNavigate: (path: string) => void;
@@ -92,17 +93,18 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredGuides.map((guide) => (
-              <div
+              <a
                 key={guide.id}
-                onClick={() => onNavigate(`/guide/${guide.slug}`)}
+                href={`/guide/${guide.slug}`}
+                onClick={(e) => { e.preventDefault(); onNavigate(`/guide/${guide.slug}`); }}
                 className="group bg-surface-primary border border-border-default rounded-card overflow-hidden shadow-subtle hover:shadow-card hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between text-right"
               >
                 <div>
                   <div className="relative aspect-[16/9] overflow-hidden">
-                    <img
+                    <SmartImage
                       src={guide.heroImage}
                       alt={guide.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute top-3 right-3 bg-brand-navy/90 text-white px-2.5 py-1 rounded-md text-caption font-bold">
                       {guide.categoryLabel}
@@ -135,7 +137,7 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
                     <ChevronLeft className="w-4 h-4" />
                   </span>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         )}

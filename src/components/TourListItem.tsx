@@ -1,4 +1,5 @@
 import React from 'react';
+import SmartImage from './SmartImage';
 import { Clock, ShieldCheck, FileText, ChevronLeft } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -18,6 +19,8 @@ export interface TourListItemProps {
   closestDeparture?: string;
   recurring?: boolean;
   origin?: string;
+  /** مسیر واقعی صفحه تور — لینک HTML برای خزنده‌ها (سند ۰۳) */
+  href?: string;
   onClick?: () => void;
   className?: string;
 }
@@ -36,6 +39,7 @@ export default function TourListItem({
   closestDeparture,
   recurring,
   origin,
+  href,
   onClick,
   className = ''
 }: TourListItemProps) {
@@ -69,17 +73,25 @@ export default function TourListItem({
     statusBadge = 'ظرفیت محدود';
   }
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
-    <div 
-      onClick={onClick}
-      className={`group bg-surface-primary border border-border-default rounded-card shadow-subtle hover:-translate-y-0.5 hover:shadow-card hover:border-border-default/80 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col md:flex-row min-h-[100px] w-full dir-rtl ${soldOut ? 'opacity-85' : ''} ${className}`}
+    <a 
+      href={href || '#'}
+      onClick={handleClick}
+      className={`group block bg-surface-primary border border-border-default rounded-card shadow-subtle hover:-translate-y-0.5 hover:shadow-card hover:border-border-default/80 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col md:flex-row min-h-[100px] w-full dir-rtl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange ${soldOut ? 'opacity-85' : ''} ${className}`}
     >
       {/* --- Image Area --- */}
       <div className="relative w-full md:w-[140px] lg:w-[160px] shrink-0 aspect-[16/9] md:aspect-auto">
-        <img 
+        <SmartImage
           src={image} 
           alt={title} 
-          className="w-full h-full object-cover"
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 md:hidden" />
         
@@ -184,6 +196,6 @@ export default function TourListItem({
           </div>
         </div>
       </div>
-    </div>
+    </a>
   );
 }

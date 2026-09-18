@@ -134,7 +134,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                   </div>
                   <h4 className="text-h4 font-bold mb-2">پیام شما با موفقیت دریافت شد</h4>
                   <p className="text-body-sm text-emerald-800">
-                    کارشناسان ریوان سفر در اسرع وقت پاسخگوی شما خواهند بود.
+                    کارشناسان ریوان سفر در ساعات کاری پاسخگوی شما هستند.
                   </p>
                 </div>
               ) : (

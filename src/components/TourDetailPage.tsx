@@ -5,6 +5,9 @@ import {
   ChevronLeft, Sparkles, FileText, ArrowRight
 } from 'lucide-react';
 import { SAMPLE_TOURS, TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
+import { submitLead } from '../../app/actions/lead';
+import { trackLeadSubmit } from '../lib/analytics';
+import SmartImage from './SmartImage';
 
 interface TourDetailPageProps {
   tourSlug: string;
@@ -25,6 +28,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState('');
 
   if (!tour) {
     return (
@@ -45,15 +49,26 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
     tour.destination === 'قشم' || 
     /ایران|کیش|مشهد|قشم|شیراز|اصفهان|یزد|تبریز|چابهار/i.test(tour.title);
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.phone) return;
 
     setFormLoading(true);
-    setTimeout(() => {
-      setFormLoading(false);
-      setFormSubmitted(true);
-    }, 600);
+    const result = await submitLead({
+      fullName: formData.name,
+      phone: formData.phone,
+      sourcePath: `/tour/${tourSlug}`,
+      tourContext: tour.title,
+      destinationHint: tour.destination,
+      passengers: formData.passengers,
+      notes: [formData.hotelPreference && `هتل: ${formData.hotelPreference}`, formData.notes]
+        .filter(Boolean)
+        .join(' — '),
+    });
+    setFormLoading(false);
+    setSubmitMessage(result.message);
+    setFormSubmitted(result.ok);
+    if (result.ok) trackLeadSubmit(`/tour/${tourSlug}`, result.stored);
   };
 
   return (
@@ -184,10 +199,11 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
             {/* Right Column: Hero Image (5 cols) */}
             <div className="lg:col-span-5">
               <div className="aspect-[4/3] rounded-card overflow-hidden border border-border-default shadow-card relative">
-                <img
+                <SmartImage
                   src={tour.image}
                   alt={tour.title}
-                  className="w-full h-full object-cover"
+                  priority
+                  className="object-cover"
                 />
               </div>
 
@@ -195,7 +211,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
               <div className="mt-4 p-4 bg-surface-primary rounded-card border border-border-default text-right space-y-2 text-caption text-text-secondary">
                 <div className="flex items-center gap-2 text-text-heading font-bold">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>تضمین شفافیت خدمات ریوان سفر</span>
+                  <span>شفافیت خدمات ریوان سفر</span>
                 </div>
                 <p className="leading-relaxed">
                   تمامی موارد هتل، پرواز، ترانسفر و بیمه در قرارداد رسمی گردشگری به صورت مکتوب قید می‌گردند.
@@ -348,9 +364,9 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
               <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
                 <Check className="w-6 h-6" />
               </div>
-              <h4 className="text-h4 font-bold mb-2">درخواست تماس شما با موفقیت ثبت شد</h4>
+              <h4 className="text-h4 font-bold mb-2">درخواست تماس شما ثبت شد</h4>
               <p className="text-body-sm text-emerald-800 mb-4">
-                کارشناس ریوان سفر در ساعت‌های کاری برای تأیید قیمت و ظرفیت {tour.title} با شما تماس می‌گیرد.
+                {submitMessage || `کارشناس ریوان سفر در ساعات کاری برای تأیید قیمت و ظرفیت ${tour.title} با شما تماس می‌گیرد.`}
               </p>
               <div className="text-caption text-emerald-700">
                 در صورت تمایل می‌توانید مستقیماً با تلفن <a href="tel:02633350139" className="font-bold underline">۰۲۶۳۳۳۵۰۱۳۹</a> تماس حاصل فرمایید.
@@ -449,14 +465,15 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
 
           <div className="space-y-4">
             {relatedTours.map((rel) => (
-              <div
+              <a
                 key={rel.id}
-                onClick={() => onNavigate(`/tour/${rel.id}`)}
+                href={`/tour/${rel.id}`}
+                onClick={(e) => { e.preventDefault(); onNavigate(`/tour/${rel.id}`); }}
                 className="bg-surface-primary border border-border-default rounded-card p-4 hover:shadow-card hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-4 text-right"
               >
                 <div className="flex items-center gap-4 w-full sm:w-auto">
-                  <div className="w-16 h-16 rounded-control overflow-hidden shrink-0">
-                    <img src={rel.image} alt={rel.title} className="w-full h-full object-cover" />
+                  <div className="w-16 h-16 rounded-control overflow-hidden shrink-0 relative">
+                    <SmartImage src={rel.image} alt={rel.title} className="object-cover" sizes="64px" />
                   </div>
                   <div>
                     <h4 className="text-body font-bold text-text-heading">{rel.title}</h4>
@@ -471,7 +488,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   </div>
                   <span className="btn btn-secondary btn-small text-caption">مشاهده تور</span>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </section>

@@ -204,6 +204,32 @@ export function getIndexableLandings(): SeoLanding[] {
   );
 }
 
+/**
+ * مسیرهای داینامیک ایندکس‌پذیر (تور/راهنما/نمایشگاه/ویزا).
+ * قانون: این صفحات فقط تا زمانی ایندکس‌پذیرند که داده واقعی پشتشان باشد.
+ * با اتصال DB، این فهرست از جدول seo_landings خوانده می‌شود.
+ */
+export function getDynamicIndexablePaths(): string[] {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { SAMPLE_TOURS } = require('./toursData') as typeof import('./toursData');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { GUIDES } = require('./guidesData') as typeof import('./guidesData');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { EXHIBITION_SERIES } = require('./exhibitionsData') as typeof import('./exhibitionsData');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { COUNTRIES } = require('./destinationsData') as typeof import('./destinationsData');
+
+  const paths: string[] = [];
+  for (const t of SAMPLE_TOURS) paths.push(`/tour/${t.id}`);
+  for (const g of Object.values(GUIDES)) paths.push(`/guide/${g.slug}`);
+  for (const s of Object.values(EXHIBITION_SERIES)) {
+    paths.push(`/exhibition/${s.slug}`);
+    paths.push(`/exhibition/${s.slug}/${s.upcomingEdition.editionSlug}`);
+  }
+  for (const c of Object.keys(COUNTRIES)) paths.push(`/visa/${c}`);
+  return paths;
+}
+
 export function findLandingByPath(path: string): SeoLanding | undefined {
   const clean = path.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
   return SEO_LANDINGS.find((l) => l.urlPath === clean);

@@ -203,3 +203,19 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   reason_fa TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+DO $$ BEGIN CREATE TYPE lead_status AS ENUM ('new','contacted','qualified','won','lost','invalid'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS lead_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  full_name VARCHAR(160) NOT NULL,
+  phone VARCHAR(20) NOT NULL,
+  source_path VARCHAR(300) NOT NULL,
+  tour_context VARCHAR(220),
+  destination_hint VARCHAR(120),
+  passengers VARCHAR(20),
+  notes TEXT,
+  status lead_status NOT NULL DEFAULT 'new',
+  assignee VARCHAR(160),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

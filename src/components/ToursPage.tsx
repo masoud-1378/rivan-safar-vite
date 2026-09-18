@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Search, Filter, ChevronDown, Check, ArrowLeft, Phone, Calendar, 
   MapPin, SlidersHorizontal, Info, Clock, Sparkles, X, ShieldCheck, 
@@ -6,7 +7,11 @@ import {
   Users, CheckCircle2, AlertCircle, Building2, Headset, FileCheck2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { SAMPLE_TOURS, TourItem, TOUR_FAQ_ITEMS, RELATED_GUIDE_ARTICLES } from '../data/toursData';
+import { SAMPLE_TOURS, TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
+import { GUIDES } from '../data/guidesData';
+import { submitLead } from '../../app/actions/lead';
+import { trackLeadSubmit } from '../lib/analytics';
+import SmartImage from './SmartImage';
 import TourListItem from './TourListItem';
 
 interface ToursPageProps {
@@ -14,6 +19,13 @@ interface ToursPageProps {
 }
 
 export default function ToursPage({ onGoHome }: ToursPageProps) {
+  const router = useRouter();
+
+  /** ناوبری به صفحه واقعی تور (سند ۰۳: لینک به صفحه پکیج) */
+  const navigateToTour = (tourId: string) => {
+    router.push(`/tour/${tourId}`);
+  };
+
   // --- Search & Filter States ---
   const [selectedType, setSelectedType] = useState<string>('all');
   const [searchDestination, setSearchDestination] = useState<string>('');
@@ -162,15 +174,21 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
     }
   };
 
-  const handleBookingSubmit = (e: React.FormEvent) => {
+  const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setBookingSubmitted(true);
-    setTimeout(() => {
-      setBookingSubmitted(false);
-      setSelectedDetailTour(null);
-      setBookingForm({ name: '', mobile: '', passengers: 2, selectedHotel: '', notes: '' });
-      alert('درخواست تماس شما با موفقیت ثبت شد. کارشناسان ریوان سفر به‌زودی با شما تماس خواهند گرفت.');
-    }, 1500);
+    const result = await submitLead({
+      fullName: bookingForm.name,
+      phone: bookingForm.mobile,
+      sourcePath: '/tours',
+      tourContext: selectedDetailTour?.title,
+      destinationHint: selectedDetailTour?.destination,
+      passengers: String(bookingForm.passengers),
+      notes: bookingForm.selectedHotel ? `هتل: ${bookingForm.selectedHotel}` : undefined,
+    });
+    setSelectedDetailTour(null);
+    setBookingForm({ name: '', mobile: '', passengers: 2, selectedHotel: '', notes: '' });
+    if (result.ok) trackLeadSubmit('/tours', result.stored);
+    alert(result.message);
   };
 
   return (
@@ -223,10 +241,10 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
             <h2 className="text-h2 text-text-heading">
               {searchDestination 
                 ? `تورهای ${searchDestination}` 
-                : selectedType === 'foreign' ? 'تورهای قابل رزرو خارجی'
-                : selectedType === 'domestic' ? 'تورهای قابل رزرو داخلی'
-                : selectedType === 'exhibition' ? 'تورهای قابل رزرو نمایشگاهی'
-                : 'تورهای قابل رزرو'}
+                : selectedType === 'foreign' ? 'تورهای خارجی فعال'
+                : selectedType === 'domestic' ? 'تورهای داخلی فعال'
+                : selectedType === 'exhibition' ? 'تورهای نمایشگاهی فعال'
+                : 'تورهای فعال'}
             </h2>
             <p className="text-body-sm text-text-secondary mt-1">
               {filteredTours.length > 0 
@@ -498,7 +516,8 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                     soldOut={tour.status === 'full'}
                     closestDeparture={tour.closestDeparture}
                     origin={tour.origin}
-                    onClick={() => setSelectedDetailTour(tour)}
+                    href={`/tour/${tour.id}`}
+                    onClick={() => navigateToTour(tour.id)}
                   />
                 ))}
               </div>
@@ -727,26 +746,28 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
         </div>
       </section>
 
-      {/* ---------------- 20. Related Articles ---------------- */}
+      {/* ---------------- 20. Related Guides (real, from GUIDES registry) ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-compact">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-h2 text-text-heading mb-6 md:mb-8">مقالات مرتبط راهنمای انتخاب تور</h2>
+          <h2 className="text-h2 text-text-heading mb-6 md:mb-8">راهنماهای مرتبط انتخاب تور</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {RELATED_GUIDE_ARTICLES.map(art => (
-            <article key={art.id} className="bg-surface-primary rounded-card border border-border-default overflow-hidden text-right shadow-subtle flex flex-col justify-between">
+          {Object.values(GUIDES).map(guide => (
+            <article key={guide.id} className="bg-surface-primary rounded-card border border-border-default overflow-hidden text-right shadow-subtle flex flex-col justify-between">
               <div>
-                <img src={art.image} alt={art.title} className="w-full h-40 object-cover" />
+                <div className="relative w-full h-40">
+                  <SmartImage src={guide.heroImage} alt={guide.title} className="object-cover" />
+                </div>
                 <div className="p-4">
-                  <span className="text-caption font-bold text-brand-orange block mb-1">خواندن {art.readTime}</span>
-                  <h3 className="font-bold text-[14.5px] text-text-heading mb-2 leading-snug">{art.title}</h3>
-                  <p className="text-caption text-text-secondary leading-relaxed">{art.excerpt}</p>
+                  <span className="text-caption font-bold text-brand-orange block mb-1">{guide.categoryLabel} · {guide.readTime}</span>
+                  <h3 className="font-bold text-[14.5px] text-text-heading mb-2 leading-snug">{guide.title}</h3>
+                  <p className="text-caption text-text-secondary leading-relaxed">{guide.summary}</p>
                 </div>
               </div>
               <div className="p-4 pt-0">
-                <a href={art.url} className="text-link text-btn">
-                  مطالعه مقاله <ArrowLeft className="w-3.5 h-3.5" />
+                <a href={`/guide/${guide.slug}`} className="text-link text-btn">
+                  مطالعه راهنما <ArrowLeft className="w-3.5 h-3.5" />
                 </a>
               </div>
             </article>
@@ -819,8 +840,8 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
 
               <h2 className="text-h2 text-text-heading mb-6 md:mb-8">{selectedDetailTour.title}</h2>
 
-              <div className="aspect-video w-full rounded-control overflow-hidden mb-6">
-                <img src={selectedDetailTour.image} alt={selectedDetailTour.title} className="w-full h-full object-cover" />
+              <div className="aspect-video w-full rounded-control overflow-hidden mb-6 relative">
+                <SmartImage src={selectedDetailTour.image} alt={selectedDetailTour.title} className="object-cover" />
               </div>
 
               <p className="text-body-sm text-text-primary leading-relaxed mb-6">
@@ -874,7 +895,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               <form onSubmit={handleBookingSubmit} className="bg-surface-dark text-white p-5 rounded-card text-right">
                 <h3 className="text-h4 mb-3">ثبت درخواست تماس برای این تور</h3>
                 <p className="text-caption text-white/80 mb-4">
-                  با ثبت این فرم، کارشناسان ریوان سفر ظرف ۱۵ دقیقه ظرفیت نهایی و قیمت قطعی را با شما هماهنگ می‌کنند.
+                  با ثبت این فرم، کارشناسان ریوان سفر در ساعات کاری ظرفیت نهایی و قیمت را با شما هماهنگ می‌کنند.
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">

@@ -73,7 +73,7 @@ export default function AboutPage({ onNavigate }: AboutPageProps) {
             </div>
             <h3 className="text-h4 font-bold text-text-heading mb-2">تخصص در سفرهای تجاری</h3>
             <p className="text-body-sm text-text-secondary leading-relaxed">
-              ریوان سفر مجری شناخته‌شده تورهای نمایشگاهی بین‌المللی نظیر Canton Fair چین و Gulfood دبی برای هیئت‌های بازرگانی است.
+              ریوان سفر تورهای نمایشگاهی بین‌المللی نظیر Canton Fair چین و Gulfood دبی را برای هیئت‌های بازرگانی اجرا می‌کند.
             </p>
           </div>
         </div>

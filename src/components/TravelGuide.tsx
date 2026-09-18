@@ -1,50 +1,15 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { ArrowLeft, Clock, Calendar, ChevronLeft } from 'lucide-react';
+import { GUIDES } from '../data/guidesData';
+import SmartImage from './SmartImage';
 
 const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=800&auto=format&fit=crop';
 
-const MAIN_ARTICLE = {
-  id: 'antalya-guide',
-  category: 'راهنمای مقصد',
-  title: 'بهترین زمان سفر به آنتالیا برای تفریح و خرید',
-  excerpt: 'مقایسه جامع شرایط آب‌وهوایی، جشنواره‌های خرید، نوسانات قیمت هتل‌ها و میزان شلوغی آنتالیا در فصل‌های مختلف سال به همراه پیشنهادات اختصاصی رزرو.',
-  readTime: '۵ دقیقه',
-  date: '۱۴ مرداد ۱۴۰۳',
-  author: 'کارشناسی تیم تور خارجی',
-  image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1000&auto=format&fit=crop',
-  url: '#antalya-guide'
-};
-
-const SUB_ARTICLES = [
-  {
-    id: 'dubai-cost',
-    category: 'هزینه‌های سفر',
-    title: 'هزینه سفر به دبی چقدر است؟ محاسبه دقیق بودجه پرواز، هتل و تفریحات',
-    readTime: '۴ دقیقه',
-    date: '۱۲ مرداد ۱۴۰۳',
-    image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=400&auto=format&fit=crop',
-    url: '#dubai-cost'
-  },
-  {
-    id: 'istanbul-districts',
-    category: 'راهنمای اقامت',
-    title: 'کدام منطقه استانبول برای اقامت بهتر است؟ بررسی مقایسه‌ای تکسیم، شیشلی و فاتح',
-    readTime: '۶ دقیقه',
-    date: '۱۰ مرداد ۱۴۰۳',
-    image: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=400&auto=format&fit=crop',
-    url: '#istanbul-districts'
-  },
-  {
-    id: 'russia-documents',
-    category: 'مدارک و ویزا',
-    title: 'مدارک لازم برای تور روسیه و مراحل اخذ ویزای الکترونیکی (E-Visa)',
-    readTime: '۳ دقیقه',
-    date: '۰۸ مرداد ۱۴۰۳',
-    image: 'https://images.unsplash.com/photo-1513326718677-b964603b136b?q=80&w=400&auto=format&fit=crop',
-    url: '#russia-documents'
-  }
-];
+/** کارت‌های صفحه اصلی فقط از رجیستری راهنماهای واقعی تغذیه می‌شوند (سند ۰۴) */
+const guideList = Object.values(GUIDES);
+const MAIN_ARTICLE = guideList[0];
+const SUB_ARTICLES = guideList.slice(1);
 
 export default function TravelGuide() {
   return (
@@ -91,28 +56,23 @@ export default function TravelGuide() {
             transition={{ duration: 0.4 }}
             className="lg:col-span-7"
           >
-            <a href={MAIN_ARTICLE.url} className="card-article-featured group">
-              <img 
-                src={MAIN_ARTICLE.image || DEFAULT_FALLBACK_IMAGE} 
-                alt={MAIN_ARTICLE.title}
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (target.src !== DEFAULT_FALLBACK_IMAGE) {
-                    target.src = DEFAULT_FALLBACK_IMAGE;
-                  }
-                }}
-                className="card-article-featured-image"
-              />
+            <a href={`/guide/${MAIN_ARTICLE.slug}`} className="card-article-featured group">
+              <div className="relative w-full aspect-[21/9]">
+                <SmartImage 
+                  src={MAIN_ARTICLE.heroImage || DEFAULT_FALLBACK_IMAGE} 
+                  alt={MAIN_ARTICLE.title}
+                  className="card-article-featured-image"
+                />
+              </div>
               <div className="card-article-featured-content">
                 <div className="card-article-category">
-                  {MAIN_ARTICLE.category}
+                  {MAIN_ARTICLE.categoryLabel}
                 </div>
                 <h3 className="card-article-featured-title">
                   {MAIN_ARTICLE.title}
                 </h3>
                 <p className="card-article-featured-desc">
-                  {MAIN_ARTICLE.excerpt}
+                  {MAIN_ARTICLE.summary}
                 </p>
                 <div className="mt-auto pt-4 flex items-center justify-between text-caption text-text-secondary">
                   <div className="flex items-center gap-4">
@@ -122,7 +82,7 @@ export default function TravelGuide() {
                     </span>
                     <span className="hidden sm:inline-flex items-center gap-1.5 opacity-70">
                       <Calendar className="w-4 h-4" />
-                      {MAIN_ARTICLE.date}
+                      {MAIN_ARTICLE.lastReviewedAt}
                     </span>
                   </div>
                   <span className="text-link text-body-sm group-hover:text-brand-orange transition-colors">
@@ -137,7 +97,7 @@ export default function TravelGuide() {
           <div className="lg:col-span-5 flex flex-col sm:grid sm:grid-cols-2 lg:flex lg:flex-col gap-4 justify-between">
             {SUB_ARTICLES.map((article, idx) => (
               <motion.a 
-                href={article.url}
+                href={`/guide/${article.slug}`}
                 key={article.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -145,22 +105,16 @@ export default function TravelGuide() {
                 transition={{ duration: 0.4, delay: (idx + 1) * 0.08 }}
                 className="card-article-compact"
               >
-                <div className="card-article-compact-thumbnail">
-                  <img 
-                    src={article.image || DEFAULT_FALLBACK_IMAGE} 
+                <div className="card-article-compact-thumbnail relative">
+                  <SmartImage 
+                    src={article.heroImage || DEFAULT_FALLBACK_IMAGE} 
                     alt={article.title}
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      if (target.src !== DEFAULT_FALLBACK_IMAGE) {
-                        target.src = DEFAULT_FALLBACK_IMAGE;
-                      }
-                    }}
+                    sizes="120px"
                   />
                 </div>
                 <div className="card-article-compact-content">
                   <div className="card-article-category" style={{ marginBottom: '4px', fontSize: '10px' }}>
-                    {article.category}
+                    {article.categoryLabel}
                   </div>
                   <h3 className="card-article-compact-title">
                     {article.title}

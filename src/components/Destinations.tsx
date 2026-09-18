@@ -1,6 +1,17 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { ArrowLeft, Star } from 'lucide-react';
+import SmartImage from './SmartImage';
+
+/** نگاشت عنوان کارت به مسیر واقعی مقصد (سند ۰۳: لینک HTML واقعی) */
+const DESTINATION_PATHS: Record<string, string> = {
+  'تور استانبول': '/destination/turkey/istanbul',
+  'تور دبی': '/destination/uae/dubai',
+  'تور تایلند': '/destination/thailand',
+  'تور ترکیه': '/destination/turkey',
+  'تور کیش': '/destination/iran/kish',
+  'تور مشهد': '/destination/iran/mashhad',
+};
 
 const domesticDestinations = [
   {
@@ -163,9 +174,13 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
               {/* Layer 1 (Middle) */}
               <div className="hidden sm:block absolute -bottom-1.5 left-3 right-3 h-[95%] bg-page-background/90 rounded-card md:rounded-feature shadow-subtle transition-all duration-500 group-hover:translate-y-1 group-hover:opacity-70 z-0" />
 
-              {/* Main Card */}
-              <div className="card-destination h-[220px] sm:h-auto sm:aspect-[4/5] w-full">
-                <img 
+              {/* Main Card — لینک HTML واقعی به صفحه مقصد */}
+              <a
+                href={DESTINATION_PATHS[dest.title] || '/destinations'}
+                onClick={(e) => handleNav(DESTINATION_PATHS[dest.title] || '/destinations', e)}
+                className="card-destination h-[220px] sm:h-auto sm:aspect-[4/5] w-full block"
+              >
+                <SmartImage 
                   src={dest.image} 
                   alt={dest.title}
                   className="card-destination-image"
@@ -203,7 +218,7 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
                     </div>
                   </div>
                 </div>
-              </div>
+              </a>
             </motion.div>
           ))}
         </div>
@@ -251,9 +266,13 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
               {/* Layer 1 (Middle) */}
               <div className="hidden sm:block absolute -bottom-1.5 left-3 right-3 h-[95%] bg-page-background/90 rounded-card md:rounded-feature shadow-subtle transition-all duration-500 group-hover:translate-y-1 group-hover:opacity-70 z-0" />
 
-              {/* Main Card */}
-              <div className="card-destination h-[220px] sm:h-auto sm:aspect-[4/5] w-full">
-                <img 
+              {/* Main Card — لینک HTML واقعی به صفحه مقصد */}
+              <a
+                href={DESTINATION_PATHS[dest.title] || '/destinations'}
+                onClick={(e) => handleNav(DESTINATION_PATHS[dest.title] || '/destinations', e)}
+                className="card-destination h-[220px] sm:h-auto sm:aspect-[4/5] w-full block"
+              >
+                <SmartImage 
                   src={dest.image} 
                   alt={dest.title}
                   className="card-destination-image"
@@ -291,7 +310,7 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
                     </div>
                   </div>
                 </div>
-              </div>
+              </a>
             </motion.div>
           ))}
         </div>

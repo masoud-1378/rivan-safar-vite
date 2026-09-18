@@ -5,6 +5,7 @@ import {
   Sparkles, ExternalLink, Send, Check, HelpCircle
 } from 'lucide-react';
 import { EXHIBITION_SERIES, ExhibitionSeries } from '../data/exhibitionsData';
+import SmartImage from './SmartImage';
 
 interface ExhibitionDetailPageProps {
   eventSeriesSlug: string;
@@ -130,7 +131,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2 font-bold shadow-subtle"
                   >
                     <Phone className="w-4 h-4" />
-                    <span>مشاوره و رزرو پکیج</span>
+                    <span>مشاوره پکیج نمایشگاهی</span>
                   </a>
                 </div>
                 <p className="text-caption text-text-secondary border-t border-border-default/40 pt-2">
@@ -141,11 +142,12 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
             </div>
 
             <div className="lg:col-span-5">
-              <div className="aspect-[4/3] rounded-card overflow-hidden border border-border-default shadow-card">
-                <img
+              <div className="aspect-[4/3] rounded-card overflow-hidden border border-border-default shadow-card relative">
+                <SmartImage
                   src={ex.image}
                   alt={ex.title}
-                  className="w-full h-full object-cover"
+                  priority
+                  className="object-cover"
                 />
               </div>
 
@@ -155,7 +157,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   <span>پشتیبانی کامل ویزا و اقامت</span>
                 </div>
                 <p className="leading-relaxed">
-                  تیم تخصصی ریوان سفر با سابقه اعزام هیئت‌های تجاری، پرونده ویزای شما را با بالاترین ضریب اطمینان پیگیری می‌کند.
+                  کارشناسان ریوان سفر پرونده ویزا، اقامت و ترانسفر شما را بر اساس چک‌لیست پیگیری می‌کنند؛ نتیجه صدور در اختیار مرجع صادرکننده است.
                 </p>
               </div>
             </div>

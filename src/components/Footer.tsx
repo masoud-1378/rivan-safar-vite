@@ -163,7 +163,7 @@ export default function Footer({ onNavigate }: FooterProps) {
           <div className="lg:col-span-5 bg-white/5 rounded-control p-5 sm:p-6 border border-white/10 space-y-3.5">
             <h3 className="text-h4 text-white mb-2 flex items-center gap-2">
               <Phone className="w-4 h-4 text-brand-orange" />
-              مشاوره و رزرو تلفنی
+              مشاوره تلفنی
             </h3>
 
             <div className="flex items-center justify-between bg-white/5 px-4 py-2.5 rounded-control border border-white/5">

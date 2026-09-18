@@ -148,6 +148,55 @@ export function organizationJsonLd() {
   };
 }
 
+/**
+ * Schema صفحه تور — فقط از داده نمایش‌داده‌شده به کاربر ساخته می‌شود (سند ۱۰ §۱۲.۸).
+ * قیمت به‌صورت PriceSpecification بدون ادعای قطعی؛ PriceType حذف چون استعلام‌محوریم.
+ */
+export function tourJsonLd(tourId: string) {
+  const tour = SAMPLE_TOURS.find((t) => t.id === tourId);
+  if (!tour) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: tour.title,
+    description: tour.description,
+    image: tour.image,
+    brand: { '@type': 'Brand', name: 'ریوان سفر' },
+    category: 'Package Tour',
+    offers: {
+      '@type': 'Offer',
+      url: `${SITE_URL}/tour/${tour.id}`,
+      priceCurrency: 'IRR',
+      price: tour.price * 10, // تومان → ریال
+      availability:
+        tour.status === 'full'
+          ? 'https://schema.org/SoldOut'
+          : 'https://schema.org/InStock',
+      priceValidUntil: undefined,
+      seller: { '@type': 'Organization', name: 'ریوان سفر' },
+    },
+  };
+}
+
+/** Schema فهرست — ItemList برای صفحات لیستینگ (سند ۰۱: داده متناسب با صفحه) */
+export function itemListJsonLd(
+  path: string,
+  items: Array<{ name: string; url: string }>,
+) {
+  if (!items || items.length === 0) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    url: `${SITE_URL}${path}`,
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.name,
+      url: `${SITE_URL}${item.url}`,
+    })),
+  };
+}
+
 export function metadataFor(path: string): Metadata {
   return toMetadata(resolveSeo(path));
 }

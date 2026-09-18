@@ -2,6 +2,7 @@ import React from 'react';
 import { Phone, Globe, MapPin, Calendar, Clock, ShieldCheck, ArrowLeft, CheckCircle2, FileText, ChevronLeft, Sparkles, Filter } from 'lucide-react';
 import { SAMPLE_TOURS, TourItem } from '../data/toursData';
 import { COUNTRIES, CITIES, Place } from '../data/destinationsData';
+import SmartImage from './SmartImage';
 import TourListItem from './TourListItem';
 
 interface HubPageProps {
@@ -84,16 +85,17 @@ export default function HubPage({ type, onNavigate }: HubPageProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {destinations.map((dest) => (
-            <div
+            <a
               key={dest.id}
-              onClick={() => onNavigate(`/destination/${dest.parentCountrySlug || dest.slug}/${dest.slug}`)}
+              href={`/destination/${dest.parentCountrySlug || dest.slug}/${dest.slug}`}
+              onClick={(e) => { e.preventDefault(); onNavigate(`/destination/${dest.parentCountrySlug || dest.slug}/${dest.slug}`); }}
               className="group bg-surface-primary border border-border-default rounded-card overflow-hidden shadow-subtle hover:shadow-card hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col"
             >
               <div className="relative aspect-[16/9] overflow-hidden">
-                <img
+                <SmartImage
                   src={dest.image}
                   alt={`تور ${dest.name}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute top-3 right-3 bg-brand-navy/90 text-white px-2.5 py-1 rounded-md text-caption font-bold">
                   {dest.parentCountryName || dest.name}
@@ -126,7 +128,7 @@ export default function HubPage({ type, onNavigate }: HubPageProps) {
                   </span>
                 </div>
               </div>
-            </div>
+            </a>
           ))}
         </div>
       </section>
@@ -157,6 +159,7 @@ export default function HubPage({ type, onNavigate }: HubPageProps) {
                 pricePending={tour.status === 'pending'}
                 closestDeparture={tour.closestDeparture}
                 origin={tour.origin}
+                href={`/tour/${tour.id}`}
                 onClick={() => onNavigate(`/tour/${tour.id}`)}
               />
             ))}

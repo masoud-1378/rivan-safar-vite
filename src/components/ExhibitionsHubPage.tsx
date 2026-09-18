@@ -5,6 +5,7 @@ import {
   Sparkles, Filter, ExternalLink
 } from 'lucide-react';
 import { EXHIBITION_SERIES, ExhibitionSeries } from '../data/exhibitionsData';
+import SmartImage from './SmartImage';
 
 interface ExhibitionsHubPageProps {
   onNavigate: (path: string) => void;
@@ -66,23 +67,24 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
             رویدادهای تجاری و نمایشگاه‌های پیش‌رو
           </h2>
           <p className="text-body-sm text-text-secondary">
-            برای بررسی فازها، زمان‌بندی اخذ ویزا و رزرو پکیج سفر روی هر رویداد کلیک کنید.
+            برای بررسی فازها، زمان‌بندی اخذ ویزا و ثبت درخواست سفر روی هر رویداد کلیک کنید.
           </p>
         </div>
 
         <div className="space-y-6">
           {filteredExhibitions.map((ex) => (
-            <div
+            <a
               key={ex.id}
-              onClick={() => onNavigate(`/exhibition/${ex.slug}`)}
+              href={`/exhibition/${ex.slug}`}
+              onClick={(e) => { e.preventDefault(); onNavigate(`/exhibition/${ex.slug}`); }}
               className="group bg-surface-primary border border-border-default rounded-card overflow-hidden shadow-subtle hover:shadow-card hover:-translate-y-0.5 transition-all duration-300 cursor-pointer flex flex-col lg:flex-row text-right"
             >
               {/* Image Column */}
               <div className="lg:w-72 xl:w-80 relative shrink-0 aspect-[16/9] lg:aspect-auto">
-                <img
+                <SmartImage
                   src={ex.image}
                   alt={ex.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute top-3 right-3 bg-brand-navy/90 text-white px-2.5 py-1 rounded-md text-caption font-bold">
                   {ex.city} ({ex.country})
@@ -129,7 +131,7 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
                   </span>
                 </div>
               </div>
-            </div>
+            </a>
           ))}
         </div>
       </section>

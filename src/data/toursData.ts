@@ -44,7 +44,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     priceNote: 'برای هر بزرگسال در اتاق دو تخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
-    updatedAt: 'به‌روزرسانی امروز، ساعت ۱۴:۳۰',
+    updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۴:۳۰',
     image: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=600&auto=format&fit=crop',
     badge: undefined,
     features: ['پرواز مستقیم ماهان', 'هتل‌های ۴ و ۵ ستاره مرکز شهر'],
@@ -76,7 +76,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     priceNote: 'برای هر بزرگسال در اتاق دو تخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
-    updatedAt: 'به‌روزرسانی امروز، ساعت ۱۵:۱۰',
+    updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۵:۱۰',
     image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=600&auto=format&fit=crop',
     badge: 'UALL / All Inclusive',
     features: ['ریزورت‌های ۵ ستاره ساحلی', 'پرواز مستقیم ترکیش'],
@@ -107,7 +107,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     priceNote: 'برای هر بزرگسال در اتاق دو تخته',
     status: 'pending',
     statusLabel: 'نیازمند تأیید ظرفیت',
-    updatedAt: 'به‌روزرسانی امروز، ساعت ۱۲:۰۰',
+    updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۲:۰۰',
     image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=600&auto=format&fit=crop',
     badge: 'ویزای فوری',
     features: ['ویزای سریع امارات', 'هتل‌های نزدیک دبی مال'],
@@ -120,7 +120,7 @@ export const SAMPLE_TOURS: TourItem[] = [
       { name: 'هتل ۴ ستاره ماریوت مارکیز', stars: 4, board: 'صبحانه (BB)', pricePerPerson: '۳۲٬۵۰۰٬۰۰۰ تومان' },
       { name: 'هتل ۵ ستاره آدرس دیوان', stars: 5, board: 'صبحانه (BB)', pricePerPerson: '۴۷٬۲۰۰٬۰۰۰ تومان' },
     ],
-    description: 'سفر به پایتخت مدرن خاورمیانه دبی. اخذ سریع ویزا، پرواز صبح به شب و امکان رزرو بلیط پارک‌های تفریحی با تخفیف ویژه.'
+    description: 'سفر به پایتخت مدرن خاورمیانه دبی. اخذ سریع ویزا، پرواز صبح به شب و امکان هماهنگی بلیط پارک‌های تفریحی با تخفیف ویژه.'
   },
   {
     id: 'kish-island',
@@ -138,7 +138,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     priceNote: 'برای هر بزرگسال در اتاق دو تخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
-    updatedAt: 'به‌روزرسانی امروز، ساعت ۱۳:۴۵',
+    updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۳:۴۵',
     image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop',
     badge: 'پیشنهاد اقتصادی',
     features: ['گشت جزیره رایگان', 'تخفیف شومانس و تفریحات دریایی'],
@@ -170,7 +170,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     priceNote: 'برای هر بزرگسال در اتاق دو تخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
-    updatedAt: 'به‌روزرسانی امروز، ساعت ۱۱:۲۰',
+    updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۱:۲۰',
     image: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?q=80&w=600&auto=format&fit=crop',
     badge: 'گزینه اقتصادی',
     features: ['فاصله ۵ دقیقه‌ای تا حرم', 'صبحانه، ناهار و شام (FB)'],
@@ -201,7 +201,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     priceNote: 'برای هر بزرگسال در اتاق دو تخته',
     status: 'pending',
     statusLabel: 'نیازمند تأیید ظرفیت',
-    updatedAt: 'به‌روزرسانی امروز، ساعت ۱۰:۰۰',
+    updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۰:۰۰',
     image: 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?q=80&w=600&auto=format&fit=crop',
     badge: 'نمایشگاهی ویژه',
     features: ['کارت ورود به نمایشگاه Canton Fair', 'مترجم تخصصی تجاری و ویزا'],
@@ -232,7 +232,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     priceNote: 'برای هر بزرگسال در اتاق دو تخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
-    updatedAt: 'به‌روزرسانی امروز، ساعت ۰۹:۱۵',
+    updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۰۹:۱۵',
     image: 'https://images.unsplash.com/photo-1506665531195-3566af294710?q=80&w=600&auto=format&fit=crop',
     badge: 'سفر استوایی',
     features: ['پرواز داخلی بین بانکوک و پوکت', 'گشت جزایر فی‌فی و جیمز باند'],
@@ -263,7 +263,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     priceNote: 'برای هر بزرگسال در اتاق دو تخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
-    updatedAt: 'به‌روزرسانی امروز، ساعت ۱۶:۰۰',
+    updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۶:۰۰',
     image: 'https://images.unsplash.com/photo-1513326718677-b964603b136b?q=80&w=600&auto=format&fit=crop',
     badge: 'ویزای الکترونیکی',
     features: ['قطار سریع‌السیر سابسان', 'گشت موزه هرمیتاژ و کاخ کرملین'],
@@ -293,7 +293,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     priceNote: 'برای هر بزرگسال در اتاق دو تخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
-    updatedAt: 'به‌روزرسانی امروز، ساعت ۱۵:۳۰',
+    updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۵:۳۰',
     image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=600&auto=format&fit=crop',
     badge: 'ویزای شنگن',
     features: ['پرواز مستقیم ایران ایر', 'اقامت در هتل‌های ۴ ستاره مرکز شهر'],
@@ -323,7 +323,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     priceNote: 'برای هر بزرگسال در اتاق دو تخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
-    updatedAt: 'به‌روزرسانی امروز، ساعت ۱۶:۲۰',
+    updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۶:۲۰',
     image: 'https://images.unsplash.com/photo-1565008447742-97f6f38c985c?q=80&w=600&auto=format&fit=crop',
     badge: 'بدون ویزا',
     features: ['پرواز مستقیم وارش', 'ترانسفر بین تفلیس و باتومی'],
@@ -353,7 +353,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     priceNote: 'برای هر بزرگسال در اتاق دو تخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
-    updatedAt: 'به‌روزرسانی امروز، ساعت ۰۸:۴۵',
+    updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۰۸:۴۵',
     image: 'https://images.unsplash.com/photo-1580837119756-563d608dd119?q=80&w=600&auto=format&fit=crop',
     badge: 'بدون ویزا',
     features: ['پرواز مستقیم آسمان', 'گشت شهری با ناهار'],
@@ -383,7 +383,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     priceNote: 'برای هر بزرگسال در اتاق دو تخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
-    updatedAt: 'به‌روزرسانی امروز، ساعت ۱۷:۰۰',
+    updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۷:۰۰',
     image: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?q=80&w=600&auto=format&fit=crop',
     badge: 'استوایی',
     features: ['برج‌های دوقلوی پتروناس', 'پرواز داخلی لنکاوی'],
@@ -439,32 +439,5 @@ export const TOUR_FAQ_ITEMS = [
   {
     q: 'اگر ظرفیت هتل یا پرواز تأیید نشود چه می‌شود؟',
     a: 'در صورتی که هتل انتخابی پر باشد، کارشناس ما گزینه‌های جایگزین با همان درجه کیفی و موقعیت مکانی را به شما پیشنهاد می‌دهد و در صورت عدم رضایت، کل مبلغ پرداختی بازگردانده می‌شود.'
-  }
-];
-
-export const RELATED_GUIDE_ARTICLES = [
-  {
-    id: 'budget-guide',
-    title: 'چگونه تور مناسب بودجه خود را انتخاب کنیم؟',
-    excerpt: 'راهنمای کاربردی مدیریت هزینه پرواز، انتخاب درجه هتل و زمان مناسب خرید تور برای حداکثر صرفه‌جویی.',
-    readTime: '۴ دقیقه',
-    image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=400&auto=format&fit=crop',
-    url: '#budget-guide'
-  },
-  {
-    id: 'package-vs-flight',
-    title: 'تفاوت پکیج تور با پرواز و هتل جداگانه چیست؟',
-    excerpt: 'چرا خرید پکیج آماده تور در بیشتر موارد ارزان‌تر و امن‌تر از رزرو جداگانه پرواز و هتل آنلاین است؟',
-    readTime: '۵ دقیقه',
-    image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=400&auto=format&fit=crop',
-    url: '#package-vs-flight'
-  },
-  {
-    id: 'foreign-documents',
-    title: 'پیش از ثبت درخواست تور خارجی چه مدارکی آماده کنیم؟',
-    excerpt: 'چک‌لیست کامل گذرنامه، مدارک شغلی، گواهی تمکن مالی و شرایط اخذ ویزای توریستی کشورهای مختلف.',
-    readTime: '۶ دقیقه',
-    image: 'https://images.unsplash.com/photo-1526772662000-3f88f10405ff?q=80&w=400&auto=format&fit=crop',
-    url: '#foreign-documents'
   }
 ];

@@ -19,6 +19,9 @@ import {
 } from 'lucide-react';
 import { COUNTRIES, CITIES, Place } from '../data/destinationsData';
 import { SAMPLE_TOURS } from '../data/toursData';
+import { submitLead } from '../../app/actions/lead';
+import { trackLeadSubmit } from '../lib/analytics';
+import SmartImage from './SmartImage';
 import TourListItem from './TourListItem';
 
 interface CountryPageProps {
@@ -37,6 +40,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
   const [inquiryPhone, setInquiryPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState('');
 
   if (!country) {
     return (
@@ -71,15 +75,22 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
   };
 
   // Handle Quick Inquiry Submit
-  const handleInquirySubmit = (e: React.FormEvent) => {
+  const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inquiryPhone.trim()) return;
-    
+
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-    }, 800);
+    const result = await submitLead({
+      fullName: inquiryName,
+      phone: inquiryPhone,
+      sourcePath: `/destination/${country.slug}`,
+      tourContext: `تور ${country.name}`,
+      destinationHint: country.name,
+    });
+    setIsSubmitting(false);
+    setSubmitMessage(result.message);
+    setIsSubmitted(result.ok);
+    if (result.ok) trackLeadSubmit(`/destination/${country.slug}`, result.stored);
   };
 
   return (
@@ -153,10 +164,11 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
             <div className="lg:col-span-5">
               <div className="relative rounded-2xl overflow-hidden border border-border-default/80 shadow-card bg-surface-secondary group">
                 <div className="aspect-[4/3] relative">
-                  <img
+                  <SmartImage
                     src={country.image}
                     alt={`تور ${country.name}`}
-                    className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
+                    priority
+                    className="object-cover group-hover:scale-102 transition-transform duration-500"
                   />
                   {/* Subtle clean bottom edge protection */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
@@ -195,13 +207,14 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
             {cities.map((city) => (
-              <div
+              <a
                 key={city.id}
-                onClick={() => onNavigate(`/destination/${country.slug}/${city.slug}`)}
+                href={`/destination/${country.slug}/${city.slug}`}
+                onClick={(e) => { e.preventDefault(); onNavigate(`/destination/${country.slug}/${city.slug}`); }}
                 className="card-destination h-[210px] sm:h-[240px] md:h-[260px] w-full rounded-xl overflow-hidden shadow-card hover:shadow-floating hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
               >
                 {/* Background Image */}
-                <img
+                <SmartImage
                   src={city.image}
                   alt={`تور ${city.name}`}
                   className="card-destination-image"
@@ -235,7 +248,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                     </div>
                   </div>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </section>
@@ -268,6 +281,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                   pricePending={tour.status === 'pending'}
                   closestDeparture={tour.closestDeparture}
                   origin={tour.origin}
+                  href={`/tour/${tour.id}`}
                   onClick={() => onNavigate(`/tour/${tour.id}`)}
                 />
               ))}
@@ -309,7 +323,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                 پرسش‌های متداول تور {country.name}
               </h3>
               <p className="text-body-sm text-text-secondary">
-                پاسخ کارشناسان تور به پرتکرارترین سوالات پیش از ثبت نام و رزرو:
+                پاسخ کارشناسان تور به پرتکرارترین سوالات پیش از ثبت درخواست:
               </p>
             </div>
 
@@ -367,9 +381,9 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
             {isSubmitted ? (
               <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-card text-center my-4">
                 <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto mb-2" />
-                <h4 className="text-h4 font-bold text-emerald-800 mb-1">درخواست شما با موفقیت ثبت شد</h4>
+                <h4 className="text-h4 font-bold text-emerald-800 mb-1">درخواست شما ثبت شد</h4>
                 <p className="text-body-sm text-emerald-700">
-                  کارشناس تور {country.name} به زودی با شماره {inquiryPhone} تماس خواهد گرفت.
+                  {submitMessage || `کارشناس تور ${country.name} به زودی با شماره ${inquiryPhone} تماس خواهد گرفت.`}
                 </p>
               </div>
             ) : (

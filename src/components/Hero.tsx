@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MapPin, Star, Search, Loader2 } from 'lucide-react';
+import SmartImage from './SmartImage';
 
 const DESTINATIONS = [
   { name: 'استانبول', popular: true },
@@ -9,23 +10,9 @@ const DESTINATIONS = [
   { name: 'کیش', popular: true },
   { name: 'مشهد', popular: true },
   { name: 'پوکت', popular: true },
-  { name: 'بالی', popular: true },
-  { name: 'قشم', popular: false },
-  { name: 'شیراز', popular: false },
-  { name: 'اصفهان', popular: false },
-  { name: 'تبریز', popular: false },
-  { name: 'یزد', popular: false },
-  { name: 'تهران', popular: false },
-  { name: 'وان', popular: false },
-  { name: 'پاتایا', popular: false },
-  { name: 'پاریس', popular: false },
-  { name: 'رم', popular: false },
-  { name: 'بارسلونا', popular: false },
-  { name: 'پکن', popular: false },
+  { name: 'تایلند', popular: false },
+  { name: 'ترکیه', popular: false },
   { name: 'گوانگجو', popular: false },
-  { name: 'کانتون', popular: false },
-  { name: 'مسکو', popular: false },
-  { name: 'سن پترزبورگ', popular: false },
 ];
 
 const normalizePersian = (text: string) => {
@@ -111,14 +98,10 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
     const destMap: Record<string, string> = {
       'استانبول': '/destination/turkey/istanbul',
       'آنتالیا': '/destination/turkey/antalya',
-      'وان': '/destination/turkey/van',
       'دبی': '/destination/uae/dubai',
       'کیش': '/destination/iran/kish',
       'مشهد': '/destination/iran/mashhad',
       'پوکت': '/destination/thailand/phuket',
-      'بالی': '/destination/thailand/phuket',
-      'مسکو': '/destination/russia/moscow',
-      'سن پترزبورگ': '/destination/russia/moscow',
     };
     return destMap[tour] || '/tours';
   };
@@ -165,7 +148,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
             </h1>
             
             <p className="text-body-lg md:text-xl text-text-secondary max-w-hero mb-8 leading-relaxed">
-              تاریخ و قیمت‌های به‌روز، ارائه برنامه سفر شخصی و رزرو هتل‌های مطمئن
+              تاریخ و قیمت پایه تورها، توضیح مسیر واقعی سفر و بررسی برنامه شخصی با کارشناس
             </p>
             
             {/* Search Field */}
@@ -282,23 +265,30 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
             {/* Main Image Grid Composition */}
             <div className="relative w-full max-w-[300px] sm:max-w-md md:max-w-lg lg:max-w-none grid grid-cols-12 gap-3.5 sm:gap-4 md:gap-6">
               <div className="col-span-7 flex flex-col h-full">
-                <img 
-                  src="https://images.unsplash.com/photo-1527838832700-5059252407fa?q=80&w=800&auto=format&fit=crop" 
-                  alt="استانبول" 
-                  className="w-full h-[200px] sm:h-[300px] md:h-[360px] lg:h-[420px] object-cover rounded-card md:rounded-feature shadow-floating"
-                />
+                <div className="relative w-full h-[200px] sm:h-[300px] md:h-[360px] lg:h-[420px]">
+                  <SmartImage 
+                    src="https://images.unsplash.com/photo-1527838832700-5059252407fa?q=80&w=800&auto=format&fit=crop" 
+                    alt="استانبول" 
+                    priority
+                    className="object-cover rounded-card md:rounded-feature shadow-floating"
+                  />
+                </div>
               </div>
               <div className="col-span-5 flex flex-col gap-3.5 sm:gap-4 md:gap-6 translate-y-6 sm:translate-y-8">
-                <img 
-                  src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=800&auto=format&fit=crop" 
-                  alt="دبی" 
-                  className="w-full h-[90px] sm:h-[140px] md:h-[170px] lg:h-[200px] object-cover rounded-card md:rounded-feature shadow-card"
-                />
-                <img 
-                  src="https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=800&auto=format&fit=crop" 
-                  alt="تایلند" 
-                  className="w-full h-[90px] sm:h-[140px] md:h-[170px] lg:h-[200px] object-cover rounded-card md:rounded-feature shadow-card"
-                />
+                <div className="relative w-full h-[90px] sm:h-[140px] md:h-[170px] lg:h-[200px]">
+                  <SmartImage 
+                    src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=800&auto=format&fit=crop" 
+                    alt="دبی" 
+                    className="object-cover rounded-card md:rounded-feature shadow-card"
+                  />
+                </div>
+                <div className="relative w-full h-[90px] sm:h-[140px] md:h-[170px] lg:h-[200px]">
+                  <SmartImage 
+                    src="https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=800&auto=format&fit=crop" 
+                    alt="تایلند" 
+                    className="object-cover rounded-card md:rounded-feature shadow-card"
+                  />
+                </div>
               </div>
               
               {/* Floating Elements */}

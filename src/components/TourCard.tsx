@@ -1,4 +1,5 @@
 import React, { type ReactNode } from 'react';
+import SmartImage from './SmartImage';
 import { Plane, Car, Building2, ShieldCheck, MapPin, Sparkles } from 'lucide-react';
 
 export interface TourCardProps {
@@ -117,11 +118,10 @@ export default function TourCard({
     <CardWrapper>
       {/* 1. Card Image Container */}
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-page-background shrink-0">
-        <img
+        <SmartImage
           src={image}
           alt={title}
-          referrerPolicy="no-referrer"
-          className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${soldOut ? 'grayscale-[50%]' : ''}`}
+          className={`object-cover transition-transform duration-500 group-hover:scale-105 ${soldOut ? 'grayscale-[50%]' : ''}`}
         />
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import RouteView from '../../RouteView';
 import JsonLd from '../../JsonLd';
 import { metadataFor, resolveSeo, breadcrumbJsonLd } from '../../seo-helpers';
@@ -13,7 +14,16 @@ export function generateMetadata({
 }: {
   params: Promise<{ country: string }>;
 }): Promise<Metadata> {
-  return params.then(({ country }) => metadataFor(`/visa/${country}`));
+  return params.then(({ country }) => {
+    // محتوای نازک ایندکس نشود (Quality Gate سند ۰۱)
+    if (!COUNTRIES[country]) {
+      return {
+        title: 'صفحه مورد نظر پیدا نشد | ریوان سفر',
+        robots: 'noindex,nofollow',
+      };
+    }
+    return metadataFor(`/visa/${country}`);
+  });
 }
 
 export default async function VisaPage({
@@ -22,6 +32,7 @@ export default async function VisaPage({
   params: Promise<{ country: string }>;
 }) {
   const { country } = await params;
+  if (!COUNTRIES[country]) notFound();
   const seo = resolveSeo(`/visa/${country}`);
   return (
     <>

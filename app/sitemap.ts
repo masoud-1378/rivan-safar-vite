@@ -1,29 +1,19 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/src/lib/siteConfig';
-import { getIndexableLandings } from '@/src/data/seoLandings';
+import { getIndexableLandings, getDynamicIndexablePaths } from '@/src/data/seoLandings';
 
 /**
- * نقشه سایت داینامیک — فقط لندینگ‌های published/index + صفحات اعتماد.
+ * نقشه سایت داینامیک — فقط لندینگ‌های published/index + مسیرهای داینامیک دارای داده واقعی.
  * با اتصال DB، این فهرست از جدول seo_landings خوانده می‌شود.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const staticPaths = [
-    '/',
-    '/tours',
-    '/tours/foreign',
-    '/tours/domestic',
-    '/destinations',
-    '/about',
-    '/contact',
-    '/guides',
-    '/exhibitions',
-  ];
   const landingPaths = getIndexableLandings().map((l) => l.urlPath);
-  const paths = Array.from(new Set([...staticPaths, ...landingPaths]));
+  const dynamicPaths = getDynamicIndexablePaths();
+  const paths = Array.from(new Set([...landingPaths, ...dynamicPaths]));
 
   return paths.map((p) => ({
     url: p === '/' ? `${SITE_URL}/` : `${SITE_URL}${p}`,
     changeFrequency: 'weekly',
-    priority: p === '/' ? 1 : p.split('/').length <= 2 ? 0.8 : 0.6,
+    priority: p === '/' ? 1 : p.split('/').filter(Boolean).length <= 1 ? 0.8 : 0.6,
   }));
 }

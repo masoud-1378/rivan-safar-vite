@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Phone, MapPin, Globe, Calendar, Clock, ShieldCheck, ChevronLeft, CheckCircle2, FileText, ArrowLeft, HelpCircle, Check, Send, AlertCircle } from 'lucide-react';
 import { CITIES, COUNTRIES, Place } from '../data/destinationsData';
 import { SAMPLE_TOURS } from '../data/toursData';
+import { submitLead } from '../../app/actions/lead';
+import { trackLeadSubmit } from '../lib/analytics';
+import SmartImage from './SmartImage';
 import TourListItem from './TourListItem';
 
 interface DestinationDetailPageProps {
@@ -24,6 +27,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState('');
 
   if (!city) {
     return (
@@ -42,15 +46,26 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
   // Alternative destinations
   const alternativeCities = Object.values(CITIES).filter(c => c.slug !== city.slug && c.category === city.category).slice(0, 3);
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.phone) return;
 
     setFormLoading(true);
-    setTimeout(() => {
-      setFormLoading(false);
-      setFormSubmitted(true);
-    }, 600);
+    const result = await submitLead({
+      fullName: formData.name,
+      phone: formData.phone,
+      sourcePath: `/destination/${countrySlug}/${placeSlug}`,
+      tourContext: `تور ${city.name}`,
+      destinationHint: city.name,
+      passengers: formData.passengers,
+      notes: [formData.datePreference && `تاریخ: ${formData.datePreference}`, formData.notes]
+        .filter(Boolean)
+        .join(' — '),
+    });
+    setFormLoading(false);
+    setSubmitMessage(result.message);
+    setFormSubmitted(result.ok);
+    if (result.ok) trackLeadSubmit(`/destination/${countrySlug}/${placeSlug}`, result.stored);
   };
 
   return (
@@ -142,11 +157,12 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
             </div>
 
             <div className="lg:col-span-5">
-              <div className="aspect-[4/3] rounded-card overflow-hidden border border-border-default shadow-card">
-                <img
+              <div className="aspect-[4/3] rounded-card overflow-hidden border border-border-default shadow-card relative">
+                <SmartImage
                   src={city.image}
                   alt={`تور ${city.name}`}
-                  className="w-full h-full object-cover"
+                  priority
+                  className="object-cover"
                 />
               </div>
             </div>
@@ -180,6 +196,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                 pricePending={tour.status === 'pending'}
                 closestDeparture={tour.closestDeparture}
                 origin={tour.origin}
+                href={`/tour/${tour.id}`}
                 onClick={() => onNavigate(`/tour/${tour.id}`)}
               />
             ))}
@@ -392,19 +409,20 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {alternativeCities.map((alt) => (
-              <div
+              <a
                 key={alt.id}
-                onClick={() => onNavigate(`/destination/${alt.parentCountrySlug || alt.slug}/${alt.slug}`)}
+                href={`/destination/${alt.parentCountrySlug || alt.slug}/${alt.slug}`}
+                onClick={(e) => { e.preventDefault(); onNavigate(`/destination/${alt.parentCountrySlug || alt.slug}/${alt.slug}`); }}
                 className="bg-surface-primary border border-border-default rounded-card p-4 hover:shadow-card hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-4 text-right"
               >
-                <div className="w-16 h-16 rounded-control overflow-hidden shrink-0">
-                  <img src={alt.image} alt={alt.name} className="w-full h-full object-cover" />
+                <div className="w-16 h-16 rounded-control overflow-hidden shrink-0 relative">
+                  <SmartImage src={alt.image} alt={alt.name} className="object-cover" sizes="64px" />
                 </div>
                 <div>
                   <h4 className="text-body font-bold text-text-heading">تور {alt.name}</h4>
                   <span className="text-caption text-brand-orange font-bold">{alt.startingPrice}</span>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </section>

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Navbar from '@/src/components/Navbar';
 import Footer from '@/src/components/Footer';
+import { installPhoneClickTracker } from '@/src/lib/analytics';
 
 /** پوسته کلاینت: هدر/فوتر + وضعیت بنر — محتوای هر صفحه از app router می‌آید */
 export default function ClientChrome({
@@ -14,6 +15,8 @@ export default function ClientChrome({
   const [showAnnouncement, setShowAnnouncement] = useState(true);
   const pathname = usePathname() ?? '/';
   const router = useRouter();
+
+  useEffect(() => installPhoneClickTracker(), []);
 
   const navigateTo = (path: string) => {
     let target = path;

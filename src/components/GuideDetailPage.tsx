@@ -7,6 +7,7 @@ import {
 import { GUIDES, GuideItem } from '../data/guidesData';
 import { CITIES } from '../data/destinationsData';
 import { SAMPLE_TOURS } from '../data/toursData';
+import SmartImage from './SmartImage';
 
 interface GuideDetailPageProps {
   guideSlug: string;
@@ -117,8 +118,8 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
       <section className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl section-standard">
         <div className="space-y-8 text-right">
           {/* Featured Image */}
-          <div className="aspect-[21/9] rounded-card overflow-hidden border border-border-default shadow-card">
-            <img src={guide.heroImage} alt={guide.title} className="w-full h-full object-cover" />
+          <div className="aspect-[21/9] rounded-card overflow-hidden border border-border-default shadow-card relative">
+            <SmartImage src={guide.heroImage} alt={guide.title} priority className="object-cover" />
           </div>
 
           {/* Article Sections */}
@@ -184,13 +185,14 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
               <h3 className="text-h3 font-bold text-text-heading mb-4">راهنماهای مرتبط پیشنهادی</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {relatedGuides.map((rg) => (
-                  <div
+                  <a
                     key={rg.id}
-                    onClick={() => onNavigate(`/guide/${rg.slug}`)}
+                    href={`/guide/${rg.slug}`}
+                    onClick={(e) => { e.preventDefault(); onNavigate(`/guide/${rg.slug}`); }}
                     className="p-4 bg-surface-primary border border-border-default rounded-card hover:shadow-card hover:-translate-y-0.5 transition-all cursor-pointer text-right flex items-center gap-3"
                   >
-                    <div className="w-16 h-16 rounded-control overflow-hidden shrink-0">
-                      <img src={rg.heroImage} alt={rg.title} className="w-full h-full object-cover" />
+                    <div className="w-16 h-16 rounded-control overflow-hidden shrink-0 relative">
+                      <SmartImage src={rg.heroImage} alt={rg.title} className="object-cover" sizes="64px" />
                     </div>
                     <div>
                       <h4 className="text-body-sm font-bold text-text-heading line-clamp-1">{rg.title}</h4>
@@ -199,7 +201,7 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
                         <ChevronLeft className="w-3 h-3" />
                       </span>
                     </div>
-                  </div>
+                  </a>
                 ))}
               </div>
             </div>

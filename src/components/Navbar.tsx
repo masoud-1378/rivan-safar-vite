@@ -4,6 +4,8 @@ import {
   MapPin, Plane, ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import Image from 'next/image';
+import SmartImage from './SmartImage';
 import AnnouncementBar from './AnnouncementBar';
 
 interface NavbarProps {
@@ -267,9 +269,11 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
             className="flex items-center shrink-0 z-10" 
             title="صفحه اصلی ریوان سفر"
           >
-            <img 
+            <Image 
               src="/logo.png" 
               alt="آژانس مسافرتی ریوان سفر" 
+              width={170}
+              height={44}
               className="h-[40px] md:h-[44px] w-auto max-w-[150px] md:max-w-[170px] object-contain"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
@@ -360,10 +364,10 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                           
                           {/* Offer Column */}
                           <div className="relative w-full h-full min-h-[240px] rounded-control overflow-hidden group/card bg-surface-dark flex flex-col justify-end">
-                            <img 
+                            <SmartImage 
                               src="https://images.unsplash.com/photo-1527631746610-bca00a040d60?q=80&w=800&auto=format&fit=crop" 
                               alt="مشاوره سفر" 
-                              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105"
+                              className="absolute inset-0 object-cover transition-transform duration-700 group-hover/card:scale-105"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-brand-navy/95 via-brand-navy/40 to-transparent" />
                             <div className="absolute inset-0 p-5 flex flex-col justify-end z-10">
@@ -505,7 +509,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
               className="hidden sm:flex items-center gap-3 group px-3 py-1.5 hover:bg-page-background rounded-control transition-colors"
             >
               <div className="flex flex-col items-end leading-tight">
-                <span className="text-[12px] font-medium text-text-secondary transition-colors">مشاوره و رزرو</span>
+                <span className="text-[12px] font-medium text-text-secondary transition-colors">مشاوره و ثبت درخواست</span>
                 <span className="text-[15px] font-bold text-text-heading mt-0.5 group-hover:text-brand-orange transition-colors" dir="ltr">۰۲۶ - ۳۳۳۵۰۱۳۹</span>
               </div>
               <Phone className="w-5 h-5 text-brand-orange" strokeWidth={1.5} />

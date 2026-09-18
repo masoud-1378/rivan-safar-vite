@@ -26,7 +26,7 @@ export default function TrustBar() {
       id: 'contract',
       icon: FileCheck,
       title: 'قرارداد رسمی',
-      desc: 'تضمین کتبی خدمات تور',
+      desc: 'خدمات تور در قرارداد مکتوب',
     }
   ];
 
