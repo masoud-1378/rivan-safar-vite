@@ -61,7 +61,7 @@ export default function AboutPage({ onNavigate }: AboutPageProps) {
             <div className="w-10 h-10 rounded-control bg-brand-orange/10 text-brand-orange flex items-center justify-center mb-4">
               <Users className="w-5 h-5" />
             </div>
-            <h3 className="text-h4 font-bold text-text-heading mb-2">پشتیبانی ۲۴ ساعته در سفر</h3>
+            <h3 className="text-h4 font-bold text-text-heading mb-2">همراهی کارشناس در طول سفر</h3>
             <p className="text-body-sm text-text-secondary leading-relaxed">
               مسافران ما در تمام طول سفر در صورت بروز هرگونه مشکل در پرواز، ترانسفر یا هتل، دسترسی مستقیم به پشتیبان دارند.
             </p>

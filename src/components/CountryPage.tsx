@@ -94,7 +94,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
             </button>
             <span className="text-text-muted">/</span>
             <button onClick={() => onNavigate('/destinations')} className="hover:text-brand-orange transition-colors">
-              تورها
+              مقصدها
             </button>
             <span className="text-text-muted">/</span>
             <span className="text-text-heading font-semibold">تور {country.name}</span>
@@ -136,7 +136,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                   className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2 font-bold shadow-subtle hover:shadow-card transition-all"
                 >
                   <Phone className="w-4 h-4" />
-                  <span>رزرو تور</span>
+                  <span>ثبت درخواست تماس</span>
                 </a>
 
                 <a
@@ -286,10 +286,11 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                 className="btn btn-medium btn-primary text-caption inline-flex items-center gap-2"
               >
                 <Phone className="w-4 h-4" />
-                <span>رزرو تور</span>
+                <span>ثبت درخواست تماس</span>
               </a>
             </div>
           )}
+
 
         </div>
       </section>
@@ -360,7 +361,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
               <div className="w-10 h-10 rounded-control bg-brand-orange text-white flex items-center justify-center shrink-0">
                 <Send className="w-5 h-5" />
               </div>
-              <h3 className="text-h3 font-bold text-text-heading">درخواست رزرو تور {country.name}</h3>
+              <h3 className="text-h3 font-bold text-text-heading">ثبت درخواست تماس برای تور {country.name}</h3>
             </div>
 
             {isSubmitted ? (
@@ -435,7 +436,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
           </span>
           <h3 className="text-h2 text-white mb-2 font-extrabold">برنامه‌ریزی سفری بی‌دغدغه با ریوان سفر</h3>
           <p className="text-body text-white/80 mb-6 max-w-lg">
-            برای استعلام نرخ پروازهای چارتر و سیستمی، گارانتی هتل‌ها و واچر اختصاصی همین حالا رزرو کنید.
+            برای استعلام نرخ پروازها، هتل‌ها و واچر اختصاصی، درخواست تماس ثبت کنید.
           </p>
           <a
             href="tel:02633350139"

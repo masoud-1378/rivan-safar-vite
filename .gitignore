@@ -1,9 +1,12 @@
 node_modules/
 build/
 dist/
+.next/
+out/
 coverage/
 .DS_Store
 *.log
 .env*
 !.env.example
-.claude/settings.local.json
+tsconfig.tsbuildinfo
+*.tsbuildinfo

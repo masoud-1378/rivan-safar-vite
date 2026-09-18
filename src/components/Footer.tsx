@@ -33,14 +33,14 @@ const FOOTER_GROUPS = [
       { label: 'تور آنتالیا', path: '/destination/turkey/antalya' },
       { label: 'تور دبی', path: '/destination/uae/dubai' },
       { label: 'تور تایلند (پوکت)', path: '/destination/thailand/phuket' },
-      { label: 'تور روسیه (مسکو)', path: '/destination/russia/moscow' },
+      { label: 'تور مسکو و سنت پترزبورگ', path: '/tour/russia-moscow' },
     ]
   },
   {
     title: 'خدمات و راهنما',
     links: [
       { label: 'راهنمای ویزای چین', path: '/visa/china' },
-      { label: 'راهنمای ویزای دبی', path: '/visa/dubai' },
+      { label: 'راهنمای ویزای امارات', path: '/visa/uae' },
       { label: 'راهنمای سفر و مقالات', path: '/guides' },
       { label: 'شرایط و مقررات', path: '/terms' },
       { label: 'حریم خصوصی', path: '/privacy' },
@@ -122,7 +122,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             </div>
 
             <p className="text-body leading-[1.9] text-text-on-dark-secondary max-w-[580px]">
-              ریوان سفر؛ همراه شما برای انتخاب، برنامه‌ریزی و رزرو تورهای خارجی، داخلی و نمایشگاهی. ما تجربه سفری مطمئن، شفاف و خاطره‌انگیز را برای شما رقم می‌زنیم.
+              ریوان سفر؛ همراه شما برای انتخاب، برنامه‌ریزی و بررسی تورهای خارجی، داخلی و نمایشگاهی.
             </p>
 
             {/* Social Media Links */}

@@ -169,7 +169,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
       setBookingSubmitted(false);
       setSelectedDetailTour(null);
       setBookingForm({ name: '', mobile: '', passengers: 2, selectedHotel: '', notes: '' });
-      alert('درخواست رزرو شما با موفقیت ثبت شد. کارشناسان ریوان سفر به‌زودی با شما تماس خواهند گرفت.');
+      alert('درخواست تماس شما با موفقیت ثبت شد. کارشناسان ریوان سفر به‌زودی با شما تماس خواهند گرفت.');
     }, 1500);
   };
 
@@ -186,7 +186,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
             صفحه اصلی
           </button>
           <span className="text-text-secondary/50">←</span>
-          <span className="text-text-heading font-semibold">رزرو تور</span>
+          <span className="text-text-heading font-semibold">تورها</span>
         </nav>
       </div>
 
@@ -202,11 +202,11 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
         <div className="container-main px-4 sm:px-6 lg:px-8 relative z-10 text-center">
 
           <h1 className="text-h1 text-text-heading mb-6 md:mb-8">
-            رزرو تورهای مسافرتی داخلی و خارجی
+            تورهای مسافرتی داخلی و خارجی
           </h1>
 
           <p className="text-body text-text-secondary max-w-subtitle mx-auto leading-relaxed mb-6">
-            تورهای داخلی، خارجی و نمایشگاهی را بررسی کنید، تاریخ‌ها و قیمت‌ها را مقایسه کنید و برای گزینه مناسب، درخواست رزرو ثبت نمایید.
+            تورهای داخلی، خارجی و نمایشگاهی را بررسی کنید، تاریخ‌ها و قیمت‌ها را مقایسه کنید و برای گزینه مناسب، درخواست تماس ثبت نمایید.
           </p>
 
 
@@ -256,8 +256,8 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                 className="form-input form-select font-bold shadow-subtle !h-10"
               >
                 <option value="default">پیشنهاد ریوان سفر</option>
-                <option value="price-low">کمترین قیمت</option>
-                <option value="price-high">بیشترین قیمت</option>
+                <option value="price-low">قیمت پایه (کم به زیاد)</option>
+                <option value="price-high">قیمت پایه (زیاد به کم)</option>
                 <option value="duration-short">کوتاه‌ترین مدت سفر</option>
               </select>
             </div>
@@ -685,17 +685,17 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
       <section className="container-main px-4 sm:px-6 lg:px-8 section-compact bg-page-background rounded-feature border border-border-default/80">
         <div className="text-center mb-8">
           <h2 className="text-h2 text-text-heading mb-2">
-            رزرو تور در ریوان سفر چگونه انجام می‌شود؟
+            ثبت درخواست تور در ریوان سفر چگونه انجام می‌شود؟
           </h2>
-          <p className="text-body-sm text-text-secondary">فرایند ۴ مرحله‌ای شفاف و سریع ثبت و عقد قرارداد رزرو تور</p>
+          <p className="text-body-sm text-text-secondary">فرایند ۴ مرحله‌ای شفاف ثبت درخواست تا عقد قرارداد تور</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { step: '۱', title: '۱. تور را انتخاب کنید', desc: 'مقصد، تاریخ و پکیج مناسب را بررسی نمایید.' },
-            { step: '۲', title: '۲. درخواست رزرو ثبت کنید', desc: 'اطلاعات تماس و تعداد مسافران را وارد نمایید.' },
+            { step: '۲', title: '۲. درخواست تماس ثبت کنید', desc: 'اطلاعات تماس و تعداد مسافران را وارد نمایید.' },
             { step: '۳', title: '۳. قیمت و ظرفیت تأیید می‌شود', desc: 'کارشناس وضعیت پرواز، هتل و ظرفیت را بررسی می‌کند.' },
-            { step: '۴', title: '۴. قرارداد و رزرو نهایی می‌شود', desc: 'پس از تأیید شرایط و پرداخت، قرارداد و مدارک رزرو را دریافت می‌نمایید.' }
+            { step: '۴', title: '۴. قرارداد و هماهنگی نهایی انجام می‌شود', desc: 'پس از تأیید شرایط، قرارداد و مدارک سفر را دریافت می‌نمایید.' }
           ].map((item) => (
             <div key={item.step} className="bg-surface-primary p-5 rounded-card border border-border-default/60 shadow-subtle text-right relative">
               <span className="w-8 h-8 rounded-full bg-brand-orange text-on-brand font-black text-body-sm flex items-center justify-center mb-3">
@@ -730,7 +730,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
       {/* ---------------- 20. Related Articles ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-compact">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-h2 text-text-heading mb-6 md:mb-8">مقالات مرتبط راهنمای رزرو تور</h2>
+          <h2 className="text-h2 text-text-heading mb-6 md:mb-8">مقالات مرتبط راهنمای انتخاب تور</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -757,9 +757,9 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
       {/* ---------------- 21. SEO Content ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-compact">
         <div className="bg-surface-primary rounded-card border border-border-default p-6 md:p-8 text-right leading-relaxed">
-          <h2 className="text-h2 text-text-heading mb-6 md:mb-8">رزرو تور مسافرتی با ریوان سفر</h2>
+          <h2 className="text-h2 text-text-heading mb-6 md:mb-8">بررسی و انتخاب تور مسافرتی با ریوان سفر</h2>
           <p className="text-body-sm text-text-secondary mb-4">
-            خرید و رزرو تور مسافرتی یکی از بهترین روش‌ها برای برنامه‌ریزی بدون دغدغه سفر است. آژانس مسافرتی ریوان سفر با ارائه تنوع وسیعی از تورهای داخلی (کیش، مشهد، قشم)، تورهای خارجی (ترکیه، دبی، تایلند، روسیه، اروپا) و تورهای تخصصی نمایشگاهی، شرایطی را فراهم کرده تا مسافران عزیز بتوانند مناسب‌ترین گزینه را بر اساس بودجه و سلیقه خود انتخاب کنند.
+            بررسی و مقایسه تور مسافرتی پیش از سفر، به برنامه‌ریزی بدون دغدغه کمک می‌کند. آژانس مسافرتی ریوان سفر با ارائه تنوع وسیعی از تورهای داخلی (کیش، مشهد، قشم)، تورهای خارجی (ترکیه، دبی، تایلند، روسیه، اروپا) و تورهای تخصصی نمایشگاهی، شرایطی را فراهم کرده تا مسافران عزیز بتوانند مناسب‌ترین گزینه را بر اساس بودجه و سلیقه خود انتخاب کنند.
           </p>
           <p className="text-body-sm text-text-secondary">
             تمامی پکیج‌های ارائه‌شده شامل شفافیت کامل در خصوص نوع پرواز، درجه کیفی هتل‌ها، خدمات جانبی (ترانسفر، بیمه، گشت و ویزا) بوده و پشتیبانی کامل کارشناسان از زمان مشاوره تا پایان سفر همراه شماست.
@@ -770,8 +770,8 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
       {/* ---------------- 22. Tour Reservation FAQ Section ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-compact">
         <div className="text-center mb-8">
-          <h2 className="text-h2 text-text-heading mb-2">سؤالات متداول رزرو تور</h2>
-          <p className="text-body-sm text-text-secondary">پاسخ شفاف به متداول‌ترین ابهامات مسافران پیش از ثبت درخواست رزرو</p>
+          <h2 className="text-h2 text-text-heading mb-2">سؤالات متداول ثبت درخواست تور</h2>
+          <p className="text-body-sm text-text-secondary">پاسخ شفاف به متداول‌ترین ابهامات مسافران پیش از ثبت درخواست تماس</p>
         </div>
 
         <div className="max-w-3xl mx-auto space-y-3 dir-rtl text-right">
@@ -872,7 +872,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
 
               {/* Booking Request Form */}
               <form onSubmit={handleBookingSubmit} className="bg-surface-dark text-white p-5 rounded-card text-right">
-                <h3 className="text-h4 mb-3">ثبت درخواست اولیه رزرو این تور</h3>
+                <h3 className="text-h4 mb-3">ثبت درخواست تماس برای این تور</h3>
                 <p className="text-caption text-white/80 mb-4">
                   با ثبت این فرم، کارشناسان ریوان سفر ظرف ۱۵ دقیقه ظرفیت نهایی و قیمت قطعی را با شما هماهنگ می‌کنند.
                 </p>
@@ -908,7 +908,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                   disabled={bookingSubmitted}
                   className="btn btn-primary btn-large text-btn w-full"
                 >
-                  {bookingSubmitted ? 'در حال ارسال...' : 'ثبت درخواست رزرو تور'}
+                  {bookingSubmitted ? 'در حال ارسال...' : 'ثبت درخواست تماس برای این تور'}
                 </button>
               </form>
 

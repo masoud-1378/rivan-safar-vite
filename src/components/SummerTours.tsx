@@ -75,7 +75,7 @@ export default function SummerTours({ onNavigate }: SummerToursProps) {
              transition={{ duration: 0.6, delay: 0.1 }}
              className="text-text-secondary mt-2 text-body-sm max-w-subtitle mx-auto"
           >
-            فرصت تکرارنشدنی سفرهای رویایی با تضمین بهترین قیمت و کیفیت خدمات
+            تورهای فعال تابستان را با تاریخ حرکت، هتل و قیمت پایه مقایسه کنید
           </motion.p>
         </div>
 

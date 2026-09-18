@@ -60,7 +60,7 @@ export default function TravelGuide() {
             transition={{ duration: 0.4 }}
           >
             <h2 className="text-h2 text-text-heading">
-              قبل از رزرو تور، بهتر تصمیم بگیرید
+              قبل از ثبت درخواست، بهتر تصمیم بگیرید
             </h2>
             <p className="text-body-sm lg:text-[16px] text-text-secondary mt-2 leading-relaxed max-w-2xl">
               راهنماهای تخصصی برای انتخاب مقصد، بررسی هزینه‌ها، شرایط اقامت و آماده‌سازی مدارک پیش از خرید تور
@@ -75,7 +75,7 @@ export default function TravelGuide() {
             viewport={{ once: true }}
             className="hidden md:inline-flex text-link text-btn shrink-0"
           >
-            <span>مشاهده همه راهنماهای سفر و رزرو تور</span>
+            <span>مشاهده همه راهنماهای سفر</span>
             <ArrowLeft className="w-4 h-4 text-brand-orange group-hover:-translate-x-1 transition-transform" />
           </motion.a>
         </div>
@@ -183,7 +183,7 @@ export default function TravelGuide() {
             href="#all-guides"
             className="text-link text-btn w-full justify-center mt-6"
           >
-            <span>مشاهده همه راهنماهای سفر و رزرو تور</span>
+            <span>مشاهده همه راهنماهای سفر</span>
             <ArrowLeft className="w-4 h-4 text-brand-orange" />
           </a>
         </div>

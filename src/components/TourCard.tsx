@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { type ReactNode } from 'react';
 import { Plane, Car, Building2, ShieldCheck, MapPin, Sparkles } from 'lucide-react';
 
 export interface TourCardProps {
@@ -96,7 +96,7 @@ export default function TourCard({
     ? hotelStars
     : `هتل ${hotelStars}★`;
 
-  const CardWrapper = ({ children }: { children: React.ReactNode }) => {
+  const CardWrapper = ({ children }: { children: ReactNode }) => {
     const baseClasses = `group bg-surface-primary border border-border-default rounded-[18px] shadow-subtle hover:shadow-card hover:border-border-brand/40 transition-all duration-300 flex flex-col overflow-hidden h-full cursor-pointer hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange ${soldOut ? 'opacity-85' : ''} ${className}`;
     
     if (onClick) {

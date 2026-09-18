@@ -26,7 +26,6 @@ const foreignToursData = [
     links: [
       { name: 'تور استانبول', path: '/destination/turkey/istanbul' },
       { name: 'تور آنتالیا', path: '/destination/turkey/antalya' },
-      { name: 'تور وان', path: '/destination/turkey/van' },
     ],
     viewAll: 'همه تورهای ترکیه',
     path: '/destination/turkey'
@@ -35,7 +34,7 @@ const foreignToursData = [
     title: 'شرق آسیا',
     links: [
       { name: 'تور تایلند و پوکت', path: '/destination/thailand/phuket' },
-      { name: 'تور مالزی', path: '/tours/foreign' },
+      { name: 'تور مالزی', path: '/tour/malaysia-kl' },
     ],
     viewAll: 'همه مقاصد شرق آسیا',
     path: '/destination/thailand'
@@ -43,18 +42,18 @@ const foreignToursData = [
   {
     title: 'اروپا و روسیه',
     links: [
-      { name: 'تور مسکو و سنت پترزبورگ', path: '/destination/russia/moscow' },
-      { name: 'تور پاریس و رم', path: '/tours/foreign' },
+      { name: 'تور مسکو و سنت پترزبورگ', path: '/tour/russia-moscow' },
+      { name: 'تور پاریس و رم', path: '/tour/paris-rome' },
     ],
-    viewAll: 'همه تورهای روسیه و اروپا',
-    path: '/destination/russia'
+    viewAll: 'همه تورهای خارجی',
+    path: '/tours/foreign'
   },
   {
     title: 'امارات و قفقاز',
     links: [
       { name: 'تور دبی', path: '/destination/uae/dubai' },
-      { name: 'تور گرجستان', path: '/tours/foreign' },
-      { name: 'تور ارمنستان', path: '/tours/foreign' },
+      { name: 'تور گرجستان', path: '/tour/georgia-tbilisi' },
+      { name: 'تور ارمنستان', path: '/tour/armenia-yerevan' },
     ],
     viewAll: 'همه تورهای خاورمیانه',
     path: '/destination/uae'
@@ -96,8 +95,7 @@ const mobileNavData = [
         title: 'تورهای ترکیه',
         links: [
           { name: 'تور استانبول', path: '/destination/turkey/istanbul' },
-          { name: 'تور آنتالیا', path: '/destination/turkey/antalya' },
-          { name: 'تور وان', path: '/destination/turkey/van' }
+          { name: 'تور آنتالیا', path: '/destination/turkey/antalya' }
         ],
         viewAll: 'همه تورهای ترکیه',
         path: '/destination/turkey'
@@ -113,10 +111,11 @@ const mobileNavData = [
       {
         title: 'اروپا و روسیه',
         links: [
-          { name: 'تور مسکو و روسیه', path: '/destination/russia/moscow' }
+          { name: 'تور مسکو و روسیه', path: '/tour/russia-moscow' },
+          { name: 'تور پاریس و رم', path: '/tour/paris-rome' }
         ],
-        viewAll: 'همه تورهای روسیه',
-        path: '/destination/russia'
+        viewAll: 'همه تورهای خارجی',
+        path: '/tours/foreign'
       },
       {
         title: 'خاورمیانه و قفقاز',
@@ -474,7 +473,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                               href="tel:02633350139" 
                               className="btn btn-primary btn-medium text-[13px] font-bold shadow-subtle inline-flex justify-center py-2"
                             >
-                              مشاوره رزرو تور نمایشگاهی
+                              مشاوره تور نمایشگاهی
                             </a>
                           </div>
                         </div>

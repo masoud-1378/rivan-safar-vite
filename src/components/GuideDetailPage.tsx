@@ -5,6 +5,7 @@ import {
   Building2, Sparkles, Share2
 } from 'lucide-react';
 import { GUIDES, GuideItem } from '../data/guidesData';
+import { CITIES } from '../data/destinationsData';
 import { SAMPLE_TOURS } from '../data/toursData';
 
 interface GuideDetailPageProps {
@@ -26,11 +27,38 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
     );
   }
 
-  // Related guides
-  const relatedGuides = Object.values(GUIDES).filter(g => g.slug !== guide.slug).slice(0, 2);
+  // Related guides (same category first, then others)
+  const relatedGuides = [
+    ...Object.values(GUIDES).filter(
+      (g) => g.slug !== guide.slug && g.category === guide.category,
+    ),
+    ...Object.values(GUIDES).filter(
+      (g) => g.slug !== guide.slug && g.category !== guide.category,
+    ),
+  ].slice(0, 2);
 
-  // Related tours
-  const relatedTours = SAMPLE_TOURS.slice(0, 2);
+  // Money Page link: هر راهنما به یک صفحه فروش مرتبط وصل است (سند 03)
+  // relatedDestinationSlug ممکن است شهر (istanbul) یا کشور (turkey) باشد
+  const moneyPagePath = (() => {
+    if (guide.relatedTourId) {
+      const tour = SAMPLE_TOURS.find((t) => t.id === guide.relatedTourId);
+      if (tour) return { path: `/tour/${tour.id}`, label: tour.title };
+    }
+    if (guide.relatedDestinationSlug) {
+      const slug = guide.relatedDestinationSlug;
+      const cityEntry = Object.entries(CITIES ?? {}).find(([, c]) => c.slug === slug);
+      if (cityEntry) {
+        const [, city] = cityEntry;
+        const countrySlug = city.parentCountrySlug ?? slug;
+        return {
+          path: `/destination/${countrySlug}/${city.slug}`,
+          label: `مشاهده تورهای ${city.name}`,
+        };
+      }
+      return { path: `/destination/${slug}`, label: 'مشاهده تورهای مرتبط' };
+    }
+    return null;
+  })();
 
   return (
     <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
@@ -117,6 +145,23 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
               </div>
             ))}
           </div>
+
+          {/* Money Page CTA: قدم بعدی تجاری */}
+          {moneyPagePath && (
+            <div className="p-6 bg-brand-navy text-white rounded-card flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <h3 className="text-h4 font-bold mb-1">آماده بررسی گزینه‌ها هستید؟</h3>
+                <p className="text-body-sm text-white/80">تورهای فعال مرتبط با این راهنما را با قیمت پایه ببینید.</p>
+              </div>
+              <button
+                onClick={() => onNavigate(moneyPagePath.path)}
+                className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2 font-bold shrink-0"
+              >
+                <span>{moneyPagePath.label}</span>
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Consultation CTA Inside Article */}
           <div className="p-6 bg-surface-primary border border-border-default rounded-card text-right flex flex-col sm:flex-row items-center justify-between gap-4">
