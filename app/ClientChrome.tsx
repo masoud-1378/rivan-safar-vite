@@ -30,6 +30,11 @@ export default function ClientChrome({
   };
 
   const isHomePage = pathname === '/';
+  const isAdmin = pathname.startsWith('/admin');
+
+  if (isAdmin) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen bg-page-background text-text-primary font-sans flex flex-col justify-between selection:bg-brand-orange selection:text-white">

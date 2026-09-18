@@ -10,12 +10,16 @@
     "preview": "next start --port 3000",
     "clean": "rm -rf .next dist server.js",
     "lint": "tsc --noEmit",
-    "db:generate": "drizzle-kit generate",
+"db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
+    "db:seed": "tsx scripts/seed.ts",
+    "cms:check": "tsx scripts/cms-check.ts",
     "seo:check": "tsx scripts/seo-check.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.116.0",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.2",
     "express": "^4.21.2",

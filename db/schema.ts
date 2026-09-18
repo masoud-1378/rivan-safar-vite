@@ -14,6 +14,7 @@ import {
   boolean,
   timestamp,
   numeric,
+  jsonb,
   pgEnum,
   uniqueIndex,
   index,
@@ -310,7 +311,90 @@ export const auditLogs = pgTable('audit_logs', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-// ---------- درخواست‌های تماس (Lead) ----------
+// ---------- CMS: مدیران، راهنماها، نمایشگاه‌ها، رسانه ----------
+
+export const adminRoleEnum = pgEnum('admin_role', ['owner', 'editor']);
+
+export const adminUsers = pgTable('admin_users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().unique(),
+  email: varchar('email', { length: 200 }).notNull(),
+  role: adminRoleEnum('role').notNull().default('editor'),
+  active: boolean('active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const guides = pgTable(
+  'guides',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    slug: varchar('slug', { length: 160 }).notNull().unique(),
+    titleFa: varchar('title_fa', { length: 260 }).notNull(),
+    category: varchar('category', { length: 60 }).notNull().default('general'),
+    categoryLabel: varchar('category_label', { length: 120 }),
+    readTime: varchar('read_time', { length: 40 }),
+    author: varchar('author', { length: 160 }),
+    reviewer: varchar('reviewer', { length: 160 }),
+    summary: text('summary'),
+    heroImage: text('hero_image'),
+    directAnswer: text('direct_answer'),
+    sections: jsonb('sections').notNull().default([]),
+    faqs: jsonb('faqs').notNull().default([]),
+    status: publishStatusEnum('status').notNull().default('draft'),
+    lastReviewedAt: timestamp('last_reviewed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+);
+
+export const guideLinks = pgTable('guide_links', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  guideId: uuid('guide_id')
+    .notNull()
+    .references(() => guides.id, { onDelete: 'cascade' }),
+  toPath: varchar('to_path', { length: 300 }).notNull(),
+  anchorFa: varchar('anchor_fa', { length: 220 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const exhibitions = pgTable(
+  'exhibitions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    slug: varchar('slug', { length: 160 }).notNull().unique(),
+    titleFa: varchar('title_fa', { length: 260 }).notNull(),
+    titleEn: varchar('title_en', { length: 260 }),
+    country: varchar('country', { length: 120 }),
+    city: varchar('city', { length: 120 }),
+    venue: varchar('venue', { length: 220 }),
+    officialWebsite: text('official_website'),
+    industry: varchar('industry', { length: 220 }),
+    heroTagline: text('hero_tagline'),
+    description: text('description'),
+    image: text('image'),
+    editionSlug: varchar('edition_slug', { length: 120 }),
+    solarDate: varchar('solar_date', { length: 120 }),
+    gregorianDate: varchar('gregorian_date', { length: 120 }),
+    phases: jsonb('phases').notNull().default([]),
+    visaDeadline: text('visa_deadline'),
+    hotelArea: text('hotel_area'),
+    startingPriceNote: text('starting_price_note'),
+    servicesIncluded: jsonb('services_included').notNull().default([]),
+    businessTips: jsonb('business_tips').notNull().default([]),
+    faqs: jsonb('faqs').notNull().default([]),
+    status: publishStatusEnum('status').notNull().default('draft'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+);
+
+export const media = pgTable('media', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  url: text('url').notNull(),
+  altFa: varchar('alt_fa', { length: 260 }).notNull(),
+  source: varchar('source', { length: 260 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
 
 export const leadStatusEnum = pgEnum('lead_status', [
   'new',
