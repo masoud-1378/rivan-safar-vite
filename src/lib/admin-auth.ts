@@ -1,7 +1,4 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-import { getDb } from '@/db/client';
-import { adminUsers } from '@/db/schema';
-import { eq } from 'drizzle-orm';
 import { createClient as createServerSupabase } from './supabase-server';
 
 export type AdminRole = 'owner' | 'editor';
@@ -34,16 +31,13 @@ export async function requireAdmin(
   } = await supabase.auth.getUser();
   if (!user?.email) throw new Error('UNAUTHORIZED');
 
-  const db = getDb();
-  if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db
-    .select()
-    .from(adminUsers)
-    .where(eq(adminUsers.userId, user.id))
-    .limit(1);
-  const row = rows[0];
-  if (!row || !row.active || !allowed.includes(row.role as AdminRole)) {
-    throw new Error('FORBIDDEN');
+  const { data: adminUser, error: adminError } = await createAdminDb()
+    .from('admin_users')
+    .select('user_id, email, role, active')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (adminError || !adminUser || !adminUser.active || !allowed.includes(adminUser.role as AdminRole)) {
+    throw new Error(adminError ? 'ADMIN_LOOKUP_FAILED' : 'FORBIDDEN');
   }
-  return { userId: user.id, email: user.email, role: row.role as AdminRole };
+  return { userId: user.id, email: user.email, role: adminUser.role as AdminRole };
 }
