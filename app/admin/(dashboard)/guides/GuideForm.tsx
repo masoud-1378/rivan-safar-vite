@@ -1,6 +1,11 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Field, Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { saveGuide, type GuideInput, type GuideRow, type GuideStatus } from './actions';
 
 const CATEGORIES = [
@@ -19,33 +24,6 @@ const STATUSES: Array<{ value: GuideStatus; label: string }> = [
   { value: 'paused', label: 'متوقف' },
   { value: 'archived', label: 'بایگانی' },
 ];
-
-export const inputCls =
-  'w-full bg-surface-secondary border border-border-default rounded-control px-3 py-2 text-body-sm';
-
-function Field({
-  label,
-  htmlFor,
-  children,
-  required,
-  hint,
-}: {
-  label: string;
-  htmlFor?: string;
-  children: React.ReactNode;
-  required?: boolean;
-  hint?: string;
-}) {
-  return (
-    <div>
-      <label htmlFor={htmlFor || label} className="block text-caption font-bold text-text-heading mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      {children}
-      {hint && <p className="text-caption text-text-muted mt-1">{hint}</p>}
-    </div>
-  );
-}
 
 export default function GuideForm({
   initial,
@@ -141,175 +119,150 @@ export default function GuideForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-surface-primary border border-border-default rounded-card p-5 space-y-4"
-    >
-      <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
-        <h2 className="text-h4 font-bold text-text-heading">
-          {editingId ? 'ویرایش مقاله' : 'مقاله جدید'}
-        </h2>
-        {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-caption font-medium text-text-muted hover:text-text-primary"
-          >
-            انصراف
-          </button>
-        )}
-      </div>
+    <Card>
+      <form onSubmit={handleSubmit} className="space-y-5 p-5">
+        <div className="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h2 className="text-lg font-semibold">{editingId ? 'ویرایش مقاله' : 'مقاله جدید'}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">اطلاعات و محتوای راهنمای سفر را وارد کنید.</p>
+          </div>
+          {onCancel && <Button type="button" variant="ghost" size="sm" onClick={onCancel}>انصراف</Button>}
+        </div>
 
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-control text-body-sm text-red-600">
+          <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Field label="نامک انگلیسی (Slug)" htmlFor="guide-slug" required>
-          <input
+        <Field label="نامک انگلیسی (Slug)" htmlFor="guide-slug">          <Input
             id="guide-slug"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            className={`${inputCls} text-left`}
+            className="text-left"
             dir="ltr"
             placeholder="e.g. dubai-metro-guide"
             required
           />
         </Field>
 
-        <Field label="عنوان فارسی" htmlFor="guide-title" required>
-          <input
+        <Field label="عنوان فارسی" htmlFor="guide-title">          <Input
             id="guide-title"
             value={titleFa}
             onChange={(e) => setTitleFa(e.target.value)}
-            className={inputCls}
+
             placeholder="مثال: راهنمای کامل متروی دبی"
             required
           />
         </Field>
 
-        <Field label="دسته‌بندی (category)" htmlFor="guide-cat" required>
-          <select
+        <Field label="دسته‌بندی (category)" htmlFor="guide-cat">          <Select
             id="guide-cat"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className={inputCls}
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
+            options={CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
+          />
         </Field>
 
         <Field label="برچسب دسته‌بندی (categoryLabel)" htmlFor="guide-cat-lbl">
-          <input
+          <Input
             id="guide-cat-lbl"
             value={categoryLabel}
             onChange={(e) => setCategoryLabel(e.target.value)}
-            className={inputCls}
+
             placeholder="مثال: راهنمای سفر"
           />
         </Field>
 
         <Field label="مدت زمان مطالعه (readTime)" htmlFor="guide-read-time">
-          <input
+          <Input
             id="guide-read-time"
             value={readTime}
             onChange={(e) => setReadTime(e.target.value)}
-            className={inputCls}
+
             placeholder="مثال: ۶ دقیقه مطالعه"
           />
         </Field>
 
         <Field label="نویسنده (author)" htmlFor="guide-author">
-          <input
+          <Input
             id="guide-author"
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
-            className={inputCls}
+
             placeholder="نام نویسنده"
           />
         </Field>
 
         <Field label="بازبین (reviewer)" htmlFor="guide-reviewer">
-          <input
+          <Input
             id="guide-reviewer"
             value={reviewer}
             onChange={(e) => setReviewer(e.target.value)}
-            className={inputCls}
+
             placeholder="نام بازبین یا کارشناس"
           />
         </Field>
 
         <Field label="آدرس تصویر اصلی (heroImage)" htmlFor="guide-hero">
-          <input
+          <Input
             id="guide-hero"
             value={heroImage}
             onChange={(e) => setHeroImage(e.target.value)}
-            className={`${inputCls} text-left`}
+            className="text-left"
             dir="ltr"
             placeholder="https://..."
           />
         </Field>
 
         <Field label="نامک مقصد مرتبط (relatedDestinationSlug)" htmlFor="guide-rel-dest">
-          <input
+          <Input
             id="guide-rel-dest"
             value={relatedDestinationSlug}
             onChange={(e) => setRelatedDestinationSlug(e.target.value)}
-            className={`${inputCls} text-left`}
+            className="text-left"
             dir="ltr"
             placeholder="مثال: dubai یا turkey"
           />
         </Field>
 
         <Field label="شناسه تور مرتبط (relatedTourId)" htmlFor="guide-rel-tour">
-          <input
+          <Input
             id="guide-rel-tour"
             value={relatedTourId}
             onChange={(e) => setRelatedTourId(e.target.value)}
-            className={`${inputCls} text-left`}
+            className="text-left"
             dir="ltr"
             placeholder="شناسه یا نامک تور"
           />
         </Field>
 
-        <Field label="وضعیت انتشار" htmlFor="guide-status" required>
-          <select
+        <Field label="وضعیت انتشار" htmlFor="guide-status">          <Select
             id="guide-status"
             value={status}
             onChange={(e) => setStatus(e.target.value as GuideStatus)}
-            className={inputCls}
-          >
-            {STATUSES.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
+            options={STATUSES.map((s) => ({ value: s.value, label: s.label }))}
+          />
         </Field>
       </div>
 
       <Field label="خلاصه مقاله (summary)" htmlFor="guide-summary">
-        <textarea
+        <Textarea
           id="guide-summary"
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
-          className={`${inputCls} min-h-[70px]`}
+            className="min-h-20"
           placeholder="چکیده کوتاه مقاله..."
         />
       </Field>
 
       <Field label="پاسخ مستقیم و سریع (directAnswer)" htmlFor="guide-direct">
-        <textarea
+        <Textarea
           id="guide-direct"
           value={directAnswer}
           onChange={(e) => setDirectAnswer(e.target.value)}
-          className={`${inputCls} min-h-[70px]`}
+            className="min-h-20"
           placeholder="پاسخ سریع به پرسش اصلی کاربر..."
         />
       </Field>
@@ -319,11 +272,11 @@ export default function GuideForm({
         htmlFor="guide-sections"
         hint="آرایه JSON بخش‌ها - هر بخش شامل title, content, order و ..."
       >
-        <textarea
+        <Textarea
           id="guide-sections"
           value={sectionsJson}
           onChange={(e) => setSectionsJson(e.target.value)}
-          className={`${inputCls} font-mono text-left text-caption min-h-[160px]`}
+            className="min-h-40 font-mono text-left"
           dir="ltr"
           placeholder="[]"
         />
@@ -334,34 +287,23 @@ export default function GuideForm({
         htmlFor="guide-faqs"
         hint="آرایه JSON پرسش‌ها - هر آیتم شامل question, answer"
       >
-        <textarea
+        <Textarea
           id="guide-faqs"
           value={faqsJson}
           onChange={(e) => setFaqsJson(e.target.value)}
-          className={`${inputCls} font-mono text-left text-caption min-h-[140px]`}
+            className="min-h-36 font-mono text-left"
           dir="ltr"
           placeholder="[]"
         />
       </Field>
 
       <div className="flex items-center gap-3 pt-2">
-        <button
-          type="submit"
-          className="btn btn-medium btn-primary text-btn font-bold"
-          disabled={pending}
-        >
-          {pending ? 'در حال ذخیره...' : 'ذخیره'}
-        </button>
+          <Button type="submit" disabled={pending}>{pending ? 'در حال ذخیره...' : 'ذخیره'}</Button>
         {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="btn btn-medium bg-surface-secondary text-text-primary border border-border-default hover:bg-surface-tertiary"
-          >
-            انصراف
-          </button>
+          <Button type="button" onClick={onCancel} variant="outline">انصراف</Button>
         )}
-      </div>
-    </form>
+        </div>
+      </form>
+    </Card>
   );
 }

@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { Search, Trash2 } from 'lucide-react';
 import { updateLeadStatus, type LeadStatus } from './actions';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { DataTable, type Column } from '@/components/ui/data-table';
+import { Select } from '@/components/ui/select';
 
 const STATUS_FA: Record<LeadStatus, string> = {
   new: 'جدید',
@@ -10,6 +15,15 @@ const STATUS_FA: Record<LeadStatus, string> = {
   won: 'موفق',
   lost: 'ناموفق',
   invalid: 'نامعتبر',
+};
+
+const STATUS_VARIANT: Record<LeadStatus, 'brand' | 'warning' | 'success' | 'destructive' | 'secondary'> = {
+  new: 'brand',
+  contacted: 'warning',
+  qualified: 'warning',
+  won: 'success',
+  lost: 'destructive',
+  invalid: 'secondary',
 };
 
 const STATUSES: LeadStatus[] = ['new', 'contacted', 'qualified', 'won', 'lost', 'invalid'];
@@ -30,10 +44,7 @@ export interface LeadRow {
 
 function faDate(iso: string) {
   try {
-    return new Intl.DateTimeFormat('fa-IR', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(iso));
+    return new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
   } catch {
     return iso;
   }
@@ -43,8 +54,7 @@ export function LeadBoard({ initial }: { initial: LeadRow[] }) {
   const [filter, setFilter] = useState<LeadStatus | 'all'>('all');
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState('');
-
-  const rows = initial.filter((r) => filter === 'all' || r.status === filter);
+  const rows = initial.filter((row) => filter === 'all' || row.status === filter).map((row) => ({ ...row })) as (LeadRow & Record<string, unknown>)[];
 
   const changeStatus = (id: string, status: LeadStatus) => {
     setMessage('');
@@ -58,92 +68,25 @@ export function LeadBoard({ initial }: { initial: LeadRow[] }) {
     });
   };
 
+  const columns: Column<LeadRow>[] = [
+    { key: 'fullName', header: 'نام', sortable: true, cell: (row) => <span className="font-semibold">{row.fullName}</span> },
+    { key: 'phone', header: 'تلفن', cell: (row) => <a href={`tel:${row.phone}`} dir="ltr" className="text-brand">{row.phone}</a> },
+    { key: 'tourContext', header: 'زمینه تور', cell: (row) => <span>{[row.tourContext, row.destinationHint].filter(Boolean).join(' — ') || '—'}</span> },
+    { key: 'createdAt', header: 'تاریخ', sortable: true, cell: (row) => <span className="whitespace-nowrap">{faDate(row.createdAt)}</span> },
+    {
+      key: 'status', header: 'وضعیت', cell: (row) => (
+        <div className="flex items-center gap-2">
+          <Badge variant={STATUS_VARIANT[row.status]}>{STATUS_FA[row.status]}</Badge>
+          <Select aria-label="تغییر وضعیت درخواست" value={row.status} disabled={pending} onChange={(event) => changeStatus(row.id, event.target.value as LeadStatus)} className="h-8 min-w-36 text-xs" options={STATUSES.map((status) => ({ value: status, label: STATUS_FA[status] }))} />
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <FilterChip active={filter === 'all'} onClick={() => setFilter('all')} label="همه" />
-        {STATUSES.map((s) => (
-          <FilterChip key={s} active={filter === s} onClick={() => setFilter(s)} label={STATUS_FA[s]} />
-        ))}
-      </div>
-      {message ? <p className="text-body-sm text-text-secondary">{message}</p> : null}
-      <div className="bg-surface-primary border border-border-default rounded-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-right text-body-sm min-w-[720px]">
-            <thead>
-              <tr className="bg-surface-secondary border-b border-border-default text-text-heading">
-                <th className="px-4 py-3 font-bold">نام</th>
-                <th className="px-4 py-3 font-bold">تلفن</th>
-                <th className="px-4 py-3 font-bold">زمینه تور</th>
-                <th className="px-4 py-3 font-bold">منبع</th>
-                <th className="px-4 py-3 font-bold">تاریخ</th>
-                <th className="px-4 py-3 font-bold">وضعیت</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-subtle">
-              {rows.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-text-secondary">
-                    درخواستی با این وضعیت ثبت نشده است.
-                  </td>
-                </tr>
-              ) : (
-                rows.map((r) => (
-                  <tr key={r.id} className="hover:bg-surface-secondary/50">
-                    <td className="px-4 py-3 font-bold text-text-heading">{r.fullName}</td>
-                    <td className="px-4 py-3" dir="ltr">
-                      <a href={`tel:${r.phone}`} className="text-link font-medium">
-                        {r.phone}
-                      </a>
-                    </td>
-                    <td className="px-4 py-3 text-text-secondary">
-                      {[r.tourContext, r.destinationHint].filter(Boolean).join(' — ') || '—'}
-                    </td>
-                    <td className="px-4 py-3 text-text-secondary" dir="ltr">
-                      {r.sourcePath}
-                    </td>
-                    <td className="px-4 py-3 text-text-secondary whitespace-nowrap">{faDate(r.createdAt)}</td>
-                    <td className="px-4 py-3">
-                      <select
-                        value={r.status}
-                        disabled={pending}
-                        onChange={(e) => changeStatus(r.id, e.target.value as LeadStatus)}
-                        className="bg-surface-secondary border border-border-default rounded-control px-2 py-1.5 text-body-sm"
-                      >
-                        {STATUSES.map((s) => (
-                          <option key={s} value={s}>
-                            {STATUS_FA[s]}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
+      <Card><CardContent className="p-5"><DataTable rows={rows} columns={columns} rowKey={(row) => row.id} searchKeys={['fullName', 'phone', 'tourContext', 'destinationHint']} searchPlaceholder="جست‌وجوی نام، تلفن یا مقصد…" emptyTitle="درخواستی یافت نشد" emptyDescription="وضعیت انتخاب‌شده را تغییر دهید." toolbar={<div className="w-48"><Select aria-label="فیلتر وضعیت درخواست‌ها" value={filter} onChange={(event) => setFilter(event.target.value as LeadStatus | 'all')} className="h-9" options={[{ value: 'all', label: 'همه وضعیت‌ها' }, ...STATUSES.map((status) => ({ value: status, label: STATUS_FA[status] }))]} /></div>} /></CardContent></Card>
     </div>
-  );
-}
-
-function FilterChip({
-  active,
-  onClick,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`chip chip-small ${active ? 'chip-selected' : ''}`}
-    >
-      {label}
-    </button>
   );
 }

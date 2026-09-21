@@ -1,182 +1,49 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import ExhibitionForm from './ExhibitionForm';
-import {
-  deleteExhibition,
-  setExhibitionStatus,
-  type ExhibitionRow,
-  type ExhibitionStatus,
-} from './actions';
+import { deleteExhibition, setExhibitionStatus, type ExhibitionRow, type ExhibitionStatus } from './actions';
+import { AlertDialog } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { DataTable, type Column } from '@/components/ui/data-table';
+import { Select } from '@/components/ui/select';
+import { fa } from '@/lib/utils';
 
-const STATUS_MAP: Record<ExhibitionStatus, { label: string; cls: string }> = {
-  published: { label: 'منتشرشده', cls: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' },
-  review: { label: 'در حال بازبینی', cls: 'bg-amber-500/15 text-amber-700 border-amber-500/30' },
-  draft: { label: 'پیش‌نویس', cls: 'bg-zinc-500/15 text-zinc-700 border-zinc-500/30' },
-  paused: { label: 'متوقف', cls: 'bg-orange-500/15 text-orange-700 border-orange-500/30' },
-  archived: { label: 'بایگانی', cls: 'bg-red-500/15 text-red-700 border-red-500/30' },
+const STATUS_MAP: Record<ExhibitionStatus, { label: string; variant: 'success' | 'warning' | 'secondary' | 'brand' | 'destructive' }> = {
+  published: { label: 'منتشرشده', variant: 'success' }, review: { label: 'در حال بازبینی', variant: 'warning' }, draft: { label: 'پیش‌نویس', variant: 'secondary' }, paused: { label: 'متوقف', variant: 'brand' }, archived: { label: 'بایگانی', variant: 'destructive' },
 };
+const statusOptions = (Object.keys(STATUS_MAP) as ExhibitionStatus[]).map((value) => ({ value, label: STATUS_MAP[value].label }));
 
 export default function ExhibitionsManager({ initial }: { initial: ExhibitionRow[] }) {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<ExhibitionRow | null>(null);
+  const [deleting, setDeleting] = useState<ExhibitionRow | null>(null);
   const [pending, startTransition] = useTransition();
-
-  const reload = () => {
-    setShowForm(false);
-    setEditing(null);
-    window.location.reload();
+  const reload = () => { setShowForm(false); setEditing(null); window.location.reload(); };
+  const onDelete = async () => {
+    if (!deleting) return;
+    try { await new Promise<void>((resolve, reject) => startTransition(async () => { try { await deleteExhibition(deleting.id); resolve(); } catch (error) { reject(error); } })); window.location.reload(); } catch (error) { alert(error instanceof Error ? error.message : 'خطا در حذف.'); }
   };
-
-  const onDelete = (id: string, title: string) => {
-    if (!confirm(`آیا از حذف نمایشگاه «${title}» اطمینان دارید؟`)) return;
-    startTransition(async () => {
-      try {
-        await deleteExhibition(id);
-        window.location.reload();
-      } catch (e) {
-        alert(e instanceof Error ? e.message : 'خطا در حذف.');
-      }
-    });
-  };
-
-  const onStatusChange = (id: string, nextStatus: ExhibitionStatus) => {
-    startTransition(async () => {
-      try {
-        await setExhibitionStatus(id, nextStatus);
-        window.location.reload();
-      } catch (e) {
-        alert(e instanceof Error ? e.message : 'خطا در تغییر وضعیت.');
-      }
-    });
-  };
-
+  const onStatusChange = (id: string, status: ExhibitionStatus) => startTransition(async () => { try { await setExhibitionStatus(id, status); window.location.reload(); } catch (error) { alert(error instanceof Error ? error.message : 'خطا در تغییر وضعیت.'); } });
+  const edit = (exhibition: ExhibitionRow) => { setEditing(exhibition); setShowForm(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const columns: Column<ExhibitionRow>[] = [
+    { key: 'titleFa', header: 'عنوان نمایشگاه', sortable: true, cell: (exhibition) => <span className="font-medium">{exhibition.titleFa}</span> },
+    { key: 'slug', header: 'نامک', sortable: true, cell: (exhibition) => <span dir="ltr">{exhibition.slug}</span> },
+    { key: 'country', header: 'کشور / شهر', cell: (exhibition) => [exhibition.country, exhibition.city].filter(Boolean).join(' / ') || '—' },
+    { key: 'solarDate', header: 'تاریخ شمسی', cell: (exhibition) => exhibition.solarDate || '—' },
+    { key: 'status', header: 'وضعیت', cell: (exhibition) => <Badge variant={STATUS_MAP[exhibition.status].variant}>{STATUS_MAP[exhibition.status].label}</Badge> },
+    { key: 'id', header: 'تغییر وضعیت', cell: (exhibition) => <Select aria-label={`تغییر وضعیت ${exhibition.titleFa}`} value={exhibition.status} disabled={pending} onChange={(event) => onStatusChange(exhibition.id, event.target.value as ExhibitionStatus)} className="h-8 min-w-36 text-xs" options={statusOptions} /> },
+    { key: 'updatedAt', header: 'عملیات', className: 'w-36', cell: (exhibition) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(exhibition)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" className="text-destructive" disabled={pending} onClick={() => setDeleting(exhibition)}><Trash2 />حذف</Button></div> },
+  ];
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-h2 font-bold text-text-heading">نمایشگاه‌ها</h1>
-          <p className="text-body-sm text-text-secondary mt-1">
-            مجموع نمایشگاه‌های ثبت‌شده: {initial.length} مورد
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            setEditing(null);
-            setShowForm(true);
-          }}
-          className="btn btn-medium btn-primary text-btn font-bold"
-        >
-          نمایشگاه جدید
-        </button>
-      </div>
-
-      {(showForm || editing) && (
-        <ExhibitionForm
-          key={editing?.id ?? 'new'}
-          initial={editing}
-          editingId={editing?.id ?? null}
-          onSaved={reload}
-          onCancel={() => {
-            setShowForm(false);
-            setEditing(null);
-          }}
-        />
-      )}
-
-      <div className="bg-surface-primary border border-border-default rounded-card overflow-hidden">
-        <div className="p-4 border-b border-border-subtle flex items-center justify-between">
-          <h2 className="text-h4 font-bold text-text-heading">لیست نمایشگاه‌ها ({initial.length})</h2>
-        </div>
-
-        {initial.length === 0 ? (
-          <div className="p-8 text-center text-text-muted text-body-sm">
-            هیچ نمایشگاهی یافت نشد. برای شروع، روی «نمایشگاه جدید» کلیک کنید.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-right text-body-sm">
-              <thead className="bg-surface-secondary text-caption font-bold text-text-secondary border-b border-border-subtle">
-                <tr>
-                  <th className="p-3">عنوان نمایشگاه</th>
-                  <th className="p-3">نامک (Slug)</th>
-                  <th className="p-3">کشور / شهر</th>
-                  <th className="p-3">تاریخ شمسی</th>
-                  <th className="p-3">وضعیت</th>
-                  <th className="p-3">تغییر وضعیت</th>
-                  <th className="p-3 text-left">عملیات</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-subtle">
-                {initial.map((ex) => {
-                  const statusInfo = STATUS_MAP[ex.status] || STATUS_MAP.draft;
-                  return (
-                    <tr key={ex.id} className="hover:bg-surface-secondary/50 transition-colors">
-                      <td className="p-3 font-medium text-text-heading max-w-[240px] truncate">
-                        {ex.titleFa}
-                      </td>
-                      <td className="p-3 font-mono text-caption text-text-muted max-w-[160px] truncate" dir="ltr">
-                        {ex.slug}
-                      </td>
-                      <td className="p-3 text-caption text-text-secondary whitespace-nowrap">
-                        {[ex.country, ex.city].filter(Boolean).join(' / ') || '-'}
-                      </td>
-                      <td className="p-3 text-caption text-text-secondary whitespace-nowrap">
-                        {ex.solarDate || '-'}
-                      </td>
-                      <td className="p-3 whitespace-nowrap">
-                        <span
-                          className={`inline-block px-2.5 py-0.5 rounded-full text-caption border ${statusInfo.cls}`}
-                        >
-                          {statusInfo.label}
-                        </span>
-                      </td>
-                      <td className="p-3 whitespace-nowrap">
-                        <select
-                          value={ex.status}
-                          disabled={pending}
-                          onChange={(e) => onStatusChange(ex.id, e.target.value as ExhibitionStatus)}
-                          className="bg-surface-secondary border border-border-default rounded px-2 py-1 text-caption text-text-primary"
-                        >
-                          <option value="draft">پیش‌نویس</option>
-                          <option value="review">بازبینی</option>
-                          <option value="published">منتشرشده</option>
-                          <option value="paused">متوقف</option>
-                          <option value="archived">بایگانی</option>
-                        </select>
-                      </td>
-                      <td className="p-3 text-left whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-3">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditing(ex);
-                              setShowForm(false);
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                            className="text-caption font-bold text-text-heading hover:text-brand-orange hover:underline"
-                          >
-                            ویرایش
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onDelete(ex.id, ex.titleFa)}
-                            disabled={pending}
-                            className="text-caption font-bold text-red-600 hover:text-red-700 hover:underline"
-                          >
-                            حذف
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-h2 font-bold text-text-heading">نمایشگاه‌ها</h1><p className="mt-1 text-sm text-muted-foreground">مجموع نمایشگاه‌های ثبت‌شده: {fa(initial.length)} مورد</p></div><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />نمایشگاه جدید</Button></div>
+      {(showForm || editing) && <Card><CardContent className="p-5"><ExhibitionForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onSaved={reload} onCancel={() => { setShowForm(false); setEditing(null); }} /></CardContent></Card>}
+      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">لیست نمایشگاه‌ها ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(exhibition) => exhibition.id} searchKeys={['titleFa', 'slug', 'country', 'city']} searchPlaceholder="جست‌وجوی عنوان، نامک، کشور یا شهر…" emptyTitle="نمایشگاهی یافت نشد" emptyDescription="برای شروع، نمایشگاه جدیدی اضافه کنید." /></CardContent></Card>
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="حذف نمایشگاه" description={deleting ? `آیا از حذف نمایشگاه «${deleting.titleFa}» اطمینان دارید؟` : ''} confirmText="حذف نمایشگاه" destructive onConfirm={onDelete} />
     </div>
   );
 }

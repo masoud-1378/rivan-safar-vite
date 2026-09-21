@@ -1,102 +1,45 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import DestinationForm from './DestinationForm';
 import { deleteDestination, type DestinationRow } from './actions';
+import { AlertDialog } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { DataTable, type Column } from '@/components/ui/data-table';
+import { fa } from '@/lib/utils';
 
 export default function CatalogManager({ initial }: { initial: DestinationRow[] }) {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<DestinationRow | null>(null);
+  const [deleting, setDeleting] = useState<DestinationRow | null>(null);
   const [pending, startTransition] = useTransition();
-
-  const reload = () => {
-    setShowForm(false);
-    setEditing(null);
-    window.location.reload();
+  const reload = () => { setShowForm(false); setEditing(null); window.location.reload(); };
+  const onDelete = async () => {
+    if (!deleting) return;
+    try {
+      await new Promise<void>((resolve, reject) => startTransition(async () => {
+        try { await deleteDestination(deleting.id); resolve(); } catch (error) { reject(error); }
+      }));
+      window.location.reload();
+    } catch (error) { alert(error instanceof Error ? error.message : 'خطا در حذف.'); }
   };
-
-  const onDelete = (id: string) => {
-    if (!confirm('این مقصد حذف شود؟')) return;
-    startTransition(async () => {
-      try {
-        await deleteDestination(id);
-        window.location.reload();
-      } catch (e) {
-        alert(e instanceof Error ? e.message : 'خطا در حذف.');
-      }
-    });
-  };
+  const edit = (destination: DestinationRow) => { setEditing(destination); setShowForm(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const columns: Column<DestinationRow>[] = [
+    { key: 'name', header: 'نام', sortable: true, cell: (destination) => <span className="font-semibold">{destination.name}</span> },
+    { key: 'type', header: 'نوع', sortable: true },
+    { key: 'category', header: 'دسته‌بندی', sortable: true, cell: (destination) => destination.category || '—' },
+    { key: 'startingPrice', header: 'قیمت شروع', cell: (destination) => destination.startingPrice || '—' },
+    { key: 'id', header: 'عملیات', className: 'w-36', cell: (destination) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(destination)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(destination)} disabled={pending}><Trash2 />حذف</Button></div> },
+  ];
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <h1 className="text-h2 font-bold text-text-heading">مکان‌ها و مقصدها</h1>
-          <p className="text-body-sm text-text-secondary mt-1">مدیریت مستقیم جدول site_destinations</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            setEditing(null);
-            setShowForm(true);
-          }}
-          className="btn btn-medium btn-primary text-btn font-bold"
-        >
-          افزودن مقصد جدید
-        </button>
-      </div>
-
-      {showForm || editing ? (
-        <DestinationForm
-          key={editing?.id ?? 'new'}
-          initial={editing}
-          editingId={editing?.id ?? null}
-          onDone={reload}
-        />
-      ) : null}
-
-      <div className="bg-surface-primary border border-border-default rounded-card p-5">
-        <h2 className="text-h4 font-bold text-text-heading mb-3">مقصدها ({initial.length})</h2>
-        {initial.length === 0 ? (
-          <p className="text-body-sm text-text-secondary">هنوز مقصدی ثبت نشده است.</p>
-        ) : (
-          <ul className="divide-y divide-border-subtle">
-            {initial.map((d) => (
-              <li key={d.id} className="py-2 flex items-center justify-between gap-2 text-body-sm">
-                <div className="min-w-0">
-                  <div className="font-bold text-text-heading truncate">
-                    {d.name} <span className="text-caption text-text-muted font-normal">({d.nameEn})</span>
-                  </div>
-                  <div className="text-caption text-text-muted" dir="ltr">
-                    {d.slug} · {d.type} · {d.category}
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditing(d);
-                      setShowForm(false);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className="text-caption font-bold text-text-heading hover:underline"
-                  >
-                    ویرایش
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDelete(d.id)}
-                    disabled={pending}
-                    className="text-caption font-bold text-red-700 hover:underline"
-                  >
-                    حذف
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <div className="flex items-center justify-between gap-2"><div><h1 className="text-h2 font-bold text-text-heading">مکان‌ها و مقصدها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول مقصدها</p></div><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن مقصد جدید</Button></div>
+      {showForm || editing ? <Card><CardContent className="p-5"><DestinationForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onDone={reload} /></CardContent></Card> : null}
+      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">مقصدها ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(destination) => destination.id} searchKeys={['name', 'nameEn', 'type', 'category']} searchPlaceholder="جست‌وجوی نام، نوع یا دسته‌بندی…" emptyTitle="مقصدی ثبت نشده است" emptyDescription="برای شروع، مقصد جدیدی اضافه کنید." /></CardContent></Card>
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="حذف مقصد" description={deleting ? `آیا از حذف مقصد «${deleting.name}» اطمینان دارید؟` : ''} confirmText="حذف مقصد" destructive onConfirm={onDelete} />
     </div>
   );
 }
