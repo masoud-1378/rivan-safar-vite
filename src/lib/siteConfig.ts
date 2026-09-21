@@ -27,7 +27,17 @@ function normalise(url: string): string {
   return `https://${trimmed}`;
 }
 
-export const SITE_URL = normalise(rawSiteUrl || 'https://rivansafar.ir');
+function safeSiteUrl(url: string): string {
+  const candidate = normalise(url || 'https://rivansafar.ir');
+  try {
+    const parsed = new URL(candidate);
+    return parsed.origin;
+  } catch {
+    return 'https://rivansafar.ir';
+  }
+}
+
+export const SITE_URL = safeSiteUrl(rawSiteUrl);
 
 export const BUSINESS = {
   brandFa: 'ریوان سفر',
