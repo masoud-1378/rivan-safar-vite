@@ -140,7 +140,7 @@ export default function GuideForm({
             id="guide-slug"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            className="text-left"
+            className="text-start"
             dir="ltr"
             placeholder="e.g. dubai-metro-guide"
             required
@@ -210,7 +210,7 @@ export default function GuideForm({
             id="guide-hero"
             value={heroImage}
             onChange={(e) => setHeroImage(e.target.value)}
-            className="text-left"
+            className="text-start"
             dir="ltr"
             placeholder="https://..."
           />
@@ -221,7 +221,7 @@ export default function GuideForm({
             id="guide-rel-dest"
             value={relatedDestinationSlug}
             onChange={(e) => setRelatedDestinationSlug(e.target.value)}
-            className="text-left"
+            className="text-start"
             dir="ltr"
             placeholder="مثال: dubai یا turkey"
           />
@@ -232,7 +232,7 @@ export default function GuideForm({
             id="guide-rel-tour"
             value={relatedTourId}
             onChange={(e) => setRelatedTourId(e.target.value)}
-            className="text-left"
+            className="text-start"
             dir="ltr"
             placeholder="شناسه یا نامک تور"
           />
@@ -276,7 +276,7 @@ export default function GuideForm({
           id="guide-sections"
           value={sectionsJson}
           onChange={(e) => setSectionsJson(e.target.value)}
-            className="min-h-40 font-mono text-left"
+            className="min-h-40 font-mono text-start"
           dir="ltr"
           placeholder="[]"
         />
@@ -291,7 +291,7 @@ export default function GuideForm({
           id="guide-faqs"
           value={faqsJson}
           onChange={(e) => setFaqsJson(e.target.value)}
-            className="min-h-36 font-mono text-left"
+            className="min-h-36 font-mono text-start"
           dir="ltr"
           placeholder="[]"
         />

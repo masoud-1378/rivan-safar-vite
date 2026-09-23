@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { updateSetting } from './settings/actions';
 import { SETTINGS_REGISTRY, type SettingTab } from '@/src/lib/settings';
@@ -79,16 +80,15 @@ export default function SectionSettingsDialog({
                   <p className="mt-0.5 text-xs text-muted-foreground">{d.hint}</p>
                   <div className="mt-2">
                     {d.kind === 'boolean' ? (
-                      <label className="flex cursor-pointer items-center gap-2 text-sm">
-                        <Input
-                          type="checkbox"
+                      <div className="flex items-center gap-2.5 text-sm">
+                        <Switch
                           checked={(local[d.key] ?? d.defaultValue) === 'true'}
                           disabled={pending}
-                          onChange={(e) => setLocal((p) => ({ ...p, [d.key]: e.target.checked ? 'true' : 'false' }))}
-                          className="size-4"
+                          onCheckedChange={(checked) => setLocal((p) => ({ ...p, [d.key]: checked ? 'true' : 'false' }))}
+                          aria-label={d.label}
                         />
-                        {local[d.key] === 'true' ? 'فعال' : 'غیرفعال'}
-                      </label>
+                        <span>{(local[d.key] ?? d.defaultValue) === 'true' ? 'فعال' : 'غیرفعال'}</span>
+                      </div>
                     ) : d.kind === 'select' && d.options ? (
                       <Select
                         value={local[d.key] ?? d.defaultValue}

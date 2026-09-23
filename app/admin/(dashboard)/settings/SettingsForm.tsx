@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { updateSetting } from './actions';
@@ -13,16 +14,15 @@ import { SETTINGS_REGISTRY, SETTING_TABS, type SettingDef } from '@/src/lib/sett
 function SettingField({ def, value, onChange, disabled }: { def: SettingDef; value: string; onChange: (v: string) => void; disabled: boolean }) {
   if (def.kind === 'boolean') {
     return (
-      <label className="flex cursor-pointer items-center gap-2 text-sm">
-        <Input
-          type="checkbox"
+      <div className="flex items-center gap-2.5">
+        <Switch
           checked={value === 'true'}
           disabled={disabled}
-          onChange={(e) => onChange(e.target.checked ? 'true' : 'false')}
-          className="size-4"
+          onCheckedChange={(checked) => onChange(checked ? 'true' : 'false')}
+          aria-label={def.label}
         />
-        {value === 'true' ? 'فعال' : 'غیرفعال'}
-      </label>
+        <span className="text-sm">{value === 'true' ? 'فعال' : 'غیرفعال'}</span>
+      </div>
     );
   }
   if (def.kind === 'select' && def.options) {
@@ -81,7 +81,7 @@ export default function SettingsPage({ initial, role }: { initial: Record<string
   return (
     <div className="admin-enter space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">تنظیمات سایت</h1>
+        <h1 className="text-2xl font-bold">تنظیمات سایت</h1>
         <p className="mt-1 text-sm text-muted-foreground">تنظیمات مرکزی که در کل سایت، سئو و پنل استفاده می‌شوند. هر تغییر در گزارش تغییرات ثبت می‌شود.</p>
       </div>
       {error ? (

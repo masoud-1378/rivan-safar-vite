@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
-import {
-  createLanding,
-  updateLanding,
-  type LandingInput,
-} from './actions';
+import { useState, useTransition } from 'react';
+import { DatePicker } from '@/components/ui/date-picker';
+import { Field, Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { useToast } from '@/components/ui/toast';
+import { Textarea } from '@/components/ui/textarea';
+import { createLanding, type LandingInput } from './actions';
 
 const PAGE_TYPES = [
   { value: 'home', label: 'خانه' },
@@ -27,18 +28,13 @@ const PAGE_TYPES = [
   { value: 'privacy', label: 'حریم خصوصی' },
 ];
 
-function Field({ label, htmlFor, children, required }: { label: string; children: React.ReactNode; htmlFor?: string; required?: boolean }) {
-  return (
-    <div>
-      <label htmlFor={htmlFor || label} className="block text-xs font-bold text-foreground mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-const inputCls = 'w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground';
+const WORKFLOW_OPTIONS = [
+  { value: 'draft', label: 'پیش‌نویس' },
+  { value: 'review', label: 'بازبینی' },
+  { value: 'published', label: 'منتشرشده' },
+  { value: 'paused', label: 'متوقف' },
+  { value: 'archived', label: 'بایگانی' },
+];
 
 export default function LandingForm({ onSaved }: { onSaved?: () => void }) {
   const [queryOwner, setQueryOwner] = useState('');
@@ -47,79 +43,70 @@ export default function LandingForm({ onSaved }: { onSaved?: () => void }) {
   const [titleFa, setTitleFa] = useState('');
   const [metaDescriptionFa, setMetaDescriptionFa] = useState('');
   const [h1Fa, setH1Fa] = useState('');
-  const [workflow, setWorkflow] = useState<'draft' | 'review' | 'published' | 'paused' | 'archived'>('draft');
-  const [indexStatus, setIndexStatus] = useState<'index' | 'noindex'>('noindex');
-  const [nextReviewAt, setNextReviewAt] = useState('');
+  const [workflow, setWorkflow] = useState<NonNullable<LandingInput['workflow']>>('draft');
+  const [indexStatus, setIndexStatus] = useState<NonNullable<LandingInput['indexStatus']>>('noindex');
+  const [nextReviewAt, setNextReviewAt] = useState<Date | null>(null);
   const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
 
-  const submit = async () => {
+  const submit = () => {
     const input: LandingInput = {
-      queryOwner,
-      urlPath: urlPath.startsWith('/') ? urlPath : '/' + urlPath,
+      queryOwner: queryOwner.trim(),
+      urlPath: urlPath.trim().startsWith('/') ? urlPath.trim() : '/' + urlPath.trim(),
       pageType,
       titleFa,
       metaDescriptionFa,
       h1Fa,
       workflow,
       indexStatus,
-      nextReviewAt,
+      nextReviewAt: nextReviewAt ? nextReviewAt.toISOString() : '',
     };
     startTransition(async () => {
       try {
         await createLanding(input);
+        toast({ variant: 'success', title: 'لندینگ ساخته شد.' });
         if (onSaved) onSaved();
         window.location.reload();
       } catch (e) {
-        alert(e instanceof Error ? e.message : 'خطا');
+        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ساخت لندینگ.' });
       }
     });
   };
 
   return (
-    <div className="bg-card border border-border rounded-xl p-5 space-y-4 admin-lift">
+    <div className="space-y-4 rounded-xl border border-border bg-card p-5 admin-lift">
       <h2 className="font-semibold text-foreground">لندینگ جدید</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Field label="Query Owner" htmlFor="qo">
-          <input id="qo" value={queryOwner} onChange={e => setQueryOwner(e.target.value)} className={inputCls} placeholder="home:ریوان سفر" />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Field label="Query Owner" htmlFor="qo" hint="کد یکتای صفحه، مثلاً home:ریوان سفر">
+          <Input id="qo" dir="ltr" value={queryOwner} onChange={(e) => setQueryOwner(e.target.value)} placeholder="home:ریوان سفر" />
         </Field>
-        <Field label="مسیر URL" htmlFor="up" required>
-          <input id="up" value={urlPath} dir="ltr" onChange={e => setUrlPath(e.target.value)} className={`${inputCls} text-left`} placeholder="/destination/turkey/istanbul" />
+        <Field label="مسیر URL" htmlFor="up" hint="بدون نیم‌فاصله؛ مثلاً /destination/turkey/istanbul">
+          <Input id="up" dir="ltr" value={urlPath} onChange={(e) => setUrlPath(e.target.value)} placeholder="/destination/turkey/istanbul" />
         </Field>
         <Field label="نوع صفحه" htmlFor="pt">
-          <select id="pt" value={pageType} onChange={e => setPageType(e.target.value)} className={inputCls}>
-            {PAGE_TYPES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-          </select>
+          <Select id="pt" value={pageType} onChange={(e) => setPageType(e.target.value)} options={PAGE_TYPES} />
         </Field>
-        <Field label="Title (SEO)" htmlFor="tf" required>
-          <input id="tf" value={titleFa} onChange={e => setTitleFa(e.target.value)} className={inputCls} />
+        <Field label="عنوان سئو (Title)" htmlFor="tf" hint="حدود ۶۰ نویسه">
+          <Input id="tf" value={titleFa} onChange={(e) => setTitleFa(e.target.value)} placeholder="تور استانبول با اقامت در مرکز شهر" />
         </Field>
-        <Field label="Meta Description" htmlFor="md">
-          <textarea id="md" value={metaDescriptionFa} onChange={e => setMetaDescriptionFa(e.target.value)} className={`${inputCls} min-h-[80px]`} />
+        <Field label="توضیحات متا (Meta Description)" htmlFor="md" hint="حدود ۱۵۵ نویسه">
+          <Textarea id="md" autoResize showCount maxLength={200} value={metaDescriptionFa} onChange={(e) => setMetaDescriptionFa(e.target.value)} placeholder="توضیح کوتاهی که در نتایج جست‌وجو نمایش داده می‌شود." />
         </Field>
-        <Field label="H1" htmlFor="h1" required>
-          <input id="h1" value={h1Fa} onChange={e => setH1Fa(e.target.value)} className={inputCls} />
+        <Field label="تیتر صفحه (H1)" htmlFor="h1">
+          <Input id="h1" value={h1Fa} onChange={(e) => setH1Fa(e.target.value)} placeholder="تور استانبول" />
         </Field>
-        <Field label="Workflow">
-          <select value={workflow} onChange={e => setWorkflow(e.target.value as any)} className={inputCls}>
-            <option value="draft">پیش‌نویس</option>
-            <option value="review">بازبینی</option>
-            <option value="published">منتشرشده</option>
-            <option value="paused">متوقف</option>
-            <option value="archived">بایگانی</option>
-          </select>
+        <Field label="وضعیت انتشار" htmlFor="wf">
+          <Select id="wf" value={workflow} onChange={(e) => setWorkflow(e.target.value as NonNullable<LandingInput['workflow']>)} options={WORKFLOW_OPTIONS} />
         </Field>
-        <Field label="Index Status">
-          <select value={indexStatus} onChange={e => setIndexStatus(e.target.value as any)} className={inputCls}>
-            <option value="index">index</option>
-            <option value="noindex">noindex</option>
-          </select>
+        <Field label="ایندکس" htmlFor="ix" hint="noindex یعنی صفحه از نتایج جست‌وجو حذف شود">
+          <Select id="ix" dir="ltr" value={indexStatus} onChange={(e) => setIndexStatus(e.target.value as NonNullable<LandingInput['indexStatus']>)} options={[{ value: 'index', label: 'index' }, { value: 'noindex', label: 'noindex' }]} />
         </Field>
-        <Field label="بازبینی بعدی" htmlFor="nr">
-          <input id="nr" type="date" value={nextReviewAt} onChange={e => setNextReviewAt(e.target.value)} className={inputCls} />
+        <Field label="بازبینی بعدی" htmlFor="nr" hint="تاریخ شمسی">
+          <DatePicker value={nextReviewAt} onChange={setNextReviewAt} placeholder="انتخاب تاریخ بازبینی" />
         </Field>
       </div>
       <div className="flex gap-2">
-        <button onClick={submit} className="btn btn-medium btn-primary text-btn font-bold" disabled={pending}>
+        <button type="button" onClick={submit} disabled={pending} className="inline-flex h-10 items-center justify-center rounded-lg bg-brand px-4 text-sm font-semibold text-brand-foreground transition-colors hover:bg-brand/90 disabled:pointer-events-none disabled:opacity-50">
           {pending ? 'در حال ثبت...' : 'ایجاد لندینگ'}
         </button>
       </div>

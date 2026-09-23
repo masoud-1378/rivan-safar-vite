@@ -5,7 +5,10 @@ import { ArrowLeft, BookOpen, BriefcaseBusiness, Globe2, Inbox, MapPinned } from
 import { DashboardStats } from '@/components/blocks/dashboard-stats';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { BarChart } from '@/components/ui/chart';
+import { formatJalali } from '@/lib/jalali';
 import { formatToman, fa } from '@/lib/utils';
+import { getDashboardTrend } from './actions-search';
 import { getDb } from '@/db/client';
 import {
   accommodationOffers,
@@ -22,6 +25,15 @@ import { requireAdmin } from '@/src/lib/admin-auth';
 export const metadata: Metadata = {
   title: 'داشبورد | پنل ریوان سفر',
   robots: 'noindex,nofollow',
+};
+
+const LEAD_STATUS_LABELS: Record<string, string> = {
+  new: 'جدید',
+  contacted: 'تماس گرفته شد',
+  qualified: 'مخاطب واجد شرایط',
+  won: 'تبدیل به مشتری',
+  lost: 'از دست رفته',
+  invalid: 'نامعتبر',
 };
 
 export default async function AdminDashboard() {
@@ -61,6 +73,7 @@ export default async function AdminDashboard() {
   let drafts = 0;
   let departures = 0;
   let expiringPrices = 0;
+  let trend = { labels: [] as string[], leads: [] as number[], tours: [] as number[], destinations: [] as number[], guides: [] as number[] };
 
   if (db) {
     // ترتیبی اجرا می‌شوند تا روی اتصال تکی serverless قفل نکنند
@@ -104,12 +117,30 @@ export default async function AdminDashboard() {
     dbDown = true;
   }
 
+  if (!dbDown) {
+    try {
+      trend = await getDashboardTrend(30);
+    } catch {
+      trend = { labels: [], leads: [], tours: [], destinations: [], guides: [] };
+    }
+  }
+
+  const last7 = (series: number[]) => {
+    const slice = series.slice(-7);
+    return slice.length ? slice : [0, 0, 0, 0, 0, 0, 0];
+  };
+
   const stats = [
-    { label: 'کل درخواست‌های تماس', value: fa(leads), trend: [2, 3, 2, 5, 4, 6, 8] },
-    { label: 'تورهای قابل مدیریت', value: fa(tours), trend: [8, 9, 9, 10, 10, 11, 12] },
-    { label: 'مقصدها و شهرها', value: fa(destinations), trend: [5, 6, 7, 8, 8, 10, 11] },
-    { label: 'مقاله و راهنما', value: fa(guidesCount), trend: [1, 2, 2, 3, 3, 4, 4] },
+    { label: 'کل درخواست‌های تماس', value: fa(leads), trend: last7(trend.leads) },
+    { label: 'تورهای قابل مدیریت', value: fa(tours), trend: last7(trend.tours) },
+    { label: 'مقصدها و شهرها', value: fa(destinations), trend: last7(trend.destinations) },
+    { label: 'مقاله و راهنما', value: fa(guidesCount), trend: last7(trend.guides) },
   ];
+
+  const leadSeries = trend.labels.map((key, i) => ({
+    label: formatJalali(new Date(key), { year: false }).split(' ')[0],
+    value: trend.leads[i] ?? 0,
+  }));
 
   const quickLinks = [
     { href: '/admin/tours', label: 'مدیریت تورها', value: tours, icon: BriefcaseBusiness },
@@ -128,7 +159,7 @@ export default async function AdminDashboard() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="mb-1 text-sm font-medium text-brand">مرکز کنترل ریوان سفر</p>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">داشبورد مدیریت</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">داشبورد مدیریت</h1>
           <p className="mt-1 text-sm text-muted-foreground">محتوا، تورها و درخواست‌های مشتری را از یکجا مدیریت کنید.</p>
         </div>
         <Link href="/admin/leads" className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium transition hover:bg-accent">
@@ -164,10 +195,25 @@ export default async function AdminDashboard() {
         </Card>
       </div>
 
+      <Card className="p-5">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">روند درخواست‌های تماس</h2>
+            <p className="text-sm text-muted-foreground">درخواست‌های ثبت‌شده در {fa(30)} روز گذشته، بر پایه‌ی تاریخ شمسی</p>
+          </div>
+          <Link href="/admin/leads" className="text-sm font-medium text-brand hover:underline">همه‌ی درخواست‌ها</Link>
+        </div>
+        {leadSeries.some((p) => p.value > 0) ? (
+          <BarChart data={leadSeries} height={200} highlight={leadSeries.length - 1} />
+        ) : (
+          <p className="py-12 text-center text-sm text-muted-foreground">در ۳۰ روز گذشته درخواستی ثبت نشده است.</p>
+        )}
+      </Card>
+
       <Card className="overflow-hidden">
         <div className="flex items-center justify-between border-b border-border p-5"><div><h2 className="font-semibold">آخرین درخواست‌های تماس</h2><p className="text-sm text-muted-foreground">پیگیری سریع سرنخ‌های جدید</p></div><Link href="/admin/leads" className="text-sm font-medium text-brand hover:underline">مشاهده همه</Link></div>
         <div className="divide-y divide-border">
-          {recentLeads.length === 0 ? <p className="p-5 text-sm text-muted-foreground">هنوز درخواستی ثبت نشده است.</p> : recentLeads.map((lead) => <Link key={lead.id} href="/admin/leads" className="flex flex-wrap items-center justify-between gap-3 p-4 transition hover:bg-accent/40"><div><p className="font-medium">{lead.fullName}</p><p className="text-xs text-muted-foreground" dir="ltr">{lead.phone}</p></div><div className="text-left"><p className="text-sm">{lead.tourContext || lead.destinationHint || 'درخواست عمومی'}</p><p className="text-xs text-muted-foreground">{lead.status === 'new' ? 'جدید' : lead.status}</p></div></Link>)}
+          {recentLeads.length === 0 ? <p className="p-5 text-sm text-muted-foreground">هنوز درخواستی ثبت نشده است.</p> : recentLeads.map((lead) => <Link key={lead.id} href="/admin/leads" className="flex flex-wrap items-center justify-between gap-3 p-4 transition hover:bg-accent/40"><div><p className="font-medium">{lead.fullName}</p><p className="text-xs text-muted-foreground" dir="ltr">{fa(lead.phone)}</p></div><div className="text-end"><p className="text-sm">{lead.tourContext || lead.destinationHint || 'درخواست عمومی'}</p><p className="text-xs text-muted-foreground">{LEAD_STATUS_LABELS[lead.status] ?? lead.status}</p></div></Link>)}
         </div>
       </Card>
     </div>

@@ -9,7 +9,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { Dialog } from '@/components/ui/dialog';
 import { Field, Input } from '@/components/ui/input';
+import { NumberField } from '@/components/ui/number-field';
 import { Select } from '@/components/ui/select';
+import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
 
 interface HotelsManagerProps {
@@ -25,6 +27,7 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
   const [stars, setStars] = useState(5);
   const [placeSlug, setPlaceSlug] = useState('');
   const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   const reload = () => window.location.reload();
 
@@ -46,7 +49,7 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
 
   const submit = () => {
     if (name.trim().length < 2) {
-      alert('نام هتل لازم است.');
+      toast({ variant: 'error', title: 'نام هتل لازم است.' });
       return;
     }
     startTransition(async () => {
@@ -61,7 +64,7 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
         setOpen(false);
         reload();
       } catch (e) {
-        alert(e instanceof Error ? e.message : 'خطا در ذخیره.');
+        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ذخیره.' });
       }
     });
   };
@@ -81,7 +84,7 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
       );
       reload();
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'خطا در حذف.');
+      toast({ variant: 'error', title: error instanceof Error ? error.message : 'خطا در حذف.' });
     }
   };
 
@@ -113,7 +116,7 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">هتل‌ها</h1>
+          <h1 className="text-2xl font-bold text-foreground">هتل‌ها</h1>
           <p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول اقامتگاه‌ها</p>
         </div>
         <Button onClick={startCreate}>
@@ -155,7 +158,7 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="مثلاً Rixos Premium Dubai" data-autofocus />
           </Field>
           <Field label="ستاره">
-            <Input type="number" min={0} max={7} value={stars} onChange={(e) => setStars(Number(e.target.value))} />
+            <NumberField value={stars} onChange={setStars} min={0} max={7} aria-label="ستاره هتل" />
           </Field>
           <Field label="شهر / مقصد">
             <Select

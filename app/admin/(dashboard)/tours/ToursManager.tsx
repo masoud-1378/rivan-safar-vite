@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DataTable, type Column } from '@/components/ui/data-table';
+import { useToast } from '@/components/ui/toast';
 import { fa, formatToman } from '@/lib/utils';
 
 interface ToursManagerProps {
@@ -26,6 +27,7 @@ export default function ToursManager({ initial, sectionSettings, tree, origins, 
   const [editing, setEditing] = useState<TourRow | null>(null);
   const [deleting, setDeleting] = useState<TourRow | null>(null);
   const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   const reload = () => { setShowForm(false); setEditing(null); window.location.reload(); };
   const onDelete = async () => {
@@ -35,7 +37,7 @@ export default function ToursManager({ initial, sectionSettings, tree, origins, 
         try { await deleteTour(deleting.id); resolve(); } catch (error) { reject(error); }
       }));
       window.location.reload();
-    } catch (error) { alert(error instanceof Error ? error.message : 'خطا در حذف.'); }
+    } catch (error) { toast({ variant: 'error', title: error instanceof Error ? error.message : 'خطا در حذف.' }); }
   };
   const edit = (tour: TourRow) => { setEditing(tour); setShowForm(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const duplicate = (tour: TourRow) => {
@@ -54,7 +56,7 @@ export default function ToursManager({ initial, sectionSettings, tree, origins, 
 
   return (
     <div className="admin-enter space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2"><div><h1 className="text-2xl font-bold tracking-tight text-foreground">تورها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول تورها</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="tours" title="تنظیمات تورها" tabs={['general']} values={sectionSettings} /><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن تور جدید</Button></div></div>
+      <div className="flex flex-wrap items-center justify-between gap-2"><div><h1 className="text-2xl font-bold text-foreground">تورها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول تورها</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="tours" title="تنظیمات تورها" tabs={['general']} values={sectionSettings} /><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن تور جدید</Button></div></div>
       {showForm || editing ? <Card><CardContent className="p-5"><TourForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onDone={reload} tree={tree} origins={origins} hotels={hotels} /></CardContent></Card> : null}
       <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">تورها ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(tour) => tour.id} searchKeys={['title', 'destination', 'typeLabel']} searchPlaceholder="جست‌وجوی عنوان، مقصد یا نوع تور…" emptyTitle="توری ثبت نشده است" emptyDescription="برای شروع، تور جدیدی اضافه کنید." /></CardContent></Card>
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="حذف تور" description={deleting ? `آیا از حذف تور «${deleting.title}» اطمینان دارید؟` : ''} confirmText="حذف تور" destructive onConfirm={onDelete} />

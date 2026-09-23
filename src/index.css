@@ -43,13 +43,13 @@
   --color-border-on-dark: rgba(255, 255, 255, 0.12);
   --color-border-brand: rgba(255, 102, 0, 0.35);
 
-  /* Semantic */
-  --color-success: #16A765;
-  --color-success-soft: #EAF9F0;
+  /* Semantic — prefixed to avoid colliding with the VibeFarsi admin tokens */
+  --color-brand-success: #16A765;
+  --color-brand-success-soft: #EAF9F0;
   --color-info: #2878E8;
   --color-info-soft: #EBF3FF;
-  --color-warning: #D99100;
-  --color-warning-soft: #FFF6DB;
+  --color-brand-warning: #D99100;
+  --color-brand-warning-soft: #FFF6DB;
   --color-danger: #D93D3D;
   --color-danger-soft: #FDECEC;
   --color-disabled: #C7CFD3;
@@ -384,12 +384,12 @@ html, body {
   white-space: nowrap;
 }
 .status-success {
-  background-color: var(--color-success-soft);
-  color: var(--color-success);
+  background-color: var(--color-brand-success-soft);
+  color: var(--color-brand-success);
 }
 .status-warning {
-  background-color: var(--color-warning-soft);
-  color: var(--color-warning);
+  background-color: var(--color-brand-warning-soft);
+  color: var(--color-brand-warning);
 }
 .status-unavailable {
   background-color: var(--color-surface-secondary);
@@ -529,7 +529,7 @@ html, body {
 }
 
 .form-input-success {
-  border-color: var(--color-success);
+  border-color: var(--color-brand-success);
 }
 .form-input-success:focus {
   box-shadow: 0 0 0 3px rgba(22, 167, 101, 0.16);
@@ -704,7 +704,7 @@ html, body {
 .form-success-text {
   margin-top: 6px;
   font-size: 12px;
-  color: var(--color-success);
+  color: var(--color-brand-success);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1613,7 +1613,11 @@ html, body {
 
 /* --- vibefarsi:theme-graphite --- */
 /* گرافیت، پیش‌فرض. این بلوک را در :root بگذارید. */
-.admin-vibefarsi {
+/* `body:has(.admin-vibefarsi)` توکن‌ها را به هر پورتالی که روی body سوار می‌شود
+   (تقویم، پالت فرمان، پاپ‌آور) می‌رساند؛ بدون دست‌زدن به فایل کامپوننت‌ها. */
+.admin-vibefarsi,
+[data-theme='admin'],
+body:has(.admin-vibefarsi) {
   color-scheme: dark;
   --background: oklch(0.115 0.002 285);
   --foreground: oklch(0.975 0 0);
@@ -1638,6 +1642,7 @@ html, body {
   --brand: oklch(0.8 0.165 65);
   --brand-foreground: oklch(0.22 0.06 60);
   --radius: 0.625rem;
+  --shadow-lift: 0 16px 40px oklch(0 0 0 / 40%);
 }
 /* --- vibefarsi:theme-graphite-end --- */
 
@@ -1645,7 +1650,10 @@ html, body {
 @media (prefers-reduced-motion: no-preference) {
   .admin-vibefarsi *,
   .admin-vibefarsi *::before,
-  .admin-vibefarsi *::after {
+  .admin-vibefarsi *::after,
+  [data-theme='admin'] *,
+  [data-theme='admin'] *::before,
+  [data-theme='admin'] *::after {
     transition-property: color, background-color, border-color, box-shadow, transform, opacity;
     transition-duration: 200ms;
     transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
@@ -1667,9 +1675,10 @@ html, body {
   .admin-vibefarsi .admin-enter > *:nth-child(5) { animation-delay: 240ms; }
   .admin-vibefarsi .admin-enter > *:nth-child(6) { animation-delay: 290ms; }
 
-  .admin-vibefarsi .admin-lift:hover {
+  .admin-vibefarsi .admin-lift:hover,
+  [data-theme='admin'] .admin-lift:hover {
     transform: translateY(-3px);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-lift);
   }
 }
 

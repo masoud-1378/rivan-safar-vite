@@ -22,8 +22,8 @@ import {
 } from 'lucide-react';
 import { Sidebar, SidebarGroup, SidebarItem } from '@/components/ui/sidebar';
 import { Avatar } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import AdminSignOut from './SignOut';
+import AdminCommand from './AdminCommand';
 
 const groups = [
   {
@@ -61,14 +61,17 @@ export default function AdminSidebar({ role, email }: { role: 'owner' | 'editor'
     <Sidebar
       className="admin-sidebar sticky top-4 hidden h-[calc(100dvh-2rem)] w-64 shrink-0 border-border bg-card md:flex"
       header={
-        <div className="flex items-center gap-3 py-2">
-          <div className="grid size-10 place-items-center rounded-xl bg-brand text-brand-foreground">
-            <Gauge className="size-5" />
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 py-2">
+            <div className="grid size-10 place-items-center rounded-xl bg-brand text-brand-foreground">
+              <Gauge className="size-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate font-bold">ریوان سفر</p>
+              <p className="truncate text-xs text-muted-foreground">مرکز مدیریت محتوا</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="truncate font-bold">ریوان سفر</p>
-            <p className="truncate text-xs text-muted-foreground">مرکز مدیریت محتوا</p>
-          </div>
+          <AdminCommand ownerOnly={role === 'owner'} />
         </div>
       }
       footer={

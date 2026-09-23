@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { Building2, Check as CheckIcon, ChevronDown, Eye, History, Plus, Sparkles, X } from 'lucide-react';
 import { AmountInput } from '@/components/ui/amount-input';
+import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -11,6 +12,7 @@ import { Field, Input } from '@/components/ui/input';
 import { RadioGroup } from '@/components/ui/radio-group';
 import { Select } from '@/components/ui/select';
 import { TagsInput } from '@/components/ui/tags-input';
+import { useToast } from '@/components/ui/toast';
 import { Textarea } from '@/components/ui/textarea';
 import { fa } from '@/lib/utils';
 import { faNumber } from '@/lib/utils';
@@ -164,6 +166,8 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
   const [showPreview, setShowPreview] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [qualityMissing, setQualityMissing] = useState<string[] | null>(null);
+  const { toast } = useToast();
   const slugTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const draftKey = editingId ? `tour-draft:${editingId}` : 'tour-draft:new';
   const [openRegions, setOpenRegions] = useState<Record<string, boolean>>(() => {
@@ -300,7 +304,7 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
 
   const addHotel = () => {
     if (newHotelName.trim().length < 2) {
-      alert('نام هتل لازم است.');
+      toast({ variant: 'error', title: 'نام هتل لازم است.' });
       return;
     }
     startSavingHotel(async () => {
@@ -312,26 +316,12 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
         setNewHotelStars(5);
         setNewHotelPlace('');
       } catch (e) {
-        alert(e instanceof Error ? e.message : 'خطا در ذخیره هتل.');
+        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ذخیره هتل.' });
       }
     });
   };
 
-  const submit = () => {
-    setTouched(true);
-    const errs = validateDraft({ title, slug, price, destinations: selected.length, origin });
-    if (Object.keys(errs).length > 0 || slugTaken) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-    if (status === 'confirmed') {
-      const missing: string[] = [];
-      if (!image.trim()) missing.push('تصویر شاخص');
-      if (Object.keys(picked).length === 0) missing.push('حداقل یک هتل');
-      if (included.length === 0) missing.push('خدمات شامل');
-      if (description.trim().length < DESC_MIN) missing.push(`توضیحات حداقل ${fa(DESC_MIN)} نویسه`);
-      if (missing.length > 0 && !confirm(`برای انتشار قطعی این موارد ناقص است:\n• ${missing.join('\n• ')}\n\nباز هم ثبت شود؟`)) return;
-    }
+  const doSave = () => {
     const hotelOptions = Object.entries(picked)
       .map(([id, v]) => {
         const h = hotelList.find((x) => x.id === id);
@@ -376,9 +366,30 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
         setDirty(false);
         onDone();
       } catch (e) {
-        alert(e instanceof Error ? e.message : 'خطا در ذخیره.');
+        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ذخیره.' });
       }
     });
+  };
+
+  const submit = () => {
+    setTouched(true);
+    const errs = validateDraft({ title, slug, price, destinations: selected.length, origin });
+    if (Object.keys(errs).length > 0 || slugTaken) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (status === 'confirmed') {
+      const missing: string[] = [];
+      if (!image.trim()) missing.push('تصویر شاخص');
+      if (Object.keys(picked).length === 0) missing.push('حداقل یک هتل');
+      if (included.length === 0) missing.push('خدمات شامل');
+      if (description.trim().length < DESC_MIN) missing.push(`توضیحات حداقل ${fa(DESC_MIN)} نویسه`);
+      if (missing.length > 0) {
+        setQualityMissing(missing);
+        return;
+      }
+    }
+    doSave();
   };
 
   const suggestSlug = () => {
@@ -444,7 +455,7 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
                   setSlugTouched(true);
                 }}
                 placeholder="istanbul-antalya"
-                className="h-10 min-w-0 flex-1 bg-transparent px-3 text-left text-sm outline-none placeholder:text-muted-foreground/50"
+                className="h-10 min-w-0 flex-1 bg-transparent px-3 text-start text-sm outline-none placeholder:text-muted-foreground/50"
               />
               <button
                 type="button"
@@ -462,7 +473,7 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
               <p className="mt-1 text-xs text-destructive">{errors.slug}</p>
             ) : null}
           </Field>
-          <p dir="ltr" className="text-left text-xs text-muted-foreground">
+          <p dir="ltr" className="text-start text-xs text-muted-foreground">
             {slug.trim() ? `https://rivansafar.ir/tour/${slug.trim()}` : 'نامک را وارد کنید تا آدرس نهایی نمایش داده شود.'}
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -491,7 +502,7 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
             </Field>
           </div>
           <Field label="تصویر شاخص">
-            <Input value={image} dir="ltr" onChange={(e) => setImage(e.target.value)} placeholder="/images/tours/… یا آدرس کامل" className="text-left" />
+            <Input value={image} dir="ltr" onChange={(e) => setImage(e.target.value)} placeholder="/images/tours/… یا آدرس کامل" />
           </Field>
         </CardContent>
       </Card>
@@ -797,6 +808,18 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
           />
         ) : null}
       </div>
+      <AlertDialog
+        open={Boolean(qualityMissing)}
+        onOpenChange={(openState) => !openState && setQualityMissing(null)}
+        title="انتشار قطعی با موارد ناقص"
+        description={qualityMissing ? `این موارد هنوز کامل نشده‌اند: ${qualityMissing.join('، ')}` : ''}
+        confirmText="با همین حالا ثبت کن"
+        destructive
+        onConfirm={() => {
+          setQualityMissing(null);
+          doSave();
+        }}
+      />
     </div>
   );
 }

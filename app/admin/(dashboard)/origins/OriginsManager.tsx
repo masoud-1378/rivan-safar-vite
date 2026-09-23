@@ -10,6 +10,7 @@ import { DataTable, type Column } from '@/components/ui/data-table';
 import { Dialog } from '@/components/ui/dialog';
 import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
 
 const TYPE_LABEL: Record<string, string> = { region: 'قاره/ناحیه', country: 'کشور', city: 'شهر' };
@@ -22,6 +23,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
   const [type, setType] = useState('city');
   const [parentSlug, setParentSlug] = useState('');
   const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   const reload = () => window.location.reload();
 
@@ -43,7 +45,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
 
   const submit = () => {
     if (name.trim().length < 2) {
-      alert('نام مبدأ لازم است.');
+      toast({ variant: 'error', title: 'نام مبدأ لازم است.' });
       return;
     }
     startTransition(async () => {
@@ -52,7 +54,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
         setOpen(false);
         reload();
       } catch (e) {
-        alert(e instanceof Error ? e.message : 'خطا در ذخیره.');
+        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ذخیره.' });
       }
     });
   };
@@ -64,7 +66,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
         await deleteOrigin(deleting.id);
         reload();
       } catch (e) {
-        alert(e instanceof Error ? e.message : 'خطا در حذف.');
+        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در حذف.' });
       }
     });
   };
@@ -97,7 +99,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">مبدأها</h1>
+          <h1 className="text-2xl font-bold text-foreground">مبدأها</h1>
           <p className="mt-1 text-sm text-muted-foreground">شهرهای مبدأ حرکت تورها با ساختار سلسله‌مراتبی</p>
         </div>
         <Button onClick={startCreate}>

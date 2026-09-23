@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { Select } from '@/components/ui/select';
+import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
 
 const STATUS_MAP: Record<GuideStatus, { label: string; variant: 'success' | 'warning' | 'secondary' | 'brand' | 'destructive' }> = {
@@ -22,12 +23,13 @@ export default function GuidesManager({ initial }: { initial: GuideRow[] }) {
   const [editing, setEditing] = useState<GuideRow | null>(null);
   const [deleting, setDeleting] = useState<GuideRow | null>(null);
   const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
   const reload = () => { setShowForm(false); setEditing(null); window.location.reload(); };
   const onDelete = async () => {
     if (!deleting) return;
-    try { await new Promise<void>((resolve, reject) => startTransition(async () => { try { await deleteGuide(deleting.id); resolve(); } catch (error) { reject(error); } })); window.location.reload(); } catch (error) { alert(error instanceof Error ? error.message : 'خطا در حذف.'); }
+    try { await new Promise<void>((resolve, reject) => startTransition(async () => { try { await deleteGuide(deleting.id); resolve(); } catch (error) { reject(error); } })); window.location.reload(); } catch (error) { toast({ variant: 'error', title: error instanceof Error ? error.message : 'خطا در حذف.' }); }
   };
-  const onStatusChange = (id: string, status: GuideStatus) => startTransition(async () => { try { await setGuideStatus(id, status); window.location.reload(); } catch (error) { alert(error instanceof Error ? error.message : 'خطا در تغییر وضعیت.'); } });
+  const onStatusChange = (id: string, status: GuideStatus) => startTransition(async () => { try { await setGuideStatus(id, status); window.location.reload(); } catch (error) { toast({ variant: 'error', title: error instanceof Error ? error.message : 'خطا در تغییر وضعیت.' }); } });
   const edit = (guide: GuideRow) => { setEditing(guide); setShowForm(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const columns: Column<GuideRow>[] = [
     { key: 'titleFa', header: 'عنوان مقاله', sortable: true, cell: (guide) => <span className="font-medium">{guide.titleFa}</span> },
@@ -40,7 +42,7 @@ export default function GuidesManager({ initial }: { initial: GuideRow[] }) {
   ];
   return (
     <div className="admin-enter space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold tracking-tight text-foreground">مقالات و راهنماها</h1><p className="mt-1 text-sm text-muted-foreground">مجموع مقالات ثبت‌شده: {fa(initial.length)} مورد</p></div><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />مقاله جدید</Button></div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-foreground">مقالات و راهنماها</h1><p className="mt-1 text-sm text-muted-foreground">مجموع مقالات ثبت‌شده: {fa(initial.length)} مورد</p></div><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />مقاله جدید</Button></div>
       {(showForm || editing) && <Card><CardContent className="p-5"><GuideForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onSaved={reload} onCancel={() => { setShowForm(false); setEditing(null); }} /></CardContent></Card>}
       <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">لیست مقالات ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(guide) => guide.id} searchKeys={['titleFa', 'slug', 'category', 'categoryLabel']} searchPlaceholder="جست‌وجوی عنوان، نامک یا دسته‌بندی…" emptyTitle="مقاله‌ای یافت نشد" emptyDescription="برای شروع، مقاله جدیدی اضافه کنید." /></CardContent></Card>
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="حذف مقاله" description={deleting ? `آیا از حذف مقاله «${deleting.titleFa}» اطمینان دارید؟` : ''} confirmText="حذف مقاله" destructive onConfirm={onDelete} />

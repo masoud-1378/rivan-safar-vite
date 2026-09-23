@@ -15,7 +15,7 @@ export default async function AdminLeadsPage() {
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">درخواست‌های تماس</h1>
+          <h1 className="text-2xl font-bold text-foreground">درخواست‌های تماس</h1>
           <p className="text-sm text-muted-foreground mt-1">
             جدیدترین درخواست‌های ثبت‌شده در سایت؛ تغییر وضعیت، پیگیری را مشخص می‌کند.
           </p>
