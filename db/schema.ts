@@ -74,6 +74,7 @@ export const siteTours = pgTable(
     type: varchar('type', { length: 60 }).notNull(), // 'foreign' | 'domestic' | 'exhibition'
     typeLabel: varchar('type_label', { length: 120 }).notNull(),
     destination: varchar('destination', { length: 120 }).notNull(),
+    destinationSlugs: jsonb('destination_slugs').default('[]').notNull(), // string[] (چند مقصدی)
     origin: varchar('origin', { length: 120 }).notNull(),
     route: varchar('route', { length: 260 }).notNull(),
     duration: varchar('duration', { length: 120 }).notNull(),
@@ -168,6 +169,8 @@ export const originCities = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     slug: varchar('slug', { length: 120 }).notNull(),
     nameFa: varchar('name_fa', { length: 120 }).notNull(),
+    parentSlug: varchar('parent_slug', { length: 120 }),
+    type: varchar('type', { length: 60 }).notNull().default('city'), // region | country | city
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (t) => [uniqueIndex('origin_cities_slug_uidx').on(t.slug)],
