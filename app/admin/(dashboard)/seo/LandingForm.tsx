@@ -30,7 +30,7 @@ const PAGE_TYPES = [
 function Field({ label, htmlFor, children, required }: { label: string; children: React.ReactNode; htmlFor?: string; required?: boolean }) {
   return (
     <div>
-      <label htmlFor={htmlFor || label} className="block text-caption font-bold text-text-heading mb-1">
+      <label htmlFor={htmlFor || label} className="block text-xs font-bold text-foreground mb-1">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}
@@ -38,7 +38,7 @@ function Field({ label, htmlFor, children, required }: { label: string; children
   );
 }
 
-const inputCls = 'w-full bg-surface-secondary border border-border-default rounded-control px-3 py-2 text-body-sm';
+const inputCls = 'w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground';
 
 export default function LandingForm({ onSaved }: { onSaved?: () => void }) {
   const [queryOwner, setQueryOwner] = useState('');
@@ -76,8 +76,8 @@ export default function LandingForm({ onSaved }: { onSaved?: () => void }) {
   };
 
   return (
-    <div className="bg-surface-primary border border-border-default rounded-card p-5 space-y-4">
-      <h2 className="text-h4 font-bold text-text-heading">لندینگ جدید</h2>
+    <div className="bg-card border border-border rounded-xl p-5 space-y-4 admin-lift">
+      <h2 className="font-semibold text-foreground">لندینگ جدید</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Query Owner" htmlFor="qo">
           <input id="qo" value={queryOwner} onChange={e => setQueryOwner(e.target.value)} className={inputCls} placeholder="home:ریوان سفر" />

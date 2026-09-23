@@ -13,9 +13,9 @@ type UserRow = Awaited<ReturnType<typeof listAdminUsers>>[number];
 
 function statusBadge(active: boolean) {
   return active ? (
-    <span className="inline-flex px-2 py-0.5 rounded-md text-caption font-bold bg-emerald-50 text-emerald-800">فعال</span>
+    <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-300">فعال</span>
   ) : (
-    <span className="inline-flex px-2 py-0.5 rounded-md text-caption font-bold bg-amber-50 text-amber-800">غیرفعال</span>
+    <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-bold bg-amber-500/15 text-amber-300">غیرفعال</span>
   );
 }
 
@@ -80,24 +80,24 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="admin-enter space-y-6">
       <div>
-        <h1 className="text-h2 font-bold text-text-heading">مدیریت کاربران پنل</h1>
-        <p className="text-body-sm text-text-secondary mt-1">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">مدیریت کاربران پنل</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           فقط مالک می‌تواند کاربران را دعوت، تغییر نقش، غیرفعال یا حذف کند.
         </p>
       </div>
 
-      <form onSubmit={handleInvite} className="bg-surface-primary border border-border-default rounded-card p-5 space-y-3">
-        <h2 className="text-h4 font-bold text-text-heading mb-3">دعوت مدیر/ویراستار جدید</h2>
+      <form onSubmit={handleInvite} className="bg-card border border-border rounded-xl p-5 space-y-3 admin-lift">
+        <h2 className="font-semibold text-foreground mb-3">دعوت مدیر/ویراستار جدید</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label className="block text-caption font-bold text-text-heading mb-1">ایمیل</label>
-            <input name="email" type="email" dir="ltr" required className="w-full bg-surface-secondary border border-border-default rounded-control px-3 py-2 text-body-sm text-left" placeholder="admin@example.com" />
+            <label className="block text-xs font-bold text-foreground mb-1">ایمیل</label>
+            <input name="email" type="email" dir="ltr" required className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground text-left placeholder:text-muted-foreground" placeholder="admin@example.com" />
           </div>
           <div>
-            <label className="block text-caption font-bold text-text-heading mb-1">نقش</label>
-            <select name="role" className="w-full bg-surface-secondary border border-border-default rounded-control px-3 py-2 text-body-sm">
+            <label className="block text-xs font-bold text-foreground mb-1">نقش</label>
+            <select name="role" className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground">
               <option value="editor">ویراستار</option>
               <option value="owner">مالک</option>
             </select>
@@ -108,11 +108,11 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
         </div>
       </form>
 
-      <div className="bg-surface-primary border border-border-default rounded-card overflow-hidden">
+      <div className="bg-card border border-border rounded-xl overflow-hidden admin-lift">
         <div className="overflow-x-auto">
-          <table className="w-full text-right text-body-sm min-w-[700px]">
+          <table className="w-full text-right text-sm min-w-[700px]">
             <thead>
-              <tr className="bg-surface-secondary border-b border-border-default text-text-heading">
+              <tr className="bg-muted border-b border-border text-foreground">
                 <th className="px-4 py-3 font-bold">ایمیل</th>
                 <th className="px-4 py-3 font-bold">نقش</th>
                 <th className="px-4 py-3 font-bold">وضعیت</th>
@@ -120,15 +120,15 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
                 <th className="px-4 py-3 font-bold">عملیات</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border-subtle">
+            <tbody className="divide-y divide-border">
               {users.map(u => (
-                <tr key={u.id} className="hover:bg-surface-secondary/50">
-                  <td className="px-4 py-3 font-medium text-text-heading" dir="ltr">{u.email}</td>
+                <tr key={u.id} className="hover:bg-accent/40">
+                  <td className="px-4 py-3 font-medium text-foreground" dir="ltr">{u.email}</td>
                   <td className="px-4 py-3">
                     <select
                       value={u.role}
                       onChange={e => handleRoleChange(u.id, e.target.value as 'owner' | 'editor')}
-                      className="w-full bg-surface-secondary border border-border-default rounded-control px-3 py-2 text-body-sm"
+                      className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground"
                       disabled={pending}
                     >
                       <option value="editor">ویراستار</option>
@@ -136,14 +136,14 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
                     </select>
                   </td>
                   <td className="px-4 py-3">{statusBadge(u.active)}</td>
-                  <td className="px-4 py-3 text-text-secondary text-caption" dir="ltr">
+                  <td className="px-4 py-3 text-muted-foreground text-xs" dir="ltr">
                     {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(u.createdAt))}
                   </td>
                   <td className="px-4 py-3">
                     <button
                       type="button"
                       onClick={() => handleToggleActive(u.id, u.active)}
-                      className="text-caption font-bold text-text-secondary hover:underline"
+                      className="text-xs font-bold text-muted-foreground hover:underline"
                       disabled={pending}
                     >
                       {u.active ? 'غیرفعال' : 'فعال'}
@@ -151,7 +151,7 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
                     <button
                       type="button"
                       onClick={() => handleRemove(u.id)}
-                      className="text-caption font-bold text-red-700 hover:underline ml-4"
+                      className="text-xs font-bold text-red-400 hover:underline ml-4"
                       disabled={pending}
                     >
                       حذف

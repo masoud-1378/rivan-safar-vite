@@ -35,8 +35,8 @@ export default function CatalogManager({ initial }: { initial: DestinationRow[] 
   ];
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-2"><div><h1 className="text-h2 font-bold text-text-heading">مکان‌ها و مقصدها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول مقصدها</p></div><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن مقصد جدید</Button></div>
+    <div className="admin-enter space-y-6">
+      <div className="flex items-center justify-between gap-2"><div><h1 className="text-2xl font-bold tracking-tight text-foreground">مکان‌ها و مقصدها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول مقصدها</p></div><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن مقصد جدید</Button></div>
       {showForm || editing ? <Card><CardContent className="p-5"><DestinationForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onDone={reload} /></CardContent></Card> : null}
       <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">مقصدها ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(destination) => destination.id} searchKeys={['name', 'nameEn', 'type', 'category']} searchPlaceholder="جست‌وجوی نام، نوع یا دسته‌بندی…" emptyTitle="مقصدی ثبت نشده است" emptyDescription="برای شروع، مقصد جدیدی اضافه کنید." /></CardContent></Card>
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="حذف مقصد" description={deleting ? `آیا از حذف مقصد «${deleting.name}» اطمینان دارید؟` : ''} confirmText="حذف مقصد" destructive onConfirm={onDelete} />

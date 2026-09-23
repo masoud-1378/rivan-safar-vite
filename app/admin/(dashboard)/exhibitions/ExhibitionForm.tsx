@@ -135,7 +135,7 @@ export default function ExhibitionForm({
         </div>
 
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-control text-body-sm text-red-600">
+        <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-600">
           {error}
         </div>
       )}

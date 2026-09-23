@@ -38,8 +38,8 @@ export default function ToursManager({ initial }: { initial: TourRow[] }) {
   ];
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-2"><div><h1 className="text-h2 font-bold text-text-heading">تورها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول تورها</p></div><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن تور جدید</Button></div>
+    <div className="admin-enter space-y-6">
+      <div className="flex items-center justify-between gap-2"><div><h1 className="text-2xl font-bold tracking-tight text-foreground">تورها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول تورها</p></div><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن تور جدید</Button></div>
       {showForm || editing ? <Card><CardContent className="p-5"><TourForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onDone={reload} /></CardContent></Card> : null}
       <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">تورها ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(tour) => tour.id} searchKeys={['title', 'destination', 'typeLabel']} searchPlaceholder="جست‌وجوی عنوان، مقصد یا نوع تور…" emptyTitle="توری ثبت نشده است" emptyDescription="برای شروع، تور جدیدی اضافه کنید." /></CardContent></Card>
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="حذف تور" description={deleting ? `آیا از حذف تور «${deleting.title}» اطمینان دارید؟` : ''} confirmText="حذف تور" destructive onConfirm={onDelete} />

@@ -86,7 +86,7 @@ export function LeadBoard({ initial }: { initial: LeadRow[] }) {
   return (
     <div className="space-y-4">
       {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-      <Card><CardContent className="p-5"><DataTable rows={rows} columns={columns} rowKey={(row) => row.id} searchKeys={['fullName', 'phone', 'tourContext', 'destinationHint']} searchPlaceholder="جست‌وجوی نام، تلفن یا مقصد…" emptyTitle="درخواستی یافت نشد" emptyDescription="وضعیت انتخاب‌شده را تغییر دهید." toolbar={<div className="w-48"><Select aria-label="فیلتر وضعیت درخواست‌ها" value={filter} onChange={(event) => setFilter(event.target.value as LeadStatus | 'all')} className="h-9" options={[{ value: 'all', label: 'همه وضعیت‌ها' }, ...STATUSES.map((status) => ({ value: status, label: STATUS_FA[status] }))]} /></div>} /></CardContent></Card>
+      <Card className="admin-lift"><CardContent className="p-5"><DataTable rows={rows} columns={columns} rowKey={(row) => row.id} searchKeys={['fullName', 'phone', 'tourContext', 'destinationHint']} searchPlaceholder="جست‌وجوی نام، تلفن یا مقصد…" emptyTitle="درخواستی یافت نشد" emptyDescription="وضعیت انتخاب‌شده را تغییر دهید." toolbar={<div className="w-48"><Select aria-label="فیلتر وضعیت درخواست‌ها" value={filter} onChange={(event) => setFilter(event.target.value as LeadStatus | 'all')} className="h-9" options={[{ value: 'all', label: 'همه وضعیت‌ها' }, ...STATUSES.map((status) => ({ value: status, label: STATUS_FA[status] }))]} /></div>} /></CardContent></Card>
     </div>
   );
 }

@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 export default async function AdminLeadsPage() {
   const { rows } = await getLeadStats();
   return (
-    <div className="space-y-5">
+    <div className="admin-enter space-y-6">
       <div>
-        <h1 className="text-h2 font-bold text-text-heading">درخواست‌های تماس</h1>
-        <p className="text-body-sm text-text-secondary mt-1">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">درخواست‌های تماس</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           جدیدترین درخواست‌های ثبت‌شده در سایت؛ تغییر وضعیت، پیگیری را مشخص می‌کند.
         </p>
       </div>

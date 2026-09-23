@@ -6,13 +6,13 @@ import LandingForm from './LandingForm';
 
 function statusBadge(status: string) {
   const colors: Record<string, string> = {
-    draft: 'bg-amber-50 border-amber-200 text-amber-900',
-    review: 'bg-blue-50 border-blue-200 text-blue-900',
-    published: 'bg-emerald-50 border-emerald-200 text-emerald-900',
-    paused: 'bg-slate-50 border-slate-200 text-slate-900',
-    archived: 'bg-slate-100 border-slate-300 text-slate-700',
+    draft: 'bg-amber-500/15 border-amber-500/30 text-amber-300',
+    review: 'bg-blue-500/15 border-blue-500/30 text-blue-300',
+    published: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',
+    paused: 'bg-muted border-border text-foreground',
+    archived: 'bg-muted border-border text-muted-foreground',
   };
-  return <span className={`inline-flex px-2 py-0.5 rounded-md text-caption font-bold ${colors[status] || 'bg-slate-50'}`}>{status}</span>;
+  return <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-bold ${colors[status] || 'bg-muted'}`}>{status}</span>;
 }
 
 export default function LandingList({ initial }: { initial: Awaited<ReturnType<typeof listLandings>> }) {
@@ -64,11 +64,11 @@ export default function LandingList({ initial }: { initial: Awaited<ReturnType<t
   };
 
   return (
-    <div className="space-y-5">
+    <div className="admin-enter space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-h2 font-bold text-text-heading">مدیریت لندینگ‌ها</h1>
-          <p className="text-body-sm text-text-secondary mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">مدیریت لندینگ‌ها</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             مدیریت صفحات سئو، چک‌لیست انتشار و کنترل ایندکس.
           </p>
         </div>
@@ -82,15 +82,15 @@ export default function LandingList({ initial }: { initial: Awaited<ReturnType<t
 
       {showForm && <LandingForm onSaved={() => { setShowForm(false); refresh(); }} />}
 
-      <div className="bg-surface-primary border border-border-default rounded-card p-5">
-        <h2 className="text-h4 font-bold text-text-heading mb-3">لیست لندینگ‌ها ({data.length})</h2>
+      <div className="bg-card border border-border rounded-xl p-5 admin-lift">
+        <h2 className="font-semibold text-foreground mb-3">لیست لندینگ‌ها ({data.length})</h2>
         {data.length === 0 ? (
-          <p className="text-body-sm text-text-secondary">لندینگی ثبت نشده.</p>
+          <p className="text-sm text-muted-foreground">لندینگی ثبت نشده.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-right text-body-sm min-w-[900px]">
+            <table className="w-full text-right text-sm min-w-[900px]">
               <thead>
-                <tr className="bg-surface-secondary border-b border-border-default text-text-heading">
+                <tr className="bg-muted border-b border-border text-foreground">
                   <th className="px-4 py-3 font-bold">Query Owner</th>
                   <th className="px-4 py-3 font-bold">URL</th>
                   <th className="px-4 py-3 font-bold">Title</th>
@@ -99,18 +99,18 @@ export default function LandingList({ initial }: { initial: Awaited<ReturnType<t
                   <th className="px-4 py-3 font-bold">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-subtle">
+              <tbody className="divide-y divide-border">
                 {data.map((l) => (
-                  <tr key={l.id} className="hover:bg-surface-secondary/50">
-                    <td className="px-4 py-3 font-mono text-caption text-text-secondary" dir="ltr">{l.queryOwner}</td>
-                    <td className="px-4 py-3 text-text-secondary font-mono text-caption" dir="ltr">{l.urlPath}</td>
-                    <td className="px-4 py-3 text-text-heading font-medium truncate max-w-[300px]">{l.titleFa}</td>
+                  <tr key={l.id} className="hover:bg-accent/40">
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground" dir="ltr">{l.queryOwner}</td>
+                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs" dir="ltr">{l.urlPath}</td>
+                    <td className="px-4 py-3 text-foreground font-medium truncate max-w-[300px]">{l.titleFa}</td>
                     <td className="px-4 py-3">{statusBadge(l.workflow)}</td>
                     <td className="px-4 py-3 text-center">
                       {l.indexStatus === 'index' ? (
-                        <span className="inline-flex px-2 py-0.5 rounded-md text-caption font-bold bg-emerald-50 text-emerald-800">index</span>
+                        <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-300">index</span>
                       ) : (
-                        <span className="inline-flex px-2 py-0.5 rounded-md text-caption font-bold bg-amber-50 text-amber-800">noindex</span>
+                        <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-bold bg-amber-500/15 text-amber-300">noindex</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -118,7 +118,7 @@ export default function LandingList({ initial }: { initial: Awaited<ReturnType<t
                         <select
                           value={l.workflow}
                           onChange={e => handleWorkflow(l.id, e.target.value)}
-                          className="bg-surface-secondary border border-border-default rounded-control px-2 py-1 text-caption text-text-heading"
+                          className="bg-muted border border-border rounded-lg px-2 py-1 text-xs text-foreground"
                           disabled={pending}
                         >
                           <option value="draft">پیش‌نویس</option>
@@ -130,7 +130,7 @@ export default function LandingList({ initial }: { initial: Awaited<ReturnType<t
                         <button
                           type="button"
                           onClick={() => handleDelete(l.id)}
-                          className="text-red-700 hover:underline text-caption font-medium"
+                          className="text-red-400 hover:underline text-xs font-medium"
                           disabled={pending}
                         >
                           حذف
