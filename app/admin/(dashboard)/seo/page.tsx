@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { listLandings } from './actions';
+import { getSettingsMap } from '../settings/actions';
 import LandingList from './LandingList';
 
 export const metadata: Metadata = {
@@ -8,6 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminSeoPage() {
-  const landings = await listLandings();
-  return <LandingList initial={landings} />;
+  const [landings, settings] = await Promise.all([listLandings(), getSettingsMap()]);
+  return <LandingList initial={landings} sectionSettings={settings} />;
 }

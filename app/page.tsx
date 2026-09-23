@@ -3,6 +3,7 @@ import RouteView from './RouteView';
 import JsonLd from './JsonLd';
 import { metadataFor, resolveSeo, breadcrumbJsonLd } from './seo-helpers';
 import { getLiveContent } from '@/src/lib/db-content';
+import { getContactInfo } from '@/src/lib/site-contact';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,11 +13,11 @@ export function generateMetadata(): Metadata {
 
 export default async function HomePage() {
   const seo = resolveSeo('/');
-  const content = await getLiveContent();
+  const [content, contact] = await Promise.all([getLiveContent(), getContactInfo()]);
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
-      <RouteView type="home" params={{}} data={content} />
+      <RouteView type="home" params={{}} data={content} contact={contact} />
     </>
   );
 }

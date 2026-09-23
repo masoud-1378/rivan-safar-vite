@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { type TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
 import { useContent } from '@/src/lib/content-context';
+import { useContact } from '@/src/lib/contact-context';
 import { submitLead } from '../../app/actions/lead';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
@@ -19,6 +20,7 @@ interface ToursPageProps {
 }
 
 export default function ToursPage({ onGoHome }: ToursPageProps) {
+  const contact = useContact();
   const { tours, countries, cities, guides, exhibitions } = useContent();
   const router = useRouter();
 
@@ -539,7 +541,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                     پاک‌کردن فیلترها
                   </button>
                   <a 
-                    href="tel:02633350139"
+                    href={contact.phoneHref}
                     className="btn btn-outline btn-medium text-btn w-full sm:w-auto"
                   >
                     درخواست بررسی توسط کارشناس
@@ -692,11 +694,11 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
           <h3 className="text-h3 text-text-heading mb-2">هنوز تور یا مقصدتان را انتخاب نکردید؟</h3>
           <p className="text-body text-text-secondary mb-5">با کارشناس ریوان سفر تماس بگیرید</p>
           <a
-            href="tel:02633350139"
+            href={contact.phoneHref}
             className="btn btn-medium btn-primary text-btn font-bold inline-flex items-center gap-2.5 shadow-subtle hover:shadow-card transition-all"
           >
             <Phone className="w-4 h-4" />
-            <span dir="ltr">۰۲۶ - ۳۳۳۵۰۱۳۹</span>
+            <span dir="ltr">{contact.phoneDisplay}</span>
           </a>
         </div>
       </section>

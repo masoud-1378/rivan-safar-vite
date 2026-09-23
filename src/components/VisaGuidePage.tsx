@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { type Place } from '../data/destinationsData';
 import { useContent } from '@/src/lib/content-context';
+import { useContact } from '@/src/lib/contact-context';
 
 interface VisaGuidePageProps {
   countrySlug: string;
@@ -12,6 +13,7 @@ interface VisaGuidePageProps {
 }
 
 export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePageProps) {
+  const contact = useContact();
   const { tours, countries, cities, guides, exhibitions } = useContent();
   const country: Place | undefined = countries[countrySlug];
 
@@ -66,11 +68,11 @@ export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePage
 
           <div className="flex flex-wrap items-center gap-3">
             <a
-              href="tel:02633350139"
+              href={contact.phoneHref}
               className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2 font-bold"
             >
               <Phone className="w-4 h-4" />
-              <span>مشاوره تخصصی ویزا: ۰۲۶۳۳۳۵۰۱۳۹</span>
+              <span>مشاوره تخصصی ویزا: {contact.phoneDisplay}</span>
             </a>
             {country && (
               <button

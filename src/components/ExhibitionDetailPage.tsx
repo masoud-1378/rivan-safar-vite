@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { type ExhibitionSeries } from '../data/exhibitionsData';
 import { useContent } from '@/src/lib/content-context';
+import { useContact } from '@/src/lib/contact-context';
 import SmartImage from './SmartImage';
 
 interface ExhibitionDetailPageProps {
@@ -15,6 +16,7 @@ interface ExhibitionDetailPageProps {
 }
 
 export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onNavigate }: ExhibitionDetailPageProps) {
+  const contact = useContact();
   const { tours, countries, cities, guides, exhibitions } = useContent();
   const ex: ExhibitionSeries | undefined = exhibitions[eventSeriesSlug];
 
@@ -129,7 +131,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     <span className="text-h2 font-extrabold text-brand-orange">{ex.upcomingEdition.startingPrice}</span>
                   </div>
                   <a
-                    href="tel:02633350139"
+                    href={contact.phoneHref}
                     className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2 font-bold shadow-subtle"
                   >
                     <Phone className="w-4 h-4" />
@@ -271,7 +273,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                 کارشناس دپارتمان نمایشگاهی ریوان سفر جهت ارائه شرایط و مدارک ویزا به زودی با شما تماس خواهد گرفت.
               </p>
               <div className="text-caption text-emerald-700">
-                تماس مستقیم با بخش نمایشگاهی: <a href="tel:02633350139" className="font-bold underline">۰۲۶۳۳۳۵۰۱۳۹</a>
+                تماس مستقیم با بخش نمایشگاهی: <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a>
               </div>
             </div>
           ) : (

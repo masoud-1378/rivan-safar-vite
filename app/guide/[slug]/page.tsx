@@ -4,6 +4,7 @@ import RouteView from '../../RouteView';
 import JsonLd from '../../JsonLd';
 import { metadataFor, resolveSeo, breadcrumbJsonLd } from '../../seo-helpers';
 import { getLiveContent, getGuides } from '@/src/lib/db-content';
+import { getContactInfo } from '@/src/lib/site-contact';
 import type { GuideItem } from '@/src/data/guidesData';
 
 export const dynamic = 'force-dynamic';
@@ -44,7 +45,7 @@ export default async function GuidePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const content = await getLiveContent();
+  const [content, contact] = await Promise.all([getLiveContent(), getContactInfo()]);
   const guide = content.guides[slug];
   if (!guide) notFound();
   const seo = resolveSeo(`/guide/${slug}`);
@@ -52,7 +53,7 @@ export default async function GuidePage({
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
       <JsonLd data={faqJsonLd(guide)} />
-      <RouteView type="guide_detail" params={{ guideSlug: slug }} data={content} />
+      <RouteView type="guide_detail" params={{ guideSlug: slug }} data={content} contact={contact} />
     </>
   );
 }

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { type GuideItem } from '../data/guidesData';
 import { useContent } from '@/src/lib/content-context';
+import { useContact } from '@/src/lib/contact-context';
 import SmartImage from './SmartImage';
 
 interface GuidesHubPageProps {
@@ -12,6 +13,7 @@ interface GuidesHubPageProps {
 }
 
 export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
+  const contact = useContact();
   const { tours, countries, cities, guides, exhibitions } = useContent();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -153,11 +155,11 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
             کارشناسان ریوان سفر آماده پاسخ‌گویی به سؤالات اختصاصی شما در زمینه ویزا، پروازها و انتخاب هتل هستند.
           </p>
           <a
-            href="tel:02633350139"
+            href={contact.phoneHref}
             className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2.5 font-bold shadow-subtle"
           >
             <Phone className="w-4 h-4" />
-            <span dir="ltr">۰۲۶ - ۳۳۳۵۰۱۳۹</span>
+            <span dir="ltr">{contact.phoneDisplay}</span>
           </a>
         </div>
       </section>

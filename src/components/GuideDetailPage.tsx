@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { type GuideItem } from '../data/guidesData';
 import { useContent } from '@/src/lib/content-context';
+import { useContact } from '@/src/lib/contact-context';
 import SmartImage from './SmartImage';
 
 interface GuideDetailPageProps {
@@ -14,6 +15,7 @@ interface GuideDetailPageProps {
 }
 
 export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPageProps) {
+  const contact = useContact();
   const { tours, countries, cities, guides, exhibitions } = useContent();
   const guide: GuideItem | undefined = guides[guideSlug];
 
@@ -171,7 +173,7 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
               <p className="text-body-sm text-text-secondary">کارشناسان ریوان سفر در ساعات کاری پاسخگوی شما هستند.</p>
             </div>
             <a
-              href="tel:02633350139"
+              href={contact.phoneHref}
               className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2 font-bold shrink-0"
             >
               <Phone className="w-4 h-4" />

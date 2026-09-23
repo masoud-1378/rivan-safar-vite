@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Phone, Menu, X, ChevronDown, Map, Globe, Compass, 
+import {
+  Phone, Menu, X, ChevronDown, Map, Globe, Compass,
   MapPin, Plane, ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
 import SmartImage from './SmartImage';
 import AnnouncementBar from './AnnouncementBar';
+import { useContact } from '@/src/lib/contact-context';
 
 interface NavbarProps {
   showAnnouncement: boolean;
@@ -89,7 +90,7 @@ const exhibitionToursData = {
 };
 
 const mobileNavData = [
-  { 
+  {
     name: 'تورهای خارجی',
     path: '/tours/foreign',
     subcategories: [
@@ -130,7 +131,7 @@ const mobileNavData = [
     ],
     viewAll: 'همه تورهای خارجی'
   },
-  { 
+  {
     name: 'تورهای داخلی',
     path: '/tours/domestic',
     subcategories: [
@@ -149,7 +150,7 @@ const mobileNavData = [
     ],
     viewAll: 'همه تورهای داخلی'
   },
-  { 
+  {
     name: 'تورهای نمایشگاهی',
     path: '/exhibitions',
     subcategories: [
@@ -169,11 +170,12 @@ const mobileNavData = [
 ];
 
 export default function Navbar({ showAnnouncement, setShowAnnouncement, onNavigate, currentPath = '/' }: NavbarProps) {
+  const contact = useContact();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const [mobileSubExpanded, setMobileSubExpanded] = useState<string | null>(null);
-  
+
   // Megamenu state
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -251,27 +253,27 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
       )}
 
       {/* Desktop & Tablet Navbar */}
-      <header 
+      <header
         className={`fixed left-0 right-0 z-50 transition-all duration-300 border-b border-border-default ${
           showAnnouncement ? 'top-[38px] md:top-[34px]' : 'top-0'
         } ${
-          isScrolled 
-            ? 'bg-surface-primary/95 backdrop-blur-md shadow-subtle h-[70px]' 
+          isScrolled
+            ? 'bg-surface-primary/95 backdrop-blur-md shadow-subtle h-[70px]'
             : 'bg-surface-primary h-[80px] md:h-[90px]'
         }`}
       >
         <div className="container-main px-4 sm:px-6 lg:px-8 flex items-center justify-between h-full relative">
-          
+
           {/* Right Section: Logo */}
-          <a 
-            href="/" 
+          <a
+            href="/"
             onClick={(e) => handleNavClick('/', e)}
-            className="flex items-center shrink-0 z-10" 
+            className="flex items-center shrink-0 z-10"
             title="صفحه اصلی ریوان سفر"
           >
-            <Image 
-              src="/logo.png" 
-              alt="آژانس مسافرتی ریوان سفر" 
+            <Image
+              src="/logo.png"
+              alt="آژانس مسافرتی ریوان سفر"
               width={170}
               height={44}
               className="h-[40px] md:h-[44px] w-auto max-w-[150px] md:max-w-[170px] object-contain"
@@ -297,13 +299,13 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
               {navigation.map((item) => {
                 const isActive = currentPath === item.path || (item.path !== '/' && currentPath.startsWith(item.path));
                 return (
-                  <li 
-                    key={item.name} 
+                  <li
+                    key={item.name}
                     className={`group h-full flex items-center ${item.name === 'تورهای خارجی' ? '' : 'relative'}`}
                     onMouseEnter={item.hasMegamenu ? () => handleMouseEnter(item.name) : undefined}
                     onMouseLeave={item.hasMegamenu ? handleMouseLeave : undefined}
                   >
-                    <a 
+                    <a
                       href={item.path}
                       onClick={(e) => handleNavClick(item.path, e)}
                       onFocus={item.hasMegamenu ? () => handleMouseEnter(item.name) : undefined}
@@ -318,7 +320,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                           activeMenu === item.name ? 'rotate-180 text-brand-orange' : 'opacity-70'
                         }`} />
                       )}
-                      
+
                       {/* Active/Hover Line */}
                       <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-brand-orange transition-all duration-300 ${
                         isActive || activeMenu === item.name ? 'w-full' : 'w-0 group-hover:w-6'
@@ -327,7 +329,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
 
                     {/* Mega Menu */}
                     {item.hasMegamenu && item.name === 'تورهای خارجی' && (
-                      <div 
+                      <div
                         className={`absolute top-[100%] left-1/2 -translate-x-1/2 w-[1000px] xl:w-[1200px] bg-surface-primary rounded-b-[14px] shadow-floating transition-all duration-300 z-50 overflow-hidden border-t border-border-default ${
                           activeMenu === item.name ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
                         }`}
@@ -341,8 +343,8 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                               <ul className="flex flex-col gap-3">
                                 {col.links.map((link) => (
                                   <li key={link.name}>
-                                    <a 
-                                      href={link.path} 
+                                    <a
+                                      href={link.path}
                                       onClick={(e) => handleNavClick(link.path, e)}
                                       className="block text-[14px] text-text-secondary hover:text-brand-orange transition-colors leading-relaxed"
                                     >
@@ -351,8 +353,8 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                                   </li>
                                 ))}
                               </ul>
-                              <a 
-                                href={col.path} 
+                              <a
+                                href={col.path}
                                 onClick={(e) => handleNavClick(col.path, e)}
                                 className="inline-flex items-center gap-1.5 mt-3.5 text-[13px] font-semibold text-text-heading hover:text-brand-orange transition-colors"
                               >
@@ -361,20 +363,20 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                               </a>
                             </div>
                           ))}
-                          
+
                           {/* Offer Column */}
                           <div className="relative w-full h-full min-h-[240px] rounded-control overflow-hidden group/card bg-surface-dark flex flex-col justify-end">
-                            <SmartImage 
-                              src="https://images.unsplash.com/photo-1527631746610-bca00a040d60?q=80&w=800&auto=format&fit=crop" 
-                              alt="مشاوره سفر" 
+                            <SmartImage
+                              src="https://images.unsplash.com/photo-1527631746610-bca00a040d60?q=80&w=800&auto=format&fit=crop"
+                              alt="مشاوره سفر"
                               className="absolute inset-0 object-cover transition-transform duration-700 group-hover/card:scale-105"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-brand-navy/95 via-brand-navy/40 to-transparent" />
                             <div className="absolute inset-0 p-5 flex flex-col justify-end z-10">
                               <span className="text-white font-bold text-[15px] mb-1.5 leading-tight">مقصدتان را انتخاب نکرده‌اید؟</span>
                               <span className="text-white/80 text-[13px] leading-relaxed mb-4">فقط بودجه و زمان سفرتان را بگویید.</span>
-                              <a 
-                                href="tel:02633350139" 
+                              <a
+                                href={contact.phoneHref}
                                 className="btn btn-primary btn-medium w-full text-[13.5px] font-bold shadow-card py-2"
                               >
                                 دریافت پیشنهاد از کارشناس
@@ -382,11 +384,11 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                             </div>
                           </div>
                         </div>
-                        
+
                         {/* Foreign Mega Menu Footer */}
                         <div className="bg-page-background border-t border-border-default py-3.5 px-8 flex items-center justify-between">
                           <p className="text-[13.5px] font-medium text-text-heading">مقصد موردنظرتان را در فهرست کامل تورهای خارجی پیدا کنید.</p>
-                          <a 
+                          <a
                             href="/tours/foreign"
                             onClick={(e) => handleNavClick('/tours/foreign', e)}
                             className="inline-flex items-center gap-2 border-2 border-border-brand text-brand-orange text-[13px] font-bold py-1.5 px-4 rounded-small hover:bg-brand-orange-soft transition-colors whitespace-nowrap"
@@ -399,7 +401,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                     )}
 
                     {item.hasMegamenu && item.name === 'تورهای داخلی' && (
-                      <div 
+                      <div
                         className={`absolute top-[100%] right-0 w-[560px] bg-surface-primary rounded-b-[14px] shadow-floating transition-all duration-300 z-50 overflow-hidden border-t border-border-default ${
                           activeMenu === item.name ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
                         }`}
@@ -413,8 +415,8 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                               <ul className="flex flex-col gap-3">
                                 {col.links.map((link) => (
                                   <li key={link.name}>
-                                    <a 
-                                      href={link.path} 
+                                    <a
+                                      href={link.path}
                                       onClick={(e) => handleNavClick(link.path, e)}
                                       className="block text-[14px] text-text-secondary hover:text-brand-orange transition-colors leading-relaxed"
                                     >
@@ -430,7 +432,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                         {/* Domestic Mega Menu Footer */}
                         <div className="bg-page-background border-t border-border-default py-3.5 px-6 flex items-center justify-between gap-4">
                           <p className="text-[13.5px] font-medium text-text-heading">مقصد موردنظرتان را در فهرست کامل تورهای داخلی پیدا کنید.</p>
-                          <a 
+                          <a
                             href="/tours/domestic"
                             onClick={(e) => handleNavClick('/tours/domestic', e)}
                             className="inline-flex items-center justify-center shrink-0 gap-2 border-2 border-border-brand text-brand-orange text-[13px] font-bold py-1.5 px-4 rounded-small hover:bg-brand-orange-soft transition-colors whitespace-nowrap"
@@ -443,7 +445,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                     )}
 
                     {item.hasMegamenu && item.name === 'تورهای نمایشگاهی' && (
-                      <div 
+                      <div
                         className={`absolute top-[100%] right-0 w-[500px] bg-surface-primary rounded-b-[14px] shadow-floating transition-all duration-300 z-50 overflow-hidden border-t border-border-default ${
                           activeMenu === item.name ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
                         }`}
@@ -456,8 +458,8 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                             <ul className="flex flex-col gap-3">
                               {exhibitionToursData.links.map((link) => (
                                 <li key={link.name}>
-                                  <a 
-                                    href={link.path} 
+                                  <a
+                                    href={link.path}
                                     onClick={(e) => handleNavClick(link.path, e)}
                                     className="block text-[14px] text-text-secondary hover:text-brand-orange transition-colors leading-relaxed"
                                   >
@@ -467,25 +469,25 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                               ))}
                             </ul>
                           </div>
-                          
+
                           {/* Promo Box */}
                           <div className="bg-page-background rounded-control p-5 flex flex-col justify-center text-center border border-border-default/50">
                             <p className="text-[13.5px] font-medium text-text-heading leading-relaxed mb-4">
                               برای سفرهای تجاری و نمایشگاهی به تور اختصاصی نیاز دارید؟
                             </p>
-                            <a 
-                              href="tel:02633350139" 
+                            <a
+                              href={contact.phoneHref}
                               className="btn btn-primary btn-medium text-[13px] font-bold shadow-subtle inline-flex justify-center py-2"
                             >
                               مشاوره تور نمایشگاهی
                             </a>
                           </div>
                         </div>
-                        
+
                         {/* Exhibition Mega Menu Footer */}
                         <div className="bg-page-background border-t border-border-default py-3.5 px-6 flex items-center justify-between gap-4">
                           <p className="text-[13.5px] font-medium text-text-heading">فهرست کامل تورهای نمایشگاهی را ببینید.</p>
-                          <a 
+                          <a
                             href="/exhibitions"
                             onClick={(e) => handleNavClick('/exhibitions', e)}
                             className="inline-flex items-center justify-center shrink-0 gap-2 border-2 border-border-brand text-brand-orange text-[13px] font-bold py-1.5 px-4 rounded-small hover:bg-brand-orange-soft transition-colors whitespace-nowrap"
@@ -504,19 +506,21 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
 
           {/* Left Section: Contact Block & Mobile Menu Toggle */}
           <div className="flex items-center gap-3 shrink-0">
-            <a 
-              href="tel:02633350139" 
+            {contact.showHeaderPhone && (
+            <a
+              href={contact.phoneHref}
               className="hidden sm:flex items-center gap-3 group px-3 py-1.5 hover:bg-page-background rounded-control transition-colors"
             >
               <div className="flex flex-col items-end leading-tight">
                 <span className="text-[12px] font-medium text-text-secondary transition-colors">مشاوره و ثبت درخواست</span>
-                <span className="text-[15px] font-bold text-text-heading mt-0.5 group-hover:text-brand-orange transition-colors" dir="ltr">۰۲۶ - ۳۳۳۵۰۱۳۹</span>
+                <span className="text-[15px] font-bold text-text-heading mt-0.5 group-hover:text-brand-orange transition-colors" dir="ltr">{contact.phoneDisplay}</span>
               </div>
               <Phone className="w-5 h-5 text-brand-orange" strokeWidth={1.5} />
             </a>
+            )}
 
             {/* Mobile / Tablet Menu Toggle */}
-            <button 
+            <button
               className="lg:!hidden flex items-center justify-center w-11 h-11 rounded-control text-text-heading hover:text-brand-orange hover:bg-page-background transition-colors"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="باز کردن منو"
@@ -532,7 +536,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -541,7 +545,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
             />
 
             {/* Mobile Drawer Content */}
-            <motion.div 
+            <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
@@ -555,7 +559,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                   <Plane className="w-4 h-4 absolute -top-1 -right-3 transform rotate-45" />
                   <span className="text-lg font-black text-text-heading mr-2 border-r-2 border-border-default pr-2">ریوان سفر</span>
                 </div>
-                <button 
+                <button
                   onClick={() => setMobileMenuOpen(false)}
                   className="icon-btn icon-btn-medium absolute left-5 bg-page-background text-text-secondary hover:bg-brand-orange-soft hover:text-brand-orange"
                 >
@@ -653,7 +657,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                                   </AnimatePresence>
                                 </div>
                               )})}
-                              
+
                               {item.viewAll && (
                                 <button
                                   onClick={() => handleNavClick(item.path)}
@@ -676,14 +680,14 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
               <div className="p-5 border-t border-border-default bg-surface-primary shadow-subtle">
                 <div className="bg-page-background rounded-card p-4 border border-border-default text-center">
                   <p className="text-body-sm text-text-heading font-bold mb-3">برای انتخاب تور نیاز به راهنمایی داری؟</p>
-                  <a 
-                    href="tel:02633350139" 
+                  <a
+                    href={contact.phoneHref}
                     className="btn btn-primary btn-medium text-btn w-full shadow-subtle mb-2.5"
                   >
                     <Phone className="w-4 h-4 animate-pulse" />
-                    <span className="text-body-lg tracking-wider font-semibold mt-0.5" dir="ltr">۰۲۶ - ۳۳۳۵۰۱۳۹</span>
+                    <span className="text-body-lg tracking-wider font-semibold mt-0.5" dir="ltr">{contact.phoneDisplay}</span>
                   </a>
-                  <p className="text-caption text-text-secondary font-medium">پاسخگویی شنبه تا پنجشنبه، ۹ تا ۲۱</p>
+                  <p className="text-caption text-text-secondary font-medium">{contact.workingHours}</p>
                 </div>
               </div>
             </motion.div>
@@ -693,9 +697,9 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
 
       {/* Mobile Bottom Navigation Bar (Persistent across all pages) */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-primary shadow-card z-[45] rounded-t-2xl border-t border-border-default h-14 px-6 flex justify-between items-center pb-safe">
-          
+
           {/* Menu Button (Opens Drawer) */}
-          <button 
+          <button
             onClick={() => setMobileMenuOpen(true)}
             className="flex flex-col items-center justify-center gap-1 text-text-secondary hover:text-brand-orange transition-colors"
           >
@@ -705,8 +709,8 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
 
           {/* Main CTA: Call */}
           <div className="absolute left-1/2 -translate-x-1/2 bottom-2 flex flex-col items-center gap-1.5 pointer-events-none">
-            <a 
-              href="tel:02633350139"
+            <a
+              href={contact.phoneHref}
               className="pointer-events-auto bg-brand-orange text-on-brand w-14 h-14 rounded-card flex items-center justify-center shadow-card border-[3px] border-white hover:scale-105 transition-transform"
             >
               <Phone className="w-6 h-6" />
@@ -714,8 +718,8 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
           </div>
 
           {/* WhatsApp Button */}
-          <a 
-            href="https://wa.me/982633350139" 
+          <a
+            href="https://wa.me/982633350139"
             target="_blank"
             rel="noopener noreferrer"
             className="flex flex-col items-center justify-center gap-1 text-text-secondary hover:text-[#25D366] transition-colors"

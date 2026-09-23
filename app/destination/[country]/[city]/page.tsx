@@ -8,6 +8,7 @@ import {
   breadcrumbJsonLd,
 } from '../../../seo-helpers';
 import { getLiveContent, getCities } from '@/src/lib/db-content';
+import { getContactInfo } from '@/src/lib/site-contact';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,7 @@ export default async function CityPage({
   params: Promise<{ country: string; city: string }>;
 }) {
   const { country, city } = await params;
-  const content = await getLiveContent();
+  const [content, contact] = await Promise.all([getLiveContent(), getContactInfo()]);
   if (!content.cities[city]) notFound();
   const seo = resolveSeo(`/destination/${country}/${city}`);
   return (
@@ -45,6 +46,7 @@ export default async function CityPage({
         type="destination_city"
         params={{ countrySlug: country, placeSlug: city }}
         data={content}
+        contact={contact}
       />
     </>
   );

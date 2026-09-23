@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { 
-  Phone, 
-  Clock, 
-  MapPin, 
-  Mail, 
-  ChevronDown, 
-  Instagram, 
-  Send, 
-  MessageCircle, 
-  Linkedin, 
-  ShieldCheck, 
-  Award, 
+import { useContact } from '@/src/lib/contact-context';
+import {
+  Phone,
+  Clock,
+  MapPin,
+  Mail,
+  ChevronDown,
+  Instagram,
+  Send,
+  MessageCircle,
+  Linkedin,
+  ShieldCheck,
+  Award,
   FileCheck2,
   Plane
 } from 'lucide-react';
@@ -80,6 +81,7 @@ interface FooterProps {
 }
 
 export default function Footer({ onNavigate }: FooterProps) {
+  const contact = useContact();
   // Mobile accordion state (all closed by default or multiple openable)
   const [openAccordions, setOpenAccordions] = useState<Record<number, boolean>>({});
 
@@ -100,10 +102,10 @@ export default function Footer({ onNavigate }: FooterProps) {
       <div className="h-[3px] bg-brand-orange w-full" />
 
       <div className="container-main px-4 sm:px-6 lg:px-8 pt-12 lg:pt-16 pb-8">
-        
+
         {/* Top Info Section: Brand + Contact Info */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 pb-12 border-b border-white/10 items-start">
-          
+
           {/* Brand Intro (7 cols on lg) */}
           <div className="lg:col-span-7 space-y-4">
             {/* Logo */}
@@ -128,29 +130,29 @@ export default function Footer({ onNavigate }: FooterProps) {
             {/* Social Media Links */}
             <div className="pt-2 flex items-center gap-3">
               <span className="text-body-sm text-white/70 font-medium ml-2">شبکه‌های اجتماعی:</span>
-              <a 
-                href="#instagram" 
+              <a
+                href="#instagram"
                 aria-label="اینستاگرام ریوان سفر"
                 className="w-9 h-9 rounded-small bg-white/5 hover:bg-brand-orange hover:text-on-brand text-text-on-dark-secondary flex items-center justify-center transition-colors"
               >
                 <Instagram className="w-4 h-4" />
               </a>
-              <a 
-                href="#telegram" 
+              <a
+                href="#telegram"
                 aria-label="تلگرام ریوان سفر"
                 className="w-9 h-9 rounded-small bg-white/5 hover:bg-brand-orange hover:text-on-brand text-text-on-dark-secondary flex items-center justify-center transition-colors"
               >
                 <Send className="w-4 h-4" />
               </a>
-              <a 
-                href="#whatsapp" 
+              <a
+                href="#whatsapp"
                 aria-label="واتساپ ریوان سفر"
                 className="w-9 h-9 rounded-small bg-white/5 hover:bg-brand-orange hover:text-on-brand text-text-on-dark-secondary flex items-center justify-center transition-colors"
               >
                 <MessageCircle className="w-4 h-4" />
               </a>
-              <a 
-                href="#linkedin" 
+              <a
+                href="#linkedin"
                 aria-label="لینكدین ریوان سفر"
                 className="w-9 h-9 rounded-small bg-white/5 hover:bg-brand-orange hover:text-on-brand text-text-on-dark-secondary flex items-center justify-center transition-colors"
               >
@@ -168,27 +170,29 @@ export default function Footer({ onNavigate }: FooterProps) {
 
             <div className="flex items-center justify-between bg-white/5 px-4 py-2.5 rounded-control border border-white/5">
               <span className="text-body-sm text-text-on-dark-secondary">شماره تماس:</span>
-              <a 
-                href="tel:02633350139" 
+              {contact.showFooterPhone && (
+              <a
+                href={contact.phoneHref}
                 dir="ltr"
                 className="text-body-lg font-bold text-white hover:text-brand-orange transition-colors"
               >
-                ۰۲۶ - ۳۳۳۵۰۱۳۹
+                {contact.phoneDisplay}
               </a>
+              )}
             </div>
 
             <div className="space-y-2 text-body-sm text-text-on-dark-secondary/90 pt-1">
               <div className="flex items-center gap-2.5">
                 <Clock className="w-4 h-4 text-brand-orange shrink-0" />
-                <span>ساعت پاسخگویی: شنبه تا پنجشنبه، ۹ تا ۲۱</span>
+                <span>ساعت پاسخگویی: {contact.workingHours}</span>
               </div>
               <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-brand-orange shrink-0 mt-0.5" />
-                <span>نشانی: کرج، مهرشهر، بلوار شهرداری، نبش 208، ساختمان آماتیس، واحد 7</span>
+                <span>نشانی: {contact.address}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-brand-orange shrink-0" />
-                <span>ایمیل: info@rivansafar.com</span>
+                <span>ایمیل: {contact.email}</span>
               </div>
             </div>
           </div>
@@ -197,7 +201,7 @@ export default function Footer({ onNavigate }: FooterProps) {
 
         {/* Middle Section: Navigation Columns (Desktop Grid / Mobile Accordion) */}
         <div className="py-10 border-b border-white/10">
-          
+
           {/* Desktop View (4 columns) */}
           <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {FOOTER_GROUPS.map((group, idx) => (
@@ -208,7 +212,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                 <ul className="space-y-2.5">
                   {group.links.map((link, lIdx) => (
                     <li key={lIdx}>
-                      <a 
+                      <a
                         href={link.path}
                         onClick={(e) => handleNav(link.path, e)}
                         className="text-body-sm text-text-on-dark-secondary hover:text-brand-orange transition-colors inline-block hover:translate-x-[-2px] duration-150 cursor-pointer"
@@ -235,12 +239,12 @@ export default function Footer({ onNavigate }: FooterProps) {
                     <span>{group.title}</span>
                     <ChevronDown className={`w-4 h-4 text-brand-orange transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                   </button>
-                  
+
                   {isOpen && (
                     <ul className="pb-4 space-y-2.5 pr-2">
                       {group.links.map((link, lIdx) => (
                         <li key={lIdx}>
-                          <a 
+                          <a
                             href={link.path}
                             onClick={(e) => handleNav(link.path, e)}
                             className="text-body-sm text-text-on-dark-secondary hover:text-brand-orange transition-colors block py-0.5 cursor-pointer"
@@ -266,7 +270,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             </span>
             <div className="flex flex-wrap items-center justify-center gap-3">
               {BADGES.map((badge, idx) => (
-                <div 
+                <div
                   key={idx}
                   className="flex items-center gap-3 bg-surface-primary text-text-heading px-4 py-2.5 rounded-control border border-white/20 shadow-subtle min-w-[180px]"
                 >
@@ -292,18 +296,18 @@ export default function Footer({ onNavigate }: FooterProps) {
           <div>
             تمامی حقوق این وب‌سایت متعلق به <span className="text-white font-medium">ریوان سفر</span> است. © ۱۴۰۳
           </div>
-          
+
           <div className="flex items-center gap-4">
-            <a 
-              href="/privacy" 
+            <a
+              href="/privacy"
               onClick={(e) => handleNav('/privacy', e)}
               className="hover:text-white transition-colors cursor-pointer"
             >
               حریم خصوصی
             </a>
             <span className="text-white/20">•</span>
-            <a 
-              href="/terms" 
+            <a
+              href="/terms"
               onClick={(e) => handleNav('/terms', e)}
               className="hover:text-white transition-colors cursor-pointer"
             >

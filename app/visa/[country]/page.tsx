@@ -4,6 +4,7 @@ import RouteView from '../../RouteView';
 import JsonLd from '../../JsonLd';
 import { metadataFor, resolveSeo, breadcrumbJsonLd } from '../../seo-helpers';
 import { getCountries } from '@/src/lib/db-content';
+import { getContactInfo } from '@/src/lib/site-contact';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,13 +30,13 @@ export default async function VisaPage({
   params: Promise<{ country: string }>;
 }) {
   const { country } = await params;
-  const countries = await getCountries();
+  const [countries, contact] = await Promise.all([getCountries(), getContactInfo()]);
   if (!countries[country]) notFound();
   const seo = resolveSeo(`/visa/${country}`);
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
-      <RouteView type="visa_country" params={{ countrySlug: country }} data={{ countries }} />
+      <RouteView type="visa_country" params={{ countrySlug: country }} data={{ countries }} contact={contact} />
     </>
   );
 }

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { type ExhibitionSeries } from '../data/exhibitionsData';
 import { useContent } from '@/src/lib/content-context';
+import { useContact } from '@/src/lib/contact-context';
 import SmartImage from './SmartImage';
 
 interface ExhibitionsHubPageProps {
@@ -13,6 +14,7 @@ interface ExhibitionsHubPageProps {
 }
 
 export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPageProps) {
+  const contact = useContact();
   const { tours, countries, cities, guides, exhibitions } = useContent();
   const [selectedIndustry, setSelectedIndustry] = useState<string>('all');
 
@@ -190,11 +192,11 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
             مهلت تشکیل پرونده ویزای چین و کشورهای اروپایی محدود است. جهت دریافت تقویم و زمان‌بندی دقیق با کارشناس تماس بگیرید.
           </p>
           <a
-            href="tel:02633350139"
+            href={contact.phoneHref}
             className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2.5 font-bold shadow-card"
           >
             <Phone className="w-4 h-4" />
-            <span dir="ltr">۰۲۶ - ۳۳۳۵۰۱۳۹</span>
+            <span dir="ltr">{contact.phoneDisplay}</span>
           </a>
         </div>
       </section>

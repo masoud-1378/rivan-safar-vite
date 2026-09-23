@@ -9,6 +9,7 @@ import {
   tourJsonLd,
 } from '../../seo-helpers';
 import { getLiveContent, getTours } from '@/src/lib/db-content';
+import { getContactInfo } from '@/src/lib/site-contact';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,14 +32,14 @@ export default async function TourPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const content = await getLiveContent();
+  const [content, contact] = await Promise.all([getLiveContent(), getContactInfo()]);
   if (!content.tours.some((t) => t.id === slug)) notFound();
   const seo = resolveSeo(`/tour/${slug}`);
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
       <JsonLd data={tourJsonLd(slug)} />
-      <RouteView type="tour_detail" params={{ tourSlug: slug }} data={content} />
+      <RouteView type="tour_detail" params={{ tourSlug: slug }} data={content} contact={contact} />
     </>
   );
 }

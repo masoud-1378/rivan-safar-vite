@@ -1,7 +1,8 @@
 'use server';
 
 import { isDbConfigured, getDb } from '@/db/client';
-import { leadRequests } from '@/db/schema';
+import { leadRequests, siteSettings } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 export interface LeadInput {
   fullName: string;
@@ -64,6 +65,16 @@ export async function submitLead(input: LeadInput): Promise<LeadResult> {
   try {
     const db = getDb();
     if (!db) throw new Error('no-db');
+    const autoAssign = await db
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.settingKey, 'leads.auto_assign'))
+      .limit(1);
+    const successMsg = await db
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.settingKey, 'leads.success_message'))
+      .limit(1);
     await db.insert(leadRequests).values({
       fullName,
       phone,
@@ -72,11 +83,13 @@ export async function submitLead(input: LeadInput): Promise<LeadResult> {
       destinationHint: input.destinationHint || null,
       passengers: input.passengers || null,
       notes: input.notes || null,
+      assignee: autoAssign[0]?.settingValue || null,
     });
     return {
       ok: true,
       stored: true,
       message:
+        successMsg[0]?.settingValue ||
         'درخواست تماس شما ثبت شد؛ کارشناس ریوان سفر در ساعات کاری با شما تماس می‌گیرد.',
     };
   } catch {

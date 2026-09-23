@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { Button } from '@/components/ui/button';
 import { listLandings, checkQualityGate, setLandingWorkflow, deleteLanding } from './actions';
 import LandingForm from './LandingForm';
+import SectionSettingsDialog from '../SectionSettingsDialog';
 
 function statusBadge(status: string) {
   const colors: Record<string, string> = {
@@ -15,7 +17,7 @@ function statusBadge(status: string) {
   return <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-bold ${colors[status] || 'bg-muted'}`}>{status}</span>;
 }
 
-export default function LandingList({ initial }: { initial: Awaited<ReturnType<typeof listLandings>> }) {
+export default function LandingList({ initial, sectionSettings }: { initial: Awaited<ReturnType<typeof listLandings>>; sectionSettings: Record<string, string> }) {
   const [data, setData] = useState(initial);
   const [showForm, setShowForm] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -72,12 +74,12 @@ export default function LandingList({ initial }: { initial: Awaited<ReturnType<t
             مدیریت صفحات سئو، چک‌لیست انتشار و کنترل ایندکس.
           </p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="btn btn-medium btn-primary text-btn font-bold"
-        >
-          {showForm ? 'بستن فرم' : '+ لندینگ جدید'}
-        </button>
+        <div className="flex items-center gap-2">
+          <SectionSettingsDialog sectionKey="seo" title="تنظیمات سئو" tabs={['seo']} values={sectionSettings} />
+          <Button onClick={() => setShowForm(!showForm)}>
+            {showForm ? 'بستن فرم' : '+ لندینگ جدید'}
+          </Button>
+        </div>
       </div>
 
       {showForm && <LandingForm onSaved={() => { setShowForm(false); refresh(); }} />}

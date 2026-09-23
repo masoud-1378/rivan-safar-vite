@@ -1,11 +1,13 @@
 import React from 'react';
 import { Award, ShieldCheck, CheckCircle2, FileText, Phone, ChevronLeft } from 'lucide-react';
+import { useContact } from '@/src/lib/contact-context';
 
 interface LicensesPageProps {
   onNavigate: (path: string) => void;
 }
 
 export default function LicensesPage({ onNavigate }: LicensesPageProps) {
+  const contact = useContact();
   return (
     <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
       <section className="bg-surface-primary border-b border-border-default section-compact">
@@ -60,9 +62,9 @@ export default function LicensesPage({ onNavigate }: LicensesPageProps) {
             کلیه مسافران ریوان سفر تحت پوشش قرارداد رسمی تیپ سازمان میراث فرهنگی و بیمه‌نامه معتبر بین‌المللی (شامل حوادث، فوریت‌های پزشکی و بار سفر) قرار می‌گیرند.
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            <a href="tel:02633350139" className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2">
+            <a href={contact.phoneHref} className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2">
               <Phone className="w-4 h-4" />
-              <span>استعلام و ارتباط با مدیریت: ۰۲۶۳۳۳۵۰۱۳۹</span>
+              <span>استعلام و ارتباط با مدیریت: {contact.phoneDisplay}</span>
             </a>
           </div>
         </div>

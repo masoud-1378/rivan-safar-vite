@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { type TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
 import { useContent } from '@/src/lib/content-context';
+import { useContact } from '@/src/lib/contact-context';
 import { submitLead } from '../../app/actions/lead';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
@@ -16,6 +17,7 @@ interface TourDetailPageProps {
 }
 
 export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageProps) {
+  const contact = useContact();
   const { tours, countries, cities, guides, exhibitions } = useContent();
   const tour: TourItem | undefined = tours.find(t => t.id === tourSlug);
 
@@ -183,11 +185,11 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
               {/* Call to Action Buttons */}
               <div className="flex flex-wrap items-center gap-3">
                 <a
-                  href="tel:02633350139"
+                  href={contact.phoneHref}
                   className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2.5 font-bold shadow-subtle"
                 >
                   <Phone className="w-4 h-4" />
-                  <span>تماس و استعلام ظرفیت: ۰۲۶۳۳۳۵۰۱۳۹</span>
+                  <span>تماس و استعلام ظرفیت: {contact.phoneDisplay}</span>
                 </a>
                 <a
                   href="#booking-form"
@@ -371,7 +373,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 {submitMessage || `کارشناس ریوان سفر در ساعات کاری برای تأیید قیمت و ظرفیت ${tour.title} با شما تماس می‌گیرد.`}
               </p>
               <div className="text-caption text-emerald-700">
-                در صورت تمایل می‌توانید مستقیماً با تلفن <a href="tel:02633350139" className="font-bold underline">۰۲۶۳۳۳۵۰۱۳۹</a> تماس حاصل فرمایید.
+                در صورت تمایل می‌توانید مستقیماً با تلفن <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a> تماس حاصل فرمایید.
               </div>
             </div>
           ) : (

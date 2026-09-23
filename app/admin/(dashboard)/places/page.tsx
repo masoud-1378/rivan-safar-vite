@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { listDestinations } from './actions';
+import { getSettingsMap } from '../settings/actions';
 import CatalogManager from './CatalogManager';
 
 export const metadata: Metadata = {
@@ -8,6 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPlacesPage() {
-  const destinations = await listDestinations();
-  return <CatalogManager initial={destinations} />;
+  const [destinations, settings] = await Promise.all([listDestinations(), getSettingsMap()]);
+  return <CatalogManager initial={destinations} sectionSettings={settings} />;
 }

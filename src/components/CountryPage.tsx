@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { type Place } from '../data/destinationsData';
 import { useContent } from '@/src/lib/content-context';
+import { useContact } from '@/src/lib/contact-context';
 import { submitLead } from '../../app/actions/lead';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
@@ -30,6 +31,7 @@ interface CountryPageProps {
 }
 
 export default function CountryPage({ countrySlug, onNavigate }: CountryPageProps) {
+  const contact = useContact();
   const { tours, countries, cities, guides, exhibitions } = useContent();
   const country: Place | undefined = countries[countrySlug];
 
@@ -454,11 +456,11 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
             برای استعلام نرخ پروازها، هتل‌ها و واچر اختصاصی، درخواست تماس ثبت کنید.
           </p>
           <a
-            href="tel:02633350139"
+            href={contact.phoneHref}
             className="btn btn-large btn-primary text-btn inline-flex items-center gap-3 font-bold shadow-lg hover:scale-105 transition-transform"
           >
             <Phone className="w-5 h-5" />
-            <span dir="ltr">۰۲۶ - ۳۳۳۵۰۱۳۹</span>
+            <span dir="ltr">{contact.phoneDisplay}</span>
           </a>
         </div>
       </section>

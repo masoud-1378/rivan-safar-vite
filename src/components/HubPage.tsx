@@ -3,6 +3,7 @@ import { Phone, Globe, MapPin, Calendar, Clock, ShieldCheck, ArrowLeft, CheckCir
 import { type TourItem } from '../data/toursData';
 import { type Place } from '../data/destinationsData';
 import { useContent } from '@/src/lib/content-context';
+import { useContact } from '@/src/lib/contact-context';
 import SmartImage from './SmartImage';
 import TourListItem from './TourListItem';
 
@@ -12,6 +13,7 @@ interface HubPageProps {
 }
 
 export default function HubPage({ type, onNavigate }: HubPageProps) {
+  const contact = useContact();
   const { tours: allTours, countries, cities, guides, exhibitions } = useContent();
   const isForeign = type === 'foreign';
 
@@ -52,7 +54,7 @@ export default function HubPage({ type, onNavigate }: HubPageProps) {
             {/* Quick Action Buttons */}
             <div className="flex flex-wrap items-center gap-3">
               <a
-                href="tel:02633350139"
+                href={contact.phoneHref}
                 className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2"
               >
                 <Phone className="w-4 h-4" />
@@ -212,11 +214,11 @@ export default function HubPage({ type, onNavigate }: HubPageProps) {
             با کارشناسان متخصص ریوان سفر تماس بگیرید تا بر اساس بودجه، تاریخ و سلیقه شما بهترین گزینه‌ها را بررسی کنیم.
           </p>
           <a
-            href="tel:02633350139"
+            href={contact.phoneHref}
             className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2.5 font-bold shadow-card"
           >
             <Phone className="w-4 h-4" />
-            <span dir="ltr">۰۲۶ - ۳۳۳۵۰۱۳۹</span>
+            <span dir="ltr">{contact.phoneDisplay}</span>
           </a>
         </div>
       </section>

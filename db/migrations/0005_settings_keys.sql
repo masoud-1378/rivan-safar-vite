@@ -1,0 +1,31 @@
+INSERT INTO site_settings (setting_key, setting_value)
+SELECT k, v FROM (VALUES
+  ('site.brand', 'ریوان سفر'),
+  ('site.tagline', 'سفر خوب، از انتخاب روشن شروع می‌شود'),
+  ('business.phone_display', '۰۲۶ — ۳۳۳۵۰۱۳۹'),
+  ('business.phone_secondary', ''),
+  ('business.email', 'info@rivansafar.com'),
+  ('business.working_hours', 'شنبه تا پنجشنبه، ۹ تا ۲۱'),
+  ('contact.show_header_phone', 'true'),
+  ('contact.show_footer_phone', 'true'),
+  ('contact.cta_label', 'درخواست تماس'),
+  ('seo.indexing_enabled', 'false'),
+  ('seo.default_title', 'ریوان سفر | تورهای داخلی، خارجی و نمایشگاهی با مسیر شفاف'),
+  ('seo.default_description', 'تورهای داخلی، خارجی و نمایشگاهی را با تاریخ، خدمات و قیمت پایه بررسی کنید.'),
+  ('seo.ga_id', ''),
+  ('seo.min_meta_length', '120'),
+  ('seo.review_days', '90'),
+  ('places.page_size', '12'),
+  ('places.default_sort', 'default'),
+  ('tours.default_currency', 'toman'),
+  ('tours.default_price_note', 'برای هر بزرگسال در اتاق دو تخته'),
+  ('tours.page_size', '12'),
+  ('tours.default_sort', 'default'),
+  ('leads.success_message', 'درخواست شما ثبت شد؛ کارشناس ما به‌زودی تماس می‌گیرد.'),
+  ('leads.notify_phones', ''),
+  ('leads.auto_assign', ''),
+  ('leads.page_size', '20'),
+  ('site.maintenance', 'false'),
+  ('site.maintenance_message', 'سایت در حال به‌روزرسانی است؛ به‌زودی برمی‌گردیم.')
+) AS seed(k, v)
+WHERE NOT EXISTS (SELECT 1 FROM site_settings s WHERE s.setting_key = seed.k);

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getSettings } from './actions';
 import SettingsForm from './SettingsForm';
 import { requireAdmin } from '@/src/lib/admin-auth';
+import { withDefaults } from '@/src/lib/settings';
 
 export const metadata: Metadata = {
   title: 'تنظیمات | پنل ریوان سفر',
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminSettingsPage() {
-  const settings = await getSettings();
-  await import('@/src/lib/admin-auth').then(m => m.requireAdmin(['owner']));
-  return <SettingsForm initial={settings} />;
+  const session = await requireAdmin(['owner', 'editor']);
+  const rows = await getSettings();
+  return <SettingsForm initial={withDefaults(rows)} role={session.role} />;
 }

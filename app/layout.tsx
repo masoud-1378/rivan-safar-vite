@@ -3,11 +3,10 @@ import type { ReactNode } from 'react';
 import { SITE_URL } from '@/src/lib/siteConfig';
 import { organizationJsonLd } from './seo-helpers';
 import ClientChrome from './ClientChrome';
+import { getGaId } from '@/src/lib/site-contact';
 import '../src/index.css';
 import { vazirmatn } from "./fonts";
 
-
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -32,11 +31,12 @@ export const viewport: Viewport = {
   themeColor: '#102A3A',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  const GA_ID = await getGaId();
   return (
     <html lang="fa" dir="rtl" className={vazirmatn.variable}>
       <head>

@@ -4,6 +4,7 @@ import RouteView from '../../RouteView';
 import JsonLd from '../../JsonLd';
 import { metadataFor, resolveSeo, breadcrumbJsonLd } from '../../seo-helpers';
 import { getLiveContent, getCountries } from '@/src/lib/db-content';
+import { getContactInfo } from '@/src/lib/site-contact';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,13 +27,13 @@ export default async function CountryPage({
   params: Promise<{ country: string }>;
 }) {
   const { country } = await params;
-  const content = await getLiveContent();
+  const [content, contact] = await Promise.all([getLiveContent(), getContactInfo()]);
   if (!content.countries[country]) notFound();
   const seo = resolveSeo(`/destination/${country}`);
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
-      <RouteView type="country" params={{ countrySlug: country }} data={content} />
+      <RouteView type="country" params={{ countrySlug: country }} data={content} contact={contact} />
     </>
   );
 }

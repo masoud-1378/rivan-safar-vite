@@ -28,15 +28,17 @@ import PrivacyPage from '@/src/components/PrivacyPage';
 import NotFoundPage from '@/src/components/NotFoundPage';
 import type { PageType } from '@/src/data/siteRegistry';
 import { ContentProvider, type ContentValue } from '@/src/lib/content-context';
+import { ContactProvider, type ContactInfo } from '@/src/lib/contact-context';
 
 export interface RouteViewProps {
   type: PageType;
   params: Record<string, string>;
   data?: Partial<ContentValue>;
+  contact?: Partial<ContactInfo>;
 }
 
 /** بدنه هر صفحه — جایگزین renderCurrentView در App قبلی؛ ناوبری با Next router */
-export default function RouteView({ type, params, data }: RouteViewProps) {
+export default function RouteView({ type, params, data, contact }: RouteViewProps) {
   const router = useRouter();
   const navigateTo = (path: string) => {
     router.push(path);
@@ -118,5 +120,9 @@ export default function RouteView({ type, params, data }: RouteViewProps) {
   }
   })();
 
-  return <ContentProvider value={data}>{body}</ContentProvider>;
+  return (
+    <ContentProvider value={data}>
+      <ContactProvider value={contact}>{body}</ContactProvider>
+    </ContentProvider>
+  );
 }

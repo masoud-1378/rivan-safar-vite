@@ -1,11 +1,13 @@
 import React from 'react';
 import { Compass, Home, Phone, Search, ChevronLeft } from 'lucide-react';
+import { useContact } from '@/src/lib/contact-context';
 
 interface NotFoundPageProps {
   onNavigate: (path: string) => void;
 }
 
 export default function NotFoundPage({ onNavigate }: NotFoundPageProps) {
+  const contact = useContact();
   return (
     <div className="min-h-screen bg-page-background text-text-primary dir-rtl flex items-center justify-center py-16 px-4">
       <div className="bg-surface-primary border border-border-default rounded-card p-8 md:p-12 text-center max-w-lg shadow-card">
@@ -40,8 +42,8 @@ export default function NotFoundPage({ onNavigate }: NotFoundPageProps) {
 
         <div className="pt-4 border-t border-border-default/60 text-caption text-text-secondary">
           <span>نیاز به راهنمایی دارید؟ تماس با </span>
-          <a href="tel:02633350139" className="font-bold text-brand-navy hover:underline" dir="ltr">
-            026 - 33350139
+          <a href={contact.phoneHref} className="font-bold text-brand-navy hover:underline" dir="ltr">
+            {contact.phoneDisplay}
           </a>
         </div>
       </div>

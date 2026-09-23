@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { listTours } from './actions';
+import { getSettingsMap } from '../settings/actions';
 import ToursManager from './ToursManager';
 
 export const metadata: Metadata = {
@@ -8,6 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminToursPage() {
-  const tours = await listTours();
-  return <ToursManager initial={tours} />;
+  const [tours, settings] = await Promise.all([listTours(), getSettingsMap()]);
+  return <ToursManager initial={tours} sectionSettings={settings} />;
 }

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  Phone, MapPin, Clock, Mail, MessageSquare, 
-  Building2, Check, Send, ShieldCheck, Sparkles 
+import {
+  Phone, MapPin, Clock, Mail, MessageSquare,
+  Building2, Check, Send, ShieldCheck, Sparkles
 } from 'lucide-react';
+import { useContact } from '@/src/lib/contact-context';
 
 interface ContactPageProps {
   onNavigate: (path: string) => void;
 }
 
 export default function ContactPage({ onNavigate }: ContactPageProps) {
+  const contact = useContact();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -66,11 +68,11 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                 </div>
               </div>
               <a
-                href="tel:02633350139"
+                href={contact.phoneHref}
                 className="text-h3 font-extrabold text-brand-navy hover:text-brand-orange transition-colors block font-mono"
                 dir="ltr"
               >
-                026 - 33350139
+                {contact.phoneDisplay}
               </a>
             </div>
 
@@ -86,7 +88,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                 </div>
               </div>
               <p className="text-body-sm text-text-secondary leading-relaxed">
-                استان البرز، کرج، گوهردشت، بلوار شهید مطهری، مجتمع گردشگری ریوان سفر
+                {contact.address}
               </p>
             </div>
 
@@ -103,16 +105,12 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
               </div>
               <div className="space-y-1.5 text-body-sm text-text-secondary">
                 <div className="flex justify-between">
-                  <span>شنبه تا چهارشنبه:</span>
-                  <span className="font-bold text-text-heading">۹:۰۰ الی ۱۸:۰۰</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>پنج‌شنبه‌ها:</span>
-                  <span className="font-bold text-text-heading">۹:۰۰ الی ۱۴:۰۰</span>
+                  <span>ساعات پاسخگویی:</span>
+                  <span className="font-bold text-text-heading">{contact.workingHours}</span>
                 </div>
                 <div className="flex justify-between text-text-muted pt-1">
-                  <span>جمعه‌ها و ایام تعطیل رسمی:</span>
-                  <span>پشتیبانی اضطراری مسافران در سفر</span>
+                  <span>ایمیل:</span>
+                  <span>{contact.email}</span>
                 </div>
               </div>
             </div>
