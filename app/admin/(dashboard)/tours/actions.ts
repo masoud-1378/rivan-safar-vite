@@ -305,3 +305,14 @@ export async function deleteTour(id: string) {
   revalidatePath('/admin/tours');
   return { ok: true };
 }
+
+export async function checkSlugUnique(slug: string, excludeId?: string | null) {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const s = (slug || '').trim();
+  if (!s) return { unique: false };
+  const rows = await db.select().from(siteTours).where(eq(siteTours.slug, s)).limit(2);
+  const taken = rows.some((r) => r.id !== excludeId);
+  return { unique: !taken };
+}

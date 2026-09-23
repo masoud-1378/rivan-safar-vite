@@ -1,26 +1,31 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState, useTransition } from 'react';
-import { Building2, Check as CheckIcon, ChevronDown, Plus, Sparkles, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { Building2, Check as CheckIcon, ChevronDown, Eye, History, Plus, Sparkles, X } from 'lucide-react';
 import { AmountInput } from '@/components/ui/amount-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Field, Input } from '@/components/ui/input';
 import { RadioGroup } from '@/components/ui/radio-group';
 import { Select } from '@/components/ui/select';
 import { TagsInput } from '@/components/ui/tags-input';
 import { Textarea } from '@/components/ui/textarea';
 import { fa } from '@/lib/utils';
+import { faNumber } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { formatJalali } from '@/lib/jalali';
 import {
   saveTour,
+  checkSlugUnique,
   type DestinationTree,
   type OriginRow,
   type TourInput,
   type TourRow,
 } from './actions';
 import { listHotels, saveHotel, type HotelRow } from '../hotels/actions';
+import { DEFAULT_SERVICES, DESC_MIN, faToSlugFa, TITLE_MAX, validateDraft } from './tour-helpers';
 
 const TYPE_LABELS: Record<string, string> = {
   domestic: 'تور گروهی',
@@ -153,6 +158,14 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
   const [statusLabel, setStatusLabel] = useState(initial?.statusLabel ?? '');
   const [visa, setVisa] = useState(initial?.visaRequired ?? false);
   const [pending, startTransition] = useTransition();
+  const [touched, setTouched] = useState(false);
+  const [slugTouched, setSlugTouched] = useState(Boolean(editingId));
+  const [slugTaken, setSlugTaken] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const slugTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draftKey = editingId ? `tour-draft:${editingId}` : 'tour-draft:new';
   const [openRegions, setOpenRegions] = useState<Record<string, boolean>>(() => {
     const out: Record<string, boolean> = {};
     tree.regions.forEach((r, i) => {
@@ -195,6 +208,94 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
     return opts;
   }, [origins, origin]);
 
+  const errors = useMemo(
+    () =>
+      touched
+        ? validateDraft({ title, slug, price, destinations: selected.length, origin })
+        : {},
+    [touched, title, slug, price, selected.length, origin],
+  );
+  const hasErrors = Object.keys(errors).length > 0;
+
+  useEffect(() => {
+    if (!slug.trim()) {
+      setSlugTaken(false);
+      return;
+    }
+    if (slugTimer.current) clearTimeout(slugTimer.current);
+    slugTimer.current = setTimeout(async () => {
+      try {
+        const res = await checkSlugUnique(slug.trim(), editingId ?? null);
+        setSlugTaken(!res.unique);
+      } catch {
+        setSlugTaken(false);
+      }
+    }, 500);
+    return () => {
+      if (slugTimer.current) clearTimeout(slugTimer.current);
+    };
+  }, [slug, editingId]);
+
+  const snapshot = useMemo(
+    () =>
+      JSON.stringify({
+        title, slug, type, typeLabel, image, selected, origin, price,
+        picked, badgeSel, badgeCustom, airline, duration, nights,
+        closestDeparture, features, included, excluded, description,
+        status, statusLabel, visa,
+      }),
+    [title, slug, type, typeLabel, image, selected, origin, price, picked, badgeSel, badgeCustom, airline, duration, nights, closestDeparture, features, included, excluded, description, status, statusLabel, visa],
+  );
+
+  useEffect(() => {
+    setDirty(true);
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, snapshot);
+      } catch { /* ignore */ }
+    }, 10000);
+    return () => clearTimeout(t);
+  }, [snapshot, draftKey]);
+
+  useEffect(() => {
+    const onUnload = (e: BeforeUnloadEvent) => {
+      if (dirty && !pending) e.preventDefault();
+    };
+    window.addEventListener('beforeunload', onUnload);
+    return () => window.removeEventListener('beforeunload', onUnload);
+  }, [dirty, pending]);
+
+  const restoreDraft = () => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (typeof d.title === 'string') setTitle(d.title);
+      if (typeof d.slug === 'string') setSlug(d.slug);
+      if (typeof d.type === 'string') setType(d.type);
+      if (typeof d.typeLabel === 'string') setTypeLabel(d.typeLabel);
+      if (typeof d.image === 'string') setImage(d.image);
+      if (Array.isArray(d.selected)) setSelected(d.selected.filter((s: unknown) => typeof s === 'string'));
+      if (typeof d.origin === 'string') setOrigin(d.origin);
+      if (typeof d.price === 'number' || d.price === null) setPrice(d.price);
+      if (d.picked && typeof d.picked === 'object') setPicked(d.picked);
+      if (typeof d.badgeSel === 'string') setBadgeSel(d.badgeSel);
+      if (typeof d.badgeCustom === 'string') setBadgeCustom(d.badgeCustom);
+      if (typeof d.airline === 'string') setAirline(d.airline);
+      if (typeof d.duration === 'string') setDuration(d.duration);
+      if (typeof d.nights === 'number') setNights(d.nights);
+      if (typeof d.closestDeparture === 'string') setClosestDeparture(d.closestDeparture);
+      if (Array.isArray(d.features)) setFeatures(d.features);
+      if (Array.isArray(d.included)) setIncluded(d.included);
+      if (Array.isArray(d.excluded)) setExcluded(d.excluded);
+      if (typeof d.description === 'string') setDescription(d.description);
+      if (typeof d.status === 'string') setStatus(d.status);
+      if (typeof d.statusLabel === 'string') setStatusLabel(d.statusLabel);
+      if (typeof d.visa === 'boolean') setVisa(d.visa);
+      setDraftRestored(true);
+    } catch { /* ignore */ }
+  };
+
   const applyTypeLabel = (t: string) => setTypeLabel(TYPE_LABELS[t] ?? '');
 
   const addHotel = () => {
@@ -217,13 +318,19 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
   };
 
   const submit = () => {
-    if (title.trim().length < 2) {
-      alert('عنوان تور لازم است.');
+    setTouched(true);
+    const errs = validateDraft({ title, slug, price, destinations: selected.length, origin });
+    if (Object.keys(errs).length > 0 || slugTaken) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    if (!slug.trim()) {
-      alert('نامک (slug) لازم است.');
-      return;
+    if (status === 'confirmed') {
+      const missing: string[] = [];
+      if (!image.trim()) missing.push('تصویر شاخص');
+      if (Object.keys(picked).length === 0) missing.push('حداقل یک هتل');
+      if (included.length === 0) missing.push('خدمات شامل');
+      if (description.trim().length < DESC_MIN) missing.push(`توضیحات حداقل ${fa(DESC_MIN)} نویسه`);
+      if (missing.length > 0 && !confirm(`برای انتشار قطعی این موارد ناقص است:\n• ${missing.join('\n• ')}\n\nباز هم ثبت شود؟`)) return;
     }
     const hotelOptions = Object.entries(picked)
       .map(([id, v]) => {
@@ -263,6 +370,10 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
     startTransition(async () => {
       try {
         await saveTour(editingId ?? null, payload);
+        try {
+          localStorage.removeItem(draftKey);
+        } catch { /* ignore */ }
+        setDirty(false);
         onDone();
       } catch (e) {
         alert(e instanceof Error ? e.message : 'خطا در ذخیره.');
@@ -270,16 +381,55 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
     });
   };
 
+  const suggestSlug = () => {
+    const s = faToSlugFa(title);
+    if (s) {
+      setSlug(s);
+      setSlugTouched(true);
+    }
+  };
+
+  const applyDefaultServices = () => {
+    const defs = DEFAULT_SERVICES[type] ?? [];
+    setIncluded((prev) => [...new Set([...prev, ...defs])]);
+  };
+
   return (
     <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={restoreDraft}>
+          <History className="size-4" />
+          بازیابی پیش‌نویس
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setShowPreview((v) => !v)}>
+          <Eye className="size-4" />
+          {showPreview ? 'بستن پیش‌نمایش' : 'پیش‌نمایش کارت'}
+        </Button>
+      </div>
+      {draftRestored ? (
+        <p className="rounded-lg border border-success/40 bg-success/10 px-3 py-2 text-sm text-success">
+          پیش‌نویس بازیابی شد.
+        </p>
+      ) : null}
+      <div className={cn('grid gap-5', showPreview && 'xl:grid-cols-[1fr_340px]')}>
+        <div className="min-w-0 space-y-5">
       <Card>
         <CardHeader>
           <CardTitle>{editingId ? 'ویرایش تور' : 'افزودن تور جدید'}</CardTitle>
           <CardDescription>مشخصات اصلی تور؛ نامک همان آدرس صفحه تور در سایت است.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Field label="عنوان تور">
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="مثلاً تور استانبول + آنتالیا" className="h-12 text-base font-bold" />
+          <Field label="عنوان تور" hint={`${fa(Math.min(title.trim().length, 999))} / ${fa(TITLE_MAX)} نویسه`}>
+            <Input
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (!slugTouched && !editingId) setSlug(faToSlugFa(e.target.value));
+              }}
+              placeholder="مثلاً تور استانبول + آنتالیا"
+              className="h-12 text-base font-bold"
+              error={errors.title}
+            />
           </Field>
           <Field label="نامک (اسلاگ)">
             <div className="flex items-stretch gap-0 overflow-hidden rounded-lg border border-input bg-background/60 focus-within:ring-2 focus-within:ring-ring/60">
@@ -289,11 +439,28 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
               <input
                 value={slug}
                 dir="ltr"
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={(e) => {
+                  setSlug(e.target.value);
+                  setSlugTouched(true);
+                }}
                 placeholder="istanbul-antalya"
                 className="h-10 min-w-0 flex-1 bg-transparent px-3 text-left text-sm outline-none placeholder:text-muted-foreground/50"
               />
+              <button
+                type="button"
+                onClick={suggestSlug}
+                title="ساخت خودکار از عنوان"
+                className="flex shrink-0 cursor-pointer items-center gap-1 border-s border-border bg-muted/60 px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Sparkles className="size-3.5" />
+                خودکار
+              </button>
             </div>
+            {slugTaken ? (
+              <p className="mt-1 text-xs text-destructive">این نامک قبلاً استفاده شده است.</p>
+            ) : errors.slug ? (
+              <p className="mt-1 text-xs text-destructive">{errors.slug}</p>
+            ) : null}
           </Field>
           <p dir="ltr" className="text-left text-xs text-muted-foreground">
             {slug.trim() ? `https://rivansafar.ir/tour/${slug.trim()}` : 'نامک را وارد کنید تا آدرس نهایی نمایش داده شود.'}
@@ -335,6 +502,9 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
           <CardDescription>
             {selected.length > 0 ? `${fa(selected.length)} مقصد انتخاب شد` : 'از درخت زیر یک یا چند مقصد انتخاب کنید.'}
           </CardDescription>
+          {errors.destinations ? (
+            <p className="-mt-2 text-xs text-destructive">{errors.destinations}</p>
+          ) : null}
         </CardHeader>
         <CardContent className="space-y-4">
           {selected.length > 0 && (
@@ -417,12 +587,15 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
               );
             })}
           </div>
-          <Field label="مبدأ حرکت">
+          <Field label="مبدأ حرکت" hint={errors.origin ?? undefined}>
             {originOptions.length > 0 ? (
               <RadioGroup options={originOptions} value={origin} onChange={setOrigin} />
             ) : (
               <p className="text-sm text-muted-foreground">شهری ثبت نشده است.</p>
             )}
+            {errors.origin ? (
+              <p className="mt-1 text-xs text-destructive">{errors.origin}</p>
+            ) : null}
           </Field>
           <Field label="مسیر نهایی (خودکار)">
             <div className="rounded-lg border border-dashed border-border bg-muted/50 px-3 py-2.5 text-sm font-medium">{routePreview}</div>
@@ -436,8 +609,11 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
           <CardDescription>فقط مبلغ پایه را وارد کنید؛ بقیه خودکار محاسبه می‌شود.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Field label="قیمت پایه (تومان)">
+          <Field label="قیمت پایه (تومان)" hint={errors.price ?? undefined}>
             <AmountInput value={price} onChange={setPrice} unit="تومان" words />
+            {errors.price ? (
+              <p className="mt-1 text-xs text-destructive">{errors.price}</p>
+            ) : null}
           </Field>
           <p className="mt-2 text-xs text-muted-foreground">یادداشت قیمت ثابت است: برای هر بزرگسال در اتاق دو تخته</p>
         </CardContent>
@@ -526,8 +702,17 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
             <Field label="تعداد شب‌ها">
               <Input type="number" min={0} value={nights} onChange={(e) => setNights(Number(e.target.value))} />
             </Field>
-            <Field label="نزدیک‌ترین تاریخ حرکت">
-              <Input value={closestDeparture} onChange={(e) => setClosestDeparture(e.target.value)} placeholder="مثلاً ۲۵ آبان" />
+            <Field label="نزدیک‌ترین تاریخ حرکت" hint="از تقویم انتخاب کنید یا دستی بنویسید">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <DatePicker
+                  onChange={(d) => {
+                    if (d) setClosestDeparture(formatJalali(d));
+                  }}
+                  placeholder="انتخاب از تقویم شمسی"
+                  className="sm:w-56"
+                />
+                <Input value={closestDeparture} onChange={(e) => setClosestDeparture(e.target.value)} placeholder="مثلاً ۲۵ آبان" className="flex-1" />
+              </div>
             </Field>
             <Field label="وضعیت فروش">
               <Select
@@ -548,13 +733,19 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
           <Field label="ویژگی‌ها">
             <TagsInput value={features} onChange={setFeatures} placeholder="ویژگی را بنویسید و Enter بزنید" />
           </Field>
-          <Field label="خدمات شامل">
+          <Field label="خدمات شامل" hint="برای شروع سریع، خدمات پیش‌فرض نوع تور را اضافه کنید">
+            <div className="mb-2">
+              <Button variant="outline" size="sm" onClick={applyDefaultServices}>
+                <Sparkles className="size-4" />
+                افزودن خدمات پیش‌فرض
+              </Button>
+            </div>
             <TagsInput value={included} onChange={setIncluded} placeholder="خدمت را بنویسید و Enter بزنید" />
           </Field>
           <Field label="خدمات خارج از پکیج">
             <TagsInput value={excluded} onChange={setExcluded} placeholder="خدمت را بنویسید و Enter بزنید" />
           </Field>
-          <Field label="توضیحات">
+          <Field label="توضیحات" hint={`${fa(description.trim().length)} / حداقل پیشنهادی ${fa(DESC_MIN)} نویسه`}>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} autoResize className="min-h-28 leading-7" />
           </Field>
         </CardContent>
@@ -577,13 +768,67 @@ export default function TourForm({ initial, editingId, onDone, tree, origins, ho
       </Card>
 
       <div className="sticky bottom-4 z-10 rounded-2xl border border-border bg-card/95 p-3 shadow-lg backdrop-blur">
-        <div className="flex items-center justify-end gap-2">
-          <Button variant="outline" onClick={onDone}>
-            انصراف
-          </Button>
-          <Button onClick={submit} disabled={pending}>
-            {pending ? 'در حال ذخیره…' : editingId ? 'ذخیره تغییرات' : 'ثبت تور'}
-          </Button>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            {dirty ? 'تغییرات ذخیره‌نشده دارید — پیش‌نویس خودکار فعال است.' : 'همه تغییرات ذخیره شده است.'}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={onDone}>
+              انصراف
+            </Button>
+            <Button onClick={submit} disabled={pending || (touched && (hasErrors || slugTaken))}>
+              {pending ? 'در حال ذخیره…' : editingId ? 'ذخیره تغییرات' : 'ثبت تور'}
+            </Button>
+          </div>
+        </div>
+      </div>
+        </div>
+        {showPreview ? (
+          <TourPreview
+            title={title}
+            image={image}
+            duration={duration}
+            destination={destNames[0] ?? ''}
+            badge={badgeCustom.trim() || badgeSel}
+            price={price}
+            hotelStars={Math.max(0, ...Object.values(picked).map(() => 0), ...hotelList.filter((h) => picked[h.id]).map((h) => h.stars))}
+            visaRequired={effectiveVisa}
+            type={type}
+          />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function TourPreview({ title, image, duration, destination, badge, price, hotelStars, visaRequired, type }: { title: string; image: string; duration: string; destination: string; badge: string; price: number | null; hotelStars: number; visaRequired: boolean; type: string }) {
+  return (
+    <div className="xl:sticky xl:top-4 h-fit">
+      <p className="mb-2 text-xs font-medium text-muted-foreground">پیش‌نمایش زنده کارت سایت</p>
+      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+        {image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={image} alt={title || 'پیش‌نمایش تور'} className="aspect-[4/3] w-full object-cover" />
+        ) : (
+          <div className="grid aspect-[4/3] w-full place-items-center bg-muted text-xs text-muted-foreground">
+            بدون تصویر
+          </div>
+        )}
+        <div className="space-y-2 p-4 text-center">
+          <h3 className="text-[16px] font-bold">{title || 'عنوان تور…'}</h3>
+          <p className="text-xs text-muted-foreground">
+            {duration || '—'} | {destination || '—'}
+          </p>
+          {badge ? (
+            <span className="inline-block rounded-full bg-secondary px-2.5 py-1 text-[11px] font-bold">{badge}</span>
+          ) : null}
+          <p className="text-xs text-muted-foreground">
+            {hotelStars > 0 ? `هتل ${fa(hotelStars)}★` : 'هتل انتخاب نشده'} · {visaRequired ? 'نیازمند ویزا' : type === 'domestic' ? 'داخلی' : 'بدون نیاز به ویزا'}
+          </p>
+          <div className="flex items-baseline justify-center gap-1 border-t border-border pt-3">
+            <span className="text-lg font-black">{price !== null && price > 0 ? faNumber(price) : '—'}</span>
+            <span className="text-[11px] text-muted-foreground">تومان</span>
+          </div>
         </div>
       </div>
     </div>

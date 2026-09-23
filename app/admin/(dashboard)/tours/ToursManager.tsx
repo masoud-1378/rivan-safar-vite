@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Copy, Pencil, Plus, Trash2 } from 'lucide-react';
 import TourForm from './TourForm';
 import { deleteTour, type DestinationTree, type OriginRow, type TourRow } from './actions';
 import type { HotelRow } from '../hotels/actions';
@@ -38,13 +38,18 @@ export default function ToursManager({ initial, sectionSettings, tree, origins, 
     } catch (error) { alert(error instanceof Error ? error.message : 'خطا در حذف.'); }
   };
   const edit = (tour: TourRow) => { setEditing(tour); setShowForm(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const duplicate = (tour: TourRow) => {
+    setEditing({ ...tour, id: '', slug: '', title: `${tour.title} (کپی)` });
+    setShowForm(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const columns: Column<TourRow>[] = [
     { key: 'title', header: 'عنوان', sortable: true, cell: (tour) => <span className="font-semibold">{tour.title}</span> },
     { key: 'destination', header: 'مقصد', sortable: true },
     { key: 'typeLabel', header: 'نوع', cell: (tour) => tour.typeLabel || '—' },
     { key: 'price', header: 'قیمت', numeric: true, sortable: true, cell: (tour) => formatToman(Number(tour.price)) },
     { key: 'status', header: 'وضعیت', cell: (tour) => <Badge variant={tour.status === 'published' ? 'success' : tour.status === 'pending' ? 'warning' : 'secondary'}>{tour.statusLabel || tour.status}</Badge> },
-    { key: 'id', header: 'عملیات', className: 'w-36', cell: (tour) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(tour)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(tour)} disabled={pending}><Trash2 />حذف</Button></div> },
+    { key: 'id', header: 'عملیات', className: 'w-44', cell: (tour) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(tour)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" onClick={() => duplicate(tour)}><Copy />تکثیر</Button><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(tour)} disabled={pending}><Trash2 />حذف</Button></div> },
   ];
 
   return (
