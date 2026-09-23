@@ -14,7 +14,13 @@ const connectionString =
 
 function createDb() {
   if (!connectionString) return null;
-  const client = postgres(connectionString, { max: 5 });
+  const client = postgres(connectionString, {
+    max: 1,
+    idle_timeout: 10,
+    connect_timeout: 10,
+    max_lifetime: 60,
+    prepare: false,
+  });
   return drizzle(client, { schema });
 }
 

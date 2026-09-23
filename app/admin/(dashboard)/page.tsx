@@ -27,36 +27,104 @@ export const metadata: Metadata = {
 export default async function AdminDashboard() {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
-  if (!db) throw new Error('DB_NOT_CONFIGURED');
 
-  const [leads, tours, destinations, guidesCount, exhibitionsCount, drafts, departures, expiringPrices, recentLeads] = await Promise.all([
-    db.select({ n: count() }).from(leadRequests),
-    db.select({ n: count() }).from(siteTours),
-    db.select({ n: count() }).from(siteDestinations),
-    db.select({ n: count() }).from(guides),
-    db.select({ n: count() }).from(exhibitions),
-    db.select({ n: count() }).from(seoLandings).where(eq(seoLandings.workflow, 'draft')),
-    db.select({ n: count() }).from(tourDepartures),
-    db.select({ n: count() }).from(accommodationOffers).where(and(eq(accommodationOffers.priceStatus, 'confirmed'), lte(accommodationOffers.validUntil, new Date(Date.now() + 7 * 24 * 3600 * 1000)))),
-    db.select().from(leadRequests).orderBy(leadRequests.createdAt).limit(5),
-  ]);
+  // هر کوئری با تایم‌اوت جدا؛ اگر دیتابیس کند/قطع بود داشبورد با صفر بالا می‌آید نه خطای ۵۰۰
+  async function safeCount(run: () => Promise<Array<{ n: unknown }>>): Promise<number> {
+    if (!db) return 0;
+    try {
+      const rows = await Promise.race([
+        run(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('db-timeout')), 8000),
+        ),
+      ]);
+      return Number(rows[0]?.n ?? 0);
+    } catch {
+      return 0;
+    }
+  }
+
+  let recentLeads: Array<{
+    id: string;
+    fullName: string;
+    phone: string;
+    tourContext: string | null;
+    destinationHint: string | null;
+    status: string;
+  }> = [];
+  let dbDown = false;
+  let leads = 0;
+  let tours = 0;
+  let destinations = 0;
+  let guidesCount = 0;
+  let exhibitionsCount = 0;
+  let drafts = 0;
+  let departures = 0;
+  let expiringPrices = 0;
+
+  if (db) {
+    // ترتیبی اجرا می‌شوند تا روی اتصال تکی serverless قفل نکنند
+    leads = await safeCount(() => db.select({ n: count() }).from(leadRequests));
+    tours = await safeCount(() => db.select({ n: count() }).from(siteTours));
+    destinations = await safeCount(() => db.select({ n: count() }).from(siteDestinations));
+    guidesCount = await safeCount(() => db.select({ n: count() }).from(guides));
+    exhibitionsCount = await safeCount(() => db.select({ n: count() }).from(exhibitions));
+    drafts = await safeCount(() =>
+      db.select({ n: count() }).from(seoLandings).where(eq(seoLandings.workflow, 'draft')),
+    );
+    departures = await safeCount(() => db.select({ n: count() }).from(tourDepartures));
+    expiringPrices = await safeCount(() =>
+      db
+        .select({ n: count() })
+        .from(accommodationOffers)
+        .where(
+          and(
+            eq(accommodationOffers.priceStatus, 'confirmed'),
+            lte(accommodationOffers.validUntil, new Date(Date.now() + 7 * 24 * 3600 * 1000)),
+          ),
+        ),
+    );
+    try {
+      recentLeads = await Promise.race([
+        db.select().from(leadRequests).orderBy(leadRequests.createdAt).limit(5),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('db-timeout')), 8000),
+        ),
+      ]);
+    } catch {
+      recentLeads = [];
+    }
+    dbDown =
+      leads === 0 &&
+      tours === 0 &&
+      destinations === 0 &&
+      guidesCount === 0 &&
+      exhibitionsCount === 0;
+  } else {
+    dbDown = true;
+  }
 
   const stats = [
-    { label: 'کل درخواست‌های تماس', value: fa(leads[0]?.n ?? 0), trend: [2, 3, 2, 5, 4, 6, 8] },
-    { label: 'تورهای قابل مدیریت', value: fa(tours[0]?.n ?? 0), trend: [8, 9, 9, 10, 10, 11, 12] },
-    { label: 'مقصدها و شهرها', value: fa(destinations[0]?.n ?? 0), trend: [5, 6, 7, 8, 8, 10, 11] },
-    { label: 'مقاله و راهنما', value: fa(guidesCount[0]?.n ?? 0), trend: [1, 2, 2, 3, 3, 4, 4] },
+    { label: 'کل درخواست‌های تماس', value: fa(leads), trend: [2, 3, 2, 5, 4, 6, 8] },
+    { label: 'تورهای قابل مدیریت', value: fa(tours), trend: [8, 9, 9, 10, 10, 11, 12] },
+    { label: 'مقصدها و شهرها', value: fa(destinations), trend: [5, 6, 7, 8, 8, 10, 11] },
+    { label: 'مقاله و راهنما', value: fa(guidesCount), trend: [1, 2, 2, 3, 3, 4, 4] },
   ];
 
   const quickLinks = [
-    { href: '/admin/tours', label: 'مدیریت تورها', value: tours[0]?.n ?? 0, icon: BriefcaseBusiness },
-    { href: '/admin/places', label: 'مقصدها و شهرها', value: destinations[0]?.n ?? 0, icon: MapPinned },
-    { href: '/admin/guides', label: 'مقالات و راهنماها', value: guidesCount[0]?.n ?? 0, icon: BookOpen },
-    { href: '/admin/exhibitions', label: 'نمایشگاه‌ها', value: exhibitionsCount[0]?.n ?? 0, icon: Globe2 },
+    { href: '/admin/tours', label: 'مدیریت تورها', value: tours, icon: BriefcaseBusiness },
+    { href: '/admin/places', label: 'مقصدها و شهرها', value: destinations, icon: MapPinned },
+    { href: '/admin/guides', label: 'مقالات و راهنماها', value: guidesCount, icon: BookOpen },
+    { href: '/admin/exhibitions', label: 'نمایشگاه‌ها', value: exhibitionsCount, icon: Globe2 },
   ];
 
   return (
     <div className="space-y-6">
+      {dbDown ? (
+        <div className="rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm">
+          اتصال به دیتابیس در این لحظه برقرار نشد؛ آمار صفر نمایش داده می‌شود. چند لحظه بعد صفحه را تازه کنید.
+        </div>
+      ) : null}
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="mb-1 text-sm font-medium text-brand">مرکز کنترل ریوان سفر</p>
@@ -89,9 +157,9 @@ export default async function AdminDashboard() {
         <Card className="p-5">
           <div className="mb-4"><h2 className="font-semibold">وضعیت سامانه</h2><p className="text-sm text-muted-foreground">مواردی که نیاز به توجه دارند</p></div>
           <div className="space-y-3 text-sm">
-            <Link href="/admin/seo" className="flex items-center justify-between rounded-lg bg-accent/50 p-3 hover:bg-accent"><span>لندینگ‌های پیش‌نویس</span><Badge variant={Number(drafts[0]?.n ?? 0) ? 'warning' : 'success'}>{fa(drafts[0]?.n ?? 0)}</Badge></Link>
-            <Link href="/admin/tours" className="flex items-center justify-between rounded-lg bg-accent/50 p-3 hover:bg-accent"><span>قیمت‌های رو به انقضا</span><Badge variant={Number(expiringPrices[0]?.n ?? 0) ? 'warning' : 'success'}>{fa(expiringPrices[0]?.n ?? 0)}</Badge></Link>
-            <Link href="/admin/tours" className="flex items-center justify-between rounded-lg bg-accent/50 p-3 hover:bg-accent"><span>حرکت‌های ثبت‌شده</span><Badge variant="secondary">{fa(departures[0]?.n ?? 0)}</Badge></Link>
+            <Link href="/admin/seo" className="flex items-center justify-between rounded-lg bg-accent/50 p-3 hover:bg-accent"><span>لندینگ‌های پیش‌نویس</span><Badge variant={Number(drafts) ? 'warning' : 'success'}>{fa(drafts)}</Badge></Link>
+            <Link href="/admin/tours" className="flex items-center justify-between rounded-lg bg-accent/50 p-3 hover:bg-accent"><span>قیمت‌های رو به انقضا</span><Badge variant={Number(expiringPrices) ? 'warning' : 'success'}>{fa(expiringPrices)}</Badge></Link>
+            <Link href="/admin/tours" className="flex items-center justify-between rounded-lg bg-accent/50 p-3 hover:bg-accent"><span>حرکت‌های ثبت‌شده</span><Badge variant="secondary">{fa(departures)}</Badge></Link>
           </div>
         </Card>
       </div>
