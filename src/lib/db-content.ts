@@ -12,6 +12,42 @@ import { COUNTRIES, CITIES, type Place } from '@/src/data/destinationsData';
 import { GUIDES, type GuideItem } from '@/src/data/guidesData';
 import { EXHIBITION_SERIES, type ExhibitionSeries } from '@/src/data/exhibitionsData';
 
+/**
+ * استخر دیتابیس روی سرورلس با max:1 ساخته شده، پس کوئری‌های هم‌زمان پشت
+ * سر هم در صفِ اتصال می‌مانند و connect_timeout روی انتظار در صف اعمال
+ * نمی‌شود. این نگهبان تضمین می‌کند هر خواندن کوچک بماند و در نبودِ
+ * پاسخ سریع، به داده‌ی استاتیک پشتیبان برگردد به‌جای آنکه کل رندر تا
+ * سقف ۳۰۰ ثانیه‌ی Vercel معلق بماند.
+ */
+const DB_READ_TIMEOUT_MS = 6000;
+
+function withDbTimeout<T>(promise: Promise<T>, label: string): Promise<T | null> {
+  return new Promise<T | null>((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      console.error(`[db-content] timeout reading ${label}; falling back to static data`);
+      resolve(null);
+    }, DB_READ_TIMEOUT_MS);
+    promise.then(
+      (value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        console.error(`[db-content] failed reading ${label}:`, error);
+        resolve(null);
+      },
+    );
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* تورها                                                               */
 /* ------------------------------------------------------------------ */
@@ -48,15 +84,14 @@ function rowToTour(row: typeof siteTours.$inferSelect): TourItem {
 }
 
 export async function getTours(): Promise<TourItem[]> {
-  try {
-    const db = getDb();
-    if (!db) return SAMPLE_TOURS;
-    const rows = await db.select().from(siteTours).orderBy(asc(siteTours.createdAt));
-    if (rows.length === 0) return SAMPLE_TOURS;
-    return rows.map(rowToTour);
-  } catch {
-    return SAMPLE_TOURS;
-  }
+  const db = getDb();
+  if (!db) return SAMPLE_TOURS;
+  const rows = await withDbTimeout(
+    db.select().from(siteTours).orderBy(asc(siteTours.createdAt)),
+    'tours',
+  );
+  if (!rows || rows.length === 0) return SAMPLE_TOURS;
+  return rows.map(rowToTour);
 }
 
 export async function getTour(slug: string): Promise<TourItem | null> {
@@ -99,29 +134,34 @@ function rowToPlace(row: typeof siteDestinations.$inferSelect): Place {
 }
 
 export async function getDestinations(): Promise<Place[]> {
-  try {
-    const db = getDb();
-    if (!db) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
-    const rows = await db
-      .select()
-      .from(siteDestinations)
-      .orderBy(asc(siteDestinations.createdAt));
-    if (rows.length === 0) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
-    return rows.map(rowToPlace);
-  } catch {
-    return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
-  }
+  const db = getDb();
+  if (!db) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
+  const rows = await withDbTimeout(
+    db.select().from(siteDestinations).orderBy(asc(siteDestinations.createdAt)),
+    'destinations',
+  );
+  if (!rows || rows.length === 0) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
+  return rows.map(rowToPlace);
+}
+
+/** یک بار خوانده می‌شود و هر دو فهرست از همان نتیجه ساخته می‌شوند؛
+ *  فراخوانی جداگانه‌ی هرکدام کوئری تکراری روی استخر تک‌اتصالی می‌ساخت. */
+let destinationsCache: Promise<Place[]> | null = null;
+
+export function getDestinationsOnce(): Promise<Place[]> {
+  if (!destinationsCache) destinationsCache = getDestinations();
+  return destinationsCache;
 }
 
 export async function getCountries(): Promise<Record<string, Place>> {
-  const all = await getDestinations();
+  const all = await getDestinationsOnce();
   const countries = all.filter((p) => p.type === 'country');
   if (countries.length === 0) return COUNTRIES;
   return Object.fromEntries(countries.map((c) => [c.slug, c]));
 }
 
 export async function getCities(): Promise<Record<string, Place>> {
-  const all = await getDestinations();
+  const all = await getDestinationsOnce();
   const cities = all.filter((p) => p.type === 'city');
   if (cities.length === 0) return CITIES;
   return Object.fromEntries(cities.map((c) => [c.slug, c]));
@@ -158,15 +198,14 @@ function rowToGuide(row: typeof guides.$inferSelect): GuideItem {
 }
 
 export async function getGuides(): Promise<Record<string, GuideItem>> {
-  try {
-    const db = getDb();
-    if (!db) return GUIDES;
-    const rows = await db.select().from(guides).orderBy(desc(guides.updatedAt));
-    if (rows.length === 0) return GUIDES;
-    return Object.fromEntries(rows.map((r) => [r.slug, rowToGuide(r)]));
-  } catch {
-    return GUIDES;
-  }
+  const db = getDb();
+  if (!db) return GUIDES;
+  const rows = await withDbTimeout(
+    db.select().from(guides).orderBy(desc(guides.updatedAt)),
+    'guides',
+  );
+  if (!rows || rows.length === 0) return GUIDES;
+  return Object.fromEntries(rows.map((r) => [r.slug, rowToGuide(r)]));
 }
 
 export async function getGuide(slug: string): Promise<GuideItem | null> {
@@ -212,15 +251,14 @@ function rowToExhibition(row: typeof exhibitions.$inferSelect): ExhibitionSeries
 }
 
 export async function getExhibitions(): Promise<Record<string, ExhibitionSeries>> {
-  try {
-    const db = getDb();
-    if (!db) return EXHIBITION_SERIES;
-    const rows = await db.select().from(exhibitions).orderBy(desc(exhibitions.updatedAt));
-    if (rows.length === 0) return EXHIBITION_SERIES;
-    return Object.fromEntries(rows.map((r) => [r.slug, rowToExhibition(r)]));
-  } catch {
-    return EXHIBITION_SERIES;
-  }
+  const db = getDb();
+  if (!db) return EXHIBITION_SERIES;
+  const rows = await withDbTimeout(
+    db.select().from(exhibitions).orderBy(desc(exhibitions.updatedAt)),
+    'exhibitions',
+  );
+  if (!rows || rows.length === 0) return EXHIBITION_SERIES;
+  return Object.fromEntries(rows.map((r) => [r.slug, rowToExhibition(r)]));
 }
 
 export async function getExhibition(slug: string): Promise<ExhibitionSeries | null> {
@@ -235,12 +273,19 @@ export async function getLiveContent(): Promise<{
   guides: Record<string, GuideItem>;
   exhibitions: Record<string, ExhibitionSeries>;
 }> {
-  const [tours, countries, cities, guides, exhibitions] = await Promise.all([
-    getTours(),
-    getCountries(),
-    getCities(),
-    getGuides(),
-    getExhibitions(),
-  ]);
+  // ترتیبی، نه هم‌زمان: استخر روی سرورلس max:1 است و کوئری‌های موازی فقط
+  // پشت هم در صفِ یک اتصال می‌مانند. مقصدها یک‌بار خوانده و مشتق می‌شود.
+  const tours = await getTours();
+  const allPlaces = await getDestinationsOnce();
+  const countries =
+    allPlaces.filter((p) => p.type === 'country').length > 0
+      ? Object.fromEntries(allPlaces.filter((p) => p.type === 'country').map((c) => [c.slug, c]))
+      : COUNTRIES;
+  const cities =
+    allPlaces.filter((p) => p.type === 'city').length > 0
+      ? Object.fromEntries(allPlaces.filter((p) => p.type === 'city').map((c) => [c.slug, c]))
+      : CITIES;
+  const guides = await getGuides();
+  const exhibitions = await getExhibitions();
   return { tours, countries, cities, guides, exhibitions };
 }
