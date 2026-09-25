@@ -15,38 +15,13 @@ import { EXHIBITION_SERIES, type ExhibitionSeries } from '@/src/data/exhibitions
 /**
  * استخر دیتابیس روی سرورلس با max:1 ساخته شده، پس کوئری‌های هم‌زمان پشت
  * سر هم در صفِ اتصال می‌مانند و connect_timeout روی انتظار در صف اعمال
- * نمی‌شود. این نگهبان تضمین می‌کند هر خواندن کوچک بماند و در نبودِ
- * پاسخ سریع، به داده‌ی استاتیک پشتیبان برگردد به‌جای آنکه کل رندر تا
- * سقف ۳۰۰ ثانیه‌ی Vercel معلق بماند.
+ * نمی‌شود. به همین دلیل خواندن‌های این فایل ترتیبی‌اند و مقصدها یک‌بار
+ * خوانده می‌شود.
+ *
+ * هشدار: timeout روی هر کوئری نگذار. رها کردن promise، کوئری را متوقف
+ * نمی‌کند؛ کوئری زنده اتصالِ تک‌اتصالی را اشغال می‌کند و کوئری بعدی پشت
+ * آن صف می‌شود. هر خواندن باید یا کامل شود یا خطا بدهد.
  */
-const DB_READ_TIMEOUT_MS = 6000;
-
-function withDbTimeout<T>(promise: Promise<T>, label: string): Promise<T | null> {
-  return new Promise<T | null>((resolve) => {
-    let settled = false;
-    const timer = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      console.error(`[db-content] timeout reading ${label}; falling back to static data`);
-      resolve(null);
-    }, DB_READ_TIMEOUT_MS);
-    promise.then(
-      (value) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        resolve(value);
-      },
-      (error) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        console.error(`[db-content] failed reading ${label}:`, error);
-        resolve(null);
-      },
-    );
-  });
-}
 
 /* ------------------------------------------------------------------ */
 /* تورها                                                               */
@@ -84,14 +59,16 @@ function rowToTour(row: typeof siteTours.$inferSelect): TourItem {
 }
 
 export async function getTours(): Promise<TourItem[]> {
-  const db = getDb();
-  if (!db) return SAMPLE_TOURS;
-  const rows = await withDbTimeout(
-    db.select().from(siteTours).orderBy(asc(siteTours.createdAt)),
-    'tours',
-  );
-  if (!rows || rows.length === 0) return SAMPLE_TOURS;
-  return rows.map(rowToTour);
+  try {
+    const db = getDb();
+    if (!db) return SAMPLE_TOURS;
+    const rows = await db.select().from(siteTours).orderBy(asc(siteTours.createdAt));
+    if (rows.length === 0) return SAMPLE_TOURS;
+    return rows.map(rowToTour);
+  } catch (error) {
+    console.error('[db-content] tours read failed:', (error as Error).message);
+    return SAMPLE_TOURS;
+  }
 }
 
 export async function getTour(slug: string): Promise<TourItem | null> {
@@ -134,14 +111,16 @@ function rowToPlace(row: typeof siteDestinations.$inferSelect): Place {
 }
 
 export async function getDestinations(): Promise<Place[]> {
-  const db = getDb();
-  if (!db) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
-  const rows = await withDbTimeout(
-    db.select().from(siteDestinations).orderBy(asc(siteDestinations.createdAt)),
-    'destinations',
-  );
-  if (!rows || rows.length === 0) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
-  return rows.map(rowToPlace);
+  try {
+    const db = getDb();
+    if (!db) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
+    const rows = await db.select().from(siteDestinations).orderBy(asc(siteDestinations.createdAt));
+    if (rows.length === 0) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
+    return rows.map(rowToPlace);
+  } catch (error) {
+    console.error('[db-content] destinations read failed:', (error as Error).message);
+    return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
+  }
 }
 
 /** یک بار خوانده می‌شود و هر دو فهرست از همان نتیجه ساخته می‌شوند؛
@@ -198,14 +177,16 @@ function rowToGuide(row: typeof guides.$inferSelect): GuideItem {
 }
 
 export async function getGuides(): Promise<Record<string, GuideItem>> {
-  const db = getDb();
-  if (!db) return GUIDES;
-  const rows = await withDbTimeout(
-    db.select().from(guides).orderBy(desc(guides.updatedAt)),
-    'guides',
-  );
-  if (!rows || rows.length === 0) return GUIDES;
-  return Object.fromEntries(rows.map((r) => [r.slug, rowToGuide(r)]));
+  try {
+    const db = getDb();
+    if (!db) return GUIDES;
+    const rows = await db.select().from(guides).orderBy(desc(guides.updatedAt));
+    if (rows.length === 0) return GUIDES;
+    return Object.fromEntries(rows.map((r) => [r.slug, rowToGuide(r)]));
+  } catch (error) {
+    console.error('[db-content] guides read failed:', (error as Error).message);
+    return GUIDES;
+  }
 }
 
 export async function getGuide(slug: string): Promise<GuideItem | null> {
@@ -251,14 +232,16 @@ function rowToExhibition(row: typeof exhibitions.$inferSelect): ExhibitionSeries
 }
 
 export async function getExhibitions(): Promise<Record<string, ExhibitionSeries>> {
-  const db = getDb();
-  if (!db) return EXHIBITION_SERIES;
-  const rows = await withDbTimeout(
-    db.select().from(exhibitions).orderBy(desc(exhibitions.updatedAt)),
-    'exhibitions',
-  );
-  if (!rows || rows.length === 0) return EXHIBITION_SERIES;
-  return Object.fromEntries(rows.map((r) => [r.slug, rowToExhibition(r)]));
+  try {
+    const db = getDb();
+    if (!db) return EXHIBITION_SERIES;
+    const rows = await db.select().from(exhibitions).orderBy(desc(exhibitions.updatedAt));
+    if (rows.length === 0) return EXHIBITION_SERIES;
+    return Object.fromEntries(rows.map((r) => [r.slug, rowToExhibition(r)]));
+  } catch (error) {
+    console.error('[db-content] exhibitions read failed:', (error as Error).message);
+    return EXHIBITION_SERIES;
+  }
 }
 
 export async function getExhibition(slug: string): Promise<ExhibitionSeries | null> {
