@@ -1,70 +1,76 @@
 /**
  * لایه دسترسی به محتوای سایت از دیتابیس واقعی.
- * - هر تابع ابتدا از DB می‌خواند؛ اگر DB در دسترس نبود یا خالی بود،
- *   به همان دیتای استاتیک پشتیبان برمی‌گردد تا سایت هرگز خالی نشود.
+ * - هر تابع ابتدا از REST امن Supabase می‌خواند؛ اگر در دسترس نبود یا خالی
+ *   بود، به همان دیتای استاتیک پشتیبان برمی‌گردد تا سایت هرگز خالی نشود.
  * - همه توابع فقط سمت سرور قابل استفاده‌اند.
  */
-import { getDb } from '@/db/client';
-import { siteTours, siteDestinations, guides, exhibitions } from '@/db/schema';
-import { asc, desc } from 'drizzle-orm';
+import { getRest } from './supabase-rest';
 import { SAMPLE_TOURS, type TourItem } from '@/src/data/toursData';
 import { COUNTRIES, CITIES, type Place } from '@/src/data/destinationsData';
 import { GUIDES, type GuideItem } from '@/src/data/guidesData';
 import { EXHIBITION_SERIES, type ExhibitionSeries } from '@/src/data/exhibitionsData';
 
-/**
- * استخر دیتابیس روی سرورلس با max:1 ساخته شده، پس کوئری‌های هم‌زمان پشت
- * سر هم در صفِ اتصال می‌مانند و connect_timeout روی انتظار در صف اعمال
- * نمی‌شود. به همین دلیل خواندن‌های این فایل ترتیبی‌اند و مقصدها یک‌بار
- * خوانده می‌شود.
- *
- * هشدار: timeout روی هر کوئری نگذار. رها کردن promise، کوئری را متوقف
- * نمی‌کند؛ کوئری زنده اتصالِ تک‌اتصالی را اشغال می‌کند و کوئری بعدی پشت
- * آن صف می‌شود. هر خواندن باید یا کامل شود یا خطا بدهد.
- */
+type Row = Record<string, unknown>;
+
+const str = (v: unknown, fallback = ''): string =>
+  typeof v === 'string' ? v : v == null ? fallback : String(v);
+const num = (v: unknown, fallback = 0): number => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+};
+const arr = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+const iso = (v: unknown): string => {
+  if (typeof v === 'string' && v) return v;
+  if (v instanceof Date) return v.toISOString();
+  return new Date().toISOString();
+};
 
 /* ------------------------------------------------------------------ */
 /* تورها                                                               */
 /* ------------------------------------------------------------------ */
 
-function rowToTour(row: typeof siteTours.$inferSelect): TourItem {
+function restToTour(r: Row): TourItem {
   return {
-    id: row.slug,
-    title: row.title,
-    type: row.type as TourItem['type'],
-    typeLabel: row.typeLabel,
-    destination: row.destination,
-    origin: row.origin,
-    route: row.route,
-    duration: row.duration,
-    nights: row.nights,
-    closestDeparture: row.closestDeparture,
-    price: Number(row.price),
-    formattedPrice: row.formattedPrice,
-    priceNote: row.priceNote,
-    status: row.status as TourItem['status'],
-    statusLabel: row.statusLabel,
-    updatedAt: (row.updatedAt instanceof Date ? row.updatedAt : new Date()).toISOString(),
-    image: row.image,
-    badge: row.badge ?? undefined,
-    features: (row.features as string[]) ?? [],
-    visaRequired: row.visaRequired,
-    hotelStars: row.hotelStars,
-    airline: row.airline,
-    includedServices: (row.includedServices as string[]) ?? [],
-    excludedServices: (row.excludedServices as string[]) ?? [],
-    hotelOptions: (row.hotelOptions as TourItem['hotelOptions']) ?? [],
-    description: row.description,
+    id: str(r.slug),
+    title: str(r.title),
+    type: r.type as TourItem['type'],
+    typeLabel: str(r.type_label),
+    destination: str(r.destination),
+    origin: str(r.origin),
+    route: str(r.route),
+    duration: str(r.duration),
+    nights: num(r.nights),
+    closestDeparture: str(r.closest_departure),
+    price: num(r.price),
+    formattedPrice: str(r.formatted_price),
+    priceNote: str(r.price_note),
+    status: r.status as TourItem['status'],
+    statusLabel: str(r.status_label),
+    updatedAt: iso(r.updated_at),
+    image: str(r.image),
+    badge: (r.badge as string) ?? undefined,
+    features: arr<string>(r.features),
+    visaRequired: Boolean(r.visa_required),
+    hotelStars: num(r.hotel_stars),
+    airline: str(r.airline),
+    includedServices: arr<string>(r.included_services),
+    excludedServices: arr<string>(r.excluded_services),
+    hotelOptions: arr<TourItem['hotelOptions'][number]>(r.hotel_options),
+    description: str(r.description),
   };
 }
 
 export async function getTours(): Promise<TourItem[]> {
   try {
-    const db = getDb();
-    if (!db) return SAMPLE_TOURS;
-    const rows = await db.select().from(siteTours).orderBy(asc(siteTours.createdAt));
-    if (rows.length === 0) return SAMPLE_TOURS;
-    return rows.map(rowToTour);
+    const rest = getRest();
+    if (!rest) return SAMPLE_TOURS;
+    const { data, error } = await rest
+      .from('site_tours')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    if (!data || data.length === 0) return SAMPLE_TOURS;
+    return (data as Row[]).map(restToTour);
   } catch (error) {
     console.error('[db-content] tours read failed:', (error as Error).message);
     return SAMPLE_TOURS;
@@ -80,51 +86,54 @@ export async function getTour(slug: string): Promise<TourItem | null> {
 /* مقصدها (کشور و شهر)                                                 */
 /* ------------------------------------------------------------------ */
 
-function rowToPlace(row: typeof siteDestinations.$inferSelect): Place {
+function restToPlace(r: Row): Place {
   return {
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    nameEn: row.nameEn,
-    type: row.type as Place['type'],
-    parentCountrySlug: row.parentCountrySlug ?? undefined,
-    parentCountryName: row.parentCountryName ?? undefined,
-    category: row.category as Place['category'],
-    image: row.image,
-    heroTagline: row.heroTagline,
-    description: row.description,
-    bestSeason: row.bestSeason,
-    visaRequired: row.visaRequired,
-    visaType: row.visaType ?? undefined,
-    flightDuration: row.flightDuration ?? undefined,
-    currency: row.currency,
-    startingPrice: row.startingPrice,
-    startingPriceNote: row.startingPriceNote,
-    lastVerifiedAt: row.lastVerifiedAt,
-    activeToursCount: row.activeToursCount,
-    popularDistricts: (row.popularDistricts as string[]) ?? [],
-    keyHighlights: (row.keyHighlights as string[]) ?? [],
-    travelTips: (row.travelTips as string[]) ?? [],
-    faqs: (row.faqs as Place['faqs']) ?? [],
-    relatedGuides: (row.relatedGuides as string[]) ?? [],
+    id: str(r.id),
+    slug: str(r.slug),
+    name: str(r.name),
+    nameEn: str(r.name_en),
+    type: r.type as Place['type'],
+    parentCountrySlug: (r.parent_country_slug as string) ?? undefined,
+    parentCountryName: (r.parent_country_name as string) ?? undefined,
+    category: r.category as Place['category'],
+    image: str(r.image),
+    heroTagline: str(r.hero_tagline),
+    description: str(r.description),
+    bestSeason: str(r.best_season),
+    visaRequired: Boolean(r.visa_required),
+    visaType: (r.visa_type as string) ?? undefined,
+    flightDuration: (r.flight_duration as string) ?? undefined,
+    currency: str(r.currency),
+    startingPrice: str(r.starting_price),
+    startingPriceNote: str(r.starting_price_note),
+    lastVerifiedAt: str(r.last_verified_at),
+    activeToursCount: num(r.active_tours_count),
+    popularDistricts: arr<string>(r.popular_districts),
+    keyHighlights: arr<string>(r.key_highlights),
+    travelTips: arr<string>(r.travel_tips),
+    faqs: arr<Place['faqs'][number]>(r.faqs),
+    relatedGuides: arr<string>(r.related_guides),
   };
 }
 
 export async function getDestinations(): Promise<Place[]> {
   try {
-    const db = getDb();
-    if (!db) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
-    const rows = await db.select().from(siteDestinations).orderBy(asc(siteDestinations.createdAt));
-    if (rows.length === 0) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
-    return rows.map(rowToPlace);
+    const rest = getRest();
+    if (!rest) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
+    const { data, error } = await rest
+      .from('site_destinations')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    if (!data || data.length === 0) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
+    return (data as Row[]).map(restToPlace);
   } catch (error) {
     console.error('[db-content] destinations read failed:', (error as Error).message);
     return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
   }
 }
 
-/** یک بار خوانده می‌شود و هر دو فهرست از همان نتیجه ساخته می‌شوند؛
- *  فراخوانی جداگانه‌ی هرکدام کوئری تکراری روی استخر تک‌اتصالی می‌ساخت. */
+/** یک بار خوانده می‌شود و هر دو فهرست از همان نتیجه ساخته می‌شوند. */
 let destinationsCache: Promise<Place[]> | null = null;
 
 export function getDestinationsOnce(): Promise<Place[]> {
@@ -150,39 +159,41 @@ export async function getCities(): Promise<Record<string, Place>> {
 /* راهنماها                                                            */
 /* ------------------------------------------------------------------ */
 
-function rowToGuide(row: typeof guides.$inferSelect): GuideItem {
-  const sections = (row.sections as GuideItem['sections']) ?? [];
-  const faqs = (row.faqs as GuideItem['faqs']) ?? [];
-  const lastReviewed = row.lastReviewedAt
-    ? new Intl.DateTimeFormat('fa-IR', { dateStyle: 'long' }).format(new Date(row.lastReviewedAt))
+function restToGuide(r: Row): GuideItem {
+  const lastReviewed = r.last_reviewed_at
+    ? new Intl.DateTimeFormat('fa-IR', { dateStyle: 'long' }).format(new Date(String(r.last_reviewed_at)))
     : '';
   return {
-    id: row.id,
-    slug: row.slug,
-    title: row.titleFa,
-    category: row.category as GuideItem['category'],
-    categoryLabel: row.categoryLabel ?? '',
-    readTime: row.readTime ?? '',
-    author: row.author ?? '',
-    reviewer: row.reviewer ?? '',
+    id: str(r.id),
+    slug: str(r.slug),
+    title: str(r.title_fa),
+    category: r.category as GuideItem['category'],
+    categoryLabel: str(r.category_label),
+    readTime: str(r.read_time),
+    author: str(r.author),
+    reviewer: str(r.reviewer),
     lastReviewedAt: lastReviewed,
-    summary: row.summary ?? '',
-    heroImage: row.heroImage ?? '',
-    directAnswer: row.directAnswer ?? '',
-    sections,
-    relatedDestinationSlug: row.relatedDestinationSlug ?? undefined,
-    relatedTourId: row.relatedTourId ?? undefined,
-    faqs,
+    summary: str(r.summary),
+    heroImage: str(r.hero_image),
+    directAnswer: str(r.direct_answer),
+    sections: arr<GuideItem['sections'][number]>(r.sections),
+    relatedDestinationSlug: (r.related_destination_slug as string) ?? undefined,
+    relatedTourId: (r.related_tour_id as string) ?? undefined,
+    faqs: arr<GuideItem['faqs'][number]>(r.faqs),
   };
 }
 
 export async function getGuides(): Promise<Record<string, GuideItem>> {
   try {
-    const db = getDb();
-    if (!db) return GUIDES;
-    const rows = await db.select().from(guides).orderBy(desc(guides.updatedAt));
-    if (rows.length === 0) return GUIDES;
-    return Object.fromEntries(rows.map((r) => [r.slug, rowToGuide(r)]));
+    const rest = getRest();
+    if (!rest) return GUIDES;
+    const { data, error } = await rest
+      .from('guides')
+      .select('*')
+      .order('updated_at', { ascending: false });
+    if (error) throw error;
+    if (!data || data.length === 0) return GUIDES;
+    return Object.fromEntries((data as Row[]).map((r) => [str(r.slug), restToGuide(r)]));
   } catch (error) {
     console.error('[db-content] guides read failed:', (error as Error).message);
     return GUIDES;
@@ -198,46 +209,50 @@ export async function getGuide(slug: string): Promise<GuideItem | null> {
 /* نمایشگاه‌ها                                                          */
 /* ------------------------------------------------------------------ */
 
-function rowToExhibition(row: typeof exhibitions.$inferSelect): ExhibitionSeries {
+function restToExhibition(r: Row): ExhibitionSeries {
   return {
-    id: row.id,
-    slug: row.slug,
-    title: row.titleFa,
-    titleEn: row.titleEn ?? '',
-    country: row.country ?? '',
-    countrySlug: row.countrySlug ?? '',
-    city: row.city ?? '',
-    citySlug: row.citySlug ?? '',
-    venue: row.venue ?? '',
-    officialWebsite: row.officialWebsite ?? '',
-    industry: row.industry ?? '',
-    industrySlug: row.industrySlug ?? '',
-    heroTagline: row.heroTagline ?? '',
-    description: row.description ?? '',
-    image: row.image ?? '',
+    id: str(r.id),
+    slug: str(r.slug),
+    title: str(r.title_fa),
+    titleEn: str(r.title_en),
+    country: str(r.country),
+    countrySlug: str(r.country_slug),
+    city: str(r.city),
+    citySlug: str(r.city_slug),
+    venue: str(r.venue),
+    officialWebsite: str(r.official_website),
+    industry: str(r.industry),
+    industrySlug: str(r.industry_slug),
+    heroTagline: str(r.hero_tagline),
+    description: str(r.description),
+    image: str(r.image),
     upcomingEdition: {
-      editionSlug: row.editionSlug ?? '',
-      solarDate: row.solarDate ?? '',
-      gregorianDate: row.gregorianDate ?? '',
-      phases: (row.phases as ExhibitionSeries['upcomingEdition']['phases']) ?? [],
-      visaDeadline: row.visaDeadline ?? '',
-      hotelArea: row.hotelArea ?? '',
-      startingPrice: row.startingPrice ?? '',
-      startingPriceNote: row.startingPriceNote ?? '',
+      editionSlug: str(r.edition_slug),
+      solarDate: str(r.solar_date),
+      gregorianDate: str(r.gregorian_date),
+      phases: arr<ExhibitionSeries['upcomingEdition']['phases'][number]>(r.phases),
+      visaDeadline: str(r.visa_deadline),
+      hotelArea: str(r.hotel_area),
+      startingPrice: str(r.starting_price),
+      startingPriceNote: str(r.starting_price_note),
     },
-    servicesIncluded: (row.servicesIncluded as string[]) ?? [],
-    businessTips: (row.businessTips as string[]) ?? [],
-    faqs: (row.faqs as ExhibitionSeries['faqs']) ?? [],
+    servicesIncluded: arr<string>(r.services_included),
+    businessTips: arr<string>(r.business_tips),
+    faqs: arr<ExhibitionSeries['faqs'][number]>(r.faqs),
   };
 }
 
 export async function getExhibitions(): Promise<Record<string, ExhibitionSeries>> {
   try {
-    const db = getDb();
-    if (!db) return EXHIBITION_SERIES;
-    const rows = await db.select().from(exhibitions).orderBy(desc(exhibitions.updatedAt));
-    if (rows.length === 0) return EXHIBITION_SERIES;
-    return Object.fromEntries(rows.map((r) => [r.slug, rowToExhibition(r)]));
+    const rest = getRest();
+    if (!rest) return EXHIBITION_SERIES;
+    const { data, error } = await rest
+      .from('exhibitions')
+      .select('*')
+      .order('updated_at', { ascending: false });
+    if (error) throw error;
+    if (!data || data.length === 0) return EXHIBITION_SERIES;
+    return Object.fromEntries((data as Row[]).map((r) => [str(r.slug), restToExhibition(r)]));
   } catch (error) {
     console.error('[db-content] exhibitions read failed:', (error as Error).message);
     return EXHIBITION_SERIES;
@@ -256,8 +271,7 @@ export async function getLiveContent(): Promise<{
   guides: Record<string, GuideItem>;
   exhibitions: Record<string, ExhibitionSeries>;
 }> {
-  // ترتیبی، نه هم‌زمان: استخر روی سرورلس max:1 است و کوئری‌های موازی فقط
-  // پشت هم در صفِ یک اتصال می‌مانند. مقصدها یک‌بار خوانده و مشتق می‌شود.
+  // ترتیبی و سبک: هر خواندن یک درخواست HTTPS بدون حالت است.
   const tours = await getTours();
   const allPlaces = await getDestinationsOnce();
   const countries =

@@ -1,5 +1,4 @@
-import { getDb } from '@/db/client';
-import { siteSettings } from '@/db/schema';
+import { getRest } from './supabase-rest';
 import { withDefaults } from './settings';
 
 export interface ContactInfo {
@@ -34,10 +33,16 @@ const FALLBACK: ContactInfo = {
 
 export async function getContactInfo(): Promise<ContactInfo> {
   try {
-    const db = getDb();
-    if (!db) return FALLBACK;
-    const rows = await db.select().from(siteSettings);
-    const s = withDefaults(rows);
+    const rest = getRest();
+    if (!rest) return FALLBACK;
+    const { data, error } = await rest.from('site_settings').select('setting_key,setting_value');
+    if (error) throw error;
+    const s = withDefaults(
+      ((data ?? []) as Array<{ setting_key: string; setting_value: string }>).map((r) => ({
+        settingKey: r.setting_key,
+        settingValue: r.setting_value,
+      })),
+    );
     const digits = (s['business.phone'] || FALLBACK.phone).replace(/[^\d]/g, '');
     const phone = digits || FALLBACK.phone;
     return {
@@ -61,15 +66,16 @@ export async function getContactInfo(): Promise<ContactInfo> {
 
 export async function isIndexingEnabled(): Promise<boolean> {
   try {
-    const db = getDb();
-    if (!db) return process.env.SEO_INDEXING_ENABLED === 'true';
-    const { eq } = await import('drizzle-orm');
-    const rows = await db
-      .select()
-      .from(siteSettings)
-      .where(eq(siteSettings.settingKey, 'seo.indexing_enabled'))
-      .limit(1);
-    if (rows[0]) return rows[0].settingValue === 'true';
+    const rest = getRest();
+    if (!rest) return process.env.SEO_INDEXING_ENABLED === 'true';
+    const { data, error } = await rest
+      .from('site_settings')
+      .select('setting_value')
+      .eq('setting_key', 'seo.indexing_enabled')
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    if (data) return data.setting_value === 'true';
     return process.env.SEO_INDEXING_ENABLED === 'true';
   } catch {
     return process.env.SEO_INDEXING_ENABLED === 'true';
@@ -78,15 +84,16 @@ export async function isIndexingEnabled(): Promise<boolean> {
 
 export async function getGaId(): Promise<string | undefined> {
   try {
-    const db = getDb();
-    if (!db) return process.env.NEXT_PUBLIC_GA_ID;
-    const { eq } = await import('drizzle-orm');
-    const rows = await db
-      .select()
-      .from(siteSettings)
-      .where(eq(siteSettings.settingKey, 'seo.ga_id'))
-      .limit(1);
-    return rows[0]?.settingValue || process.env.NEXT_PUBLIC_GA_ID || undefined;
+    const rest = getRest();
+    if (!rest) return process.env.NEXT_PUBLIC_GA_ID;
+    const { data, error } = await rest
+      .from('site_settings')
+      .select('setting_value')
+      .eq('setting_key', 'seo.ga_id')
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return data?.setting_value || process.env.NEXT_PUBLIC_GA_ID || undefined;
   } catch {
     return process.env.NEXT_PUBLIC_GA_ID;
   }
