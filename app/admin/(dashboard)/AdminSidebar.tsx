@@ -5,16 +5,13 @@ import { usePathname } from 'next/navigation';
 import {
   BarChart3,
   BookOpen,
-  BriefcaseBusiness,
-  Building2,
+  Compass,
   FileText,
   Gauge,
   Globe2,
   Inbox,
   LayoutDashboard,
   LogOut,
-  MapPinned,
-  Plane,
   Settings,
   ShieldCheck,
   SlidersHorizontal,
@@ -27,14 +24,11 @@ import AdminCommand from './AdminCommand';
 
 const groups = [
   {
-    title: 'مدیریت اصلی',
+    title: 'مدیریت و عملیات',
     items: [
       { href: '/admin', label: 'داشبورد', icon: LayoutDashboard },
-      { href: '/admin/leads', label: 'درخواست‌های تماس', icon: Inbox },
-      { href: '/admin/tours', label: 'تورها', icon: BriefcaseBusiness },
-      { href: '/admin/places', label: 'مقصدها و شهرها', icon: MapPinned },
-      { href: '/admin/origins', label: 'مبدأها', icon: Plane },
-      { href: '/admin/hotels', label: 'هتل‌ها', icon: Building2 },
+      { href: '/admin/tours', label: 'مرکز مدیریت تورها', icon: Compass },
+      { href: '/admin/leads', label: 'درخواست‌های تماس عمومی', icon: Inbox },
     ],
   },
   {
@@ -95,7 +89,13 @@ export default function AdminSidebar({ role, email }: { role: 'owner' | 'editor'
               href={item.href}
               label={item.label}
               icon={item.icon}
-              active={item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href)}
+              active={
+                item.href === '/admin' 
+                  ? pathname === '/admin' 
+                  : item.href === '/admin/tours'
+                    ? pathname.startsWith('/admin/tours') || pathname.startsWith('/admin/places') || pathname.startsWith('/admin/origins') || pathname.startsWith('/admin/hotels')
+                    : pathname.startsWith(item.href)
+              }
             />
           ))}
         </SidebarGroup>

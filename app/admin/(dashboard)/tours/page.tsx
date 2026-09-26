@@ -3,6 +3,7 @@ import { listDestinationTree, listOrigins, listTours } from './actions';
 import { listHotels } from '../hotels/actions';
 import { getSettingsMap } from '../settings/actions';
 import ToursManager from './ToursManager';
+import TourHubNav from './TourHubNav';
 
 export const metadata: Metadata = {
   title: 'تورها | پنل ریوان سفر',
@@ -17,5 +18,10 @@ export default async function AdminToursPage() {
     listOrigins(),
     listHotels(),
   ]);
-  return <ToursManager initial={tours} sectionSettings={settings} tree={tree} origins={origins} hotels={hotels} />;
+  return (
+    <div className="space-y-6">
+      <TourHubNav counts={{ tours: tours.length, hotels: hotels.length, origins: origins.length }} />
+      <ToursManager initial={tours} sectionSettings={settings} tree={tree} origins={origins} hotels={hotels} />
+    </div>
+  );
 }
