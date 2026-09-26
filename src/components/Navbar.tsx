@@ -254,12 +254,12 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
 
       {/* Desktop & Tablet Navbar */}
       <header
-        className={`fixed start-0 end-0 z-50 transition-all duration-300 border-b border-border ${
-          showAnnouncement ? 'top-[40px]' : 'top-0'
+        className={`fixed left-0 right-0 z-50 transition-all duration-300 border-b border-border-default ${
+          showAnnouncement ? 'top-[38px] md:top-[34px]' : 'top-0'
         } ${
-          isScrolled 
-            ? 'bg-card/95 backdrop-blur-md shadow-sm h-[70px]' 
-            : 'bg-card h-[80px] md:h-[90px]'
+          isScrolled
+            ? 'bg-surface-primary/95 backdrop-blur-md shadow-subtle h-[70px]'
+            : 'bg-surface-primary h-[80px] md:h-[90px]'
         }`}
       >
         <div className="container-main px-4 sm:px-6 lg:px-8 flex items-center justify-between h-full relative">
