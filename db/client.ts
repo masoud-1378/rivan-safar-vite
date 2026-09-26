@@ -15,12 +15,9 @@ const connectionString =
 function createDb() {
   if (!connectionString) return null;
   const client = postgres(connectionString, {
-    max: 1,
+    max: 10,
     idle_timeout: 20,
-    // کوتاه نگه داشتن connect_timeout و max_lifetime یعنی اتصال مرده زود
-    // دور ریخته و جایگزین می‌شود؛ عمر خیلی بلند، اتصال نیم‌مرده را نگه می‌دارد
-    // و کوئری‌های بعدی را تا سقف زمانی رندر معطل می‌کند.
-    connect_timeout: 8,
+    connect_timeout: 5,
     max_lifetime: 300,
     prepare: false,
   });

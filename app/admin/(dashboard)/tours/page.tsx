@@ -12,11 +12,11 @@ export const metadata: Metadata = {
 
 export default async function AdminToursPage() {
   const [tours, settings, tree, origins, hotels] = await Promise.all([
-    listTours(),
-    getSettingsMap(),
-    listDestinationTree(),
-    listOrigins(),
-    listHotels(),
+    listTours().catch(() => []),
+    getSettingsMap().catch(() => ({})),
+    listDestinationTree().catch(() => ({ regions: [], all: [] })),
+    listOrigins().catch(() => []),
+    listHotels().catch(() => []),
   ]);
   return (
     <div className="space-y-6">

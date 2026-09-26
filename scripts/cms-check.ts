@@ -94,11 +94,11 @@ if (hasQuery !== owners.length) {
 
 // 7. لاگ کریتیکال برای CMS
 const cmsFiles = [
-  'app/admin/seo/actions.ts',
-  'app/admin/tours/actions.ts',
-  'app/admin/leads/actions.ts',
-  'app/admin/places/actions.ts',
-  'app/admin/settings/actions.ts',
+  'app/admin/(dashboard)/seo/actions.ts',
+  'app/admin/(dashboard)/tours/actions.ts',
+  'app/admin/(dashboard)/leads/actions.ts',
+  'app/admin/(dashboard)/places/actions.ts',
+  'app/admin/(dashboard)/settings/actions.ts',
 ];
 for (const f of cmsFiles) {
   if (!fs.existsSync(path.join(root, f))) {
