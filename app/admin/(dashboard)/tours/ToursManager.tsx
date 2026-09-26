@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Copy, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Copy, Pencil, Plus, Trash2, Plane, Train, Bus, ShieldCheck } from 'lucide-react';
 import TourForm from './TourForm';
 import { deleteTour, type DestinationTree, type OriginRow, type TourRow } from './actions';
 import type { HotelRow } from '../hotels/actions';
@@ -46,10 +46,53 @@ export default function ToursManager({ initial, sectionSettings, tree, origins, 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const columns: Column<TourRow>[] = [
-    { key: 'title', header: 'عنوان', sortable: true, cell: (tour) => <span className="font-semibold">{tour.title}</span> },
-    { key: 'destination', header: 'مقصد', sortable: true },
+    { 
+      key: 'title', 
+      header: 'عنوان و شیوه سفر', 
+      sortable: true, 
+      cell: (tour) => {
+        const isRail = /قطار|بن ریل|فدک|رجاء/i.test(tour.airline || '');
+        const isLand = /اتوبوس|زمینی|vip/i.test(tour.airline || '');
+        return (
+          <div className="flex flex-col gap-1">
+            <span className="font-semibold text-foreground">{tour.title}</span>
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              {isRail ? (
+                <span className="inline-flex items-center gap-1 rounded bg-blue-500/10 px-1.5 py-0.5 text-blue-600 font-medium">
+                  <Train className="size-3" /> ریلی ({tour.airline || 'قطار'})
+                </span>
+              ) : isLand ? (
+                <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-amber-600 font-medium">
+                  <Bus className="size-3" /> زمینی ({tour.airline || 'اتوبوس VIP'})
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded bg-sky-500/10 px-1.5 py-0.5 text-sky-600 font-medium">
+                  <Plane className="size-3" /> هوایی ({tour.airline || 'پرواز'})
+                </span>
+              )}
+              {tour.badge === 'حرکت تضمین‌شده' && (
+                <span className="inline-flex items-center gap-0.5 rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-600 font-bold">
+                  <ShieldCheck className="size-3" /> حرکت تضمین‌شده
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      } 
+    },
+    { 
+      key: 'destination', 
+      header: 'مسیر (مبدأ به مقصد)', 
+      sortable: true,
+      cell: (tour) => (
+        <div className="text-xs">
+          <span className="text-foreground font-medium">{tour.destination || '—'}</span>
+          {tour.origin && <span className="block text-[11px] text-muted-foreground">از مبدأ: {tour.origin}</span>}
+        </div>
+      )
+    },
     { key: 'typeLabel', header: 'نوع', cell: (tour) => tour.typeLabel || '—' },
-    { key: 'price', header: 'قیمت', numeric: true, sortable: true, cell: (tour) => formatToman(Number(tour.price)) },
+    { key: 'price', header: 'قیمت پایه', numeric: true, sortable: true, cell: (tour) => formatToman(Number(tour.price)) },
     { key: 'status', header: 'وضعیت', cell: (tour) => <Badge variant={tour.status === 'published' ? 'success' : tour.status === 'pending' ? 'warning' : 'secondary'}>{tour.statusLabel || tour.status}</Badge> },
     { key: 'id', header: 'عملیات', className: 'w-44', cell: (tour) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(tour)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" onClick={() => duplicate(tour)}><Copy />تکثیر</Button><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(tour)} disabled={pending}><Trash2 />حذف</Button></div> },
   ];

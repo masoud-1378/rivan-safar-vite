@@ -6,6 +6,44 @@ import { accommodations, originCities, siteDestinations, siteTours } from '@/db/
 import { asc, desc, eq } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 
+export interface TourHotelOptionItem {
+  name?: string;
+  stars?: number;
+  board?: string;
+  pricePerPerson?: string;
+  priceDouble?: string;
+  priceSingle?: string;
+  priceChildWithBed?: string;
+  priceChildNoBed?: string;
+  locationNote?: string;
+}
+
+export interface TourItineraryDayItem {
+  day: number;
+  title: string;
+  city: string;
+  description: string;
+  activityType: 'guided' | 'free' | 'transit' | 'departure' | string;
+  meals?: string;
+}
+
+export interface TourTrustSpecsItem {
+  returnGuarantee?: string;
+  cityTax?: string;
+  tipsNote?: string;
+  luggageKg?: number;
+  activityLevel?: 'easy' | 'moderate' | 'demanding' | string;
+  requiredDocs?: string[];
+}
+
+export interface TourConsultantSpecItem {
+  name?: string;
+  title?: string;
+  phone?: string;
+  audioUrl?: string;
+  emergencyPhone?: string;
+}
+
 export interface TourInput {
   slug: string;
   title: string;
@@ -31,8 +69,17 @@ export interface TourInput {
   airline: string;
   includedServices: string[];
   excludedServices: string[];
-  hotelOptions: Array<{ name?: string; stars?: number; board?: string; pricePerPerson?: string }>;
+  hotelOptions: TourHotelOptionItem[];
   description: string;
+  transportKind?: 'air' | 'rail' | 'land' | 'mixed' | string;
+  carrierName?: string;
+  guaranteedDeparture?: boolean;
+  splitPriceCurrency?: string;
+  splitPriceAmount?: string;
+  splitFlightPrice?: string;
+  itineraryDays?: TourItineraryDayItem[];
+  trustSpecs?: TourTrustSpecsItem;
+  consultantSpec?: TourConsultantSpecItem;
 }
 
 export interface DestinationTreeCity {
@@ -258,6 +305,20 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
     visaRequired = !destSlugs.every((s) => isDomesticSlug(s, destBySlug));
   }
 
+  const carrier = (data.carrierName || data.airline || '').trim();
+  const badge = data.badge || (data.guaranteedDeparture ? 'حرکت تضمین‌شده' : null);
+  const normalizedHotels = hotelOptions.map((h) => ({
+    name: h.name ?? '',
+    stars: Number(h.stars) || 3,
+    board: h.board ?? 'BB',
+    pricePerPerson: h.pricePerPerson || h.priceDouble || '',
+    priceDouble: h.priceDouble || h.pricePerPerson || '',
+    priceSingle: h.priceSingle || '',
+    priceChildWithBed: h.priceChildWithBed || '',
+    priceChildNoBed: h.priceChildNoBed || '',
+    locationNote: h.locationNote || '',
+  }));
+
   const values = {
     slug,
     title,
@@ -276,14 +337,14 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
     status: data.status || 'pending',
     statusLabel: data.statusLabel || '',
     image: data.image || '',
-    badge: data.badge || null,
+    badge,
     features: data.features ?? [],
     visaRequired,
     hotelStars,
-    airline: data.airline || '',
+    airline: carrier,
     includedServices: data.includedServices ?? [],
     excludedServices: data.excludedServices ?? [],
-    hotelOptions,
+    hotelOptions: normalizedHotels,
     description: data.description || '',
     updatedAt: new Date(),
   };
