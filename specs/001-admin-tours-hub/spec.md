@@ -22,7 +22,7 @@ This feature introduces a dedicated **Tour Management Hub** (`/admin/tours`), fe
   1. **درخواست‌های رزرو تور (`/admin/tours/leads` or tabs in `/admin/tours`)**: Inquiries and booking requests specifically filtered for tours.
   2. **لیست و مدیریت تورها (`/admin/tours`)**: Main tour catalog, pricing, status, and creation.
   3. **مقصدها و شهرها (`/admin/tours/places` or linked `/admin/places`)**: Managing countries, cities, and destination content.
-  4. **مبدأهای پروازی (`/admin/tours/origins` or linked `/admin/origins`)**: Departure airports/cities.
+  4. **مبدأهای حرکت (`/admin/tours/origins` or linked `/admin/origins`)**: Departure hubs (هوایی، زمینی اتوبوس/قطار، و ترکیبی).
   5. **هتل‌های طرف قرارداد (`/admin/tours/hotels` or linked `/admin/hotels`)**: Star ratings, amenities, and partner hotels.
 - Preserves 100% of underlying server actions, schemas (`db/schema.ts`), and permission checks (owner vs editor).
 - Streamlines the main `AdminSidebar` to represent "مدیریت تورها" as the primary umbrella entry point.

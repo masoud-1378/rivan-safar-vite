@@ -7,7 +7,7 @@ import {
   BriefcaseBusiness, 
   Inbox, 
   MapPinned, 
-  Plane, 
+  Navigation, 
   Building2,
   Compass
 } from 'lucide-react';
@@ -47,10 +47,10 @@ const TABS = [
   },
   {
     id: 'origins',
-    label: 'مبدأها',
+    label: 'مبدأهای حرکت',
     href: '/admin/origins',
-    icon: Plane,
-    desc: 'فرودگاه‌ها و شهرهای مبدأ پرواز',
+    icon: Navigation,
+    desc: 'شهرهای مبدأ حرکت (هوایی، زمینی، ریلی)',
   },
   {
     id: 'hotels',
@@ -74,7 +74,7 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
           </div>
           <div>
             <h2 className="text-base font-bold text-foreground">مرکز عملیات و مدیریت جامع تورها</h2>
-            <p className="text-xs text-muted-foreground">مدیریت متمرکز پکیج‌ها، رزروها، مقاصد، پروازها و هتل‌های طرف قرارداد</p>
+            <p className="text-xs text-muted-foreground">مدیریت متمرکز پکیج‌ها، رزروها، مقاصد، مبدأهای حرکت (هوایی، زمینی) و هتل‌های طرف قرارداد</p>
           </div>
         </div>
       </div>

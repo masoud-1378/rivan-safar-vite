@@ -13,7 +13,7 @@ The 5 operational pillars:
 1. **لیست تورها (`/admin/tours`)**: Main tour packages manager, status, and pricing.
 2. **درخواست‌های رزرو تور (`/admin/tours/leads`)**: Booking inquiries specifically for tours.
 3. **مقصدها و شهرها (`/admin/tours/places`)**: Destination tree (countries/cities).
-4. **مبدأهای پروازی (`/admin/tours/origins`)**: Departure airports/cities.
+4. **مبدأهای حرکت (`/admin/tours/origins` یا `/admin/origins`)**: Departure hubs/cities (هوایی، زمینی، ریلی).
 5. **هتل‌های طرف قرارداد (`/admin/tours/hotels`)**: Partner hotels & amenities.
 
 ### Technical Architecture
@@ -41,7 +41,7 @@ The 5 operational pillars:
      - 📋 لیست تورها (`/admin/tours`)
      - 📥 درخواست‌های رزرو (`/admin/tours/leads`)
      - 🌍 مقصدها و شهرها (`/admin/tours/places`)
-     - 🛫 مبدأهای پروازی (`/admin/tours/origins`)
+     - 🧭 مبدأهای حرکت (`/admin/origins`)
      - 🏨 هتل‌های طرف قرارداد (`/admin/tours/hotels`)
 2. **Sub-Route Setup**:
    - `app/admin/(dashboard)/tours/leads/page.tsx`: Reuses `LeadManager` filtered for tour inquiries.
