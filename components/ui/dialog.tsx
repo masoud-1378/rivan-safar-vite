@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,11 +20,17 @@ export interface DialogProps {
 /**
  * پنجره (مودال). Closes on Escape and overlay click, locks body scroll,
  * moves focus inside on open and restores it on close.
+ * Mounted via createPortal to document.body to escape stacking contexts.
  */
 export function Dialog({ open, onOpenChange, title, description, children, footer, role = "dialog", className }: DialogProps) {
   const panel = React.useRef<HTMLDivElement>(null);
   const titleId = React.useId();
   const descId = React.useId();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   React.useEffect(() => {
     if (!open) return;
@@ -40,11 +47,11 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
     };
   }, [open, onOpenChange]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center"
       onClick={() => role === "dialog" && onOpenChange(false)}
     >
       <div
@@ -76,6 +83,7 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
         {children && <div className="mt-4">{children}</div>}
         {footer && <div className="mt-5 flex flex-row-reverse justify-start gap-2 sm:flex-row">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

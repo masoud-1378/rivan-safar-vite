@@ -215,7 +215,7 @@ export default function TourForm({
                 type="button"
                 onClick={() => setActiveStage(stage.id)}
                 className={cn(
-                  "relative flex flex-col items-start gap-1 rounded-xl p-3 text-right transition-all border",
+                  "relative flex flex-col items-start gap-1 rounded-xl p-3 text-right transition-all border cursor-pointer",
                   isActive
                     ? "border-brand bg-brand/10 shadow-sm"
                     : isPassed

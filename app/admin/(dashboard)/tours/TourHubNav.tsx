@@ -89,11 +89,11 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
           const Icon = tab.icon;
 
           return (
-            <Link
+            <a
               key={tab.id}
               href={tab.href}
               className={cn(
-                "group relative flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-all",
+                "group relative flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-all cursor-pointer",
                 isActive
                   ? "bg-brand text-brand-foreground shadow-sm"
                   : "bg-secondary/40 text-muted-foreground hover:bg-secondary hover:text-foreground border border-border/50"
@@ -109,7 +109,7 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
                   {counts[tab.id as keyof typeof counts]}
                 </span>
               )}
-            </Link>
+            </a>
           );
         })}
       </div>
