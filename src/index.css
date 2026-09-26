@@ -1611,10 +1611,46 @@ html, body {
   transform: translateX(-4px);
 }
 
+/* --- vibefarsi:theme-public --- */
+:root {
+  color-scheme: light;
+  /* Public Surfaces */
+  --background: #FAF7F2;
+  --foreground: #172027;
+  --card: #FFFFFF;
+  --card-foreground: #172027;
+  --popover: #FFFFFF;
+  --popover-foreground: #172027;
+
+  /* Brand Accents & Actions */
+  --primary: #FF6600;
+  --primary-foreground: #FFFFFF;
+  --secondary: #102A3A;
+  --secondary-foreground: #FFFFFF;
+
+  /* Neutrals & States */
+  --muted: #F3F4F6;
+  --muted-foreground: #66727A;
+  --accent: #FFF0E6;
+  --accent-foreground: #D95500;
+  --destructive: #D93D3D;
+  --destructive-foreground: #FFFFFF;
+  --success: #16A765;
+  --warning: #D99100;
+
+  /* Borders & Controls */
+  --border: #E2E6E8;
+  --input: #E2E6E8;
+  --ring: #FF6600;
+  --brand: #FF6600;
+  --brand-foreground: #FFFFFF;
+  --radius: 0.75rem;
+  --shadow-lift: 0 16px 40px rgba(16, 42, 58, 0.12);
+}
+/* --- vibefarsi:theme-public-end --- */
+
 /* --- vibefarsi:theme-graphite --- */
-/* گرافیت، پیش‌فرض. این بلوک را در :root بگذارید. */
-/* `body:has(.admin-vibefarsi)` توکن‌ها را به هر پورتالی که روی body سوار می‌شود
-   (تقویم، پالت فرمان، پاپ‌آور) می‌رساند؛ بدون دست‌زدن به فایل کامپوننت‌ها. */
+/* گرافیت برای پنل ادمین. */
 .admin-vibefarsi,
 [data-theme='admin'],
 body:has(.admin-vibefarsi) {

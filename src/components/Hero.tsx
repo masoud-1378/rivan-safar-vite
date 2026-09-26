@@ -1,30 +1,8 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { MapPin, Star, Search, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
+import { MapPin, Star } from 'lucide-react';
 import SmartImage from './SmartImage';
-
-const DESTINATIONS = [
-  { name: 'استانبول', popular: true },
-  { name: 'آنتالیا', popular: true },
-  { name: 'دبی', popular: true },
-  { name: 'کیش', popular: true },
-  { name: 'مشهد', popular: true },
-  { name: 'پوکت', popular: true },
-  { name: 'تایلند', popular: false },
-  { name: 'ترکیه', popular: false },
-  { name: 'گوانگجو', popular: false },
-];
-
-const normalizePersian = (text: string) => {
-  if (!text) return '';
-  return text
-    .trim()
-    .toLowerCase()
-    .replace(/[يآأإٱ]/g, (m) => (m === 'ي' ? 'ی' : 'ا'))
-    .replace(/ك/g, 'ک')
-    .replace(/‌/g, '')
-    .replace(/\s+/g, ' ');
-};
+import TravelSearchWidget, { TravelSearchState } from './TravelSearchWidget';
 
 interface HeroProps {
   showAnnouncement?: boolean;
@@ -32,11 +10,6 @@ interface HeroProps {
 }
 
 export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps) {
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
-  const searchContainerRef = useRef<HTMLDivElement>(null);
-
   const [isDesktop, setIsDesktop] = useState(true);
 
   useEffect(() => {
@@ -46,88 +19,25 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
     return () => window.removeEventListener('resize', checkWidth);
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        setIsFocused(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const filteredSuggestions = useMemo(() => {
-    const normQuery = normalizePersian(searchQuery);
-    if (!normQuery) {
-      return [];
+  const handleSearchWidget = (searchState: TravelSearchState) => {
+    if (!onNavigate) return;
+    if (searchState.destination) {
+      if (searchState.destination === 'istanbul') onNavigate('/destination/turkey/istanbul');
+      else if (searchState.destination === 'antalya') onNavigate('/destination/turkey/antalya');
+      else if (searchState.destination === 'dubai') onNavigate('/destination/uae/dubai');
+      else if (searchState.destination === 'kish') onNavigate('/destination/iran/kish');
+      else if (searchState.destination === 'mashhad') onNavigate('/destination/iran/mashhad');
+      else if (searchState.destination === 'phuket') onNavigate('/destination/thailand/phuket');
+      else onNavigate('/tours');
+    } else if (searchState.tourKind === 'foreign') {
+      onNavigate('/tours/foreign');
+    } else if (searchState.tourKind === 'domestic') {
+      onNavigate('/tours/domestic');
+    } else if (searchState.tourKind === 'exhibition') {
+      onNavigate('/exhibitions');
+    } else {
+      onNavigate('/tours');
     }
-
-    // Filter strictly by destination name match
-    const matches = DESTINATIONS.filter(d => {
-      const normName = normalizePersian(d.name);
-      return normName.includes(normQuery);
-    });
-
-    // Sort by relevance (exact > starts-with > alphabetical)
-    matches.sort((a, b) => {
-      const normA = normalizePersian(a.name);
-      const normB = normalizePersian(b.name);
-
-      const aExact = normA === normQuery;
-      const bExact = normB === normQuery;
-      if (aExact && !bExact) return -1;
-      if (!aExact && bExact) return 1;
-
-      const aStarts = normA.startsWith(normQuery);
-      const bStarts = normB.startsWith(normQuery);
-      if (aStarts && !bStarts) return -1;
-      if (!aStarts && bStarts) return 1;
-
-      return normA.localeCompare(normB, 'fa');
-    });
-
-    return matches.slice(0, 3);
-  }, [searchQuery]);
-
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    setIsFocused(true);
-  };
-
-  const getDestinationPath = (tour: string): string => {
-    const destMap: Record<string, string> = {
-      'استانبول': '/destination/turkey/istanbul',
-      'آنتالیا': '/destination/turkey/antalya',
-      'دبی': '/destination/uae/dubai',
-      'کیش': '/destination/iran/kish',
-      'مشهد': '/destination/iran/mashhad',
-      'پوکت': '/destination/thailand/phuket',
-    };
-    return destMap[tour] || '/tours';
-  };
-
-  const handleSuggestionClick = (tour: string) => {
-    setSearchQuery(tour);
-    setIsFocused(false);
-    if (onNavigate) {
-      onNavigate(getDestinationPath(tour));
-    }
-  };
-
-  const handleSearch = () => {
-    if (isSearching) return;
-    setIsSearching(true);
-    setIsFocused(false);
-    setTimeout(() => {
-      setIsSearching(false);
-      if (onNavigate) {
-        if (searchQuery.trim()) {
-          onNavigate(getDestinationPath(searchQuery.trim()));
-        } else {
-          onNavigate('/tours');
-        }
-      }
-    }, 400);
   };
 
   return (
@@ -151,105 +61,9 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
               تاریخ و قیمت پایه تورها، توضیح مسیر واقعی سفر و بررسی برنامه شخصی با کارشناس
             </p>
             
-            {/* Search Field */}
-            <div ref={searchContainerRef} className="w-full max-w-[850px] mt-8 mb-6 relative">
-              <div className="flex flex-col sm:flex-row items-stretch search-hero p-2 gap-2 sm:gap-0">
-                <div className="flex-1 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 w-full relative">
-                  <MapPin className="w-5 h-5 text-text-secondary shrink-0" />
-                  <input 
-                    type="text" 
-                    value={searchQuery}
-                    onChange={handleSearchInputChange}
-                    onFocus={() => setIsFocused(true)}
-                    placeholder={isDesktop ? "مقصد یا تور (مثلاً استانبول)" : "نام مقصد..."} 
-                    className="w-full bg-transparent border-none outline-none text-text-heading placeholder:text-text-secondary/60 text-body-sm font-medium"
-                  />
-                </div>
-                <button 
-                  onClick={handleSearch}
-                  disabled={isSearching}
-                  className="btn btn-medium btn-primary w-full sm:w-[130px]"
-                >
-                  {isSearching ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>در حال جستجو...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Search className="w-4 h-4" />
-                      <span>جستجوی تور</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Popular Destinations Chips (Shown when field is focused and empty) */}
-              <AnimatePresence>
-                {isFocused && !searchQuery.trim() && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.15 }}
-                    className="mt-3 flex flex-wrap items-center gap-2 px-1 text-right"
-                  >
-                    <span className="text-caption text-text-secondary font-medium shrink-0 ml-1">
-                      مقصدهای محبوب:
-                    </span>
-                    {DESTINATIONS.filter(d => d.popular).slice(0, 5).map((dest, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleSuggestionClick(dest.name);
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-caption font-medium bg-surface-primary hover:bg-brand-orange-soft text-text-heading hover:text-brand-orange border border-border-default/80 hover:border-brand-orange/40 transition-all cursor-pointer shadow-subtle"
-                      >
-                        <MapPin className="w-3.5 h-3.5 text-brand-orange" />
-                        <span>{dest.name}</span>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Autocomplete Dropdown (Shown when typing, max 3 relevant items) */}
-              <AnimatePresence>
-                {isFocused && searchQuery.trim() !== '' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 right-0 z-50 mt-2 bg-surface-primary border border-border-default/80 rounded-2xl shadow-elevated overflow-hidden text-right"
-                  >
-                    <div className="py-1.5">
-                      {filteredSuggestions.length > 0 ? (
-                        filteredSuggestions.map((dest, index) => (
-                          <button
-                            key={index}
-                            type="button"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              handleSuggestionClick(dest.name);
-                            }}
-                            className="flex items-center gap-2.5 w-full px-4 py-2 text-right hover:bg-page-background transition-colors cursor-pointer"
-                          >
-                            <MapPin className="w-4 h-4 text-brand-orange shrink-0" />
-                            <span className="font-medium text-body-sm text-text-heading">{dest.name}</span>
-                          </button>
-                        ))
-                      ) : (
-                        <div className="px-4 py-3 text-right">
-                          <p className="text-body-sm font-medium text-text-heading">مقصدی با این نام پیدا نشد</p>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            {/* VibeFarsi Travel Search Widget */}
+            <div className="w-full max-w-[850px] mt-2 mb-6 relative">
+              <TravelSearchWidget onSearch={handleSearchWidget} />
             </div>
           </motion.div>
 
@@ -258,9 +72,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className={`relative lg:h-[500px] xl:h-[600px] flex items-center justify-center px-2 sm:px-0 w-full transition-all duration-300 ease-in-out ${
-              isFocused ? 'mt-8 sm:mt-10 lg:mt-0' : 'mt-2 sm:mt-4 lg:mt-0'
-            }`}
+            className="relative lg:h-[500px] xl:h-[600px] flex items-center justify-center px-2 sm:px-0 w-full mt-4 lg:mt-0 transition-all duration-300 ease-in-out"
           >
             {/* Main Image Grid Composition */}
             <div className="relative w-full max-w-[300px] sm:max-w-md md:max-w-lg lg:max-w-none grid grid-cols-12 gap-3.5 sm:gap-4 md:gap-6">

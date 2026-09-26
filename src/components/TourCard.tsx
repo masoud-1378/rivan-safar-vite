@@ -1,6 +1,10 @@
 import React, { type ReactNode } from 'react';
 import SmartImage from './SmartImage';
-import { Plane, Car, Building2, ShieldCheck, MapPin, Sparkles } from 'lucide-react';
+import { Plane, Car, Building2, ShieldCheck, MapPin, ChevronLeft } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export interface TourCardProps {
   key?: React.Key;
@@ -92,13 +96,17 @@ export default function TourCard({
     ? visaRequired 
     : (visaFree !== undefined ? !visaFree : isVisaKeywordInTitle);
 
-  // Format hotel stars label (e.g. هتل ۴★)
+  // Format hotel stars label
   const hotelLabel = typeof hotelStars === 'string' && hotelStars.includes('★')
     ? hotelStars
     : `هتل ${hotelStars}★`;
 
   const CardWrapper = ({ children }: { children: ReactNode }) => {
-    const baseClasses = `group bg-surface-primary border border-border-default rounded-[18px] shadow-subtle hover:shadow-card hover:border-border-brand/40 transition-all duration-300 flex flex-col overflow-hidden h-full cursor-pointer hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange ${soldOut ? 'opacity-85' : ''} ${className}`;
+    const baseClasses = cn(
+      "group bg-card border border-border rounded-[20px] shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-300 flex flex-col overflow-hidden h-full cursor-pointer hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+      soldOut && "opacity-85",
+      className
+    );
     
     if (onClick) {
       return (
@@ -117,82 +125,86 @@ export default function TourCard({
   return (
     <CardWrapper>
       {/* 1. Card Image Container */}
-      <div className="relative w-full aspect-[4/3] overflow-hidden bg-page-background shrink-0">
+      <div className="relative w-full aspect-[4/3] overflow-hidden bg-muted shrink-0">
         <SmartImage
           src={image}
           alt={title}
-          className={`object-cover transition-transform duration-500 group-hover:scale-105 ${soldOut ? 'grayscale-[50%]' : ''}`}
+          className={cn(
+            "object-cover transition-transform duration-500 group-hover:scale-105",
+            soldOut && "grayscale-[50%]"
+          )}
         />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
-        {/* Top Badges */}
+        {/* Top Status Badges */}
         {effectiveBadge && (
-          <div className="absolute top-3 left-3 z-10">
-            <div className={`backdrop-blur-md shadow-subtle text-[11.5px] font-extrabold px-2.5 py-1 rounded-full whitespace-nowrap ${
+          <div className="absolute top-3 start-3 z-10">
+            <span className={cn(
+              "backdrop-blur-md text-[11.5px] font-extrabold px-3 py-1 rounded-full whitespace-nowrap shadow-sm inline-flex items-center",
               soldOut 
-                ? 'bg-surface-dark/90 text-white' 
+                ? "bg-secondary/90 text-secondary-foreground" 
                 : limited
-                ? 'bg-amber-500/90 text-white'
-                : 'bg-surface-primary/95 text-brand-orange border border-white/20'
-            }`}>
-              <span>{effectiveBadge}</span>
-            </div>
+                ? "bg-warning/90 text-black"
+                : "bg-background/95 text-primary border border-border"
+            )}>
+              {effectiveBadge}
+            </span>
           </div>
         )}
       </div>
 
       {/* 2. Card Content Body */}
-      <div className="p-4 sm:p-5 flex flex-col justify-between flex-grow text-center dir-rtl">
+      <div className="p-4 sm:p-5 flex flex-col justify-between flex-grow text-center">
         <div>
-          {/* Main Orange Tour Title */}
+          {/* Main Tour Title */}
           <h3 
             title={title}
-            className="text-[16.5px] sm:text-[17.5px] font-bold text-brand-orange tracking-normal mb-1.5 group-hover:opacity-90 transition-opacity [text-wrap:balance]"
+            className="text-[16.5px] sm:text-[17.5px] font-bold text-foreground group-hover:text-primary transition-colors mb-1.5 [text-wrap:balance]"
           >
             {title}
           </h3>
 
           {/* Subtitle: Duration | Country with MapPin icon */}
-          <div className="flex items-center justify-center gap-1.5 text-text-secondary text-[13px] sm:text-[14px] font-medium mb-4">
-            <span className="text-text-primary font-semibold">{duration}</span>
-            <span className="text-border-default/80 mx-1">|</span>
+          <div className="flex items-center justify-center gap-1.5 text-muted-foreground text-[13px] sm:text-[14px] font-medium mb-4">
+            <span className="text-foreground font-semibold">{duration}</span>
+            <span className="text-border mx-1">|</span>
             <span>{inferredCountry}</span>
-            <MapPin className="w-3.5 h-3.5 text-text-secondary/70 shrink-0" />
+            <MapPin className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
           </div>
 
-          {/* Features Capsule Pill (Exact design from user screenshot: Flight + Transfer + Hotel + Visa) */}
-          <div className="w-full bg-[#f8fafc] border border-border-default/70 rounded-2xl py-2.5 px-3 flex items-center justify-between text-text-heading shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] mb-4">
+          {/* Features Capsule Pill */}
+          <div className="w-full bg-muted/60 border border-border/70 rounded-2xl py-2.5 px-3 flex items-center justify-between text-foreground mb-4">
             
             {/* 1. Flight (پرواز) */}
             <div className="flex flex-col items-center justify-center gap-1 flex-1">
-              <Plane className="w-4 h-4 text-text-heading stroke-[1.8]" />
-              <span className="text-[11.5px] sm:text-[12px] font-bold text-text-heading">پرواز</span>
+              <Plane className="w-4 h-4 text-foreground stroke-[1.8]" />
+              <span className="text-[11.5px] sm:text-[12px] font-bold">پرواز</span>
             </div>
 
-            <span className="text-border-default/90 text-[13px] font-light shrink-0 select-none">+</span>
+            <span className="text-border text-[13px] font-light shrink-0 select-none">+</span>
 
             {/* 2. Transfer (ترنسفر) */}
             <div className="flex flex-col items-center justify-center gap-1 flex-1">
-              <Car className="w-4 h-4 text-text-heading stroke-[1.8]" />
-              <span className="text-[11.5px] sm:text-[12px] font-bold text-text-heading">ترنسفر</span>
+              <Car className="w-4 h-4 text-foreground stroke-[1.8]" />
+              <span className="text-[11.5px] sm:text-[12px] font-bold">ترنسفر</span>
             </div>
 
-            <span className="text-border-default/90 text-[13px] font-light shrink-0 select-none">+</span>
+            <span className="text-border text-[13px] font-light shrink-0 select-none">+</span>
 
             {/* 3. Hotel (هتل ۴★) */}
             <div className="flex flex-col items-center justify-center gap-1 flex-1">
-              <Building2 className="w-4 h-4 text-text-heading stroke-[1.8]" />
-              <span className="text-[11.5px] sm:text-[12px] font-bold text-text-heading whitespace-nowrap">{hotelLabel}</span>
+              <Building2 className="w-4 h-4 text-foreground stroke-[1.8]" />
+              <span className="text-[11.5px] sm:text-[12px] font-bold whitespace-nowrap">{hotelLabel}</span>
             </div>
 
-            {/* 4. Visa (ویزا / بدون ویزا) - فقط برای تورهای خارجی */}
+            {/* 4. Visa (ویزا / بدون ویزا) */}
             {!isDomestic && (
               <>
-                <span className="text-border-default/90 text-[13px] font-light shrink-0 select-none">+</span>
+                <span className="text-border text-[13px] font-light shrink-0 select-none">+</span>
                 <div className="flex flex-col items-center justify-center gap-1 flex-1">
-                  <ShieldCheck className="w-4 h-4 text-text-heading stroke-[1.8]" />
-                  <span className="text-[11.5px] sm:text-[12px] font-bold text-text-heading whitespace-nowrap">
+                  <ShieldCheck className="w-4 h-4 text-foreground stroke-[1.8]" />
+                  <span className="text-[11.5px] sm:text-[12px] font-bold whitespace-nowrap">
                     {requiresVisa ? 'ویزا' : 'بدون ویزا'}
                   </span>
                 </div>
@@ -202,30 +214,36 @@ export default function TourCard({
           </div>
         </div>
 
-        {/* 3. Footer Block - Price Row */}
-        <div className="mt-auto pt-3 border-t border-border-default/60 flex items-center justify-between gap-2 text-right">
+        {/* 3. Footer Block - Price & Action Row */}
+        <div className="mt-auto pt-3 border-t border-border/70 flex items-center justify-between gap-2 text-start">
           {soldOut ? (
             <>
-              <span className="text-body-sm text-text-secondary font-medium">وضعیت تور</span>
-              <span className="text-body-sm font-bold text-text-secondary">تکمیل ظرفیت</span>
+              <span className="text-xs text-muted-foreground font-medium">وضعیت تور</span>
+              <Badge variant="secondary" className="font-bold">تکمیل ظرفیت</Badge>
             </>
           ) : pricePending ? (
             <>
-              <span className="text-body-sm text-text-secondary font-medium">وضعیت قیمت</span>
-              <span className="text-body-sm font-bold text-brand-orange">قیمت در حال بررسی</span>
+              <span className="text-xs text-muted-foreground font-medium">وضعیت قیمت</span>
+              <span className="text-xs sm:text-sm font-bold text-primary">قیمت در حال بررسی</span>
             </>
           ) : price ? (
             <>
-              <span className="text-[12px] sm:text-[13px] text-text-secondary font-medium shrink-0">شروع قیمت از</span>
-              <div className="flex items-baseline gap-1 whitespace-nowrap">
-                <span className="text-body-lg sm:text-h4 font-black text-brand-orange">{price}</span>
-                <span className="text-[11px] text-text-secondary font-medium">تومان</span>
+              <div className="flex flex-col text-start">
+                <span className="text-[11px] sm:text-[12px] text-muted-foreground font-medium">شروع قیمت از</span>
+                <div className="flex items-baseline gap-1 whitespace-nowrap">
+                  <span className="text-base sm:text-lg font-black text-primary">{price}</span>
+                  <span className="text-[11px] text-muted-foreground font-medium">تومان</span>
+                </div>
               </div>
+              <Button size="sm" variant="brand" className="rounded-xl px-3 font-medium text-xs">
+                جزئیات تور
+                <ChevronLeft className="w-3.5 h-3.5 ms-0.5" />
+              </Button>
             </>
           ) : (
             <>
-              <span className="text-body-sm text-text-secondary font-medium">استعلام قیمت</span>
-              <span className="text-body-sm font-bold text-brand-orange">تماس بگیرید</span>
+              <span className="text-xs text-muted-foreground font-medium">استعلام قیمت</span>
+              <span className="text-xs sm:text-sm font-bold text-primary">تماس بگیرید</span>
             </>
           )}
         </div>
@@ -233,4 +251,3 @@ export default function TourCard({
     </CardWrapper>
   );
 }
-
