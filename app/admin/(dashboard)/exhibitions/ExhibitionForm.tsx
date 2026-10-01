@@ -4,9 +4,13 @@ import React, { useState, useTransition } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Collapsible } from '@/components/ui/collapsible';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { formatJalali } from '@/lib/jalali';
+import { faSlug } from '@/lib/utils';
 import { saveExhibition, type ExhibitionInput, type ExhibitionRow, type ExhibitionStatus } from './actions';
 import BlockEditor, { cleanBlocks, validateBlocks } from '@/components/ui/block-editor';
 
@@ -17,6 +21,14 @@ const STATUSES: Array<{ value: ExhibitionStatus; label: string }> = [
   { value: 'paused', label: 'متوقف' },
   { value: 'archived', label: 'بایگانی' },
 ];
+
+function gregorianLabel(date: Date) {
+  try {
+    return new Intl.DateTimeFormat('en-US', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
+  } catch {
+    return '';
+  }
+}
 
 export default function ExhibitionForm({
   initial,
@@ -30,21 +42,30 @@ export default function ExhibitionForm({
   onCancel?: () => void;
 }) {
   const [slug, setSlug] = useState(initial?.slug ?? '');
+  const [slugTouched, setSlugTouched] = useState(Boolean(initial?.slug));
   const [titleFa, setTitleFa] = useState(initial?.titleFa ?? '');
   const [titleEn, setTitleEn] = useState(initial?.titleEn ?? '');
   const [country, setCountry] = useState(initial?.country ?? '');
   const [countrySlug, setCountrySlug] = useState(initial?.countrySlug ?? '');
+  const [countrySlugTouched, setCountrySlugTouched] = useState(Boolean(initial?.countrySlug));
   const [city, setCity] = useState(initial?.city ?? '');
   const [citySlug, setCitySlug] = useState(initial?.citySlug ?? '');
+  const [citySlugTouched, setCitySlugTouched] = useState(Boolean(initial?.citySlug));
   const [venue, setVenue] = useState(initial?.venue ?? '');
   const [officialWebsite, setOfficialWebsite] = useState(initial?.officialWebsite ?? '');
   const [industry, setIndustry] = useState(initial?.industry ?? '');
   const [industrySlug, setIndustrySlug] = useState(initial?.industrySlug ?? '');
+  const [industrySlugTouched, setIndustrySlugTouched] = useState(Boolean(initial?.industrySlug));
   const [heroTagline, setHeroTagline] = useState(initial?.heroTagline ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [image, setImage] = useState(initial?.image ?? '');
   const [editionSlug, setEditionSlug] = useState(initial?.editionSlug ?? '');
+  const [editionSlugTouched, setEditionSlugTouched] = useState(Boolean(initial?.editionSlug));
   const [solarDate, setSolarDate] = useState(initial?.solarDate ?? '');
+  const [solarPicked, setSolarPicked] = useState<Date | null>(() => {
+    const parsed = initial?.solarDate ? new Date(initial.solarDate) : null;
+    return parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
+  });
   const [gregorianDate, setGregorianDate] = useState(initial?.gregorianDate ?? '');
   const [visaDeadline, setVisaDeadline] = useState(initial?.visaDeadline ?? '');
   const [hotelArea, setHotelArea] = useState(initial?.hotelArea ?? '');
@@ -67,6 +88,32 @@ export default function ExhibitionForm({
   const [status, setStatus] = useState<ExhibitionStatus>(initial?.status ?? 'draft');
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // E2: نامک خودکار از نام فارسی — تا وقتی کاربر دستی دست نزده باشد.
+  const onTitleFa = (v: string) => {
+    setTitleFa(v);
+    if (!slugTouched) setSlug(faSlug(v));
+  };
+  const onCountry = (v: string) => {
+    setCountry(v);
+    if (!countrySlugTouched) setCountrySlug(faSlug(v));
+  };
+  const onCity = (v: string) => {
+    setCity(v);
+    if (!citySlugTouched) setCitySlug(faSlug(v));
+  };
+  const onIndustry = (v: string) => {
+    setIndustry(v);
+    if (!industrySlugTouched) setIndustrySlug(faSlug(v));
+  };
+
+  // E3: تاریخ شمسی با DatePicker؛ تاریخ میلادی خودکار.
+  const onSolarPick = (d: Date | null) => {
+    setSolarPicked(d);
+    setSolarDate(d ? formatJalali(d) : '');
+    setGregorianDate(d ? gregorianLabel(d) : '');
+    if (d && !editionSlugTouched) setEditionSlug(String(d.getFullYear()));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,52 +177,28 @@ export default function ExhibitionForm({
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Field label="نامک انگلیسی (Slug)" htmlFor="ex-slug">
-          <Input id="ex-slug" value={slug} onChange={(e) => setSlug(e.target.value)} className="text-start" dir="ltr" placeholder="e.g. gitex-2025" required />
-        </Field>
         <Field label="عنوان فارسی" htmlFor="ex-title-fa">
-          <Input id="ex-title-fa" value={titleFa} onChange={(e) => setTitleFa(e.target.value)} placeholder="مثال: نمایشگاه جیتکس دبی" required />
+          <Input id="ex-title-fa" value={titleFa} onChange={(e) => onTitleFa(e.target.value)} placeholder="مثال: نمایشگاه جیتکس دبی" required />
         </Field>
-        <Field label="عنوان انگلیسی (titleEn)" htmlFor="ex-title-en">
-          <Input id="ex-title-en" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} className="text-start" dir="ltr" placeholder="e.g. GITEX Global 2025" />
+        <Field label="کشور" htmlFor="ex-country">
+          <Input id="ex-country" value={country} onChange={(e) => onCountry(e.target.value)} placeholder="مثال: امارات" />
         </Field>
-        <Field label="کشور (country)" htmlFor="ex-country">
-          <Input id="ex-country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="مثال: امارات" />
+        <Field label="شهر" htmlFor="ex-city">
+          <Input id="ex-city" value={city} onChange={(e) => onCity(e.target.value)} placeholder="مثال: دبی" />
         </Field>
-        <Field label="نامک کشور (countrySlug)" htmlFor="ex-country-slug">
-          <Input id="ex-country-slug" value={countrySlug} onChange={(e) => setCountrySlug(e.target.value)} className="text-start" dir="ltr" placeholder="uae" />
-        </Field>
-        <Field label="شهر (city)" htmlFor="ex-city">
-          <Input id="ex-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="مثال: دبی" />
-        </Field>
-        <Field label="نامک شهر (citySlug)" htmlFor="ex-city-slug">
-          <Input id="ex-city-slug" value={citySlug} onChange={(e) => setCitySlug(e.target.value)} className="text-start" dir="ltr" placeholder="dubai" />
-        </Field>
-        <Field label="محل برگزاری (venue)" htmlFor="ex-venue">
+        <Field label="محل برگزاری" htmlFor="ex-venue">
           <Input id="ex-venue" value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="مثال: مرکز تجارت جهانی دبی" />
         </Field>
-        <Field label="وب‌سایت رسمی (officialWebsite)" htmlFor="ex-web">
-          <Input id="ex-web" value={officialWebsite} onChange={(e) => setOfficialWebsite(e.target.value)} className="text-start" dir="ltr" placeholder="https://..." />
+        <Field label="صنعت" htmlFor="ex-industry">
+          <Input id="ex-industry" value={industry} onChange={(e) => onIndustry(e.target.value)} placeholder="مثال: فناوری اطلاعات" />
         </Field>
-        <Field label="صنعت (industry)" htmlFor="ex-industry">
-          <Input id="ex-industry" value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="مثال: فناوری اطلاعات" />
-        </Field>
-        <Field label="نامک صنعت (industrySlug)" htmlFor="ex-industry-slug">
-          <Input id="ex-industry-slug" value={industrySlug} onChange={(e) => setIndustrySlug(e.target.value)} className="text-start" dir="ltr" placeholder="technology" />
-        </Field>
-        <Field label="تصویر (image)" htmlFor="ex-image">
+        <Field label="تصویر" htmlFor="ex-image">
           <Input id="ex-image" value={image} onChange={(e) => setImage(e.target.value)} className="text-start" dir="ltr" placeholder="https://..." />
         </Field>
-        <Field label="نامک دوره (editionSlug)" htmlFor="ex-edition">
-          <Input id="ex-edition" value={editionSlug} onChange={(e) => setEditionSlug(e.target.value)} className="text-start" dir="ltr" placeholder="2025" />
+        <Field label="تاریخ شمسی" htmlFor="ex-solar">
+          <DatePicker value={solarPicked} onChange={onSolarPick} placeholder="انتخاب تاریخ برگزاری" />
         </Field>
-        <Field label="تاریخ شمسی (solarDate)" htmlFor="ex-solar">
-          <Input id="ex-solar" value={solarDate} onChange={(e) => setSolarDate(e.target.value)} placeholder="مثال: ۲۲ تا ۲۶ مهر ۱۴۰۴" />
-        </Field>
-        <Field label="تاریخ میلادی (gregorianDate)" htmlFor="ex-greg">
-          <Input id="ex-greg" value={gregorianDate} onChange={(e) => setGregorianDate(e.target.value)} className="text-start" dir="ltr" placeholder="e.g. Oct 13-17, 2025" />
-        </Field>
-        <Field label="قیمت پایه (startingPrice)" htmlFor="ex-price">
+        <Field label="قیمت پایه" htmlFor="ex-price">
           <Input id="ex-price" value={startingPrice} onChange={(e) => setStartingPrice(e.target.value)} placeholder="مثال: از ۴۵ میلیون تومان" />
         </Field>
         <Field label="وضعیت انتشار" htmlFor="ex-status">
@@ -183,24 +206,52 @@ export default function ExhibitionForm({
         </Field>
       </div>
 
-      <Field label="شعار اصلی (heroTagline)" htmlFor="ex-tagline">
-        <Input id="ex-tagline" value={heroTagline} onChange={(e) => setHeroTagline(e.target.value)} placeholder="جمله کوتاه معرفی نمایشگاه..." />
-      </Field>
-
-      <Field label="توضیحات کامل (description)" htmlFor="ex-desc">
-        <Textarea id="ex-desc" value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-20" placeholder="معرفی کامل نمایشگاه..." />
-      </Field>
-
-      <Field label="مهلت ویزا (visaDeadline)" htmlFor="ex-visa">
+      <Field label="مهلت ویزا" htmlFor="ex-visa">
         <Textarea id="ex-visa" value={visaDeadline} onChange={(e) => setVisaDeadline(e.target.value)} className="min-h-20" placeholder="توضیحات مربوط به مهلت و مدارک ویزا..." />
       </Field>
 
-      <Field label="منطقه هتل (hotelArea)" htmlFor="ex-hotel">
-        <Textarea id="ex-hotel" value={hotelArea} onChange={(e) => setHotelArea(e.target.value)} className="min-h-20" placeholder="توضیحات محل اقامت و منطقه هتل..." />
+      {/* E4: فیلدهای کم‌کاربرد در بخش تاشوی «تکمیلی» */}
+      <Collapsible trigger="تکمیلی" openLabel="بستن بخش تکمیلی" className="rounded-sm border border-border bg-muted/20 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="نامک انگلیسی" htmlFor="ex-slug" hint="خودکار از عنوان فارسی ساخته می‌شود؛ فقط اگر لازم بود تغییرش دهید.">
+            <Input id="ex-slug" value={slug} onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); }} className="text-start" dir="ltr" placeholder="e.g. gitex-2025" required />
+          </Field>
+          <Field label="عنوان انگلیسی" htmlFor="ex-title-en">
+            <Input id="ex-title-en" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} className="text-start" dir="ltr" placeholder="e.g. GITEX Global 2025" />
+          </Field>
+          <Field label="نامک کشور" htmlFor="ex-country-slug" hint="خودکار از نام کشور">
+            <Input id="ex-country-slug" value={countrySlug} onChange={(e) => { setCountrySlug(e.target.value); setCountrySlugTouched(true); }} className="text-start" dir="ltr" placeholder="uae" />
+          </Field>
+          <Field label="نامک شهر" htmlFor="ex-city-slug" hint="خودکار از نام شهر">
+            <Input id="ex-city-slug" value={citySlug} onChange={(e) => { setCitySlug(e.target.value); setCitySlugTouched(true); }} className="text-start" dir="ltr" placeholder="dubai" />
+          </Field>
+          <Field label="نامک صنعت" htmlFor="ex-industry-slug" hint="خودکار از نام صنعت">
+            <Input id="ex-industry-slug" value={industrySlug} onChange={(e) => { setIndustrySlug(e.target.value); setIndustrySlugTouched(true); }} className="text-start" dir="ltr" placeholder="technology" />
+          </Field>
+          <Field label="نامک دوره" htmlFor="ex-edition" hint="خودکار از سال تاریخ برگزاری">
+            <Input id="ex-edition" value={editionSlug} onChange={(e) => { setEditionSlug(e.target.value); setEditionSlugTouched(true); }} className="text-start" dir="ltr" placeholder="2025" />
+          </Field>
+          <Field label="تاریخ میلادی" htmlFor="ex-greg" hint="خودکار از تاریخ شمسی ساخته می‌شود.">
+            <Input id="ex-greg" value={gregorianDate} readOnly className="text-start" dir="ltr" placeholder="—" />
+          </Field>
+          <Field label="وب‌سایت رسمی" htmlFor="ex-web">
+            <Input id="ex-web" value={officialWebsite} onChange={(e) => setOfficialWebsite(e.target.value)} className="text-start" dir="ltr" placeholder="https://..." />
+          </Field>
+          <Field label="منطقه هتل" htmlFor="ex-hotel">
+            <Textarea id="ex-hotel" value={hotelArea} onChange={(e) => setHotelArea(e.target.value)} className="min-h-20" placeholder="توضیحات محل اقامت و منطقه هتل..." />
+          </Field>
+          <Field label="توضیح قیمت پایه" htmlFor="ex-price-note">
+            <Textarea id="ex-price-note" value={startingPriceNote} onChange={(e) => setStartingPriceNote(e.target.value)} className="min-h-20" placeholder="جزئیات قیمت و خدمات مشمول..." />
+          </Field>
+        </div>
+      </Collapsible>
+
+      <Field label="شعار اصلی" htmlFor="ex-tagline">
+        <Input id="ex-tagline" value={heroTagline} onChange={(e) => setHeroTagline(e.target.value)} placeholder="جمله کوتاه معرفی نمایشگاه..." />
       </Field>
 
-      <Field label="توضیح قیمت پایه (startingPriceNote)" htmlFor="ex-price-note">
-        <Textarea id="ex-price-note" value={startingPriceNote} onChange={(e) => setStartingPriceNote(e.target.value)} className="min-h-20" placeholder="جزئیات قیمت و خدمات مشمول..." />
+      <Field label="توضیحات کامل" htmlFor="ex-desc">
+        <Textarea id="ex-desc" value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-20" placeholder="معرفی کامل نمایشگاه..." />
       </Field>
 
       <BlockEditor
@@ -246,7 +297,7 @@ export default function ExhibitionForm({
         {onCancel && (
           <Button type="button" onClick={onCancel} variant="outline">انصراف</Button>
         )}
-      </div>
+        </div>
       </form>
     </Card>
   );

@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Copy } from 'lucide-react';
+import { Copy, RefreshCw } from 'lucide-react';
 import { Dialog } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/input';
 import { faSlug } from '@/lib/utils';
 import { checkSlugUnique, saveTour, type TourRow } from './actions';
 import { useToast } from '@/components/ui/toast';
+import { DepartureDateField } from './DepartureDateField';
 
 interface DuplicateTourDialogProps {
   tour: TourRow;
@@ -88,6 +89,13 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
   const commitTitle = () => {
     setTitleError('');
     if (slugTouchedRef.current) return;
+    deriveSlug(titleRef.current?.value ?? '');
+  };
+
+  // «بازسازی خودکار از عنوان» (T14): اقدام صریح کاربر — guard دستی‌بودن نادیده گرفته می‌شود.
+  const rebuildSlugFromTitle = () => {
+    setSlugTouched(false);
+    slugTouchedRef.current = false;
     deriveSlug(titleRef.current?.value ?? '');
   };
 
@@ -181,34 +189,41 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
             placeholder="عنوان تور…"
           />
         </Field>
-        <Field
-          label="نامک (آدرس اینترنتی)"
-          htmlFor="dup-slug"
-          hint="خودکار از عنوان ساخته می‌شود؛ اگر خواستید دستی عوضش کنید"
-          error={slugError}
-        >
-          <Input
-            id="dup-slug"
-            dir="ltr"
-            value={slug}
-            onChange={(e) => {
-              setSlug(e.target.value);
-              setSlugTouched(true);
-              slugTouchedRef.current = true;
-              setSlugError('');
-            }}
-            placeholder="tour-slug"
-            className="font-mono"
-          />
-        </Field>
-        <Field label="تاریخ حرکت بعدی" htmlFor="dup-departure" hint="مثلاً: ۱۵ آبان — روی کارت تور در سایت نمایش داده می‌شود">
-          <Input
-            id="dup-departure"
-            value={departure}
-            onChange={(e) => setDeparture(e.target.value)}
-            placeholder="مثلاً: ۱۵ آبان"
-          />
-        </Field>
+        <div>
+          <Field
+            label="نامک (آدرس اینترنتی)"
+            htmlFor="dup-slug"
+            hint="خودکار از عنوان ساخته می‌شود؛ اگر خواستید دستی عوضش کنید"
+            error={slugError}
+          >
+            <Input
+              id="dup-slug"
+              dir="ltr"
+              value={slug}
+              onChange={(e) => {
+                setSlug(e.target.value);
+                setSlugTouched(true);
+                slugTouchedRef.current = true;
+                setSlugError('');
+              }}
+              placeholder="tour-slug"
+              className="font-mono"
+            />
+          </Field>
+          <button
+            type="button"
+            onClick={rebuildSlugFromTitle}
+            className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:underline"
+          >
+            <RefreshCw className="size-3" />
+            بازسازی خودکار از عنوان
+          </button>
+        </div>
+        {/* تاریخ حرکت بعدی (T10): پیش‌پر از تور اصلی؛ DatePicker شمسی فقط میان‌بر نوشتن متن است */}
+        <DepartureDateField
+          value={departure}
+          onChange={setDeparture}
+        />
         <dl className="space-y-1.5 rounded-sm border border-border/70 bg-muted/40 p-3 text-xs">
           <div className="flex items-center justify-between gap-2">
             <dt className="text-muted-foreground">مبدأ (حفظ می‌شود)</dt>

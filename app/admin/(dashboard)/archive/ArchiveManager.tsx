@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ArchiveRestore, Trash2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { fa } from '@/lib/utils';
 import { formatJalali } from '@/lib/jalali';
+import { useToast } from '@/components/ui/toast';
 import { hardDeleteArchived, restoreArchived, type ArchivedGroup } from './actions';
 
 interface Props {
@@ -16,6 +18,8 @@ interface Props {
 }
 
 export default function ArchiveManager({ groups, isOwner }: Props) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [pendingDelete, setPendingDelete] = useState<{ entity: string; id: string; title: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +31,8 @@ export default function ArchiveManager({ groups, isOwner }: Props) {
     setError(null);
     try {
       await restoreArchived(entity, id);
+      toast({ variant: 'success', title: 'بازیابی شد.' });
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'خطای ناشناخته');
     } finally {

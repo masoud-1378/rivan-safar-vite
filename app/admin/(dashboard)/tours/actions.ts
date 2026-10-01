@@ -84,7 +84,7 @@ export interface TourInput {
   excludedServices: string[];
   hotelOptions: TourHotelOptionItem[];
   description: string;
-  transportKind?: 'air' | 'rail' | 'land' | 'mixed' | string;
+  transportKind?: 'air' | 'land' | 'rail' | 'sea' | 'mixed';
   carrierName?: string;
   guaranteedDeparture?: boolean;
   splitPriceCurrency?: string;
@@ -186,6 +186,7 @@ function toTourRow(r: SiteTourRow) {
     destination: r.destination,
     origin: r.origin,
     route: r.route,
+    transportKind: r.transportKind ?? 'air',
     duration: r.duration,
     nights: r.nights,
     closestDeparture: r.closestDeparture,
@@ -421,6 +422,8 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
     destination,
     origin: originName,
     route,
+    // شیوهٔ سفر از انتخاب کاربر ذخیره می‌شود؛ بج جدول از همین خوانده می‌شود (T9).
+    transportKind: data.transportKind || 'air',
     duration: data.duration || '',
     nights: Math.max(0, Number(data.nights) || 0),
     closestDeparture: data.closestDeparture || '',
@@ -528,4 +531,54 @@ export async function checkSlugUnique(slug: string, excludeId?: string | null) {
   const rows = await db.select().from(siteTours).where(eq(siteTours.slug, s)).limit(2);
   const taken = rows.some((r) => r.id !== excludeId);
   return { unique: !taken };
+}
+
+/**
+ * عملیات گروهی تورها (T15): انتشار / لغو انتشار / بایگانی برای چند تور با هم.
+ * - انتشار گروهی: تورها روی سایت دیده می‌شوند.
+ * - لغو انتشار گروهی: تورها از سایت پنهان می‌شوند ولی در فهرست می‌مانند.
+ * - بایگانی گروهی: مستقیم انجام می‌شود (حتی برای تور منتشرشده)؛ تورها از سایت
+ *   و فهرست‌ها پنهان می‌شوند و بعداً از صفحهٔ بایگانی برمی‌گردند.
+ */
+export async function setToursPublishStatusBulk(
+  ids: string[],
+  next: 'draft' | 'published',
+): Promise<{ ok: true; count: number }> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  if (next !== 'draft' && next !== 'published') throw new Error('وضعیت انتشار نامعتبر است.');
+  const clean = [...new Set((ids || []).map((i) => (i || '').trim()).filter(Boolean))];
+  if (clean.length === 0) throw new Error('توری انتخاب نشده است.');
+  for (const id of clean) {
+    await db
+      .update(siteTours)
+      .set({ publishStatus: next, updatedAt: new Date() })
+      .where(eq(siteTours.id, id));
+  }
+  revalidatePath('/admin/tours');
+  return { ok: true, count: clean.length };
+}
+
+export async function archiveToursBulk(ids: string[]): Promise<{ ok: true; count: number }> {
+  const session = await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const clean = [...new Set((ids || []).map((i) => (i || '').trim()).filter(Boolean))];
+  if (clean.length === 0) throw new Error('توری انتخاب نشده است.');
+  for (const id of clean) {
+    const rows = await db
+      .select({ title: siteTours.title })
+      .from(siteTours)
+      .where(eq(siteTours.id, id))
+      .limit(1);
+    if (rows.length === 0) continue;
+    await archiveOne(db, siteTours, id, {
+      actor: session.email,
+      entity: 'site_tours',
+      reasonFa: `بایگانی گروهی تور «${rows[0]?.title ?? id}»`,
+    });
+  }
+  revalidatePath('/admin/tours');
+  return { ok: true, count: clean.length };
 }

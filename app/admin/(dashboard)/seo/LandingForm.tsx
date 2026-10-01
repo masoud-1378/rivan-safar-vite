@@ -7,6 +7,7 @@ import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { Textarea } from '@/components/ui/textarea';
+import { faSlug } from '@/lib/utils';
 import { createLanding, updateLanding, type LandingInput } from './actions';
 
 const PAGE_TYPES = [
@@ -62,7 +63,9 @@ export default function LandingForm({
 }) {
   const editing = Boolean(initial?.id);
   const [queryOwner, setQueryOwner] = useState(initial?.queryOwner ?? '');
+  const [queryOwnerTouched, setQueryOwnerTouched] = useState(Boolean(initial?.queryOwner));
   const [urlPath, setUrlPath] = useState(initial?.urlPath ?? '');
+  const [urlPathTouched, setUrlPathTouched] = useState(Boolean(initial?.urlPath));
   const [pageType, setPageType] = useState(initial?.pageType ?? 'country');
   const [titleFa, setTitleFa] = useState(initial?.titleFa ?? '');
   const [metaDescriptionFa, setMetaDescriptionFa] = useState(initial?.metaDescriptionFa ?? '');
@@ -74,6 +77,18 @@ export default function LandingForm({
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
 
+  // S1/S2: تولید خودکار «کد یکتای صفحه» و «مسیر URL» از نوع صفحه و عنوان —
+  // تا وقتی کاربر دستی دست نزده باشد.
+  const onPageType = (v: string) => {
+    setPageType(v);
+    if (!queryOwnerTouched) setQueryOwner(`${v}:${faSlug(titleFa)}`);
+  };
+  const onTitleFa = (v: string) => {
+    setTitleFa(v);
+    setErrors((prev) => ({ ...prev, titleFa: undefined }));
+    if (!queryOwnerTouched) setQueryOwner(`${pageType}:${faSlug(v)}`);
+    if (!urlPathTouched) setUrlPath(`/${faSlug(v)}`);
+  };
   // یافتهٔ ۴: هشدار پیشاپیشِ تغییر مسیرِ لندینگ منتشرشده.
   const urlPathChanged =
     editing &&
@@ -127,11 +142,11 @@ export default function LandingForm({
     <div className="space-y-4 rounded-sm border border-border bg-card p-5">
       <h2 className="text-lg font-semibold text-foreground">{editing ? 'ویرایش لندینگ' : 'لندینگ جدید'}</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label="Query Owner" htmlFor="qo" hint="کد یکتای صفحه، مثلاً home:ریوان سفر" error={errors.queryOwner}>
-          <Input id="qo" dir="ltr" value={queryOwner} onChange={(e) => { setQueryOwner(e.target.value); setErrors((prev) => ({ ...prev, queryOwner: undefined })); }} placeholder="home:ریوان سفر" />
+        <Field label="کد یکتای صفحه" htmlFor="qo" hint="خودکار از نوع صفحه و عنوان ساخته می‌شود؛ مثلاً country:tehran" error={errors.queryOwner}>
+          <Input id="qo" dir="ltr" value={queryOwner} onChange={(e) => { setQueryOwner(e.target.value); setQueryOwnerTouched(true); setErrors((prev) => ({ ...prev, queryOwner: undefined })); }} placeholder="country:tehran" />
         </Field>
-        <Field label="مسیر URL" htmlFor="up" hint="بدون نیم‌فاصله؛ مثلاً /destination/turkey/istanbul" error={errors.urlPath}>
-          <Input id="up" dir="ltr" value={urlPath} onChange={(e) => { setUrlPath(e.target.value); setErrors((prev) => ({ ...prev, urlPath: undefined })); }} placeholder="/destination/turkey/istanbul" />
+        <Field label="مسیر URL" htmlFor="up" hint="خودکار از عنوان ساخته می‌شود؛ می‌توانید تغییرش دهید. بدون نیم‌فاصله؛ مثلاً /destination/turkey/istanbul" error={errors.urlPath}>
+          <Input id="up" dir="ltr" value={urlPath} onChange={(e) => { setUrlPath(e.target.value); setUrlPathTouched(true); setErrors((prev) => ({ ...prev, urlPath: undefined })); }} placeholder="/destination/turkey/istanbul" />
           {urlPathChanged ? (
             <p className="text-xs font-medium text-warning">
               هشدار: این لندینگ منتشرشده است؛ با تغییر مسیر، لینک‌های ورودی‌اش می‌میرند و صفحه به پیش‌نویس برمی‌گردد.
@@ -139,10 +154,10 @@ export default function LandingForm({
           ) : null}
         </Field>
         <Field label="نوع صفحه" htmlFor="pt">
-          <Select id="pt" value={pageType} onChange={(e) => setPageType(e.target.value)} options={PAGE_TYPES} />
+          <Select id="pt" value={pageType} onChange={(e) => onPageType(e.target.value)} options={PAGE_TYPES} />
         </Field>
         <Field label="Title (عنوان سئو)" htmlFor="tf" hint="حدود ۶۰ نویسه" error={errors.titleFa}>
-          <Input id="tf" value={titleFa} onChange={(e) => { setTitleFa(e.target.value); setErrors((prev) => ({ ...prev, titleFa: undefined })); }} placeholder="تور استانبول با اقامت در مرکز شهر" />
+          <Input id="tf" value={titleFa} onChange={(e) => onTitleFa(e.target.value)} placeholder="تور استانبول با اقامت در مرکز شهر" />
         </Field>
         <Field label="Meta Description (توضیحات متا)" htmlFor="md" hint="حدود ۱۵۵ نویسه">
           <Textarea id="md" autoResize showCount maxLength={200} value={metaDescriptionFa} onChange={(e) => setMetaDescriptionFa(e.target.value)} placeholder="توضیح کوتاهی که در نتایج جست‌وجو نمایش داده می‌شود." />
@@ -153,8 +168,8 @@ export default function LandingForm({
         <Field label="وضعیت انتشار" htmlFor="wf">
           <Select id="wf" value={workflow} onChange={(e) => setWorkflow(e.target.value as NonNullable<LandingInput['workflow']>)} options={WORKFLOW_OPTIONS} />
         </Field>
-        <Field label="ایندکس" htmlFor="ix" hint="noindex یعنی صفحه از نتایج جست‌وجو حذف شود">
-          <Select id="ix" dir="ltr" value={indexStatus} onChange={(e) => setIndexStatus(e.target.value as NonNullable<LandingInput['indexStatus']>)} options={[{ value: 'index', label: 'index' }, { value: 'noindex', label: 'noindex' }]} />
+        <Field label="نمایش در گوگل" htmlFor="ix" hint="«نباشد» یعنی صفحه از نتایج جست‌وجو پنهان می‌ماند.">
+          <Select id="ix" value={indexStatus} onChange={(e) => setIndexStatus(e.target.value as NonNullable<LandingInput['indexStatus']>)} options={[{ value: 'index', label: 'در نتایج گوگل باشد' }, { value: 'noindex', label: 'در نتایج گوگل نباشد' }]} />
         </Field>
         <Field label="بازبینی بعدی" htmlFor="nr" hint="تاریخ شمسی">
           <DatePicker value={nextReviewAt} onChange={setNextReviewAt} placeholder="انتخاب تاریخ بازبینی" />

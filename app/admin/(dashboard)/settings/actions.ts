@@ -53,6 +53,26 @@ export async function updateSetting(key: string, value: string, reason?: string)
   return { ok: true };
 }
 
+/**
+ * ذخیرهٔ گروهی تنظیمات یک تب (ST2): همهٔ کلیدهای کثیف در یک فراخوان.
+ * خطای هر فیلد جداگانه برمی‌گردد تا زیر همان فیلد نمایش داده شود.
+ */
+export async function updateSettings(
+  entries: Array<{ key: string; value: string }>,
+): Promise<{ ok: boolean; saved: string[]; errors: Record<string, string> }> {
+  const saved: string[] = [];
+  const errors: Record<string, string> = {};
+  for (const { key, value } of entries) {
+    try {
+      await updateSetting(key, value);
+      saved.push(key);
+    } catch (e) {
+      errors[key] = e instanceof Error ? e.message : 'خطا در ذخیره.';
+    }
+  }
+  return { ok: Object.keys(errors).length === 0, saved, errors };
+}
+
 export async function getSiteUrl() {
   const db = getDb();
   if (!db) return 'https://rivansafar.ir';

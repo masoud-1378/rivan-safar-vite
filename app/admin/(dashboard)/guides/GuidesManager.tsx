@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Pencil, Plus, Archive } from 'lucide-react';
-import GuideForm from './GuideForm';
+import GuideForm, { type GuidePickerOption } from './GuideForm';
 import { deleteGuide, setGuideStatus, type GuideRow, type GuideStatus } from './actions';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +18,7 @@ const STATUS_MAP: Record<GuideStatus, { label: string; variant: 'success' | 'war
 };
 const statusOptions = (Object.keys(STATUS_MAP) as GuideStatus[]).map((value) => ({ value, label: STATUS_MAP[value].label }));
 
-export default function GuidesManager({ initial }: { initial: GuideRow[] }) {
+export default function GuidesManager({ initial, destinationOptions = [], tourOptions = [] }: { initial: GuideRow[]; destinationOptions?: GuidePickerOption[]; tourOptions?: GuidePickerOption[] }) {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<GuideRow | null>(null);
   const [deleting, setDeleting] = useState<GuideRow | null>(null);
@@ -43,9 +43,9 @@ export default function GuidesManager({ initial }: { initial: GuideRow[] }) {
   return (
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-foreground">مقالات و راهنماها</h1><p className="mt-1 text-sm text-muted-foreground">مجموع مقالات ثبت‌شده: {fa(initial.length)} مورد</p></div><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />مقاله جدید</Button></div>
-      {(showForm || editing) && <GuideForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onSaved={reload} onCancel={() => { setShowForm(false); setEditing(null); }} />}
-      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">لیست مقالات ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(guide) => guide.id} searchKeys={['titleFa', 'slug', 'category', 'categoryLabel']} searchPlaceholder="جست‌وجوی عنوان، نامک یا دسته‌بندی…" emptyTitle="مقاله‌ای یافت نشد" emptyDescription="برای شروع، مقاله جدیدی اضافه کنید." /></CardContent></Card>
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی مقاله" description={deleting ? `مقالهٔ «${deleting.titleFa}» بایگانی می‌شود و از فهرست‌ها پنهان می‌ماند؛ لینک‌هایش برای همیشه پاک می‌شوند و با بازیابی برنمی‌گردند. خود مقاله بعداً از صفحهٔ بایگانی قابل بازیابی است.` : ''} confirmText="بایگانی مقاله" destructive onConfirm={onDelete} />
+      {(showForm || editing) && <GuideForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onSaved={reload} onCancel={() => { setShowForm(false); setEditing(null); }} destinationOptions={destinationOptions} tourOptions={tourOptions} />}
+      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">لیست مقالات ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(guide) => guide.id} searchKeys={['titleFa', 'slug', 'category', 'categoryLabel']} searchPlaceholder="جست‌وجوی عنوان، نامک یا دسته‌بندی…" emptyTitle="مقاله‌ای یافت نشد" emptyDescription="برای شروع، مقاله جدیدی اضافه کنید." emptyAction={initial.length === 0 ? { label: 'نوشتن اولین مقاله', onClick: () => { setEditing(null); setShowForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); } } : undefined} /></CardContent></Card>
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی مقاله" description={deleting ? `مقالهٔ «${deleting.titleFa}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند. با «بازیابی» خودِ مقاله برمی‌گردد، ولی لینک‌های داخلی‌اش برای همیشه پاک شده‌اند و برنمی‌گردند.` : ''} confirmText="بایگانی مقاله" destructive onConfirm={onDelete} />
     </div>
   );
 }

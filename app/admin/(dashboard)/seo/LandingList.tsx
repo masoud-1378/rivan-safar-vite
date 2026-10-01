@@ -97,11 +97,11 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
   };
 
   const columns: Column<LandingRow>[] = [
-    { key: 'queryOwner', header: 'Query Owner', sortable: true, cell: (l) => <span dir="ltr" className="font-mono text-xs text-muted-foreground">{l.queryOwner}</span> },
+    { key: 'titleFa', header: 'عنوان فارسی', sortable: true, cell: (l) => <span className="line-clamp-1 font-medium">{l.titleFa}</span> },
+    { key: 'queryOwner', header: 'کد یکتای صفحه', sortable: true, cell: (l) => <span dir="ltr" className="font-mono text-xs text-muted-foreground">{l.queryOwner}</span> },
     { key: 'urlPath', header: 'مسیر', sortable: true, cell: (l) => <span dir="ltr" className="font-mono text-xs text-muted-foreground">{l.urlPath}</span> },
-    { key: 'titleFa', header: 'عنوان', sortable: true, cell: (l) => <span className="line-clamp-1 font-medium">{l.titleFa}</span> },
     { key: 'workflow', header: 'وضعیت', sortable: true, cell: (l) => <Badge variant={WORKFLOW_MAP[(l.workflow ?? 'draft') as Workflow]?.variant ?? 'secondary'}>{WORKFLOW_MAP[(l.workflow ?? 'draft') as Workflow]?.label ?? l.workflow}</Badge> },
-    { key: 'indexStatus', header: 'ایندکس', cell: (l) => <Badge dir="ltr" variant={l.indexStatus === 'index' ? 'success' : 'warning'}>{l.indexStatus ?? 'noindex'}</Badge> },
+    { key: 'indexStatus', header: 'نمایش در گوگل', cell: (l) => <Badge variant={l.indexStatus === 'index' ? 'success' : 'warning'}>{l.indexStatus === 'index' ? 'باشد' : 'نباشد'}</Badge> },
     {
       key: 'id',
       header: 'عملیات',
@@ -167,9 +167,10 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
             columns={columns}
             rowKey={(l) => l.id}
             searchKeys={['queryOwner', 'urlPath', 'titleFa']}
-            searchPlaceholder="جست‌وجوی عنوان، مسیر یا Query Owner…"
+            searchPlaceholder="جست‌وجوی عنوان، مسیر یا کد یکتا…"
             emptyTitle="لندینگی ثبت نشده است"
             emptyDescription="برای شروع، لندینگ جدیدی بسازید."
+            emptyAction={data.length === 0 ? { label: 'ساخت اولین لندینگ', onClick: () => setShowForm(true) } : undefined}
           />
         </CardContent>
       </Card>
@@ -212,7 +213,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
         open={Boolean(deleting)}
         onOpenChange={(openState) => !openState && setDeleting(null)}
         title="بایگانی لندینگ"
-        description={deleting ? `لندینگ «${deleting.titleFa}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند؛ بلوک‌ها، لینک‌ها و محصولاتش برای همیشه پاک می‌شوند و با بازیابی برنمی‌گردند. خود لندینگ بعداً از صفحهٔ بایگانی قابل بازیابی است.` : ''}
+        description={deleting ? `لندینگ «${deleting.titleFa}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند. با «بازیابی» خودِ لندینگ برمی‌گردد، ولی بلوک‌های محتوا، لینک‌های داخلی و محصولات متصلش برای همیشه پاک شده‌اند و برنمی‌گردند.` : ''}
         confirmText="بایگانی لندینگ"
         destructive
         onConfirm={onDelete}

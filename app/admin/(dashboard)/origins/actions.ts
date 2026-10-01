@@ -29,6 +29,13 @@ export async function listOriginsAdmin(): Promise<OriginRow[]> {
   }));
 }
 
+export async function countOrigins(): Promise<number> {
+  const db = getDb();
+  if (!db) return 0;
+  const [r] = await db.select({ n: count() }).from(originCities).where(isNull(originCities.deletedAt));
+  return r?.n ?? 0;
+}
+
 export async function saveOrigin(data: { id?: string; slug: string; nameFa: string; type: string; parentSlug: string }) {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();

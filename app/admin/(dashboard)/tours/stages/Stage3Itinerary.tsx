@@ -12,11 +12,13 @@ import {
   PlaneTakeoff,
   Utensils,
   CheckCircle2,
-  XCircle
+  XCircle,
+  LayoutTemplate
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { cn, fa } from '@/lib/utils';
+import { useToast } from '@/components/ui/toast';
+import { cn, fa, faNumber } from '@/lib/utils';
 import type { TourItineraryDayItem, TourInput } from '../actions';
 
 interface Stage3ItineraryProps {
@@ -31,10 +33,38 @@ const ACTIVITY_TYPES = [
   { id: 'departure', label: 'عزیمت و بازگشت به ایران', icon: PlaneTakeoff, color: 'text-purple-500' },
 ];
 
+// قالب‌های پیش‌فرض خدمات همراه تور (T12): فقط «خدمات همراه» را پر می‌کنند؛
+// «خدمات خارج از تور» را نه.
+const SERVICE_TEMPLATES: Array<{ label: string; items: string[] }> = [
+  {
+    label: 'پکیج استاندارد خارجی',
+    items: [
+      'بلیت رفت و برگشت هواپیما',
+      'اقامت در هتل با صبحانه',
+      'ترانسفر فرودگاهی',
+      'بیمه مسافرتی',
+      'لیدر فارسی‌زبان',
+      'گشت شهری با ناهار',
+    ],
+  },
+  {
+    label: 'پکیج استاندارد داخلی',
+    items: [
+      'بلیت رفت و برگشت',
+      'اقامت در هتل',
+      'ترانسفر',
+      'بیمه مسافرتی',
+      'لیدر فارسی‌زبان',
+      'گشت‌های روزانه',
+    ],
+  },
+];
+
 export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps) {
   const itinerary: TourItineraryDayItem[] = Array.isArray(data.itineraryDays) ? data.itineraryDays : [];
   const included: string[] = Array.isArray(data.includedServices) ? data.includedServices : [];
   const excluded: string[] = Array.isArray(data.excludedServices) ? data.excludedServices : [];
+  const { toast } = useToast();
 
   const handleAddDay = () => {
     const nextDayNum = itinerary.length + 1;
@@ -79,6 +109,20 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
     onChange({ includedServices: included.filter((_, i) => i !== idx) });
   };
 
+  // اعمال قالب خدمات (T12): آیتم‌های تکراری رد می‌شوند؛ تعداد اضافه‌شده اعلام می‌شود.
+  const applyServiceTemplate = (tpl: { label: string; items: string[] }) => {
+    const fresh = tpl.items.filter((item) => !included.includes(item));
+    if (fresh.length === 0) {
+      toast({ title: 'همهٔ خدمات این قالب قبلاً اضافه شده‌اند', variant: 'warning' });
+      return;
+    }
+    onChange({ includedServices: [...included, ...fresh] });
+    toast({
+      title: `${faNumber(fresh.length)} خدمت از «${tpl.label}» اضافه شد`,
+      description: fresh.length < tpl.items.length ? 'خدماتی که از قبل بودند رد شدند.' : undefined,
+    });
+  };
+
   const addExcluded = () => {
     if (!newExcluded.trim()) return;
     onChange({ excludedServices: [...excluded, newExcluded.trim()] });
@@ -91,10 +135,10 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between rounded-sm border border-emerald-500/20 bg-emerald-500/5 p-4">
+      {/* Header (T16: الگوی تک‌رنگ با لهجهٔ برند) */}
+      <div className="flex items-center justify-between rounded-sm border border-brand/20 bg-brand/5 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-sm bg-emerald-600 text-white">
+          <div className="flex size-10 items-center justify-center rounded-sm bg-brand text-brand-foreground">
             <Map className="size-5" />
           </div>
           <div>
@@ -244,6 +288,26 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
           <div className="flex items-center gap-2 text-xs font-bold text-foreground">
             <CheckCircle2 className="size-4 text-emerald-500" />
             <span>خدمات همراه تور</span>
+          </div>
+
+          {/* نوار قالب‌های پیش‌فرض خدمات (T12) */}
+          <div className="flex flex-wrap items-center gap-2 rounded-sm border border-dashed border-border/80 p-3">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground">
+              <LayoutTemplate className="size-4 text-muted-foreground" />
+              شروع سریع با قالب آماده:
+            </span>
+            {SERVICE_TEMPLATES.map((tpl) => (
+              <Button
+                key={tpl.label}
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => applyServiceTemplate(tpl)}
+                className="text-xs"
+              >
+                {tpl.label}
+              </Button>
+            ))}
           </div>
 
           <div className="flex gap-2">

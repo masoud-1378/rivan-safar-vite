@@ -27,9 +27,9 @@ const NAV: Array<{ href: string; label: string; icon: typeof LayoutDashboard; ke
   { href: '/admin', label: 'داشبورد', icon: LayoutDashboard, keywords: 'home overview خلاصه' },
   { href: '/admin/leads', label: 'درخواست‌های تماس', icon: Inbox, keywords: 'lead سرنخ تماس' },
   { href: '/admin/tours', label: 'تورها', icon: BriefcaseBusiness, keywords: 'tour سفر' },
-  { href: '/admin/places', label: 'مقصدها و شهرها', icon: MapPinned, keywords: 'destination شهر کشور' },
-  { href: '/admin/origins', label: 'مبدأها', icon: Plane, keywords: 'origin مبدا' },
-  { href: '/admin/hotels', label: 'هتل‌ها', icon: Building2, keywords: 'hotel اقامت' },
+  { href: '/admin/catalog?tab=destinations', label: 'مقصدها', icon: MapPinned, keywords: 'destination شهر کشور مقصد' },
+  { href: '/admin/catalog?tab=origins', label: 'مبدأها', icon: Plane, keywords: 'origin مبدا' },
+  { href: '/admin/catalog?tab=hotels', label: 'هتل‌ها', icon: Building2, keywords: 'hotel اقامت هتل' },
   { href: '/admin/guides', label: 'مقالات و راهنماها', icon: BookOpen, keywords: 'guide مقاله' },
   { href: '/admin/exhibitions', label: 'نمایشگاه‌ها', icon: Globe2, keywords: 'exhibition نمایشگاه' },
   { href: '/admin/seo', label: 'سئو و لندینگ‌ها', icon: BarChart3, keywords: 'seo لندینگ' },
@@ -40,10 +40,11 @@ const NAV: Array<{ href: string; label: string; icon: typeof LayoutDashboard; ke
 
 const ACTIONS: Array<{ href: string; label: string; icon: typeof Plus; keywords: string }> = [
   { href: '/admin/tours/new', label: 'ثبت تور جدید', icon: Plus, keywords: 'new tour افزودن' },
-  { href: '/admin/hotels', label: 'افزودن هتل', icon: Plus, keywords: 'new hotel' },
-  { href: '/admin/origins', label: 'افزودن مبدأ', icon: Plus, keywords: 'new origin' },
-  { href: '/admin/places', label: 'افزودن مقصد', icon: Plus, keywords: 'new place شهر' },
-  { href: '/admin/seo', label: 'ساخت لندینگ سئو', icon: Plus, keywords: 'new landing seo' },
+  // برچسب «افزودن» فقط وقتی که واقعاً فرم/دیالوگ را باز می‌کند؛ بقیه به صفحهٔ مدیریتشان می‌روند.
+  { href: '/admin/hotels', label: 'مدیریت هتل‌ها', icon: Plus, keywords: 'hotel هتل افزودن' },
+  { href: '/admin/catalog?tab=origins', label: 'مدیریت مبدأها', icon: Plus, keywords: 'origin مبدا افزودن' },
+  { href: '/admin/catalog?tab=destinations', label: 'مدیریت مقصدها', icon: Plus, keywords: 'new place شهر مقصد افزودن' },
+  { href: '/admin/seo', label: 'مدیریت لندینگ‌های سئو', icon: Plus, keywords: 'new landing seo لندینگ' },
 ];
 
 const KIND_LABELS: Record<AdminSearchHit['kind'], string> = {

@@ -157,7 +157,7 @@ export default async function AdminDashboard() {
 
   const quickLinks = [
     { href: '/admin/tours', label: 'مدیریت تورها', value: tours, icon: BriefcaseBusiness },
-    { href: '/admin/places', label: 'مقصدها و شهرها', value: destinations, icon: MapPinned },
+    { href: '/admin/catalog?tab=destinations', label: 'مقصدها و شهرها', value: destinations, icon: MapPinned },
     { href: '/admin/guides', label: 'مقالات و راهنماها', value: guidesCount, icon: BookOpen },
     { href: '/admin/exhibitions', label: 'نمایشگاه‌ها', value: exhibitionsCount, icon: Globe2 },
   ];
@@ -172,7 +172,6 @@ export default async function AdminDashboard() {
       {onboarding && !onboarding.completed ? <OnboardingWizard initial={onboarding} /> : null}
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="mb-1 text-sm font-medium text-brand">مرکز کنترل ریوان سفر</p>
           <h1 className="text-2xl font-bold">داشبورد مدیریت</h1>
           <p className="mt-1 text-sm text-muted-foreground">محتوا، تورها و درخواست‌های مشتری را از یکجا مدیریت کنید.</p>
         </div>

@@ -13,18 +13,16 @@ export const metadata: Metadata = {
 export default async function TourLeadsPage() {
   const [{ rows }, settings] = await Promise.all([getLeadStats(), getSettingsMap()]);
   
-  // Filter leads that have tour context or originated from tour pages
-  const tourRows = rows.filter((r) => 
-    Boolean(r.tourContext) || 
+  // Filter leads that have tour context or originated from tour pages.
+  // L2: بدون فالبک بی‌صدا؛ وقتی لید توری نیست، خود برد empty state آموزشی نشان می‌دهد.
+  const tourRows = rows.filter((r) =>
+    Boolean(r.tourContext) ||
     (r.sourcePath && r.sourcePath.includes('/tour'))
   );
 
-  // If no leads specifically tagged yet, fallback to all leads so staff sees data
-  const effectiveRows = tourRows.length > 0 ? tourRows : rows;
-
   return (
     <div className="admin-enter space-y-6">
-      <TourHubNav counts={{ leads: effectiveRows.length }} />
+      <TourHubNav counts={{ leads: tourRows.length }} />
       
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -42,7 +40,8 @@ export default async function TourLeadsPage() {
       </div>
 
       <LeadBoard
-        initial={effectiveRows.map((r) => ({
+        variant="tour"
+        initial={tourRows.map((r) => ({
           id: r.id,
           fullName: r.fullName,
           phone: r.phone,

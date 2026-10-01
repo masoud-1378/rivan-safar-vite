@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 import type { TourTrustSpecsItem, TourInput } from '../actions';
 
@@ -41,13 +42,17 @@ const ACTIVITY_LEVELS = [
 
 export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsProps) {
   const trust = data.trustSpecs || {};
-  const currentDocs = trust.requiredDocs || (data.visaRequired ? [
-    'پاسپورت با حداقل ۶ ماه اعتبار',
-    'دو قطعه عکس رنگی جدید',
-    'گواهی تمکن مالی به لاتین'
-  ] : [
-    'کارت ملی هوشمند یا شناسنامه'
-  ]);
+  // مدارک پیش‌فرض بر اساس نیاز به ویزا (X12): منبع یگانه‌ای که هم fallback و هم «بازنشانی» از آن می‌خواند.
+  const defaultDocsForVisa = (visaRequired: boolean): string[] =>
+    visaRequired ? [
+      'پاسپورت با حداقل ۶ ماه اعتبار',
+      'دو قطعه عکس رنگی جدید',
+      'گواهی تمکن مالی به لاتین'
+    ] : [
+      'کارت ملی هوشمند یا شناسنامه'
+    ];
+  const currentDocs = trust.requiredDocs || defaultDocsForVisa(!!data.visaRequired);
+  const { toast } = useToast();
 
   const updateTrust = (patch: Partial<TourTrustSpecsItem>) => {
     onChange({
@@ -70,12 +75,21 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
     updateTrust({ requiredDocs: currentDocs.filter((_, i) => i !== index) });
   };
 
+  // بازنشانی مدارک بر اساس ویزا (X12): فهرست را به همان پیش‌فرض‌های ویزایی برمی‌گرداند.
+  const resetDocsToVisaDefaults = () => {
+    const defaults = defaultDocsForVisa(!!data.visaRequired);
+    updateTrust({ requiredDocs: defaults });
+    toast({
+      title: `مدارک به پیش‌فرض‌های ${data.visaRequired ? 'سفر نیازمند ویزا' : 'سفر بدون نیاز به ویزا'} برگشت`,
+    });
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between rounded-sm border border-amber-500/20 bg-amber-500/5 p-4">
+      {/* Header (T16: الگوی تک‌رنگ با لهجهٔ برند) */}
+      <div className="flex items-center justify-between rounded-sm border border-brand/20 bg-brand/5 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-sm bg-amber-600 text-white">
+          <div className="flex size-10 items-center justify-center rounded-sm bg-brand text-brand-foreground">
             <ShieldCheck className="size-5" />
           </div>
           <div>
@@ -215,7 +229,16 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
 
         {/* Quick presets */}
         <div>
-          <span className="text-[11px] text-muted-foreground block mb-1.5">پیشنهادهای سریع برای افزودن:</span>
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-[11px] text-muted-foreground">پیشنهادهای سریع برای افزودن:</span>
+            <button
+              type="button"
+              onClick={resetDocsToVisaDefaults}
+              className="text-[11px] font-bold text-brand hover:underline"
+            >
+              بازنشانی مدارک بر اساس ویزا
+            </button>
+          </div>
           <div className="flex flex-wrap gap-1.5">
             {COMMON_DOCS.map((doc, i) => {
               const exists = currentDocs.includes(doc);

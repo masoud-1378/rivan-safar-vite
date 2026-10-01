@@ -12,7 +12,6 @@ import {
   FileCheck2
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import type { TourConsultantSpecItem, TourInput } from '../actions';
 
@@ -20,17 +19,6 @@ interface Stage5ConsultantProps {
   data: TourInput;
   onChange: (fields: Partial<TourInput>) => void;
 }
-
-/**
- * وضعیت ظرفیت تور (ستون status) — ربطی به انتشار ندارد؛ انتشار از دکمه‌های
- * «ثبت پیش‌نویس» / «انتشار» پایین فرم انجام می‌شود (شرایط انتشار، مایگریشن 0011).
- */
-const CAPACITY_OPTIONS = [
-  { value: 'pending', label: 'در انتظار تأیید ظرفیت' },
-  { value: 'confirmed', label: 'تأیید شده' },
-  { value: 'full', label: 'تکمیل ظرفیت' },
-  { value: 'updating', label: 'در حال به‌روزرسانی' },
-];
 
 export default function Stage5Consultant({ data, onChange }: Stage5ConsultantProps) {
   const consultant = data.consultantSpec || {};
@@ -46,10 +34,10 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between rounded-sm border border-purple-500/20 bg-purple-500/5 p-4">
+      {/* Header (T16: الگوی تک‌رنگ با لهجهٔ برند) */}
+      <div className="flex items-center justify-between rounded-sm border border-brand/20 bg-brand/5 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-sm bg-purple-600 text-white">
+          <div className="flex size-10 items-center justify-center rounded-sm bg-brand text-brand-foreground">
             <UserCheck className="size-5" />
           </div>
           <div>
@@ -133,50 +121,21 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
         </div>
       </div>
 
-      {/* Description / Summary textarea */}
-      <div className="rounded-sm border border-border bg-card p-5 space-y-3">
-        <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
-          <FileCheck2 className="size-4 text-brand" />
-          <span>توضیحات کلی، مقدمه سفر و نکات تکمیلی</span>
-        </h4>
-        <textarea
-          rows={4}
-          value={data.description}
-          onChange={(e) => onChange({ description: e.target.value })}
-          placeholder="روایت جذاب و صادقانه از حال و هوای سفر، تجربیات خاص این مسیر و چرایی انتخاب این تور توسط مسافر…"
-          className="w-full rounded-sm border border-input bg-background p-3 text-xs leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        />
-      </div>
+      {/* توضیحات کلی تور به مرحلهٔ ۱ منتقل شد (T17) */}
 
-      {/* Publishing Status */}
+      {/* Publishing Status: وضعیت ظرفیت هم در مرحلهٔ ۱ است (T4)؛ اینجا فقط راهنما می‌ماند */}
       <div className="rounded-sm border border-border bg-card p-5 space-y-4">
         <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
           <Sparkles className="size-4 text-amber-500" />
-          <span>وضعیت ظرفیت تور</span>
+          <span>وضعیت ظرفیت و انتشار تور</span>
         </h4>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Field label="وضعیت ظرفیت">
-              <Select
-                value={CAPACITY_OPTIONS.some((o) => o.value === data.status) ? data.status : 'pending'}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  const opt = CAPACITY_OPTIONS.find((s) => s.value === val);
-                  onChange({ status: val, statusLabel: opt?.label || val });
-                }}
-                options={CAPACITY_OPTIONS}
-              />
-            </Field>
-          </div>
-
-          <div className="flex flex-col justify-center rounded-sm bg-secondary/30 p-4 border border-border/60">
-            <span className="text-xs font-bold text-foreground">راهنمای وضعیت</span>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              این فقط وضعیت ظرفیت است (روی سایت به‌صورت برچسب دیده می‌شود). دیده‌شدن یا پنهان‌ماندن تور روی سایت
-              با «انتشار» کنترل می‌شود: تور «پیش‌نویس» روی سایت نیست و با دکمهٔ «انتشار» پایین همین فرم منتشر می‌شود.
-            </p>
-          </div>
+        <div className="flex flex-col justify-center rounded-sm bg-secondary/30 p-4 border border-border/60">
+          <span className="text-xs font-bold text-foreground">راهنمای وضعیت</span>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            «ظرفیت» فقط وضعیت ظرفیت است (روی سایت به‌صورت برچسب دیده می‌شود؛ انتخابش در مرحلهٔ ۱ است). دیده‌شدن یا پنهان‌ماندن تور روی سایت
+            با «انتشار» کنترل می‌شود: تور «پیش‌نویس» روی سایت نیست و با دکمهٔ «انتشار» پایین همین فرم منتشر می‌شود.
+          </p>
         </div>
       </div>
     </div>

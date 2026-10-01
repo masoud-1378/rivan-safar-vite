@@ -26,9 +26,9 @@ const groups = [
     title: 'مدیریت و عملیات',
     items: [
       { href: '/admin', label: 'داشبورد', icon: LayoutDashboard },
-      { href: '/admin/tours', label: 'مرکز مدیریت تورها', icon: Compass },
+      { href: '/admin/tours', label: 'تورها', icon: Compass },
       { href: '/admin/catalog', label: 'کاتالوگ', icon: LayoutGrid },
-      { href: '/admin/leads', label: 'درخواست‌های تماس عمومی', icon: Inbox },
+      { href: '/admin/leads', label: 'درخواست‌های تماس', icon: Inbox },
     ],
   },
   {

@@ -30,6 +30,18 @@ export const DEFAULT_SERVICES: Record<string, string[]> = {
   exhibition: ['بلیت رفت و برگشت پرواز', 'ویزای تجاری', 'اقامت در هتل با صبحانه', 'ترانسفر روزانه نمایشگاه', 'بیمه مسافرتی'],
 };
 
+/**
+ * وضعیت ظرفیت تور (ستون status) — ربطی به انتشار ندارد؛ انتشار از دکمه‌های
+ * «ثبت پیش‌نویس» / «انتشار» پایین فرم انجام می‌شود (شرایط انتشار، مایگریشن 0011).
+ * منبع واحد گزینه‌ها: فیلتر جدول تورها و سلکت بنر مرحلهٔ ۱ هم از همین می‌خوانند (X7).
+ */
+export const CAPACITY_OPTIONS = [
+  { value: 'pending', label: 'در انتظار تأیید ظرفیت' },
+  { value: 'confirmed', label: 'تأیید شده' },
+  { value: 'full', label: 'تکمیل ظرفیت' },
+  { value: 'updating', label: 'در حال به‌روزرسانی' },
+];
+
 export const TITLE_MAX = 70;
 export const DESC_MIN = 150;
 

@@ -109,11 +109,11 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
       done: counts.tours > 0,
       action: (
         <a
-          href="/admin/tours"
+          href="/admin/tours/new"
           aria-disabled={!hasBaseData}
           className={cn(buttonClasses('outline', 'sm'), !hasBaseData && 'pointer-events-none opacity-50')}
         >
-          مدیریت تورها
+          ساخت تور
         </a>
       ),
     },

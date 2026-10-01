@@ -78,6 +78,8 @@ export const siteTours = pgTable(
     destinationSlugs: jsonb('destination_slugs').default('[]').notNull(), // string[] (چند مقصدی)
     origin: varchar('origin', { length: 120 }).notNull(),
     route: varchar('route', { length: 260 }).notNull(),
+    // شیوهٔ سفر (مایگریشن 0014): 'air' | 'land' | 'rail' | 'sea' | 'mixed' — برای بج جدول و انتخاب کاربر در مرحلهٔ ۱ تورساز
+    transportKind: transportKindEnum('transport_kind').notNull().default('air'),
     duration: varchar('duration', { length: 120 }).notNull(),
     nights: integer('nights').notNull(),
     closestDeparture: varchar('closest_departure', { length: 120 }).notNull(),

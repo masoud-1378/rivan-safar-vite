@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { 
   Compass, 
   Plane, 
@@ -14,15 +14,24 @@ import {
   Building,
   Search,
   Info,
-  Plus
+  Plus,
+  RefreshCw,
+  ImagePlus,
+  Loader2,
+  FileCheck2
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { AmountInput } from '@/components/ui/amount-input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Collapsible } from '@/components/ui/collapsible';
+import { useToast } from '@/components/ui/toast';
 import { cn, fa, formatToman } from '@/lib/utils';
 import { normalizeFaSearch } from '@/lib/persian';
-import { faToSlugFa } from '../tour-helpers';
+import { faToSlugFa, CAPACITY_OPTIONS } from '../tour-helpers';
+import { DepartureDateField } from '../DepartureDateField';
+import { uploadTourBanner } from '../banner-upload';
 import type { DestinationTree, OriginRow, TourInput } from '../actions';
 import type { TourDraftErrors } from '../tour-helpers';
 
@@ -40,7 +49,7 @@ const TYPE_OPTIONS = [
   { value: 'exhibition', label: 'تور نمایشگاهی و تجاری' },
 ];
 
-const TRANSPORT_OPTIONS = [
+const TRANSPORT_OPTIONS: Array<{ id: 'air' | 'land' | 'rail' | 'sea' | 'mixed'; label: string; icon: typeof Plane; placeholder: string }> = [
   { id: 'air', label: 'هوایی (پرواز)', icon: Plane, placeholder: 'نام ایرلاین (مثلاً: ماهان، ایران‌ایر، ترکیش)' },
   { id: 'rail', label: 'ریلی (قطار)', icon: Train, placeholder: 'نام قطار و شرکت ریلی (مثلاً: ۵ ستاره فدک، بن‌ریل، رجاء)' },
   { id: 'land', label: 'زمینی (اتوبوس)', icon: Bus, placeholder: 'نوع اتوبوس (مثلاً: اتوبوس VIP ۲۵ نفره تخت‌شو)' },
@@ -109,7 +118,14 @@ export default function Stage1Identity({
   // با هر نویسهٔ عنوان از نو ساخته می‌شود (گشت، ایراد ۳: قبلاً فقط نویسهٔ اول می‌ماند و «t» می‌شد).
   const [slugAuto, setSlugAuto] = useState(() => !data.slug);
   const [destQuery, setDestQuery] = useState('');
+  // درخت مقصدها به‌صورت پیش‌فرض جمع است؛ جست‌وجو + تگ‌ها نمای اصلی‌اند (T2).
+  const [showTree, setShowTree] = useState(false);
   const [capacity, setCapacity] = useState('');
+  const { toast } = useToast();
+  // آپلود بنر تور (T6): همان باکت عکس هتل‌ها، کنار فیلد URL.
+  const [uploading, setUploading] = useState(false);
+  const uploadingRef = useRef(false);
+  const bannerFileRef = useRef<HTMLInputElement | null>(null);
 
   const toggleSlug = (slug: string) => {
     const next = selectedSlugs.includes(slug)
@@ -132,6 +148,37 @@ export default function Stage1Identity({
     const patch: Partial<TourInput> = { title: v };
     if (slugAuto) patch.slug = faToSlugFa(v);
     onChange(patch);
+  };
+
+  // «بازسازی خودکار از عنوان» (T14): نامک را از روی عنوان می‌سازد و حالت خودکار را
+  // دوباره فعال می‌کند تا عنوان‌های بعدی هم نامک را به‌روز کنند.
+  const handleSlugRebuild = () => {
+    setSlugAuto(true);
+    onChange({ slug: faToSlugFa(data.title) });
+  };
+
+  const handleBannerFile = async (input: HTMLInputElement | null) => {
+    const file = input?.files?.[0];
+    input && (input.value = '');
+    if (!file || uploadingRef.current) return;
+    uploadingRef.current = true;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('photo', file);
+      const res = await uploadTourBanner(data.slug || 'tour', data.title, fd);
+      onChange({ image: res.url });
+      toast({ title: 'بنر آپلود شد', description: 'تصویر بنر در فیلد نشست و پیش‌نمایشش را می‌بینید.' });
+    } catch (e) {
+      toast({
+        variant: 'error',
+        title: 'آپلود بنر انجام نشد',
+        description: e instanceof Error ? e.message : 'دوباره تلاش کنید.',
+      });
+    } finally {
+      uploadingRef.current = false;
+      setUploading(false);
+    }
   };
 
   // گشت (ایراد ۲): سرور «نام فارسی» مبدأ را ذخیره می‌کند ولی آپشن‌های سلکت با اسلاگ کلید خورده بودند؛
@@ -170,9 +217,29 @@ export default function Stage1Identity({
             </p>
           </div>
         </div>
-        <Badge variant={data.status === 'published' ? 'success' : 'secondary'}>
-          {data.statusLabel || (data.status === 'published' ? 'منتشرشده' : 'پیش‌نویس')}
-        </Badge>
+        {/* دوگانگی انتشار/ظرفیت (T4): هر دو با برچسب جدا کنار هم دیده می‌شوند. */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <span className="flex items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground">انتشار:</span>
+            <Badge variant={data.publishStatus === 'published' ? 'success' : 'warning'}>
+              {data.publishStatus === 'published' ? 'منتشرشده' : 'پیش‌نویس'}
+            </Badge>
+          </span>
+          <label className="flex items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground">ظرفیت:</span>
+            <Select
+              aria-label="وضعیت ظرفیت"
+              value={CAPACITY_OPTIONS.some((o) => o.value === data.status) ? data.status : 'pending'}
+              onChange={(e) => {
+                const val = e.target.value;
+                const opt = CAPACITY_OPTIONS.find((s) => s.value === val);
+                onChange({ status: val, statusLabel: opt?.label || val });
+              }}
+              options={CAPACITY_OPTIONS}
+              className="h-8 w-auto text-xs"
+            />
+          </label>
+        </div>
       </div>
 
       {/* Row 1: Title & Slug */}
@@ -198,6 +265,14 @@ export default function Stage1Identity({
               placeholder="e.g. russia-moscow-stpetersburg-8d"
             />
           </Field>
+          <button
+            type="button"
+            onClick={handleSlugRebuild}
+            className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:underline"
+          >
+            <RefreshCw className="size-3" />
+            بازسازی خودکار از عنوان
+          </button>
         </div>
       </div>
 
@@ -338,7 +413,18 @@ export default function Stage1Identity({
           </div>
         )}
 
-        {/* Collapsible tree */}
+        {/* درخت مقصدها (T2): به‌صورت پیش‌فرض جمع؛ نمای اصلی فقط جست‌وجو و تگ‌هاست. */}
+        <button
+          type="button"
+          onClick={() => setShowTree((v) => !v)}
+          aria-expanded={showTree}
+          className="flex w-full items-center justify-center gap-2 rounded-sm border border-dashed border-border/80 p-3 text-xs font-bold text-foreground transition-colors hover:bg-accent/40"
+        >
+          مرور همهٔ مقصدها
+          <ChevronDown className={cn('size-4 text-muted-foreground transition-transform', showTree && 'rotate-180')} />
+        </button>
+
+        {showTree && (
         <div className="space-y-2 rounded-sm border border-border/70 p-3 max-h-72 overflow-y-auto">
           {tree.regions.map((region) => {
             const desc = regionDescendants(region.slug, tree);
@@ -402,6 +488,7 @@ export default function Stage1Identity({
             );
           })}
         </div>
+        )}
       </div>
 
       {/* Row 3: Transport Kind Selector (Air vs Rail vs Land) */}
@@ -461,15 +548,15 @@ export default function Stage1Identity({
         </Field>
       </div>
 
-      {/* Row 4: Origins & Duration */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Row 4: Origins & Duration & Next Departure */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           {origins.length === 0 ? (
             <div className="rounded-sm border border-amber-500/30 bg-amber-500/5 p-4 text-xs space-y-1.5">
               <p className="font-bold text-foreground">هنوز هیچ مبدأی ثبت نشده است</p>
               <p className="text-muted-foreground">برای ساخت تور اول باید دست‌کم یک شهر مبدأ داشته باشید.</p>
               <a
-                href="/admin/origins"
+                href="/admin/catalog?tab=origins"
                 className="inline-flex items-center gap-1 font-bold text-brand hover:underline"
               >
                 رفتن به مدیریت مبدأها
@@ -516,6 +603,14 @@ export default function Stage1Identity({
             </div>
           </Field>
         </div>
+
+        {/* تاریخ حرکت بعدی (T3): همان ستون closestDeparture؛ DatePicker شمسی فقط میان‌بر نوشتن متن است. */}
+        <div>
+          <DepartureDateField
+            value={data.closestDeparture || ''}
+            onChange={(v) => onChange({ closestDeparture: v })}
+          />
+        </div>
       </div>
 
       {/* Row 5: Price & Currency Transparency */}
@@ -529,11 +624,15 @@ export default function Stage1Identity({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Field label="قیمت پایه تومانی *" hint="رقم تمام‌شده تومانی (یا سهم پرواز/بخش ریالی)" error={errors.price}>
+            <Field
+              label="قیمت نمایشی روی کارت تور *"
+              hint="این عدد روی کارت تور نمایش داده می‌شود؛ نرخ هتل‌ها (مرحلهٔ ۲) جداگانه و برای همان هتل روی سایت می‌آید"
+              error={errors.price}
+            >
               <AmountInput
                 value={Number(data.price) || 0}
                 onChange={(val) => onChange({ price: val || 0 })}
-                placeholder="مبلغ به تومان…"
+                placeholder="۰"
               />
             </Field>
           </div>
@@ -561,41 +660,85 @@ export default function Stage1Identity({
           </div>
         </div>
 
-        {/* حساب سرانگشتی درآمد: ظرفیت × قیمت پایه — فقط نمایشی، ذخیره نمی‌شود */}
-        <div className="rounded-sm border border-border/60 bg-secondary/20 p-3.5 flex flex-wrap items-end gap-x-5 gap-y-3">
-          <span className="text-xs font-bold text-foreground">حساب سرانگشتی درآمد</span>
-          <div className="w-36">
-            <Field label="ظرفیت تور (نفر)">
-              <Input
-                type="number"
-                min="0"
-                inputMode="numeric"
-                value={capacity}
-                onChange={(e) => setCapacity(e.target.value)}
-                placeholder="مثلاً: ۴۰"
-                className="text-xs h-9"
-              />
-            </Field>
+        {/* حساب سرانگشتی درآمد (T1): بیرون از مسیر الزامی‌ها، تاشو و بسته؛ فقط نمایشی، ذخیره نمی‌شود */}
+        <Collapsible trigger="حساب سرانگشتی درآمد">
+          <div className="rounded-sm border border-border/60 bg-secondary/20 p-3.5 flex flex-wrap items-end gap-x-5 gap-y-3">
+            <div className="w-36">
+              <Field label="ظرفیت تور (نفر)">
+                <Input
+                  type="number"
+                  min="0"
+                  inputMode="numeric"
+                  value={capacity}
+                  onChange={(e) => setCapacity(e.target.value)}
+                  placeholder="مثلاً: ۴۰"
+                  className="text-xs h-9"
+                />
+              </Field>
+            </div>
+            <div className="text-xs pb-1">
+              <span className="text-muted-foreground block">ظرفیت × قیمت پایه</span>
+              <span className="font-black text-sm text-foreground">
+                {capacityNum > 0 && priceNum > 0 ? formatToman(capacityNum * priceNum) : '—'}
+              </span>
+            </div>
+            <span className="text-[10px] text-muted-foreground pb-1.5">فقط برای حساب سرانگشتی؛ ذخیره نمی‌شود.</span>
           </div>
-          <div className="text-xs pb-1">
-            <span className="text-muted-foreground block">ظرفیت × قیمت پایه</span>
-            <span className="font-black text-sm text-foreground">
-              {capacityNum > 0 && priceNum > 0 ? formatToman(capacityNum * priceNum) : '—'}
-            </span>
-          </div>
-          <span className="text-[10px] text-muted-foreground pb-1.5">فقط برای حساب سرانگشتی؛ ذخیره نمی‌شود.</span>
-        </div>
+        </Collapsible>
       </div>
 
-      {/* Image URL */}
-      <Field label="لینک تصویر بنر یا هیرو تور" hint="لینک تصویر باکیفیت و بدون واترمارک">
-        <Input
-          dir="ltr"
-          value={data.image}
-          onChange={(e) => onChange({ image: e.target.value })}
-          placeholder="https://images.unsplash.com/..."
+      {/* تصویر بنر تور (T6): آپلود واقعی کنار فیلد URL + پیش‌نمایش زنده */}
+      <div>
+        <Field label="تصویر بنر تور" hint="لینک تصویر باکیفیت و بدون واترمارک، یا آپلود مستقیم">
+          <div className="flex gap-2">
+            <Input
+              dir="ltr"
+              value={data.image}
+              onChange={(e) => onChange({ image: e.target.value })}
+              placeholder="https://images.unsplash.com/..."
+              className="grow"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={uploading}
+              onClick={() => bannerFileRef.current?.click()}
+              className="gap-2 text-xs shrink-0"
+            >
+              {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
+              {uploading ? 'در حال آپلود…' : 'آپلود بنر'}
+            </Button>
+            <input
+              ref={bannerFileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => void handleBannerFile(e.target)}
+            />
+          </div>
+        </Field>
+        {data.image.trim() ? (
+          <div className="mt-2 overflow-hidden rounded-sm border border-border/70">
+            <img src={data.image.trim()} alt="پیش‌نمایش بنر تور" className="aspect-video w-full object-cover" />
+          </div>
+        ) : null}
+      </div>
+
+      {/* توضیحات کلی تور (T17): همان متن مرحلهٔ ۵، انتهای مرحلهٔ ۱ */}
+      <div className="rounded-sm border border-border bg-card p-5 space-y-3">
+        <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
+          <FileCheck2 className="size-4 text-brand" />
+          <span>توضیحات کلی، مقدمه سفر و نکات تکمیلی</span>
+        </h4>
+        <textarea
+          rows={4}
+          value={data.description}
+          onChange={(e) => onChange({ description: e.target.value })}
+          placeholder="روایت جذاب و صادقانه از حال و هوای سفر، تجربیات خاص این مسیر و چرایی انتخاب این تور توسط مسافر…"
+          className="w-full rounded-sm border border-input bg-background p-3 text-xs leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
-      </Field>
+      </div>
     </div>
   );
 }

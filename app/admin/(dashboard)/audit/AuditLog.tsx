@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Field, Input } from '@/components/ui/input';
 import { Pagination } from '@/components/ui/pagination';
 import { SegmentedControl } from '@/components/ui/segmented-control';
+import { Select } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Timeline, type TimelineItem } from '@/components/ui/timeline';
 import { formatJalali } from '@/lib/jalali';
@@ -19,6 +22,11 @@ export interface AuditLogRow {
   entityId: string;
   reasonFa: string | null;
   createdAt: Date;
+}
+
+export interface AuditLogFilters {
+  entity: string;
+  actor: string;
 }
 
 const ENTITY_LABELS: Record<string, string> = {
@@ -63,8 +71,25 @@ const ACTION_LABELS: Record<string, string> = {
 
 const faTime = (date: Date) => `${fa(String(date.getHours()).padStart(2, '0'))}:${fa(String(date.getMinutes()).padStart(2, '0'))}`;
 
-export default function AuditLog({ logs, page, totalPages, total }: { logs: AuditLogRow[]; page: number; totalPages: number; total: number }) {
+export default function AuditLog({ logs, page, totalPages, total, filters }: { logs: AuditLogRow[]; page: number; totalPages: number; total: number; filters: AuditLogFilters }) {
   const [view, setView] = useState('table');
+  // X6: فیلتر موجودیت و انجام‌دهنده — سمت سرور اعمال می‌شود، صفحه ریست می‌گردد.
+  const [entity, setEntity] = useState(filters.entity);
+  const [actor, setActor] = useState(filters.actor);
+
+  const applyFilters = (nextPage = 1, nextEntity = entity, nextActor = actor) => {
+    const p = new URLSearchParams();
+    if (nextEntity) p.set('entity', nextEntity);
+    if (nextActor.trim()) p.set('actor', nextActor.trim());
+    if (nextPage > 1) p.set('page', String(nextPage));
+    window.location.search = p.toString();
+  };
+
+  const clearFilters = () => {
+    setEntity('');
+    setActor('');
+    applyFilters(1, '', '');
+  };
 
   const timeline: TimelineItem[] = logs.map((l) => ({
     date: new Date(l.createdAt),
@@ -94,6 +119,41 @@ export default function AuditLog({ logs, page, totalPages, total }: { logs: Audi
           ]}
         />
       </div>
+
+      <form
+        onSubmit={(e) => { e.preventDefault(); applyFilters(); }}
+        className="flex flex-wrap items-end gap-3"
+        aria-label="فیلتر گزارش تغییرات"
+      >
+        <div className="w-52">
+          <Field label="موجودیت" htmlFor="audit-entity">
+            <Select
+              id="audit-entity"
+              value={entity}
+              onChange={(e) => { setEntity(e.target.value); applyFilters(1, e.target.value, actor); }}
+              options={[{ value: '', label: 'همهٔ موجودیت‌ها' }, ...Object.entries(ENTITY_LABELS).map(([value, label]) => ({ value, label }))]}
+            />
+          </Field>
+        </div>
+        <div className="w-64">
+          <Field label="انجام‌دهنده" htmlFor="audit-actor">
+            <Input
+              id="audit-actor"
+              value={actor}
+              onChange={(e) => setActor(e.target.value)}
+              placeholder="ایمیل یا نام انجام‌دهنده…"
+              className="text-start"
+              dir="ltr"
+            />
+          </Field>
+        </div>
+        <div className="flex items-center gap-2 pb-0.5">
+          <Button type="submit" size="sm">اعمال فیلتر</Button>
+          {(filters.entity || filters.actor) ? (
+            <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>پاک‌کردن فیلتر</Button>
+          ) : null}
+        </div>
+      </form>
 
       <Card>
         <CardContent className="p-5">
@@ -138,7 +198,7 @@ export default function AuditLog({ logs, page, totalPages, total }: { logs: Audi
             page={page}
             total={totalPages}
             onChange={(next) => {
-              window.location.search = `page=${next}`;
+              applyFilters(next);
             }}
           />
         </div>

@@ -1,9 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Plus, Search } from "lucide-react";
 import { cn, en, fa } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table";
+import { Checkbox } from "./checkbox";
+import { Button } from "./button";
 import { Pagination } from "./pagination";
 import { Skeleton } from "./skeleton";
 import { EmptyState } from "./empty-state";
@@ -20,6 +22,13 @@ export interface Column<T> {
   className?: string;
 }
 
+export interface DataTableSelection {
+  selected: Set<string>;
+  onToggle: (key: string) => void;
+  /** انتخاب/لغو انتخاب همهٔ کلیدهای نمای فعلی (همین صفحه). */
+  onTogglePage: (keys: string[], select: boolean) => void;
+}
+
 export interface DataTableProps<T> {
   rows: T[];
   columns: Column<T>[];
@@ -34,6 +43,10 @@ export interface DataTableProps<T> {
   toolbar?: React.ReactNode;
   onRowClick?: (row: T) => void;
   className?: string;
+  /** عملیات گروهی: اگر داده شود، ستون چک‌باکس اول جدول رندر می‌شود. */
+  selection?: DataTableSelection;
+  /** دکمهٔ CTA در حالت خالی، مثلاً «ساخت اولین X» (X2). */
+  emptyAction?: { label: string; onClick: () => void };
 }
 
 type Sort<T> = { key: keyof T & string; dir: "asc" | "desc" } | null;
@@ -42,7 +55,7 @@ type Sort<T> = { key: keyof T & string; dir: "asc" | "desc" } | null;
  * جدول داده. Client-side sort, text filter (Persian and Latin digits match each other),
  * تومان-friendly numeric columns, loading skeleton, empty state and pagination.
  */
-export function DataTable<T extends Record<string, unknown>>({ rows, columns, rowKey, loading, pageSize = 8, searchKeys, searchPlaceholder = "جست‌وجو…", emptyTitle = "چیزی پیدا نشد", emptyDescription = "فیلتر را عوض کنید یا مورد جدیدی اضافه کنید.", toolbar, onRowClick, className }: DataTableProps<T>) {
+export function DataTable<T extends Record<string, unknown>>({ rows, columns, rowKey, loading, pageSize = 8, searchKeys, searchPlaceholder = "جست‌وجو…", emptyTitle = "چیزی پیدا نشد", emptyDescription = "فیلتر را عوض کنید یا مورد جدیدی اضافه کنید.", toolbar, onRowClick, className, selection, emptyAction }: DataTableProps<T>) {
   const [q, setQ] = React.useState("");
   const [sort, setSort] = React.useState<Sort<T>>(null);
   const [page, setPage] = React.useState(1);
@@ -69,8 +82,16 @@ export function DataTable<T extends Record<string, unknown>>({ rows, columns, ro
   const current = Math.min(page, pages);
   const view = sorted.slice((current - 1) * pageSize, current * pageSize);
 
+  const viewKeys = view.map(rowKey);
+  const allViewSelected = selection && viewKeys.length > 0 && viewKeys.every((k) => selection.selected.has(k));
+  const someViewSelected = selection && !allViewSelected && viewKeys.some((k) => selection.selected.has(k));
+
   function toggleSort(key: keyof T & string) {
     setSort((s) => (s?.key !== key ? { key, dir: "asc" } : s.dir === "asc" ? { key, dir: "desc" } : null));
+  }
+
+  function stopRowClick(e: React.SyntheticEvent) {
+    e.stopPropagation();
   }
 
   return (
@@ -90,6 +111,15 @@ export function DataTable<T extends Record<string, unknown>>({ rows, columns, ro
       <Table>
         <TableHeader>
           <TableRow>
+            {selection && (
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={allViewSelected ? true : someViewSelected ? "indeterminate" : false}
+                  onCheckedChange={(next) => selection.onTogglePage(viewKeys, next)}
+                  aria-label="انتخاب همهٔ ردیف‌های همین صفحه"
+                />
+              </TableHead>
+            )}
             {columns.map((c) => (
               <TableHead key={c.key} className={cn(c.numeric && "text-start", c.className)} aria-sort={sort?.key === c.key ? (sort.dir === "asc" ? "ascending" : "descending") : undefined}>
                 {c.sortable ? (
@@ -111,13 +141,34 @@ export function DataTable<T extends Record<string, unknown>>({ rows, columns, ro
             ))}
           {!loading && view.length === 0 && (
             <TableRow>
-              <TableCell colSpan={columns.length} className="p-0">
-                <EmptyState title={emptyTitle} description={emptyDescription} className="rounded-none border-0" />
+              <TableCell colSpan={columns.length + (selection ? 1 : 0)} className="p-0">
+                <EmptyState
+                  title={emptyTitle}
+                  description={emptyDescription}
+                  className="rounded-none border-0"
+                  action={
+                    emptyAction ? (
+                      <Button type="button" onClick={emptyAction.onClick} className="min-h-11">
+                        <Plus className="size-4" />
+                        {emptyAction.label}
+                      </Button>
+                    ) : undefined
+                  }
+                />
               </TableCell>
             </TableRow>
           )}
           {!loading && view.map((row) => (
             <TableRow key={rowKey(row)} onClick={onRowClick ? () => onRowClick(row) : undefined} className={cn(onRowClick && "cursor-pointer")}>
+              {selection && (
+                <TableCell className="w-10" onClick={stopRowClick}>
+                  <Checkbox
+                    checked={selection.selected.has(rowKey(row))}
+                    onCheckedChange={() => selection.onToggle(rowKey(row))}
+                    aria-label="انتخاب ردیف"
+                  />
+                </TableCell>
+              )}
               {columns.map((c) => (
                 <TableCell key={c.key} numeric={c.numeric} className={c.className}>
                   {c.cell ? c.cell(row) : String(row[c.key] ?? "")}

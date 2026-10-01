@@ -1,22 +1,28 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { fa, faSlug } from '@/lib/utils';
 import { saveGuide, type GuideInput, type GuideRow, type GuideStatus } from './actions';
 import BlockEditor, { cleanBlocks, validateBlocks } from '@/components/ui/block-editor';
 
+export interface GuidePickerOption {
+  value: string;
+  label: string;
+}
+
 const CATEGORIES = [
-  { value: 'destination-choice', label: 'انتخاب مقصد (destination-choice)' },
-  { value: 'visa-docs', label: 'ویزا و مدارک (visa-docs)' },
-  { value: 'budget-cost', label: 'بودجه و هزینه‌ها (budget-cost)' },
-  { value: 'hotel-flight', label: 'هتل و پرواز (hotel-flight)' },
-  { value: 'exhibition-trade', label: 'نمایشگاهی و تجاری (exhibition-trade)' },
-  { value: 'general', label: 'عمومی (general)' },
+  { value: 'destination-choice', label: 'انتخاب مقصد' },
+  { value: 'visa-docs', label: 'ویزا و مدارک' },
+  { value: 'budget-cost', label: 'بودجه و هزینه‌ها' },
+  { value: 'hotel-flight', label: 'هتل و پرواز' },
+  { value: 'exhibition-trade', label: 'نمایشگاهی و تجاری' },
+  { value: 'general', label: 'عمومی' },
 ];
 
 const STATUSES: Array<{ value: GuideStatus; label: string }> = [
@@ -27,22 +33,49 @@ const STATUSES: Array<{ value: GuideStatus; label: string }> = [
   { value: 'archived', label: 'بایگانی' },
 ];
 
+/** G4: شمارش واژه‌های بخش‌ها (تیتر + متن) برای تخمین زمان مطالعه. */
+function sectionWords(items: unknown[]): number {
+  let n = 0;
+  for (const it of items) {
+    if (!it || typeof it !== 'object') continue;
+    const o = it as Record<string, unknown>;
+    for (const k of ['heading', 'content', 'title', 'text']) {
+      const v = o[k];
+      if (typeof v === 'string') n += v.trim().split(/\s+/).filter(Boolean).length;
+    }
+  }
+  return n;
+}
+
+function readTimeLabel(words: number): string {
+  const minutes = Math.max(1, Math.round(words / 180));
+  return `${fa(minutes)} دقیقه مطالعه`;
+}
+
 export default function GuideForm({
   initial,
   editingId,
   onSaved,
   onCancel,
+  destinationOptions = [],
+  tourOptions = [],
 }: {
   initial?: GuideRow | null;
   editingId?: string | null;
   onSaved?: () => void;
   onCancel?: () => void;
+  /** G3: فهرست واقعی مقصدها برای انتخاب «مقصد مرتبط». */
+  destinationOptions?: GuidePickerOption[];
+  /** G3: فهرست واقعی تورها برای انتخاب «تور مرتبط». */
+  tourOptions?: GuidePickerOption[];
 }) {
   const [slug, setSlug] = useState(initial?.slug ?? '');
+  const [slugTouched, setSlugTouched] = useState(Boolean(initial?.slug));
   const [titleFa, setTitleFa] = useState(initial?.titleFa ?? '');
   const [category, setCategory] = useState(initial?.category ?? 'general');
   const [categoryLabel, setCategoryLabel] = useState(initial?.categoryLabel ?? '');
   const [readTime, setReadTime] = useState(initial?.readTime ?? '');
+  const [readTimeTouched, setReadTimeTouched] = useState(Boolean(initial?.readTime));
   const [author, setAuthor] = useState(initial?.author ?? '');
   const [reviewer, setReviewer] = useState(initial?.reviewer ?? '');
   const [summary, setSummary] = useState(initial?.summary ?? '');
@@ -63,6 +96,22 @@ export default function GuideForm({
   const [status, setStatus] = useState<GuideStatus>(initial?.status ?? 'draft');
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // G4: تا وقتی دستی بازنویسی نشده، زمان مطالعه از طول بخش‌ها می‌آید.
+  useEffect(() => {
+    if (!readTimeTouched) setReadTime(readTimeLabel(sectionWords(sections)));
+  }, [sections, readTimeTouched]);
+
+  const recomputeReadTime = () => {
+    setReadTime(readTimeLabel(sectionWords(sections)));
+    setReadTimeTouched(false);
+  };
+
+  // G2: نامک خودکار از عنوان.
+  const onTitleFa = (v: string) => {
+    setTitleFa(v);
+    if (!slugTouched) setSlug(faSlug(v));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,10 +167,11 @@ export default function GuideForm({
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Field label="نامک انگلیسی (Slug)" htmlFor="guide-slug">          <Input
+        <Field label="نامک انگلیسی" htmlFor="guide-slug" hint="خودکار از عنوان فارسی ساخته می‌شود؛ فقط اگر لازم بود تغییرش دهید.">
+          <Input
             id="guide-slug"
             value={slug}
-            onChange={(e) => setSlug(e.target.value)}
+            onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); }}
             className="text-start"
             dir="ltr"
             placeholder="e.g. dubai-metro-guide"
@@ -129,17 +179,18 @@ export default function GuideForm({
           />
         </Field>
 
-        <Field label="عنوان فارسی" htmlFor="guide-title">          <Input
+        <Field label="عنوان فارسی" htmlFor="guide-title">
+          <Input
             id="guide-title"
             value={titleFa}
-            onChange={(e) => setTitleFa(e.target.value)}
-
+            onChange={(e) => onTitleFa(e.target.value)}
             placeholder="مثال: راهنمای کامل متروی دبی"
             required
           />
         </Field>
 
-        <Field label="دسته‌بندی (category)" htmlFor="guide-cat">          <Select
+        <Field label="دسته‌بندی" htmlFor="guide-cat">
+          <Select
             id="guide-cat"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
@@ -147,47 +198,53 @@ export default function GuideForm({
           />
         </Field>
 
-        <Field label="برچسب دسته‌بندی (categoryLabel)" htmlFor="guide-cat-lbl">
+        <Field label="برچسب دسته‌بندی" htmlFor="guide-cat-lbl">
           <Input
             id="guide-cat-lbl"
             value={categoryLabel}
             onChange={(e) => setCategoryLabel(e.target.value)}
-
             placeholder="مثال: راهنمای سفر"
           />
         </Field>
 
-        <Field label="مدت زمان مطالعه (readTime)" htmlFor="guide-read-time">
-          <Input
-            id="guide-read-time"
-            value={readTime}
-            onChange={(e) => setReadTime(e.target.value)}
-
-            placeholder="مثال: ۶ دقیقه مطالعه"
-          />
+        <Field
+          label="زمان مطالعه"
+          htmlFor="guide-read-time"
+          hint={readTimeTouched ? 'دستی بازنویسی شده است.' : 'خودکار از متن بخش‌ها محاسبه می‌شود؛ می‌توانید بازنویسی کنید.'}
+        >
+          <div className="flex items-center gap-2">
+            <Input
+              id="guide-read-time"
+              value={readTime}
+              onChange={(e) => { setReadTime(e.target.value); setReadTimeTouched(true); }}
+              placeholder="مثال: ۶ دقیقه مطالعه"
+              className="flex-1"
+            />
+            <Button type="button" variant="ghost" size="sm" onClick={recomputeReadTime}>
+              محاسبهٔ خودکار
+            </Button>
+          </div>
         </Field>
 
-        <Field label="نویسنده (author)" htmlFor="guide-author">
+        <Field label="نویسنده" htmlFor="guide-author">
           <Input
             id="guide-author"
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
-
             placeholder="نام نویسنده"
           />
         </Field>
 
-        <Field label="بازبین (reviewer)" htmlFor="guide-reviewer">
+        <Field label="بازبین" htmlFor="guide-reviewer">
           <Input
             id="guide-reviewer"
             value={reviewer}
             onChange={(e) => setReviewer(e.target.value)}
-
             placeholder="نام بازبین یا کارشناس"
           />
         </Field>
 
-        <Field label="آدرس تصویر اصلی (heroImage)" htmlFor="guide-hero">
+        <Field label="آدرس تصویر اصلی" htmlFor="guide-hero">
           <Input
             id="guide-hero"
             value={heroImage}
@@ -198,29 +255,26 @@ export default function GuideForm({
           />
         </Field>
 
-        <Field label="نامک مقصد مرتبط (relatedDestinationSlug)" htmlFor="guide-rel-dest">
-          <Input
+        <Field label="مقصد مرتبط" htmlFor="guide-rel-dest" hint="از فهرست واقعی مقصدها">
+          <Select
             id="guide-rel-dest"
             value={relatedDestinationSlug}
             onChange={(e) => setRelatedDestinationSlug(e.target.value)}
-            className="text-start"
-            dir="ltr"
-            placeholder="مثال: dubai یا turkey"
+            options={[{ value: '', label: 'بدون مقصد مرتبط' }, ...destinationOptions.map((o) => ({ value: o.value, label: o.label }))]}
           />
         </Field>
 
-        <Field label="شناسه تور مرتبط (relatedTourId)" htmlFor="guide-rel-tour">
-          <Input
+        <Field label="تور مرتبط" htmlFor="guide-rel-tour" hint="از فهرست واقعی تورها">
+          <Select
             id="guide-rel-tour"
             value={relatedTourId}
             onChange={(e) => setRelatedTourId(e.target.value)}
-            className="text-start"
-            dir="ltr"
-            placeholder="شناسه یا نامک تور"
+            options={[{ value: '', label: 'بدون تور مرتبط' }, ...tourOptions.map((o) => ({ value: o.value, label: o.label }))]}
           />
         </Field>
 
-        <Field label="وضعیت انتشار" htmlFor="guide-status">          <Select
+        <Field label="وضعیت انتشار" htmlFor="guide-status">
+          <Select
             id="guide-status"
             value={status}
             onChange={(e) => setStatus(e.target.value as GuideStatus)}
@@ -229,7 +283,7 @@ export default function GuideForm({
         </Field>
       </div>
 
-      <Field label="خلاصه مقاله (summary)" htmlFor="guide-summary">
+      <Field label="خلاصه مقاله" htmlFor="guide-summary">
         <Textarea
           id="guide-summary"
           value={summary}
@@ -239,7 +293,7 @@ export default function GuideForm({
         />
       </Field>
 
-      <Field label="پاسخ مستقیم و سریع (directAnswer)" htmlFor="guide-direct">
+      <Field label="پاسخ مستقیم و سریع" htmlFor="guide-direct">
         <Textarea
           id="guide-direct"
           value={directAnswer}

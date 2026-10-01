@@ -152,6 +152,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
             searchPlaceholder="جست‌وجوی نام مبدأ…"
             emptyTitle="مبدأی ثبت نشده است"
             emptyDescription="برای شروع، مبدأ جدیدی اضافه کنید."
+            emptyAction={initial.length === 0 ? { label: 'افزودن اولین مبدأ', onClick: startCreate } : undefined}
           />
         </CardContent>
       </Card>

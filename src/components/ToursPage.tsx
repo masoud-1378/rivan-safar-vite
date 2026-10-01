@@ -920,7 +920,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                       type="tel" 
                       required
                       dir="ltr"
-                      placeholder="مثلاً 09123456789" 
+                      placeholder="مثلاً ۰۹۱۲۳۴۵۶۷۸۹" 
                       value={bookingForm.mobile}
                       onChange={(e) => setBookingForm({...bookingForm, mobile: e.target.value})}
                       className="form-input !bg-white/10 !border-white/20 !text-white placeholder:!text-white/50 focus:!border-brand-orange text-left"

@@ -39,7 +39,7 @@ export function PhoneInput({ value, onChange, className, id, autoFocus }: PhoneI
           autoFocus={autoFocus}
           value={formatIranMobile(digits)}
           onChange={(e) => set(e.target.value)}
-          placeholder="912 345 6789"
+          placeholder="۹۱۲ ۳۴۵ ۶۷۸۹"
           className="h-full min-w-0 flex-1 bg-transparent text-sm tabular-nums outline-none placeholder:text-muted-foreground/50"
           aria-invalid={digits.length === 10 && !valid ? true : undefined}
         />

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { listDestinations } from '../places/actions';
+import { countDestinations, listDestinations } from '../places/actions';
 import { getSettingsMap } from '../settings/actions';
-import { listOriginsAdmin } from '../origins/actions';
-import { listHotels } from '../hotels/actions';
+import { countOrigins, listOriginsAdmin } from '../origins/actions';
+import { countHotels, listHotels } from '../hotels/actions';
 import { listDestinationTree } from '../tours/actions';
 import CatalogManager from '../places/CatalogManager';
 import OriginsManager from '../origins/OriginsManager';
@@ -23,25 +23,35 @@ export default async function AdminCatalogPage({
 }) {
   const params = await searchParams;
   const tab: CatalogTabId = (TABS as string[]).includes(params.tab ?? '') ? (params.tab as CatalogTabId) : 'destinations';
-  // هر سه فهرست کوچک‌اند؛ یک‌جا کشیده می‌شوند تا شمار تب‌ها همیشه درست باشد.
-  const [destinations, origins, hotels, settings, tree] = await Promise.all([
-    listDestinations(),
-    listOriginsAdmin(),
-    listHotels(),
-    getSettingsMap(),
-    listDestinationTree(),
-  ]);
-  const counts = { destinations: destinations.length, origins: origins.length, hotels: hotels.length };
+  // X11: شمار هر سه تب همیشه از دیتابیس می‌آید، ولی دادهٔ کامل فقط تب فعال کشیده می‌شود.
+  const counts = await Promise.all([countDestinations(), countOrigins(), countHotels()]).then(
+    ([destinations, origins, hotels]) => ({ destinations, origins, hotels }),
+  );
 
   return (
     <CatalogTabs tab={tab} counts={counts}>
       {tab === 'destinations' ? (
-        <CatalogManager initial={destinations} sectionSettings={settings} />
+        <DestinationsTab settings={await getSettingsMap()} />
       ) : tab === 'origins' ? (
-        <OriginsManager initial={origins} />
+        <OriginsTab />
       ) : (
-        <HotelsManager initial={hotels} places={tree.all} initialCitySlug={params.city ?? ''} />
+        <HotelsTab city={params.city ?? ''} />
       )}
     </CatalogTabs>
   );
+}
+
+async function DestinationsTab({ settings }: { settings: Record<string, string> }) {
+  const destinations = await listDestinations();
+  return <CatalogManager initial={destinations} sectionSettings={settings} />;
+}
+
+async function OriginsTab() {
+  const origins = await listOriginsAdmin();
+  return <OriginsManager initial={origins} />;
+}
+
+async function HotelsTab({ city }: { city: string }) {
+  const [hotels, tree] = await Promise.all([listHotels(), listDestinationTree()]);
+  return <HotelsManager initial={hotels} places={tree.all} initialCitySlug={city} />;
 }

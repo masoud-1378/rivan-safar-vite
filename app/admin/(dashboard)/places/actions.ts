@@ -93,6 +93,13 @@ export async function listDestinations() {
 
 export type DestinationRow = Awaited<ReturnType<typeof listDestinations>>[number];
 
+export async function countDestinations(): Promise<number> {
+  const db = getDb();
+  if (!db) return 0;
+  const [r] = await db.select({ n: count() }).from(siteDestinations).where(isNull(siteDestinations.deletedAt));
+  return r?.n ?? 0;
+}
+
 export async function saveDestination(id: string | undefined | null, data: DestinationInput) {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();

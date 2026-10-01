@@ -326,7 +326,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                   </div>
                   <div>
                     <div className="text-caption text-text-secondary mb-0.5">تور فعال</div>
-                    <div className="text-body-sm sm:text-xl font-black text-text-heading leading-none">+۳۰</div>
+                    <div className="text-body-sm sm:text-xl font-black text-text-heading leading-none">۳۰+</div>
                   </div>
                 </motion.div>
               </motion.div>

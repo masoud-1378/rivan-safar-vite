@@ -85,7 +85,7 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
             <Compass className="size-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-foreground">مرکز عملیات و مدیریت جامع تورها</h2>
+            <h2 className="text-base font-bold text-foreground">تورها</h2>
             <p className="text-xs text-muted-foreground">مدیریت متمرکز تورها، رزروها، مقاصد، مبدأهای حرکت (هوایی، زمینی) و هتل‌های طرف قرارداد</p>
           </div>
         </div>

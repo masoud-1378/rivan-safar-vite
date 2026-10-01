@@ -158,7 +158,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                         dir="ltr"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="09123456789"
+                        placeholder="۰۹۱۲۳۴۵۶۷۸۹"
                         className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-start focus:border-brand-orange focus:outline-none"
                       />
                     </div>

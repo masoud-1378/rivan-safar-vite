@@ -233,6 +233,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
             searchPlaceholder="جست‌وجوی نام هتل یا مقصد…"
             emptyTitle="هتلی ثبت نشده است"
             emptyDescription="برای شروع، هتل جدیدی اضافه کنید."
+            emptyAction={initial.length === 0 ? { label: 'افزودن اولین هتل', onClick: startCreate } : undefined}
           />
         </CardContent>
       </Card>

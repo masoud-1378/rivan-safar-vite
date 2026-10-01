@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/toast';
 import { fa, faNumber, cn } from '@/lib/utils';
 import type { 
@@ -51,6 +52,23 @@ export interface TourFormProps {
 }
 
 export type StageId = 1 | 2 | 3 | 4 | 5;
+
+const LAST_ORIGIN_KEY = 'rivan-last-origin';
+
+/**
+ * مبدأ پیش‌فرض هوشمند (T5): اول آخرین مبدأ استفاده‌شده (localStorage)،
+ * وگرنه اگر فقط یک مبدأ فعال بود همان. برای تورِ در حال ویرایش، مبدأ ثبت‌شده‌اش می‌ماند.
+ */
+function smartOriginDefault(origins: OriginRow[]): string {
+  try {
+    const last = localStorage.getItem(LAST_ORIGIN_KEY);
+    if (last && origins.some((o) => o.nameFa === last)) return last;
+  } catch {
+    /* حافظهٔ مرورگر در دسترس نیست؛ رد شو */
+  }
+  if (origins.length === 1) return origins[0].nameFa;
+  return '';
+}
 
 interface StageTabConfig {
   id: StageId;
@@ -84,6 +102,9 @@ export default function TourForm({
   // گشت (ایراد ۱): تداخل نامک (مثلاً «t»های به‌جامانده از ایراد ۳) ذخیره را بی‌صدا می‌بست؛
   // حالا علاوه بر پیام، خود فیلد نامک هم قرمز می‌شود تا علت گم نشود.
   const [slugConflict, setSlugConflict] = useState(false);
+  // انصراف با فرم کثیف (T11): قبل از خروج، دیالوگ «تغییرات ذخیره‌نشده از دست می‌رود».
+  const [dirty, setDirty] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   // Initial State mapping
   const [formData, setFormData] = useState<TourInput>(() => {
@@ -96,8 +117,8 @@ export default function TourForm({
         ? (initial.destinationSlugs as string[]) 
         : [],
       destination: initial?.destination || '',
-      // پیش‌فرض انتخاب‌شده نداریم: مبدأ باید آگاهانه انتخاب شود و اعتبارسنجی هم همان را می‌خواهد
-      origin: initial?.origin || '',
+      // پیش‌فرض هوشمند مبدأ (T5): آخرین مبدأ استفاده‌شده یا تنها مبدأ فعال.
+      origin: initial?.origin || smartOriginDefault(origins),
       route: initial?.route || '',
       duration: initial?.duration || '',
       nights: Number(initial?.nights) || 0,
@@ -119,8 +140,11 @@ export default function TourForm({
       excludedServices: Array.isArray(initial?.excludedServices) ? (initial.excludedServices as string[]) : [],
       hotelOptions: Array.isArray(initial?.hotelOptions) ? (initial.hotelOptions as any[]) : [],
       description: initial?.description || '',
-      transportKind: /قطار|بن ریل|فدک|رجاء/i.test(initial?.airline || '') ? 'rail' :
-                     /اتوبوس|زمینی|vip/i.test(initial?.airline || '') ? 'land' : 'air',
+      // شیوهٔ سفر: اول از مقدار ذخیره‌شده (T9)؛ برای ردیف‌های قدیمیِ بی‌مقدار، همان حدس قبلی.
+      transportKind: initial?.transportKind || (
+        /قطار|بن ریل|فدک|رجاء/i.test(initial?.airline || '') ? 'rail' :
+        /اتوبوس|زمینی|vip/i.test(initial?.airline || '') ? 'land' : 'air'
+      ),
       carrierName: initial?.airline || '',
       guaranteedDeparture: initial?.badge === 'حرکت تضمین‌شده',
       splitPriceCurrency: 'USD',
@@ -154,6 +178,8 @@ export default function TourForm({
   const updateFormData = (fields: Partial<TourInput>) => {
     // نامک که عوض شد، پرچم تداخل قبلی بی‌اعتبار است.
     if (fields.slug !== undefined) setSlugConflict(false);
+    // هر تغییری فرم را کثیف می‌کند (برای دیالوگ انصراف، T11).
+    setDirty(true);
     setFormData((prev) => ({ ...prev, ...fields }));
   };
 
@@ -239,6 +265,10 @@ export default function TourForm({
           intent === 'keep' ? formData.publishStatus : intent;
         const res = await saveTour(editingId ?? null, { ...formData, publishStatus: nextPublish });
         updateFormData({ publishStatus: nextPublish });
+        // مبدأ استفاده‌شده را نگه دار تا تور بعدی همان را پیش‌فرض بگیرد (T5).
+        if (formData.origin.trim()) {
+          try { localStorage.setItem(LAST_ORIGIN_KEY, formData.origin.trim()); } catch { /* رد شو */ }
+        }
 
         const tourTitle = formData.title.trim();
         if (intent === 'published') {
@@ -457,7 +487,10 @@ export default function TourForm({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => onDone()}
+                onClick={() => {
+                  if (dirty) setShowCancelConfirm(true);
+                  else onDone();
+                }}
                 className="text-xs"
               >
                 انصراف
@@ -572,6 +605,17 @@ export default function TourForm({
           </div>
         )}
       </div>
+
+      {/* انصراف با فرم کثیف (T11): تغییرات ذخیره‌نشده از دست می‌رود. */}
+      <AlertDialog
+        open={showCancelConfirm}
+        onOpenChange={(open) => !open && setShowCancelConfirm(false)}
+        title="خارج شدن بدون ذخیره؟"
+        description="تغییرات ذخیره‌نشده از دست می‌رود."
+        confirmText="خارج شو"
+        cancelText="برگرد"
+        onConfirm={() => { setShowCancelConfirm(false); onDone(); }}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
 import { accommodations, siteDestinations } from '@/db/schema';
-import { and, asc, desc, eq, isNull, ne } from 'drizzle-orm';
+import { and, asc, count, desc, eq, isNull, ne } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 
@@ -36,6 +36,13 @@ export async function listHotels(): Promise<HotelRow[]> {
     stars: r.stars,
     placeSlug: r.placeSlug ?? '',
   }));
+}
+
+export async function countHotels(): Promise<number> {
+  const db = getDb();
+  if (!db) return 0;
+  const [r] = await db.select({ n: count() }).from(accommodations).where(isNull(accommodations.deletedAt));
+  return r?.n ?? 0;
 }
 
 export async function saveHotel(data: HotelInput) {
