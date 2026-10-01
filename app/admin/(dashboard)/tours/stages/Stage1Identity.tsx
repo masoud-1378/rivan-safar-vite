@@ -11,13 +11,17 @@ import {
   Check as CheckIcon,
   Sparkles,
   MapPin,
-  Building
+  Building,
+  Search,
+  Info,
+  Plus
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { AmountInput } from '@/components/ui/amount-input';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { cn, formatToman } from '@/lib/utils';
+import { faToSlugFa } from '../tour-helpers';
 import type { DestinationTree, OriginRow, TourInput } from '../actions';
 import type { TourDraftErrors } from '../tour-helpers';
 
@@ -100,6 +104,10 @@ export default function Stage1Identity({
     return out;
   });
   const [openCountries, setOpenCountries] = useState<Record<string, boolean>>({});
+  // نامک خودکار: تا وقتی کاربر دستی به نامک دست نزده و نامکی هم از قبل ثبت نشده، از روی عنوان ساخته می‌شود
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [destQuery, setDestQuery] = useState('');
+  const [capacity, setCapacity] = useState('');
 
   const toggleSlug = (slug: string) => {
     const next = selectedSlugs.includes(slug)
@@ -115,6 +123,25 @@ export default function Stage1Identity({
       : Array.from(new Set([...selectedSlugs, ...slugs]));
     onChange({ destinationSlugs: next });
   };
+
+  // عنوان که عوض شود، اگر نامک هنوز دستی ویرایش نشده و از قبل خالی است، از روی عنوان ساخته می‌شود
+  const handleTitleChange = (v: string) => {
+    const patch: Partial<TourInput> = { title: v };
+    if (!slugTouched && !data.slug) patch.slug = faToSlugFa(v);
+    onChange(patch);
+  };
+
+  // جست‌وجوی تخت مقصدها: در حالت جست‌وجو به‌جای دریلِ درخت، لیست مستقیم نتایج با انتخاب تک‌کلیکی
+  const destSearchQuery = destQuery.trim();
+  const destSearchResults = destSearchQuery
+    ? tree.all
+        .filter((a) => (a.type === 'city' || a.type === 'country') && a.name.includes(destSearchQuery))
+        .slice(0, 30)
+    : [];
+
+  // ماشین‌حساب سرانگشتی درآمد: ظرفیت × قیمت پایه (فقط نمایشی، ذخیره نمی‌شود)
+  const capacityNum = Number(capacity) || 0;
+  const priceNum = Number(data.price) || 0;
 
   return (
     <div className="space-y-6">
@@ -143,19 +170,19 @@ export default function Stage1Identity({
             <Input
               value={data.title}
               error={errors.title}
-              onChange={(e) => onChange({ title: e.target.value })}
+              onChange={(e) => handleTitleChange(e.target.value)}
               placeholder="عنوان تور را شفاف و گیرا بنویسید…"
               className="font-medium"
             />
           </Field>
         </div>
         <div className="md:col-span-4">
-          <Field label="نامک انگلیسی (Slug) *" hint={errors.slug || "فقط حروف کوچک انگلیسی و خط تیره"}>
+          <Field label="آدرس اینترنتی تور *" hint={errors.slug || "از روی عنوان خودکار ساخته می‌شود؛ اگر لازم بود خودتان تغییرش دهید"}>
             <Input
               dir="ltr"
               value={data.slug}
               error={errors.slug}
-              onChange={(e) => onChange({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+              onChange={(e) => { setSlugTouched(true); onChange({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }); }}
               placeholder="e.g. russia-moscow-stpetersburg-8d"
             />
           </Field>
@@ -194,7 +221,15 @@ export default function Stage1Identity({
               className="size-4 accent-brand rounded cursor-pointer"
             />
             <div className="text-xs">
-              <span className="font-bold text-foreground block">حرکت تضمین‌شده و قطعی</span>
+              <span className="font-bold text-foreground flex items-center gap-1.5">
+                حرکت تضمین‌شده و قطعی
+                <span
+                  title="یعنی این تور حتماً در تاریخ اعلام‌شده حرکت می‌کند؛ تضمینِ قیمت نیست."
+                  className="inline-flex cursor-help"
+                >
+                  <Info className="size-3.5 text-muted-foreground" />
+                </span>
+              </span>
               <span className="text-[11px] text-muted-foreground">تور بدون قید و شرط اجرا می‌شود</span>
             </div>
           </label>
@@ -223,6 +258,48 @@ export default function Stage1Identity({
             {selectedSlugs.length > 0 ? `${selectedSlugs.length} مقصد انتخاب شده` : 'حداقل یک مقصد انتخاب کنید'}
           </span>
         </div>
+
+        {/* جست‌وجوی نام فارسی مقصد: در حالت جست‌وجو، لیست تخت نتایج با انتخاب تک‌کلیکی */}
+        <div className="relative">
+          <Input
+            value={destQuery}
+            onChange={(e) => setDestQuery(e.target.value)}
+            placeholder="نام شهر یا کشور را بنویسید… مثلاً: استانبول"
+            className="ps-9 text-xs"
+          />
+          <Search className="size-4 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
+        </div>
+        {destSearchQuery && (
+          <div className="max-h-56 overflow-y-auto rounded-lg border border-border/60 divide-y divide-border/40">
+            {destSearchResults.length === 0 ? (
+              <p className="px-3 py-4 text-xs text-muted-foreground text-center">چیزی پیدا نشد.</p>
+            ) : (
+              destSearchResults.map((r) => {
+                const selected = selectedSlugs.includes(r.slug);
+                return (
+                  <button
+                    key={r.slug}
+                    type="button"
+                    onClick={() => toggleSlug(r.slug)}
+                    className={cn(
+                      "flex w-full items-center justify-between px-3 py-2.5 text-xs transition-colors min-h-11",
+                      selected ? "bg-brand/10" : "hover:bg-accent/40"
+                    )}
+                  >
+                    <span className="flex items-center gap-2 text-foreground">
+                      <MapPin className="size-3.5 text-brand shrink-0" />
+                      <span className="font-medium">{r.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{r.type === 'city' ? 'شهر' : 'کشور'}</span>
+                    </span>
+                    {selected
+                      ? <CheckIcon className="size-4 text-emerald-600 shrink-0" />
+                      : <Plus className="size-4 text-muted-foreground shrink-0" />}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        )}
 
         {/* Selected Destinations Tags */}
         {selectedSlugs.length > 0 && (
@@ -371,14 +448,27 @@ export default function Stage1Identity({
       {/* Row 4: Origins & Duration */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Field label="مبدأ حرکت مسافر *" hint={errors.origin || "شهر یا پایانه‌ای که تور از آن شروع می‌شود"}>
-            <Select
-              value={data.origin}
-              onChange={(e) => onChange({ origin: e.target.value })}
-              options={origins.map((o) => ({ value: o.slug, label: o.nameFa }))}
-              placeholder="انتخاب شهر مبدأ…"
-            />
-          </Field>
+          {origins.length === 0 ? (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs space-y-1.5">
+              <p className="font-bold text-foreground">هنوز هیچ مبدأی ثبت نشده است</p>
+              <p className="text-muted-foreground">برای ساخت تور اول باید دست‌کم یک شهر مبدأ داشته باشید.</p>
+              <a
+                href="/admin/origins"
+                className="inline-flex items-center gap-1 font-bold text-brand hover:underline"
+              >
+                رفتن به مدیریت مبدأها
+              </a>
+            </div>
+          ) : (
+            <Field label="مبدأ حرکت مسافر *" hint={errors.origin || "شهر یا پایانه‌ای که تور از آن شروع می‌شود"}>
+              <Select
+                value={data.origin}
+                onChange={(e) => onChange({ origin: e.target.value })}
+                options={origins.map((o) => ({ value: o.slug, label: o.nameFa }))}
+                placeholder="انتخاب شهر مبدأ…"
+              />
+            </Field>
+          )}
         </div>
 
         <div>
@@ -446,6 +536,31 @@ export default function Stage1Identity({
               </div>
             </Field>
           </div>
+        </div>
+
+        {/* حساب سرانگشتی درآمد: ظرفیت × قیمت پایه — فقط نمایشی، ذخیره نمی‌شود */}
+        <div className="rounded-xl border border-border/60 bg-secondary/20 p-3.5 flex flex-wrap items-end gap-x-5 gap-y-3">
+          <span className="text-xs font-bold text-foreground">حساب سرانگشتی درآمد</span>
+          <div className="w-36">
+            <Field label="ظرفیت تور (نفر)">
+              <Input
+                type="number"
+                min="0"
+                inputMode="numeric"
+                value={capacity}
+                onChange={(e) => setCapacity(e.target.value)}
+                placeholder="مثلاً: ۴۰"
+                className="text-xs h-9"
+              />
+            </Field>
+          </div>
+          <div className="text-xs pb-1">
+            <span className="text-muted-foreground block">ظرفیت × قیمت پایه</span>
+            <span className="font-black text-sm text-foreground">
+              {capacityNum > 0 && priceNum > 0 ? formatToman(capacityNum * priceNum) : '—'}
+            </span>
+          </div>
+          <span className="text-[10px] text-muted-foreground pb-1.5">فقط برای حساب سرانگشتی؛ ذخیره نمی‌شود.</span>
         </div>
       </div>
 

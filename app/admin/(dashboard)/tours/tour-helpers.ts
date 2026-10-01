@@ -59,3 +59,48 @@ export function validateDraft(input: {
   if (!input.origin) errors.origin = 'مبدأ حرکت را انتخاب کنید.';
   return errors;
 }
+
+/**
+ * وضعیت تکمیل واقعی هر ۵ مرحلهٔ ویزارد تورساز — برای تیک‌های هدر مرحله‌ها.
+ * قاعده: تیک هر مرحله فقط وقتی می‌خورد که فیلدهای الزامی همان مرحله پر شده باشند،
+ * نه صرفاً با عبور از آن مرحله.
+ * - مرحله ۱: همان validateDraft (عنوان، آدرس اینترنتی، قیمت، دست‌کم یک مقصد، مبدأ)
+ * - مرحله ۲: دست‌کم یک هتل با نام و قیمت دوتخته یا نفری
+ * - مرحله ۳: دست‌کم یک روز برنامه با عنوان
+ * - مرحله ۴: دست‌کم یکی از میدان‌های اعتماد (مدارک، ضمانت‌نامه، مالیات شهری، انعام) پر شده باشد
+ * - مرحله ۵: نام کارشناس تور ثبت شده باشد
+ */
+export function getStageCompletion(input: {
+  title: string;
+  slug: string;
+  price: number | null;
+  destinations: number;
+  origin: string;
+  hotelOptions: Array<{ name?: string; priceDouble?: string; pricePerPerson?: string }>;
+  itineraryDays: Array<{ title?: string }>;
+  trustSpecs?: { requiredDocs?: string[]; returnGuarantee?: string; cityTax?: string; tipsNote?: string } | null;
+  consultantSpec?: { name?: string } | null;
+}): [boolean, boolean, boolean, boolean, boolean] {
+  const s1 =
+    Object.keys(
+      validateDraft({
+        title: input.title,
+        slug: input.slug,
+        price: input.price,
+        destinations: input.destinations,
+        origin: input.origin,
+      })
+    ).length === 0;
+  const s2 = input.hotelOptions.some(
+    (h) => (h.name || '').trim() && ((h.priceDouble || '').trim() || (h.pricePerPerson || '').trim())
+  );
+  const s3 = input.itineraryDays.some((d) => (d.title || '').trim());
+  const t = input.trustSpecs || {};
+  const s4 =
+    (t.requiredDocs?.length || 0) > 0 ||
+    !!(t.returnGuarantee || '').trim() ||
+    !!(t.cityTax || '').trim() ||
+    !!(t.tipsNote || '').trim();
+  const s5 = !!(input.consultantSpec?.name || '').trim();
+  return [s1, s2, s3, s4, s5];
+}

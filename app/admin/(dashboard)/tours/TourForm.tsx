@@ -27,7 +27,7 @@ import type {
 } from './actions';
 import { saveTour, checkSlugUnique } from './actions';
 import type { HotelRow } from '../hotels/actions';
-import { validateDraft } from './tour-helpers';
+import { validateDraft, getStageCompletion } from './tour-helpers';
 
 // 5 Modular Stage Components
 import Stage1Identity from './stages/Stage1Identity';
@@ -88,7 +88,8 @@ export default function TourForm({
         ? (initial.destinationSlugs as string[]) 
         : [],
       destination: initial?.destination || '',
-      origin: initial?.origin || (origins[0]?.slug || ''),
+      // پیش‌فرض انتخاب‌شده نداریم: مبدأ باید آگاهانه انتخاب شود و اعتبارسنجی هم همان را می‌خواهد
+      origin: initial?.origin || '',
       route: initial?.route || '',
       duration: initial?.duration || '',
       nights: Number(initial?.nights) || 0,
@@ -143,6 +144,23 @@ export default function TourForm({
   const updateFormData = (fields: Partial<TourInput>) => {
     setFormData((prev) => ({ ...prev, ...fields }));
   };
+
+  // تیک واقعی تکمیل هر مرحله: بر اساس پر بودن فیلدهای الزامی همان مرحله، نه موقعیت در ویزارد
+  const stageDone = useMemo(
+    () =>
+      getStageCompletion({
+        title: formData.title,
+        slug: formData.slug,
+        price: formData.price,
+        destinations: formData.destinationSlugs.length,
+        origin: formData.origin,
+        hotelOptions: formData.hotelOptions,
+        itineraryDays: formData.itineraryDays,
+        trustSpecs: formData.trustSpecs,
+        consultantSpec: formData.consultantSpec,
+      }),
+    [formData]
+  );
 
   // Validation
   const errors = useMemo(() => {
@@ -215,7 +233,7 @@ export default function TourForm({
           {STAGES.map((stage) => {
             const Icon = stage.icon;
             const isActive = activeStage === stage.id;
-            const isPassed = activeStage > stage.id;
+            const isPassed = stageDone[stage.id - 1];
 
             return (
               <button
@@ -284,6 +302,7 @@ export default function TourForm({
             <Stage2Hotels
               data={formData}
               onChange={updateFormData}
+              hotels={hotels}
             />
           )}
 
