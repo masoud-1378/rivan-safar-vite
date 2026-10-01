@@ -8,6 +8,7 @@ import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { saveExhibition, type ExhibitionInput, type ExhibitionRow, type ExhibitionStatus } from './actions';
+import BlockEditor, { cleanBlocks, validateBlocks } from '@/components/ui/block-editor';
 
 const STATUSES: Array<{ value: ExhibitionStatus; label: string }> = [
   { value: 'draft', label: 'پیش‌نویس' },
@@ -16,16 +17,6 @@ const STATUSES: Array<{ value: ExhibitionStatus; label: string }> = [
   { value: 'paused', label: 'متوقف' },
   { value: 'archived', label: 'بایگانی' },
 ];
-
-function parseJsonArray(raw: string): { ok: boolean; value: unknown[]; error?: string } {
-  try {
-    const parsed = JSON.parse((raw || '').trim() || '[]');
-    if (!Array.isArray(parsed)) return { ok: false, value: [], error: 'ساختار باید آرایه JSON باشد.' };
-    return { ok: true, value: parsed };
-  } catch {
-    return { ok: false, value: [], error: 'فرمت JSON نامعتبر است.' };
-  }
-}
 
 export default function ExhibitionForm({
   initial,
@@ -59,18 +50,20 @@ export default function ExhibitionForm({
   const [hotelArea, setHotelArea] = useState(initial?.hotelArea ?? '');
   const [startingPrice, setStartingPrice] = useState(initial?.startingPrice ?? '');
   const [startingPriceNote, setStartingPriceNote] = useState(initial?.startingPriceNote ?? '');
-  const [phasesJson, setPhasesJson] = useState(
-    initial?.phases ? JSON.stringify(initial.phases, null, 2) : '[]',
+  const [phases, setPhases] = useState<unknown[]>(
+    Array.isArray(initial?.phases) ? initial.phases : [],
   );
-  const [servicesJson, setServicesJson] = useState(
-    initial?.servicesIncluded ? JSON.stringify(initial.servicesIncluded, null, 2) : '[]',
+  const [services, setServices] = useState<unknown[]>(
+    Array.isArray(initial?.servicesIncluded) ? initial.servicesIncluded : [],
   );
-  const [tipsJson, setTipsJson] = useState(
-    initial?.businessTips ? JSON.stringify(initial.businessTips, null, 2) : '[]',
+  const [tips, setTips] = useState<unknown[]>(
+    Array.isArray(initial?.businessTips) ? initial.businessTips : [],
   );
-  const [faqsJson, setFaqsJson] = useState(
-    initial?.faqs ? JSON.stringify(initial.faqs, null, 2) : '[]',
+  const [faqs, setFaqs] = useState<unknown[]>(
+    Array.isArray(initial?.faqs) ? initial.faqs : [],
   );
+  const [phasesError, setPhasesError] = useState<string | undefined>();
+  const [faqsError, setFaqsError] = useState<string | undefined>();
   const [status, setStatus] = useState<ExhibitionStatus>(initial?.status ?? 'draft');
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -79,14 +72,11 @@ export default function ExhibitionForm({
     e.preventDefault();
     setError(null);
 
-    const phases = parseJsonArray(phasesJson);
-    if (!phases.ok) { setError(`خطا در فازهای نمایشگاه: ${phases.error}`); return; }
-    const services = parseJsonArray(servicesJson);
-    if (!services.ok) { setError(`خطا در خدمات شامل: ${services.error}`); return; }
-    const tips = parseJsonArray(tipsJson);
-    if (!tips.ok) { setError(`خطا در نکات تجاری: ${tips.error}`); return; }
-    const faqs = parseJsonArray(faqsJson);
-    if (!faqs.ok) { setError(`خطا در پرسش‌ها: ${faqs.error}`); return; }
+    const phasesProblem = validateBlocks('phase', phases);
+    setPhasesError(phasesProblem ?? undefined);
+    const faqsProblem = validateBlocks('faq', faqs);
+    setFaqsError(faqsProblem ?? undefined);
+    if (phasesProblem || faqsProblem) return;
 
     const payload: ExhibitionInput = {
       slug: slug.trim(),
@@ -106,14 +96,14 @@ export default function ExhibitionForm({
       editionSlug: editionSlug.trim(),
       solarDate: solarDate.trim(),
       gregorianDate: gregorianDate.trim(),
-      phases: phases.value,
+      phases: cleanBlocks('phase', phases),
       visaDeadline: visaDeadline.trim(),
       hotelArea: hotelArea.trim(),
       startingPrice: startingPrice.trim(),
       startingPriceNote: startingPriceNote.trim(),
-      servicesIncluded: services.value,
-      businessTips: tips.value,
-      faqs: faqs.value,
+      servicesIncluded: cleanBlocks('lines', services),
+      businessTips: cleanBlocks('lines', tips),
+      faqs: cleanBlocks('faq', faqs),
       status,
     };
 
@@ -213,21 +203,43 @@ export default function ExhibitionForm({
         <Textarea id="ex-price-note" value={startingPriceNote} onChange={(e) => setStartingPriceNote(e.target.value)} className="min-h-20" placeholder="جزئیات قیمت و خدمات مشمول..." />
       </Field>
 
-      <Field label="فازهای نمایشگاه (phases)" htmlFor="ex-phases" hint="آرایه JSON فازها - هر فاز شامل عنوان، تاریخ و توضیح">
-        <Textarea id="ex-phases" value={phasesJson} onChange={(e) => setPhasesJson(e.target.value)} className="min-h-36 font-mono text-start" dir="ltr" placeholder="[]" />
-      </Field>
+      <BlockEditor
+        kind="phase"
+        title="فازهای نمایشگاه"
+        value={phases}
+        onChange={(next) => {
+          setPhases(next);
+          setPhasesError(undefined);
+        }}
+        error={phasesError}
+      />
 
-      <Field label="خدمات شامل تور (servicesIncluded)" htmlFor="ex-services" hint="آرایه JSON خدمات - لیست رشته‌ها یا آبجکت‌ها">
-        <Textarea id="ex-services" value={servicesJson} onChange={(e) => setServicesJson(e.target.value)} className="min-h-32 font-mono text-start" dir="ltr" placeholder="[]" />
-      </Field>
+      <BlockEditor
+        kind="lines"
+        title="خدمات شامل تور"
+        addLabel="افزودن خدمت"
+        value={services}
+        onChange={setServices}
+      />
 
-      <Field label="نکات تجاری (businessTips)" htmlFor="ex-tips" hint="آرایه JSON نکات تجاری برای مسافران کاری">
-        <Textarea id="ex-tips" value={tipsJson} onChange={(e) => setTipsJson(e.target.value)} className="min-h-32 font-mono text-start" dir="ltr" placeholder="[]" />
-      </Field>
+      <BlockEditor
+        kind="lines"
+        title="نکات تجاری"
+        addLabel="افزودن نکته"
+        value={tips}
+        onChange={setTips}
+      />
 
-      <Field label="پرسش‌های متداول (faqs)" htmlFor="ex-faqs" hint="آرایه JSON پرسش‌ها - هر آیتم شامل question, answer">
-        <Textarea id="ex-faqs" value={faqsJson} onChange={(e) => setFaqsJson(e.target.value)} className="min-h-32 font-mono text-start" dir="ltr" placeholder="[]" />
-      </Field>
+      <BlockEditor
+        kind="faq"
+        title="پرسش‌های متداول"
+        value={faqs}
+        onChange={(next) => {
+          setFaqs(next);
+          setFaqsError(undefined);
+        }}
+        error={faqsError}
+      />
 
       <div className="flex items-center gap-3 pt-2">
           <Button type="submit" disabled={pending}>{pending ? 'در حال ذخیره...' : 'ذخیره'}</Button>

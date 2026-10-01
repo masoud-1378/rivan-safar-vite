@@ -7,6 +7,7 @@ import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { saveGuide, type GuideInput, type GuideRow, type GuideStatus } from './actions';
+import BlockEditor, { cleanBlocks, validateBlocks } from '@/components/ui/block-editor';
 
 const CATEGORIES = [
   { value: 'destination-choice', label: 'انتخاب مقصد (destination-choice)' },
@@ -50,12 +51,14 @@ export default function GuideForm({
     initial?.relatedDestinationSlug ?? '',
   );
   const [relatedTourId, setRelatedTourId] = useState(initial?.relatedTourId ?? '');
-  const [sectionsJson, setSectionsJson] = useState(
-    initial?.sections ? JSON.stringify(initial.sections, null, 2) : '[]',
+  const [sections, setSections] = useState<unknown[]>(
+    Array.isArray(initial?.sections) ? initial.sections : [],
   );
-  const [faqsJson, setFaqsJson] = useState(
-    initial?.faqs ? JSON.stringify(initial.faqs, null, 2) : '[]',
+  const [faqs, setFaqs] = useState<unknown[]>(
+    Array.isArray(initial?.faqs) ? initial.faqs : [],
   );
+  const [sectionsError, setSectionsError] = useState<string | undefined>();
+  const [faqsError, setFaqsError] = useState<string | undefined>();
   const [status, setStatus] = useState<GuideStatus>(initial?.status ?? 'draft');
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -64,31 +67,11 @@ export default function GuideForm({
     e.preventDefault();
     setError(null);
 
-    let parsedSections: unknown[];
-    try {
-      const parsed = JSON.parse(sectionsJson.trim() || '[]');
-      if (!Array.isArray(parsed)) {
-        setError('خطا در بخش‌ها: ساختار وارد شده باید آرایه JSON باشد.');
-        return;
-      }
-      parsedSections = parsed;
-    } catch {
-      setError('خطا در فرمت JSON بخش‌ها. لطفاً فرمت ورودی را بررسی کنید.');
-      return;
-    }
-
-    let parsedFaqs: unknown[];
-    try {
-      const parsed = JSON.parse(faqsJson.trim() || '[]');
-      if (!Array.isArray(parsed)) {
-        setError('خطا در پرسش‌ها: ساختار وارد شده باید آرایه JSON باشد.');
-        return;
-      }
-      parsedFaqs = parsed;
-    } catch {
-      setError('خطا در فرمت JSON پرسش‌ها. لطفاً فرمت ورودی را بررسی کنید.');
-      return;
-    }
+    const sectionsProblem = validateBlocks('section', sections);
+    setSectionsError(sectionsProblem ?? undefined);
+    const faqsProblem = validateBlocks('faq', faqs);
+    setFaqsError(faqsProblem ?? undefined);
+    if (sectionsProblem || faqsProblem) return;
 
     const payload: GuideInput = {
       slug: slug.trim(),
@@ -101,8 +84,8 @@ export default function GuideForm({
       summary: summary.trim(),
       heroImage: heroImage.trim(),
       directAnswer: directAnswer.trim(),
-      sections: parsedSections,
-      faqs: parsedFaqs,
+      sections: cleanBlocks('section', sections),
+      faqs: cleanBlocks('faq', faqs),
       relatedDestinationSlug: relatedDestinationSlug.trim(),
       relatedTourId: relatedTourId.trim(),
       status,
@@ -267,35 +250,27 @@ export default function GuideForm({
         />
       </Field>
 
-      <Field
-        label="بخش‌های مقاله (sections)"
-        htmlFor="guide-sections"
-        hint="آرایه JSON بخش‌ها - هر بخش شامل title, content, order و ..."
-      >
-        <Textarea
-          id="guide-sections"
-          value={sectionsJson}
-          onChange={(e) => setSectionsJson(e.target.value)}
-            className="min-h-40 font-mono text-start"
-          dir="ltr"
-          placeholder="[]"
-        />
-      </Field>
+      <BlockEditor
+        kind="section"
+        title="بخش‌های مقاله"
+        value={sections}
+        onChange={(next) => {
+          setSections(next);
+          setSectionsError(undefined);
+        }}
+        error={sectionsError}
+      />
 
-      <Field
-        label="پرسش‌های متداول (faqs)"
-        htmlFor="guide-faqs"
-        hint="آرایه JSON پرسش‌ها - هر آیتم شامل question, answer"
-      >
-        <Textarea
-          id="guide-faqs"
-          value={faqsJson}
-          onChange={(e) => setFaqsJson(e.target.value)}
-            className="min-h-36 font-mono text-start"
-          dir="ltr"
-          placeholder="[]"
-        />
-      </Field>
+      <BlockEditor
+        kind="faq"
+        title="پرسش‌های متداول"
+        value={faqs}
+        onChange={(next) => {
+          setFaqs(next);
+          setFaqsError(undefined);
+        }}
+        error={faqsError}
+      />
 
       <div className="flex items-center gap-3 pt-2">
           <Button type="submit" disabled={pending}>{pending ? 'در حال ذخیره...' : 'ذخیره'}</Button>
