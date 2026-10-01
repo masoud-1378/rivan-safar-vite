@@ -104,7 +104,7 @@ export default function TourCard({
     : `هتل ${fa(hotelStars)}★`;
 
   const CardWrapper = ({ children }: { children: ReactNode }) => {
-    const baseClasses = `group bg-surface-primary border border-border-default rounded-[18px] shadow-subtle hover:shadow-card hover:border-border-brand/40 transition-all duration-300 flex flex-col overflow-hidden h-full cursor-pointer hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange ${soldOut ? 'opacity-85' : ''} ${className}`;
+    const baseClasses = `group bg-surface-primary border border-border-default rounded-card shadow-subtle hover:shadow-card hover:border-border-brand/40 transition-all duration-300 flex flex-col overflow-hidden h-full cursor-pointer hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange ${soldOut ? 'opacity-85' : ''} ${className}`;
     
     if (onClick) {
       return (
@@ -139,7 +139,7 @@ export default function TourCard({
               soldOut 
                 ? 'bg-surface-dark/90 text-white' 
                 : limited
-                ? 'bg-amber-500/90 text-white'
+                ? 'bg-brand-warning/90 text-white'
                 : 'bg-surface-primary/95 text-brand-orange border border-white/20'
             }`}>
               <span>{effectiveBadge}</span>

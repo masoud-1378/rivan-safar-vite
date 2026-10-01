@@ -390,10 +390,10 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
             </div>
 
             {isSubmitted ? (
-              <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-card text-center my-4">
-                <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto mb-2" />
-                <h4 className="text-h4 font-bold text-emerald-800 mb-1">درخواست شما ثبت شد</h4>
-                <p className="text-body-sm text-emerald-700">
+              <div className="p-6 bg-brand-success-soft border border-brand-success/25 rounded-card text-center my-4">
+                <CheckCircle2 className="w-12 h-12 text-brand-success mx-auto mb-2" />
+                <h4 className="text-h4 font-bold text-brand-success mb-1">درخواست شما ثبت شد</h4>
+                <p className="text-body-sm text-brand-success">
                   {submitMessage || `کارشناس تور ${country.name} به زودی با شماره ${inquiryPhone} تماس خواهد گرفت.`}
                 </p>
               </div>
@@ -409,7 +409,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                       placeholder="مثال: علی رضایی"
                       value={inquiryName}
                       onChange={(e) => setInquiryName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-control border border-border-default bg-surface-secondary text-body-sm text-text-primary focus:outline-none focus:border-brand-orange focus:bg-surface-primary transition-colors"
+                      className="w-full px-3.5 py-2.5 rounded-control border border-border-default bg-surface-secondary text-form-input text-text-primary focus:outline-none focus:border-brand-orange focus:bg-surface-primary transition-colors"
                       required
                     />
                   </div>
@@ -424,7 +424,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                       value={inquiryPhone}
                       onChange={(e) => setInquiryPhone(e.target.value)}
                       dir="ltr"
-                      className="w-full px-3.5 py-2.5 rounded-control border border-border-default bg-surface-secondary text-body-sm text-text-primary focus:outline-none focus:border-brand-orange focus:bg-surface-primary transition-colors text-start"
+                      className="w-full px-3.5 py-2.5 rounded-control border border-border-default bg-surface-secondary text-form-input text-text-primary focus:outline-none focus:border-brand-orange focus:bg-surface-primary transition-colors text-start"
                       required
                     />
                   </div>

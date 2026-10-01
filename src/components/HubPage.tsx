@@ -105,7 +105,7 @@ export default function HubPage({ type, onNavigate }: HubPageProps) {
                   {dest.parentCountryName || dest.name}
                 </div>
                 {!dest.visaRequired && (
-                  <div className="absolute bottom-3 start-3 bg-emerald-700/90 text-white px-2.5 py-0.5 rounded-md text-caption font-medium">
+                  <div className="absolute bottom-3 start-3 bg-brand-success/90 text-white px-2.5 py-0.5 rounded-md text-caption font-medium">
                     بدون نیاز به ویزا
                   </div>
                 )}

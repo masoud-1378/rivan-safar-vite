@@ -133,7 +133,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
       {/* دوره درخواستی با دوره پیش‌رو نمی‌خواند؛ اطلاع‌رسانی صادقانه */}
       {editionMismatch && (
         <div className="container-main px-4 sm:px-6 lg:px-8 mt-4">
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-card text-amber-900 text-body-sm leading-relaxed">
+          <div className="p-4 bg-brand-warning-soft border border-brand-warning/25 rounded-card text-text-primary text-body-sm leading-relaxed">
             اطلاعات این دوره ({editionSlug}) هنوز منتشر نشده است؛ جزئیات زیر مربوط به دوره پیش‌روست.
             برای هماهنگی سفر به دوره‌های دیگر، با کارشناسان ما در تماس باشید.
           </div>
@@ -196,7 +196,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     <span>منطقه پیشنهادی اقامت: {ex.upcomingEdition.hotelArea}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-red-600 font-bold">
+                <div className="flex items-center gap-2 text-danger font-bold">
                   <Clock className="w-4 h-4 shrink-0" />
                   <span>مهلت اقدام برای ویزا: {ex.upcomingEdition.visaDeadline}</span>
                 </div>
@@ -236,7 +236,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
 
               <div className="mt-4 p-4 bg-surface-primary rounded-card border border-border-default text-start text-caption text-text-secondary space-y-2">
                 <div className="flex items-center gap-2 font-bold text-text-heading">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <ShieldCheck className="w-4 h-4 text-brand-success" />
                   <span>پشتیبانی کامل ویزا و اقامت</span>
                 </div>
                 <p className="leading-relaxed">
@@ -306,7 +306,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {ex.servicesIncluded.map((srv, idx) => (
               <div key={idx} className="p-4 bg-surface-secondary rounded-card border border-border-default/60 flex items-center gap-3 text-start">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-brand-success shrink-0" />
                 <span className="text-body-sm font-medium text-text-primary">{srv}</span>
               </div>
             ))}
@@ -390,15 +390,15 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
           </div>
 
           {formSubmitted ? (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-card p-6 text-center text-emerald-900">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
+            <div className="bg-brand-success-soft border border-brand-success/25 rounded-card p-6 text-center text-text-primary">
+              <div className="w-12 h-12 rounded-full bg-brand-success/15 text-brand-success flex items-center justify-center mx-auto mb-3">
                 <Check className="w-6 h-6" />
               </div>
               <h4 className="text-h4 font-bold mb-2">درخواست شما ثبت شد</h4>
-              <p className="text-body-sm text-emerald-800 mb-4">
+              <p className="text-body-sm text-brand-success mb-4">
                 کارشناس دپارتمان نمایشگاهی ریوان سفر برای ارائهٔ شرایط و مدارک ویزا به‌زودی با شما تماس خواهد گرفت.
               </p>
-              <div className="text-caption text-emerald-700">
+              <div className="text-caption text-brand-success">
                 تماس مستقیم با بخش نمایشگاهی: <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a>
               </div>
             </div>
@@ -412,27 +412,27 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                     placeholder="مثال: بازرگانی البرز"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی مسئول <span className="text-red-500">*</span></label>
+                  <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی مسئول <span className="text-danger">*</span></label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="مثال: مهندس راد"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                   />
-                  {formErrors.name && <p className="text-red-500 text-caption mt-1">{formErrors.name}</p>}
+                  {formErrors.name && <p className="text-danger text-caption mt-1">{formErrors.name}</p>}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-caption font-bold text-text-heading mb-1">شماره تلفن همراه <span className="text-red-500">*</span></label>
+                  <label className="block text-caption font-bold text-text-heading mb-1">شماره تلفن همراه <span className="text-danger">*</span></label>
                   <input
                     type="tel"
                     required
@@ -440,9 +440,9 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-start focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:outline-none"
                   />
-                  {formErrors.phone && <p className="text-red-500 text-caption mt-1">{formErrors.phone}</p>}
+                  {formErrors.phone && <p className="text-danger text-caption mt-1">{formErrors.phone}</p>}
                 </div>
 
                 <div>
@@ -450,7 +450,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   <select
                     value={formData.passengers}
                     onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                   >
                     <option value="1">۱ نفر</option>
                     <option value="2">۲ نفر</option>
@@ -467,12 +467,12 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="حوزه کاری، فاز مد نظر، درخواست مترجم…"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                 ></textarea>
               </div>
 
               <div className="pt-2">
-                {submitError && <p className="text-red-500 text-caption mb-2">{submitError}</p>}
+                {submitError && <p className="text-danger text-caption mb-2">{submitError}</p>}
                 <button
                   type="submit"
                   disabled={formLoading}

@@ -553,7 +553,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
               className="fixed top-0 start-0 bottom-0 w-[85%] max-w-[400px] bg-surface-primary z-[70] shadow-2xl flex flex-col lg:hidden"
             >
               {/* Drawer Header */}
-              <div className="flex items-center justify-center p-5 border-b border-border-default relative">
+              <div className="flex items-center justify-center p-5 pt-[calc(1.25rem+env(safe-area-inset-top))] border-b border-border-default relative">
                 <div className="flex items-center gap-2 relative text-brand-orange">
                   <span className="text-3xl font-black font-sans tracking-tighter">R</span>
                   <Plane className="w-4 h-4 absolute -top-1 -start-3 transform rotate-45" />
@@ -677,7 +677,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
               </div>
 
               {/* Drawer Footer CTA */}
-              <div className="p-5 border-t border-border-default bg-surface-primary shadow-subtle">
+              <div className="p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] border-t border-border-default bg-surface-primary shadow-subtle">
                 <div className="bg-page-background rounded-card p-4 border border-border-default text-center">
                   <p className="text-body-sm text-text-heading font-bold mb-3">برای انتخاب تور نیاز به راهنمایی دارید؟</p>
                   <a
@@ -711,7 +711,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
           <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] flex flex-col items-center gap-1.5 pointer-events-none">
             <a
               href={contact.phoneHref}
-              className="pointer-events-auto bg-brand-orange text-on-brand w-14 h-14 rounded-card flex items-center justify-center shadow-card border-[3px] border-white hover:scale-105 transition-transform"
+              className="pointer-events-auto bg-brand-orange text-text-on-brand w-14 h-14 rounded-card flex items-center justify-center shadow-card border-[3px] border-white hover:scale-105 transition-transform"
             >
               <Phone className="w-6 h-6" />
             </a>

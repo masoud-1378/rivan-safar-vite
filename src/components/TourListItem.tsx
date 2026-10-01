@@ -102,7 +102,7 @@ export default function TourListItem({
             <div className="flex flex-col gap-1.5 items-end">
               {statusBadge && (
                 <span className={`inline-flex px-2 py-1 rounded-md text-caption font-bold text-white shadow-sm ${
-                  soldOut ? 'bg-red-500/90' : 'bg-brand-orange/90'
+                  soldOut ? 'bg-danger/90' : 'bg-brand-orange/90'
                 }`}>
                   {statusBadge}
                 </span>

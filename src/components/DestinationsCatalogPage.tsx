@@ -67,7 +67,7 @@ export default function DestinationsCatalogPage({ onNavigate }: DestinationsCata
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="جست‌وجوی نام شهر، کشور یا مقصد…"
-                  className="w-full bg-surface-secondary border border-border-default rounded-control ps-11 pe-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none transition-colors"
+                  className="w-full bg-surface-secondary border border-border-default rounded-control ps-11 pe-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none transition-colors"
                 />
               </div>
             </div>
@@ -127,7 +127,7 @@ export default function DestinationsCatalogPage({ onNavigate }: DestinationsCata
                     {dest.parentCountryName || dest.name}
                   </div>
                   {!dest.visaRequired && (
-                    <div className="absolute bottom-3 start-3 bg-emerald-700/90 text-white px-2.5 py-0.5 rounded-md text-caption font-medium">
+                    <div className="absolute bottom-3 start-3 bg-brand-success/90 text-white px-2.5 py-0.5 rounded-md text-caption font-medium">
                       بدون ویزا
                     </div>
                   )}

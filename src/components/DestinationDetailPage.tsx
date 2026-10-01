@@ -259,7 +259,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
             <div className="space-y-2.5">
               {city.keyHighlights.map((hl, idx) => (
                 <div key={idx} className="flex items-center gap-2 text-body-sm text-text-primary">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-brand-success shrink-0" />
                   <span>{hl}</span>
                 </div>
               ))}
@@ -313,34 +313,34 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
           </div>
 
           {formSubmitted ? (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-card p-6 text-center text-emerald-900">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
+            <div className="bg-brand-success-soft border border-brand-success/25 rounded-card p-6 text-center text-text-primary">
+              <div className="w-12 h-12 rounded-full bg-brand-success/15 text-brand-success flex items-center justify-center mx-auto mb-3">
                 <Check className="w-6 h-6" />
               </div>
               <h4 className="text-h4 font-bold mb-2">درخواست تماس شما با موفقیت ثبت شد</h4>
-              <p className="text-body-sm text-emerald-800 mb-4">
+              <p className="text-body-sm text-brand-success mb-4">
                 کارشناس ریوان سفر به‌زودی برای هماهنگی قیمت و ظرفیت تور {city.name} با شما تماس خواهد گرفت.
               </p>
-              <div className="text-caption text-emerald-700">
+              <div className="text-caption text-brand-success">
                 در صورت نیاز فوری، مستقیماً با تلفن <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a> تماس بگیرید.
               </div>
             </div>
           ) : (
             <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-start space-y-4">
               <div>
-                <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی <span className="text-red-500">*</span></label>
+                <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی <span className="text-danger">*</span></label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="مثال: علی محمدی"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-caption font-bold text-text-heading mb-1">شماره موبایل <span className="text-red-500">*</span></label>
+                <label className="block text-caption font-bold text-text-heading mb-1">شماره موبایل <span className="text-danger">*</span></label>
                 <input
                   type="tel"
                   required
@@ -348,7 +348,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-start focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:outline-none"
                 />
               </div>
 
@@ -358,7 +358,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                   <select
                     value={formData.passengers}
                     onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                   >
                     <option value="1">۱ نفر</option>
                     <option value="2">۲ نفر (اتاق دوتخته)</option>
@@ -374,7 +374,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                     value={formData.datePreference}
                     onChange={(e) => setFormData({ ...formData, datePreference: e.target.value })}
                     placeholder="مثال: نیمه دوم شهریور"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                   />
                 </div>
               </div>
@@ -386,7 +386,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="مثال: ترجیح هتل ۵ ستاره نزدیک مترو، اتاق رو به دریا..."
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                 ></textarea>
               </div>
 

@@ -209,7 +209,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
 
                   <div className="text-end">
                     <span className={`inline-flex px-2.5 py-1 rounded-md text-caption font-bold ${
-                      tour.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      tour.status === 'confirmed' ? 'bg-brand-success/15 text-brand-success' : 'bg-brand-warning/15 text-brand-warning'
                     }`}>
                       {tour.statusLabel}
                     </span>
@@ -254,7 +254,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
               {/* Key Guarantee Box */}
               <div className="mt-4 p-4 bg-surface-primary rounded-card border border-border-default text-start space-y-2 text-caption text-text-secondary">
                 <div className="flex items-center gap-2 text-text-heading font-bold">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <ShieldCheck className="w-4 h-4 text-brand-success" />
                   <span>شفافیت خدمات ریوان سفر</span>
                 </div>
                 <p className="leading-relaxed">
@@ -347,7 +347,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                         </div>
                       </td>
                       <td className="py-4 px-4 text-center">
-                        <span className="inline-flex px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold text-caption border border-amber-200">
+                        <span className="inline-flex px-2 py-0.5 rounded bg-brand-warning-soft text-brand-warning font-bold text-caption border border-brand-warning/25">
                           {opt.stars ? `${fa(opt.stars)} ستاره` : '—'}
                         </span>
                       </td>
@@ -374,13 +374,13 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
             {/* Included Services */}
             <div className="bg-surface-secondary/60 border border-border-default rounded-card p-6 text-start">
               <div className="flex items-center gap-2 text-h3 text-text-heading font-bold mb-4">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <CheckCircle2 className="w-5 h-5 text-brand-success" />
                 <h3>خدمات شامل تور</h3>
               </div>
               <ul className="space-y-3 text-body-sm text-text-primary font-medium">
                 {tour.includedServices.map((srv, idx) => (
                   <li key={idx} className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <Check className="w-4 h-4 text-brand-success shrink-0 mt-0.5" />
                     <span>{srv}</span>
                   </li>
                 ))}
@@ -421,7 +421,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 <ul className="space-y-2 mb-4">
                   {trust.requiredDocs.map((doc, i) => (
                     <li key={i} className="flex items-start gap-2 text-body-sm text-text-heading">
-                      <FileCheck2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <FileCheck2 className="w-4 h-4 text-brand-success shrink-0 mt-0.5" />
                       <span>{doc}</span>
                     </li>
                   ))}
@@ -508,28 +508,28 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
 
           {formSubmitted ? (
             submitStored ? (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-card p-6 text-center text-emerald-900">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
+              <div className="bg-brand-success-soft border border-brand-success/25 rounded-card p-6 text-center text-text-primary">
+                <div className="w-12 h-12 rounded-full bg-brand-success/15 text-brand-success flex items-center justify-center mx-auto mb-3">
                   <Check className="w-6 h-6" />
                 </div>
                 <h4 className="text-h4 font-bold mb-2">درخواست تماس شما ثبت شد</h4>
-                <p className="text-body-sm text-emerald-800 mb-4">
+                <p className="text-body-sm text-brand-success mb-4">
                   {submitMessage || `کارشناس ریوان سفر در ساعات کاری برای تأیید قیمت و ظرفیت ${tour.title} با شما تماس می‌گیرد.`}
                 </p>
-                <div className="text-caption text-emerald-700">
+                <div className="text-caption text-brand-success">
                   در صورت تمایل می‌توانید مستقیماً با تلفن <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a> تماس حاصل فرمایید.
                 </div>
               </div>
             ) : (
-              <div className="bg-amber-50 border border-amber-200 rounded-card p-6 text-center text-amber-900">
-                <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-3">
+              <div className="bg-brand-warning-soft border border-brand-warning/25 rounded-card p-6 text-center text-text-primary">
+                <div className="w-12 h-12 rounded-full bg-brand-warning/15 text-brand-warning flex items-center justify-center mx-auto mb-3">
                   <Phone className="w-6 h-6" />
                 </div>
                 <h4 className="text-h4 font-bold mb-2">ثبت آنلاین ممکن نشد</h4>
-                <p className="text-body-sm text-amber-800 mb-4">
+                <p className="text-body-sm text-brand-warning mb-4">
                   {submitMessage}
                 </p>
-                <div className="text-caption text-amber-700">
+                <div className="text-caption text-brand-warning">
                   برای پیگیری سریع، لطفاً با تلفن <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a> تماس بگیرید.
                 </div>
               </div>
@@ -537,26 +537,26 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
           ) : (
             <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-start space-y-4">
               {formError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-control text-red-700 text-body-sm flex items-start gap-2">
+                <div className="p-3 bg-danger-soft border border-danger/25 rounded-control text-danger text-body-sm flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{formError}</span>
                 </div>
               )}
               <div>
-                <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی <span className="text-red-500">*</span></label>
+                <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی <span className="text-danger">*</span></label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="مثال: مریم کریمی"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                 />
-                {errors.name && <p className="text-caption text-red-600 mt-1">{errors.name}</p>}
+                {errors.name && <p className="text-caption text-danger mt-1">{errors.name}</p>}
               </div>
 
               <div>
-                <label className="block text-caption font-bold text-text-heading mb-1">شماره موبایل <span className="text-red-500">*</span></label>
+                <label className="block text-caption font-bold text-text-heading mb-1">شماره موبایل <span className="text-danger">*</span></label>
                 <input
                   type="tel"
                   required
@@ -564,9 +564,9 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-start focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:outline-none"
                 />
-                {errors.phone && <p className="text-caption text-red-600 mt-1">{errors.phone}</p>}
+                {errors.phone && <p className="text-caption text-danger mt-1">{errors.phone}</p>}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -575,7 +575,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   <select
                     value={formData.passengers}
                     onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                   >
                     <option value="1">۱ نفر (اتاق یک تخته)</option>
                     <option value="2">۲ نفر (اتاق دو تخته)</option>
@@ -591,7 +591,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                     value={formData.hotelPreference}
                     onChange={(e) => setFormData({ ...formData, hotelPreference: e.target.value })}
                     placeholder="مثال: هتل ۵ ستاره یا نام هتل"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                   />
                 </div>
               </div>
@@ -603,7 +603,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="مثال: تاریخ ترجیحی حرکت، سن همراهان کودک، درخواست گشت شهری اضافه…"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                 ></textarea>
               </div>
 

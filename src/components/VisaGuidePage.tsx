@@ -101,7 +101,7 @@ export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePage
 
           <div className="space-y-4">
             <div className="p-4 bg-surface-secondary rounded-card border border-border-default/60 flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-brand-success shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-body font-bold text-text-heading mb-1">اصل یا اسکن باکیفیت گذرنامه</h3>
                 <p className="text-caption text-text-secondary">گذرنامه باید حداقل ۷ ماه از تاریخ شروع سفر اعتبار داشته و حداقل ۲ صفحه خالی داشته باشد.</p>
@@ -109,7 +109,7 @@ export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePage
             </div>
 
             <div className="p-4 bg-surface-secondary rounded-card border border-border-default/60 flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-brand-success shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-body font-bold text-text-heading mb-1">عکس پرسنلی بیومتریک جدید</h3>
                 <p className="text-caption text-text-secondary">عکس با زمینه سفید، تمام‌رخ، بدون عینک و کلاه، مربوط به ۶ ماه اخیر.</p>
@@ -117,7 +117,7 @@ export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePage
             </div>
 
             <div className="p-4 bg-surface-secondary rounded-card border border-border-default/60 flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-brand-success shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-body font-bold text-text-heading mb-1">مدارک شغلی و تمکن مالی (در صورت نیاز مقصد)</h3>
                 <p className="text-caption text-text-secondary">گواهی اشتغال به کار، پروانه کسب یا گواهی تمکن بانکی لاتین با مهر رسمی بانک.</p>
@@ -171,12 +171,12 @@ export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePage
         </div>
 
         {/* Rejection Prevention Callout */}
-        <div className="p-6 bg-amber-50 border border-amber-200 rounded-card text-start">
-          <div className="flex items-center gap-2 text-amber-900 font-bold mb-2">
-            <AlertCircle className="w-5 h-5 text-amber-700" />
+        <div className="p-6 bg-brand-warning-soft border border-brand-warning/25 rounded-card text-start">
+          <div className="flex items-center gap-2 text-text-primary font-bold mb-2">
+            <AlertCircle className="w-5 h-5 text-brand-warning" />
             <h3>چگونه از رد شدن ویزا جلوگیری کنیم؟</h3>
           </div>
-          <p className="text-body-sm text-amber-950 leading-relaxed">
+          <p className="text-body-sm text-text-primary leading-relaxed">
             رایج‌ترین دلایل رد ویزا، نقص در اسناد، ناهماهنگی تاریخ پرواز با برنامه اقامت یا عدم شفافیت هدف سفر است. کارشناسان ریوان سفر پیش از ارسال پرونده، مدارک را با چک‌لیست بازبینی می‌کنند؛ اما نتیجه صدور در اختیار مرجع صادرکننده است.
           </p>
         </div>

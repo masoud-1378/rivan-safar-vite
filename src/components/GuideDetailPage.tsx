@@ -133,7 +133,15 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
         <div className="space-y-8 text-start">
           {/* Featured Image */}
           <div className="aspect-[21/9] rounded-card overflow-hidden border border-border-default shadow-card relative">
-            <SmartImage src={guide.heroImage} alt={guide.title} priority className="object-cover" />
+              <SmartImage
+                src={guide.heroImage}
+                alt={guide.title}
+                priority
+                // هیرو تقریباً تمام عرض کانتینر max-w-4xl (۸۹۶px) است؛ sizes
+                // پیش‌فرض کارتی (۳۳vw) کاندیدای کوچک‌تر از واقعیت می‌داد (LCP تار).
+                sizes="(max-width: 896px) 100vw, 896px"
+                className="object-cover"
+              />
           </div>
 
           {/* Article Sections */}
@@ -151,7 +159,7 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
                   <ul className="space-y-2 pt-2 ps-2">
                     {sec.checkpoints.map((pt, pIdx) => (
                       <li key={pIdx} className="flex items-start gap-2.5 text-body-sm text-text-primary">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-1" />
+                        <CheckCircle2 className="w-4 h-4 text-brand-success shrink-0 mt-1" />
                         <span className="leading-relaxed">{pt}</span>
                       </li>
                     ))}

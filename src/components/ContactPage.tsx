@@ -159,25 +159,25 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
 
               {submitted ? (
                 leadStored ? (
-                  <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-card text-center text-emerald-900">
-                    <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
+                  <div className="p-6 bg-brand-success-soft border border-brand-success/25 rounded-card text-center text-text-primary">
+                    <div className="w-12 h-12 rounded-full bg-brand-success/15 text-brand-success flex items-center justify-center mx-auto mb-3">
                       <Check className="w-6 h-6" />
                     </div>
                     <h4 className="text-h4 font-bold mb-2">پیام شما با موفقیت دریافت شد</h4>
-                    <p className="text-body-sm text-emerald-800">
+                    <p className="text-body-sm text-brand-success">
                       {submitMessage || 'کارشناسان ریوان سفر در ساعات کاری پاسخگوی شما هستند.'}
                     </p>
                   </div>
                 ) : (
-                  <div className="p-6 bg-amber-50 border border-amber-200 rounded-card text-center text-amber-900">
-                    <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-3">
+                  <div className="p-6 bg-brand-warning-soft border border-brand-warning/25 rounded-card text-center text-text-primary">
+                    <div className="w-12 h-12 rounded-full bg-brand-warning/15 text-brand-warning flex items-center justify-center mx-auto mb-3">
                       <Phone className="w-6 h-6" />
                     </div>
                     <h4 className="text-h4 font-bold mb-2">ثبت آنلاین ممکن نشد</h4>
-                    <p className="text-body-sm text-amber-800">
+                    <p className="text-body-sm text-brand-warning">
                       {submitMessage}
                     </p>
-                    <div className="text-caption text-amber-700 mt-3">
+                    <div className="text-caption text-brand-warning mt-3">
                       برای پیگیری سریع، لطفاً با تلفن <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a> تماس بگیرید.
                     </div>
                   </div>
@@ -185,26 +185,26 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {formError && (
-                    <p className="p-3 bg-red-50 border border-red-200 rounded-control text-red-700 text-body-sm">
+                    <p className="p-3 bg-danger-soft border border-danger/25 rounded-control text-danger text-body-sm">
                       {formError}
                     </p>
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی <span className="text-red-500">*</span></label>
+                      <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی <span className="text-danger">*</span></label>
                       <input
                         type="text"
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder="مثال: رضا احمدی"
-                        className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                        className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                       />
-                      {errors.name && <p className="text-caption text-red-600 mt-1">{errors.name}</p>}
+                      {errors.name && <p className="text-caption text-danger mt-1">{errors.name}</p>}
                     </div>
 
                     <div>
-                      <label className="block text-caption font-bold text-text-heading mb-1">شماره موبایل <span className="text-red-500">*</span></label>
+                      <label className="block text-caption font-bold text-text-heading mb-1">شماره موبایل <span className="text-danger">*</span></label>
                       <input
                         type="tel"
                         required
@@ -212,9 +212,9 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                        className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-start focus:border-brand-orange focus:outline-none"
+                        className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:outline-none"
                       />
-                      {errors.phone && <p className="text-caption text-red-600 mt-1 text-start">{errors.phone}</p>}
+                      {errors.phone && <p className="text-caption text-danger mt-1 text-start">{errors.phone}</p>}
                     </div>
                   </div>
 
@@ -223,7 +223,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                     <select
                       value={formData.subject}
                       onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      className="w-full bg-surface-secondary border border-border-default rounded-control px-3 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                      className="w-full bg-surface-secondary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                     >
                       <option value="مشاوره عمومی تور">مشاوره عمومی تور و استعلام قیمت</option>
                       <option value="تورهای نمایشگاهی و تجاری">تورهای نمایشگاهی و تجاری (چین، دبی، اروپا)</option>
@@ -239,7 +239,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                       placeholder="مقصد، تاریخ مد نظر، تعداد نفرات یا سوال مورد نظر…"
-                      className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                      className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
                     ></textarea>
                   </div>
 

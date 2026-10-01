@@ -110,7 +110,7 @@ export default function Footer({ onNavigate }: FooterProps) {
           <div className="lg:col-span-7 space-y-4">
             {/* Logo */}
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-control bg-brand-orange flex items-center justify-center text-on-brand shadow-subtle">
+              <div className="w-9 h-9 rounded-control bg-brand-orange flex items-center justify-center text-text-on-brand shadow-subtle">
                 <Plane className="w-5 h-5 -rotate-45" />
               </div>
               <div className="flex flex-col">
@@ -146,7 +146,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={label}
-                      className="w-9 h-9 rounded-small bg-white/5 hover:bg-brand-orange hover:text-on-brand text-text-on-dark-secondary flex items-center justify-center transition-colors"
+                      className="w-11 h-11 rounded-small bg-white/5 hover:bg-brand-orange hover:text-text-on-brand text-text-on-dark-secondary flex items-center justify-center transition-colors"
                     >
                       <Icon className="w-4 h-4" />
                     </a>
