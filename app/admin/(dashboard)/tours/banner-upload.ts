@@ -14,6 +14,8 @@ import { requireAdmin } from '@/src/lib/admin-auth';
 
 const BUCKET = 'hotel-photos';
 const MAX_BYTES = 5 * 1024 * 1024;
+// F4: allowlist پسوند — فقط فرمت‌های عکسیِ امن (بستن ریسک SVG).
+const ALLOWED_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
 
 function serviceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -29,7 +31,7 @@ async function ensureBucket(sb: SupabaseClient) {
   if (listError) throw new Error('خطا در بررسی فضای ذخیره‌سازی.');
   if (!buckets?.some((b) => b.name === BUCKET)) {
     const { error: createError } = await sb.storage.createBucket(BUCKET, { public: true });
-    if (createError) throw new Error('ساخت باکت عکس ناموفق بود.');
+    if (createError) throw new Error('ساخت فضای ذخیرهٔ عکس ناموفق بود.');
   }
 }
 
@@ -50,13 +52,16 @@ export async function uploadTourBanner(
   await ensureBucket(sb);
 
   const cleanSlug = (slug || 'tour').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'tour';
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().slice(0, 8);
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (!ALLOWED_EXTS.includes(ext)) {
+    throw new Error('فرمت عکس مجاز نیست؛ فقط jpg، png، webp یا gif.');
+  }
   const path = `tours/${cleanSlug}/${crypto.randomUUID()}.${ext}`;
   const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, file, {
     contentType: file.type,
     upsert: false,
   });
-  if (uploadError) throw new Error('آپلود بنر ناموفق بود.');
+  if (uploadError) throw new Error('بنر آپلود نشد.');
 
   const {
     data: { publicUrl },

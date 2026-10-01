@@ -8,11 +8,9 @@ import {
   Mic, 
   CheckCircle, 
   Sparkles,
-  LifeBuoy,
-  FileCheck2
+  LifeBuoy
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import type { TourConsultantSpecItem, TourInput } from '../actions';
 
 interface Stage5ConsultantProps {
@@ -133,8 +131,7 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
         <div className="flex flex-col justify-center rounded-sm bg-secondary/30 p-4 border border-border/60">
           <span className="text-xs font-bold text-foreground">راهنمای وضعیت</span>
           <p className="text-[11px] text-muted-foreground mt-1">
-            «ظرفیت» فقط وضعیت ظرفیت است (روی سایت به‌صورت برچسب دیده می‌شود؛ انتخابش در مرحلهٔ ۱ است). دیده‌شدن یا پنهان‌ماندن تور روی سایت
-            با «انتشار» کنترل می‌شود: تور «پیش‌نویس» روی سایت نیست و با دکمهٔ «انتشار» پایین همین فرم منتشر می‌شود.
+            «ظرفیت» فقط وضعیت ظرفیت است (روی سایت به‌صورت برچسب دیده می‌شود؛ انتخابش در مرحلهٔ ۱ است). این‌که تور روی سایت دیده شود یا نه با «انتشار» است. تور «پیش‌نویس» روی سایت نیست و با دکمهٔ «انتشار» پایین همین فرم منتشر می‌شود.
           </p>
         </div>
       </div>

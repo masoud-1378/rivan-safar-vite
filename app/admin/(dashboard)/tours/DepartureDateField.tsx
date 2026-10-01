@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Field, Input } from '@/components/ui/input';
 import { formatJalali } from '@/lib/jalali';
@@ -26,22 +27,30 @@ export function DepartureDateField({
   error,
   placeholder = 'مثلاً: ۱۵ آبان',
 }: DepartureDateFieldProps) {
+  // F10: تاریخ انتخاب‌شده از تقویم روی خودِ دکمه دیده می‌شود (کنترل‌شده).
+  const [picked, setPicked] = useState<Date | null>(null);
   return (
     <Field label={label} hint={hint} error={error}>
       <div className="flex gap-2">
         <Input
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            // تایپ دستی، انتخاب تقویمیِ قبلی را بی‌اعتبار می‌کند.
+            setPicked(null);
+            onChange(e.target.value);
+          }}
           placeholder={placeholder}
           className="grow"
         />
         <DatePicker
-          clearable={false}
+          clearable
           weekday={false}
           className="w-40 shrink-0"
-          placeholder="از تقویم"
+          placeholder="از تقویم انتخاب کنید"
+          value={picked}
           onChange={(d) => {
-            if (d) onChange(formatJalali(d, { weekday: false }));
+            setPicked(d);
+            onChange(d ? formatJalali(d, { weekday: false }) : '');
           }}
         />
       </div>

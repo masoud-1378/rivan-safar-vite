@@ -41,7 +41,7 @@ const ENTITY_LABELS: Record<string, string> = {
   site_destinations: 'مقصد',
   origin_cities: 'مبدأ',
   accommodations: 'هتل',
-  guides: 'مقاله',
+  guides: 'راهنما',
   exhibitions: 'نمایشگاه',
   content_blocks: 'بلوک محتوایی',
   seo_internal_links: 'لینک داخلی',

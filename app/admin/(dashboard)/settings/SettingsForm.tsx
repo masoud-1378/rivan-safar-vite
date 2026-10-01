@@ -162,6 +162,8 @@ export default function SettingsPage({ initial, role }: { initial: Record<string
                           error={fieldErrors[d.key]}
                           onChange={(v) => {
                             setValues((prev) => ({ ...prev, [d.key]: v }));
+                            // F7: با اولین تغییر بعدی، بنر «همهٔ تغییرات ذخیره شد.» پاک می‌شود.
+                            setSavedFlash(false);
                             setFieldErrors((prev) => {
                               if (!prev[d.key]) return prev;
                               const next = { ...prev };

@@ -24,7 +24,8 @@ export interface GuideInput {
   sections: unknown;
   faqs: unknown;
   relatedDestinationSlug: string;
-  relatedTourId: string;
+  // F8: نام ویژگی «نامک» است چون مقدار ذخیره‌شده نامک تور است، نه شناسه؛ ستون دیتابیس دست نمی‌خورد.
+  relatedTourSlug: string;
   status: GuideStatus;
 }
 
@@ -52,7 +53,7 @@ export async function listGuides() {
     sections: asJsonArray(r.sections),
     faqs: asJsonArray(r.faqs),
     relatedDestinationSlug: r.relatedDestinationSlug ?? '',
-    relatedTourId: r.relatedTourId ?? '',
+    relatedTourSlug: r.relatedTourId ?? '',
     status: r.status as GuideStatus,
     lastReviewedAt: r.lastReviewedAt ? r.lastReviewedAt.toISOString() : null,
     createdAt: r.createdAt.toISOString(),
@@ -84,7 +85,7 @@ export async function getGuide(id: string) {
     sections: asJsonArray(r.sections),
     faqs: asJsonArray(r.faqs),
     relatedDestinationSlug: r.relatedDestinationSlug ?? '',
-    relatedTourId: r.relatedTourId ?? '',
+    relatedTourSlug: r.relatedTourId ?? '',
     status: r.status as GuideStatus,
     lastReviewedAt: r.lastReviewedAt ? r.lastReviewedAt.toISOString() : null,
     createdAt: r.createdAt.toISOString(),
@@ -101,7 +102,7 @@ export async function saveGuide(id: string | null | undefined, data: GuideInput)
   const slug = (data.slug || '').trim();
   const titleFa = (data.titleFa || '').trim();
   if (!slug) throw new Error('نامک (slug) لازم است.');
-  if (titleFa.length < 2) throw new Error('عنوان مقاله لازم است.');
+  if (titleFa.length < 2) throw new Error('عنوان راهنما لازم است.');
   const status: GuideStatus = VALID_STATUS.includes(data.status) ? data.status : 'draft';
   const values = {
     slug,
@@ -117,7 +118,7 @@ export async function saveGuide(id: string | null | undefined, data: GuideInput)
     sections: asJsonArray(data.sections),
     faqs: asJsonArray(data.faqs),
     relatedDestinationSlug: data.relatedDestinationSlug || null,
-    relatedTourId: data.relatedTourId || null,
+    relatedTourId: data.relatedTourSlug || null,
     status,
     updatedAt: new Date(),
   };
@@ -148,12 +149,12 @@ export async function deleteGuide(id: string) {
     action: 'hard_delete',
     entity: 'guides',
     entityId: id,
-    reasonFa: `حذف دائمی فرزندهای مقالهٔ «${title}»: ${fa(links.length)} لینک.`,
+    reasonFa: `حذف دائمی فرزندهای راهنمای «${title}»: ${fa(links.length)} لینک.`,
   });
   await archiveOne(db, guides, id, {
     actor: session.email,
     entity: 'guides',
-    reasonFa: `بایگانی مقالهٔ «${title}»؛ لینک‌های متصلش برای همیشه حذف شدند و با بازیابی برنمی‌گردند.`,
+    reasonFa: `بایگانی راهنمای «${title}»؛ لینک‌های متصلش برای همیشه حذف شدند و با بازیابی برنمی‌گردند.`,
   });
   revalidatePath('/admin/guides');
   return { ok: true };

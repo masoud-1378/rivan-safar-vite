@@ -45,7 +45,7 @@ export interface DataTableProps<T> {
   className?: string;
   /** عملیات گروهی: اگر داده شود، ستون چک‌باکس اول جدول رندر می‌شود. */
   selection?: DataTableSelection;
-  /** دکمهٔ CTA در حالت خالی، مثلاً «ساخت اولین X» (X2). */
+  /** دکمهٔ CTA در حالت خالی، مثلاً «ساخت اولین X» (X2)؛ فقط وقتی هیچ ردیفی نیست، نه در جست‌وجوی بی‌نتیجه (F13). */
   emptyAction?: { label: string; onClick: () => void };
 }
 
@@ -147,7 +147,9 @@ export function DataTable<T extends Record<string, unknown>>({ rows, columns, ro
                   description={emptyDescription}
                   className="rounded-none border-0"
                   action={
-                    emptyAction ? (
+                    // F13: دکمهٔ emptyAction فقط وقتی «واقعاً هیچ ردیفی نیست» (rows خالی)،
+                    // نه وقتی جست‌وجو/فیلتر نتیجه‌ای نداده.
+                    emptyAction && rows.length === 0 ? (
                       <Button type="button" onClick={emptyAction.onClick} className="min-h-11">
                         <Plus className="size-4" />
                         {emptyAction.label}

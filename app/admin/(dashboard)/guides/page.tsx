@@ -5,7 +5,7 @@ import { listTours } from '../tours/actions';
 import GuidesManager from './GuidesManager';
 
 export const metadata: Metadata = {
-  title: 'مقالات و راهنماها | پنل ریوان سفر',
+  title: 'راهنماها | پنل ریوان سفر',
   robots: 'noindex,nofollow',
 };
 

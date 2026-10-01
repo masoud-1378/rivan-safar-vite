@@ -102,7 +102,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
       : hotel.bookingType === 'semi_charter'
         ? 'نرخ نیم‌چارتر؛ با پر شدن ظرفیت ممکن است تغییر کند.'
         : hotel.bookingType === 'on_request'
-          ? 'قیمت نهایی موقع رزرو استعلام می‌شود؛ اگر سقف تقریبی دارید بنویسید.'
+          ? 'قیمت نهایی موقع رزرو مشخص می‌شود؛ اگر سقف تقریبی دارید بنویسید.'
           : null;
 
   const perPersonLabel =
@@ -114,7 +114,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
     hotel.bookingType === 'guarantee' ? 'نرخی که هتل به‌صورت گارانتی اعلام کرده است.'
     : hotel.bookingType === 'semi_charter' ? 'نرخ نیم‌چارتر این هتل برای همین تور.'
     : hotel.bookingType === 'on_request' ? undefined
-    : 'برای ردیف‌های قدیمی؛ با انتخاب نوع رزرو، برچسب دقیق می‌شود.';
+    : 'برای تورهای قدیمی؛ با انتخاب نوع رزرو، برچسب دقیق می‌شود.';
 
   return (
     <div className="rounded-sm border border-border bg-card p-5 space-y-4 transition-all hover:border-border/80">
@@ -140,7 +140,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
               type="button"
               onClick={onUnlink}
               className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors p-1"
-              title="نام و ستاره دستی می‌ماند؛ فقط اتصال به جدول قطع می‌شود"
+              title="نام و ستاره دستی می‌ماند؛ فقط پیوندش با فهرست هتل‌ها قطع می‌شود"
             >
               <Unlink className="size-4" />
               جدا کردن
@@ -341,7 +341,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
       </div>
 
       {/* Location & Transfer note */}
-      <Field label="موقعیت هتل یا نکته ترانسفر" hint="مثال: واقع در میدان تقسیم، فاصله ۵ دقیقه تا مترو، دارای استخر روباز">
+      <Field label="موقعیت هتل یا نکته ترانسفر" hint="مثال: واقع در میدان تقسیم، فاصله ۵ دقیقه تا مترو، استخر روباز دارد">
         <Input
           value={hotel.locationNote || ''}
           onChange={(e) => onUpdate({ locationNote: e.target.value })}

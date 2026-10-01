@@ -147,7 +147,7 @@ export default async function AdminDashboard() {
     { label: 'کل درخواست‌های تماس', value: fa(leads), trend: last7(trend.leads) },
     { label: 'همهٔ تورها', value: fa(tours), trend: last7(trend.tours) },
     { label: 'مقصدها و شهرها', value: fa(destinations), trend: last7(trend.destinations) },
-    { label: 'مقاله و راهنما', value: fa(guidesCount), trend: last7(trend.guides) },
+    { label: 'راهنماها', value: fa(guidesCount), trend: last7(trend.guides) },
   ];
 
   const leadSeries = trend.labels.map((key, i) => ({
@@ -158,7 +158,7 @@ export default async function AdminDashboard() {
   const quickLinks = [
     { href: '/admin/tours', label: 'مدیریت تورها', value: tours, icon: BriefcaseBusiness },
     { href: '/admin/catalog?tab=destinations', label: 'مقصدها و شهرها', value: destinations, icon: MapPinned },
-    { href: '/admin/guides', label: 'مقالات و راهنماها', value: guidesCount, icon: BookOpen },
+    { href: '/admin/guides', label: 'راهنماها', value: guidesCount, icon: BookOpen },
     { href: '/admin/exhibitions', label: 'نمایشگاه‌ها', value: exhibitionsCount, icon: Globe2 },
   ];
 
@@ -202,7 +202,8 @@ export default async function AdminDashboard() {
           <div className="mb-4"><h2 className="font-semibold">وضعیت سامانه</h2><p className="text-sm text-muted-foreground">مواردی که نیاز به توجه دارند</p></div>
           <div className="space-y-3 text-sm">
             <Link href="/admin/seo" className="flex items-center justify-between rounded-sm bg-accent/50 p-3 hover:bg-accent"><span>لندینگ‌های پیش‌نویس</span><Badge variant={Number(drafts) ? 'warning' : 'success'}>{fa(drafts)}</Badge></Link>
-            <Link href="/admin/tours" className="flex items-center justify-between rounded-sm bg-accent/50 p-3 hover:bg-accent"><span>قیمت‌های رو به انقضا</span><Badge variant={Number(expiringPrices) ? 'warning' : 'success'}>{fa(expiringPrices)}</Badge></Link>
+            {/* F5: تا تصمیم P4 نمای فیلترشده‌ای برای قیمت‌های رو به انقضا نیست؛ لینک گمراه‌کننده برداشته شد، ردیف می‌ماند. */}
+            <div className="flex items-center justify-between rounded-sm bg-accent/50 p-3"><span>قیمت‌های رو به انقضا</span><Badge variant={Number(expiringPrices) ? 'warning' : 'success'}>{fa(expiringPrices)}</Badge></div>
             <Link href="/admin/tours" className="flex items-center justify-between rounded-sm bg-accent/50 p-3 hover:bg-accent"><span>حرکت‌های ثبت‌شده</span><Badge variant="secondary">{fa(departures)}</Badge></Link>
           </div>
         </Card>

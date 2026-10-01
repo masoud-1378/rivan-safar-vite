@@ -39,7 +39,7 @@ async function ensureBucket(sb: SupabaseClient) {
   if (listError) throw new Error('خطا در بررسی فضای ذخیره‌سازی.');
   if (!buckets?.some((b) => b.name === BUCKET)) {
     const { error: createError } = await sb.storage.createBucket(BUCKET, { public: true });
-    if (createError) throw new Error('ساخت باکت عکس هتل ناموفق بود.');
+    if (createError) throw new Error('ساخت فضای ذخیرهٔ عکس هتل ناموفق بود.');
   }
 }
 

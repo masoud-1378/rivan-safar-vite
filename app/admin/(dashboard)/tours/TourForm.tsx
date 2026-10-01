@@ -610,10 +610,10 @@ export default function TourForm({
       <AlertDialog
         open={showCancelConfirm}
         onOpenChange={(open) => !open && setShowCancelConfirm(false)}
-        title="خارج شدن بدون ذخیره؟"
+        title="بدون ذخیره خارج می‌شوید؟"
         description="تغییرات ذخیره‌نشده از دست می‌رود."
-        confirmText="خارج شو"
-        cancelText="برگرد"
+        confirmText="خارج شوید"
+        cancelText="بازگشت"
         onConfirm={() => { setShowCancelConfirm(false); onDone(); }}
       />
     </div>

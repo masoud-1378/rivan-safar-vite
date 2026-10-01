@@ -43,8 +43,9 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
   // Money Page link: هر راهنما به یک صفحه فروش مرتبط وصل است (سند 03)
   // relatedDestinationSlug ممکن است شهر (istanbul) یا کشور (turkey) باشد
   const moneyPagePath = (() => {
-    if (guide.relatedTourId) {
-      const tour = tours.find((t) => t.id === guide.relatedTourId);
+    // F8: مقدار ذخیره‌شده نامک تور است؛ در TourItem عمومی، id همان نامک است.
+    if (guide.relatedTourSlug) {
+      const tour = tours.find((t) => t.id === guide.relatedTourSlug);
       if (tour) return { path: `/tour/${tour.id}`, label: tour.title };
     }
     if (guide.relatedDestinationSlug) {

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
-import { accommodations, originCities, siteDestinations, siteTours } from '@/db/schema';
+import { accommodations, auditLogs, originCities, siteDestinations, siteTours } from '@/db/schema';
 import { asc, desc, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
@@ -544,7 +544,7 @@ export async function setToursPublishStatusBulk(
   ids: string[],
   next: 'draft' | 'published',
 ): Promise<{ ok: true; count: number }> {
-  await requireAdmin(['owner', 'editor']);
+  const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   if (next !== 'draft' && next !== 'published') throw new Error('وضعیت انتشار نامعتبر است.');
@@ -556,6 +556,14 @@ export async function setToursPublishStatusBulk(
       .set({ publishStatus: next, updatedAt: new Date() })
       .where(eq(siteTours.id, id));
   }
+  // F2: رکورد جمعی حسابرسی، مثل bulkUpdateLeads.
+  await db.insert(auditLogs).values({
+    actor: session.email,
+    action: 'tour.publish_status',
+    entity: 'site_tours',
+    entityId: `${clean.length} تور`,
+    reasonFa: `عملیات گروهی (${next === 'published' ? 'انتشار' : 'لغو انتشار'})`,
+  });
   revalidatePath('/admin/tours');
   return { ok: true, count: clean.length };
 }

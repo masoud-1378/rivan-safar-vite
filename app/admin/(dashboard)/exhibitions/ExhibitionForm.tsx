@@ -61,11 +61,13 @@ export default function ExhibitionForm({
   const [image, setImage] = useState(initial?.image ?? '');
   const [editionSlug, setEditionSlug] = useState(initial?.editionSlug ?? '');
   const [editionSlugTouched, setEditionSlugTouched] = useState(Boolean(initial?.editionSlug));
-  const [solarDate, setSolarDate] = useState(initial?.solarDate ?? '');
-  const [solarPicked, setSolarPicked] = useState<Date | null>(() => {
-    const parsed = initial?.solarDate ? new Date(initial.solarDate) : null;
-    return parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
-  });
+  // F1: «تاریخ شروع» و «تاریخ پایان (اختیاری)» هر دو DatePicker شمسی‌اند؛
+  // «متن نمایشی تاریخ» اگر پر باشد همان روی سایت می‌آید و رکوردهای قدیمیِ
+  // بازه‌دار (مثل «۲۴ مهر تا ۱۴ آبان ۱۴۰۵») را دست‌نخورده نگه می‌دارد.
+  const [startPicked, setStartPicked] = useState<Date | null>(null);
+  const [endPicked, setEndPicked] = useState<Date | null>(null);
+  const [displayText, setDisplayText] = useState(initial?.solarDate ?? '');
+  const [slugError, setSlugError] = useState<string | undefined>();
   const [gregorianDate, setGregorianDate] = useState(initial?.gregorianDate ?? '');
   const [visaDeadline, setVisaDeadline] = useState(initial?.visaDeadline ?? '');
   const [hotelArea, setHotelArea] = useState(initial?.hotelArea ?? '');
@@ -107,17 +109,33 @@ export default function ExhibitionForm({
     if (!industrySlugTouched) setIndustrySlug(faSlug(v));
   };
 
-  // E3: تاریخ شمسی با DatePicker؛ تاریخ میلادی خودکار.
-  const onSolarPick = (d: Date | null) => {
-    setSolarPicked(d);
-    setSolarDate(d ? formatJalali(d) : '');
+  // F1: انتخاب شروع/پایان، «متن نمایشی» را می‌سازد؛ تاریخ میلادی خودکار از شروع.
+  const buildDisplay = (start: Date | null, end: Date | null) => {
+    if (!start) return '';
+    const s = formatJalali(start);
+    return end ? `${s} تا ${formatJalali(end)}` : s;
+  };
+  const onStartPick = (d: Date | null) => {
+    setStartPicked(d);
     setGregorianDate(d ? gregorianLabel(d) : '');
     if (d && !editionSlugTouched) setEditionSlug(String(d.getFullYear()));
+    setDisplayText(buildDisplay(d, endPicked));
+  };
+  const onEndPick = (d: Date | null) => {
+    setEndPicked(d);
+    if (d || startPicked) setDisplayText(buildDisplay(startPicked, d));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // F14: به‌جای required بومی، اعتبارسنجی با پیام فارسی زیر فیلد.
+    if (!slug.trim()) {
+      setSlugError('نامک را وارد کنید.');
+      return;
+    }
+    setSlugError(undefined);
 
     const phasesProblem = validateBlocks('phase', phases);
     setPhasesError(phasesProblem ?? undefined);
@@ -141,7 +159,7 @@ export default function ExhibitionForm({
       description: description.trim(),
       image: image.trim(),
       editionSlug: editionSlug.trim(),
-      solarDate: solarDate.trim(),
+      solarDate: displayText.trim(),
       gregorianDate: gregorianDate.trim(),
       phases: cleanBlocks('phase', phases),
       visaDeadline: visaDeadline.trim(),
@@ -195,8 +213,14 @@ export default function ExhibitionForm({
         <Field label="تصویر" htmlFor="ex-image">
           <Input id="ex-image" value={image} onChange={(e) => setImage(e.target.value)} className="text-start" dir="ltr" placeholder="https://..." />
         </Field>
-        <Field label="تاریخ شمسی" htmlFor="ex-solar">
-          <DatePicker value={solarPicked} onChange={onSolarPick} placeholder="انتخاب تاریخ برگزاری" />
+        <Field label="تاریخ شروع" htmlFor="ex-start">
+          <DatePicker value={startPicked} onChange={onStartPick} placeholder="انتخاب تاریخ شروع" />
+        </Field>
+        <Field label="تاریخ پایان (اختیاری)" htmlFor="ex-end">
+          <DatePicker value={endPicked} onChange={onEndPick} placeholder="انتخاب تاریخ پایان" />
+        </Field>
+        <Field label="متن نمایشی تاریخ (اختیاری)" htmlFor="ex-display" hint="اگر پر باشد، همین متن روی سایت نمایش داده می‌شود؛ برای حفظ تاریخ‌های بازه‌ای قدیمی." className="sm:col-span-2">
+          <Input id="ex-display" value={displayText} onChange={(e) => setDisplayText(e.target.value)} placeholder="مثال: ۲۴ مهر تا ۱۴ آبان ۱۴۰۵" />
         </Field>
         <Field label="قیمت پایه" htmlFor="ex-price">
           <Input id="ex-price" value={startingPrice} onChange={(e) => setStartingPrice(e.target.value)} placeholder="مثال: از ۴۵ میلیون تومان" />
@@ -213,8 +237,8 @@ export default function ExhibitionForm({
       {/* E4: فیلدهای کم‌کاربرد در بخش تاشوی «تکمیلی» */}
       <Collapsible trigger="تکمیلی" openLabel="بستن بخش تکمیلی" className="rounded-sm border border-border bg-muted/20 p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="نامک انگلیسی" htmlFor="ex-slug" hint="خودکار از عنوان فارسی ساخته می‌شود؛ فقط اگر لازم بود تغییرش دهید.">
-            <Input id="ex-slug" value={slug} onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); }} className="text-start" dir="ltr" placeholder="e.g. gitex-2025" required />
+          <Field label="نامک انگلیسی" htmlFor="ex-slug" hint="خودکار از عنوان فارسی ساخته می‌شود؛ فقط اگر لازم بود تغییرش دهید." error={slugError}>
+            <Input id="ex-slug" value={slug} onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); setSlugError(undefined); }} className="text-start" dir="ltr" placeholder="e.g. gitex-2025" />
           </Field>
           <Field label="عنوان انگلیسی" htmlFor="ex-title-en">
             <Input id="ex-title-en" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} className="text-start" dir="ltr" placeholder="e.g. GITEX Global 2025" />
@@ -228,7 +252,7 @@ export default function ExhibitionForm({
           <Field label="نامک صنعت" htmlFor="ex-industry-slug" hint="خودکار از نام صنعت">
             <Input id="ex-industry-slug" value={industrySlug} onChange={(e) => { setIndustrySlug(e.target.value); setIndustrySlugTouched(true); }} className="text-start" dir="ltr" placeholder="technology" />
           </Field>
-          <Field label="نامک دوره" htmlFor="ex-edition" hint="خودکار از سال تاریخ برگزاری">
+          <Field label="نامک دوره" htmlFor="ex-edition" hint="خودکار از سال میلادی تاریخ برگزاری (مثلاً ۲۰۲۵)">
             <Input id="ex-edition" value={editionSlug} onChange={(e) => { setEditionSlug(e.target.value); setEditionSlugTouched(true); }} className="text-start" dir="ltr" placeholder="2025" />
           </Field>
           <Field label="تاریخ میلادی" htmlFor="ex-greg" hint="خودکار از تاریخ شمسی ساخته می‌شود.">

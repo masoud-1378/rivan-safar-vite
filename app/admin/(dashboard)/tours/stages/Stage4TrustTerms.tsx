@@ -80,7 +80,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
     const defaults = defaultDocsForVisa(!!data.visaRequired);
     updateTrust({ requiredDocs: defaults });
     toast({
-      title: `مدارک به پیش‌فرض‌های ${data.visaRequired ? 'سفر نیازمند ویزا' : 'سفر بدون نیاز به ویزا'} برگشت`,
+      title: `مدارک به حالت پیش‌فرض برگشت (${data.visaRequired ? 'سفر نیازمند ویزا' : 'سفر بدون نیاز به ویزا'})`,
     });
   };
 

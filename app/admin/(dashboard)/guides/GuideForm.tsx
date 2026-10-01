@@ -84,7 +84,8 @@ export default function GuideForm({
   const [relatedDestinationSlug, setRelatedDestinationSlug] = useState(
     initial?.relatedDestinationSlug ?? '',
   );
-  const [relatedTourId, setRelatedTourId] = useState(initial?.relatedTourId ?? '');
+  // F8: این فیلد «نامک» تور را نگه می‌دارد (مقادیر فهرست نامک‌اند)، نه شناسهٔ دیتابیس را.
+  const [relatedTourSlug, setRelatedTourSlug] = useState(initial?.relatedTourSlug ?? '');
   const [sections, setSections] = useState<unknown[]>(
     Array.isArray(initial?.sections) ? initial.sections : [],
   );
@@ -137,7 +138,7 @@ export default function GuideForm({
       sections: cleanBlocks('section', sections),
       faqs: cleanBlocks('faq', faqs),
       relatedDestinationSlug: relatedDestinationSlug.trim(),
-      relatedTourId: relatedTourId.trim(),
+      relatedTourSlug: relatedTourSlug.trim(),
       status,
     };
 
@@ -156,7 +157,7 @@ export default function GuideForm({
       <form onSubmit={handleSubmit} className="space-y-5 p-5">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div>
-            <h2 className="text-lg font-semibold">{editingId ? 'ویرایش مقاله' : 'مقاله جدید'}</h2>
+            <h2 className="text-lg font-semibold">{editingId ? 'ویرایش راهنما' : 'راهنمای جدید'}</h2>
             <p className="mt-1 text-sm text-muted-foreground">اطلاعات و محتوای راهنمای سفر را وارد کنید.</p>
           </div>
           {onCancel && <Button type="button" variant="ghost" size="sm" onClick={onCancel}>انصراف</Button>}
@@ -267,8 +268,8 @@ export default function GuideForm({
         <Field label="تور مرتبط" htmlFor="guide-rel-tour" hint="از فهرست واقعی تورها">
           <Select
             id="guide-rel-tour"
-            value={relatedTourId}
-            onChange={(e) => setRelatedTourId(e.target.value)}
+            value={relatedTourSlug}
+            onChange={(e) => setRelatedTourSlug(e.target.value)}
             options={[{ value: '', label: 'بدون تور مرتبط' }, ...tourOptions.map((o) => ({ value: o.value, label: o.label }))]}
           />
         </Field>
@@ -283,13 +284,13 @@ export default function GuideForm({
         </Field>
       </div>
 
-      <Field label="خلاصه مقاله" htmlFor="guide-summary">
+      <Field label="خلاصه راهنما" htmlFor="guide-summary">
         <Textarea
           id="guide-summary"
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
             className="min-h-20"
-          placeholder="چکیده کوتاه مقاله…"
+          placeholder="چکیده کوتاه راهنما…"
         />
       </Field>
 
@@ -305,7 +306,7 @@ export default function GuideForm({
 
       <BlockEditor
         kind="section"
-        title="بخش‌های مقاله"
+        title="بخش‌های راهنما"
         value={sections}
         onChange={(next) => {
           setSections(next);

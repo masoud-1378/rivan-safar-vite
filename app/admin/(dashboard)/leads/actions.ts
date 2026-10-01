@@ -50,9 +50,9 @@ export async function bulkUpdateLeads(ids: string[], patch: { status?: LeadStatu
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   const valid = ids.filter((id) => typeof id === 'string' && id.length > 0);
-  if (valid.length === 0) throw new Error('درخواستی انتخاب نشده است.');
+  if (valid.length === 0) throw new Error('هیچ درخواستی انتخاب نکرده‌اید.');
   if (patch.status === undefined && patch.assignee === undefined) {
-    throw new Error('تغییری برای اعمال انتخاب نشده است.');
+    throw new Error('چیزی برای اعمال انتخاب نکرده‌اید.');
   }
   await db
     .update(leadRequests)
@@ -63,7 +63,7 @@ export async function bulkUpdateLeads(ids: string[], patch: { status?: LeadStatu
     .where(inArray(leadRequests.id, valid));
   const what: string[] = [];
   if (patch.status !== undefined) what.push(`تغییر وضعیت به «${LEAD_STATUS_FA[patch.status]}»`);
-  if (patch.assignee !== undefined) what.push(patch.assignee ? `تخصیص مسئول «${patch.assignee}»` : 'حذف مسئول پیگیری');
+  if (patch.assignee !== undefined) what.push(patch.assignee ? `تعیین مسئول: ${patch.assignee}` : 'حذف مسئول پیگیری');
   await db.insert(auditLogs).values({
     actor: session.email,
     action: 'lead.status',

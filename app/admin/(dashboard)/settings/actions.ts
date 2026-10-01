@@ -67,7 +67,7 @@ export async function updateSettings(
       await updateSetting(key, value);
       saved.push(key);
     } catch (e) {
-      errors[key] = e instanceof Error ? e.message : 'خطا در ذخیره.';
+      errors[key] = e instanceof Error ? e.message : 'خطا در ذخیرهٔ تنظیمات.';
     }
   }
   return { ok: Object.keys(errors).length === 0, saved, errors };

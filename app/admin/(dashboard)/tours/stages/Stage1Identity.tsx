@@ -168,11 +168,11 @@ export default function Stage1Identity({
       fd.append('photo', file);
       const res = await uploadTourBanner(data.slug || 'tour', data.title, fd);
       onChange({ image: res.url });
-      toast({ title: 'بنر آپلود شد', description: 'تصویر بنر در فیلد نشست و پیش‌نمایشش را می‌بینید.' });
+      toast({ title: 'بنر آپلود شد', description: 'بنر آپلود شد؛ پیش‌نمایشش را پایین می‌بینید.' });
     } catch (e) {
       toast({
         variant: 'error',
-        title: 'آپلود بنر انجام نشد',
+        title: 'بنر آپلود نشد',
         description: e instanceof Error ? e.message : 'دوباره تلاش کنید.',
       });
     } finally {
@@ -626,7 +626,7 @@ export default function Stage1Identity({
           <div>
             <Field
               label="قیمت نمایشی روی کارت تور *"
-              hint="این عدد روی کارت تور نمایش داده می‌شود؛ نرخ هتل‌ها (مرحلهٔ ۲) جداگانه و برای همان هتل روی سایت می‌آید"
+              hint="این عدد روی کارت تور نمایش داده می‌شود؛ نرخ هر هتل (مرحلهٔ ۲) جداگانه و همان‌جا روی سایت نمایش داده می‌شود."
               error={errors.price}
             >
               <AmountInput
@@ -735,7 +735,7 @@ export default function Stage1Identity({
           rows={4}
           value={data.description}
           onChange={(e) => onChange({ description: e.target.value })}
-          placeholder="روایت جذاب و صادقانه از حال و هوای سفر، تجربیات خاص این مسیر و چرایی انتخاب این تور توسط مسافر…"
+          placeholder="روایت جذاب و صادقانه از حال و هوای سفر، تجربیات خاص این مسیر و این‌که چرا مسافر باید همین تور را انتخاب کند…"
           className="w-full rounded-sm border border-input bg-background p-3 text-xs leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>

@@ -32,7 +32,7 @@ export default function GuidesManager({ initial, destinationOptions = [], tourOp
   const onStatusChange = (id: string, status: GuideStatus) => startTransition(async () => { try { await setGuideStatus(id, status); window.location.reload(); } catch (error) { toast({ variant: 'error', title: error instanceof Error ? error.message : 'خطا در تغییر وضعیت.' }); } });
   const edit = (guide: GuideRow) => { setEditing(guide); setShowForm(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const columns: Column<GuideRow>[] = [
-    { key: 'titleFa', header: 'عنوان مقاله', sortable: true, cell: (guide) => <span className="font-medium">{guide.titleFa}</span> },
+    { key: 'titleFa', header: 'عنوان راهنما', sortable: true, cell: (guide) => <span className="font-medium">{guide.titleFa}</span> },
     { key: 'slug', header: 'نامک', sortable: true, cell: (guide) => <span dir="ltr">{guide.slug}</span> },
     { key: 'category', header: 'دسته‌بندی', cell: (guide) => guide.categoryLabel || guide.category },
     { key: 'readTime', header: 'زمان مطالعه', cell: (guide) => guide.readTime || '—' },
@@ -42,10 +42,10 @@ export default function GuidesManager({ initial, destinationOptions = [], tourOp
   ];
   return (
     <div className="admin-enter space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-foreground">مقالات و راهنماها</h1><p className="mt-1 text-sm text-muted-foreground">مجموع مقالات ثبت‌شده: {fa(initial.length)} مورد</p></div><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />مقاله جدید</Button></div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-foreground">راهنماها</h1><p className="mt-1 text-sm text-muted-foreground">مجموع راهنماهای ثبت‌شده: {fa(initial.length)} مورد</p></div><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />راهنمای جدید</Button></div>
       {(showForm || editing) && <GuideForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onSaved={reload} onCancel={() => { setShowForm(false); setEditing(null); }} destinationOptions={destinationOptions} tourOptions={tourOptions} />}
-      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">لیست مقالات ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(guide) => guide.id} searchKeys={['titleFa', 'slug', 'category', 'categoryLabel']} searchPlaceholder="جست‌وجوی عنوان، نامک یا دسته‌بندی…" emptyTitle="مقاله‌ای یافت نشد" emptyDescription="برای شروع، مقاله جدیدی اضافه کنید." emptyAction={initial.length === 0 ? { label: 'نوشتن اولین مقاله', onClick: () => { setEditing(null); setShowForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); } } : undefined} /></CardContent></Card>
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی مقاله" description={deleting ? `مقالهٔ «${deleting.titleFa}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند. با «بازیابی» خودِ مقاله برمی‌گردد، ولی لینک‌های داخلی‌اش برای همیشه پاک شده‌اند و برنمی‌گردند.` : ''} confirmText="بایگانی مقاله" destructive onConfirm={onDelete} />
+      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">لیست راهنماها ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(guide) => guide.id} searchKeys={['titleFa', 'slug', 'category', 'categoryLabel']} searchPlaceholder="جست‌وجوی عنوان، نامک یا دسته‌بندی…" emptyTitle="راهنمایی یافت نشد" emptyDescription="برای شروع، راهنمای جدیدی اضافه کنید." emptyAction={initial.length === 0 ? { label: 'افزودن اولین راهنما', onClick: () => { setEditing(null); setShowForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); } } : undefined} /></CardContent></Card>
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی راهنما" description={deleting ? `راهنمای «${deleting.titleFa}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند. با «بازیابی» خودِ راهنما برمی‌گردد، ولی لینک‌های داخلی‌اش برای همیشه پاک شده‌اند و برنمی‌گردند.` : ''} confirmText="بایگانی راهنما" destructive onConfirm={onDelete} />
     </div>
   );
 }

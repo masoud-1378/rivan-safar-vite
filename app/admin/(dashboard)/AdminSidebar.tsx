@@ -34,7 +34,7 @@ const groups = [
   {
     title: 'محتوا و رشد',
     items: [
-      { href: '/admin/guides', label: 'مقالات و راهنماها', icon: BookOpen },
+      { href: '/admin/guides', label: 'راهنماها', icon: BookOpen },
       { href: '/admin/exhibitions', label: 'نمایشگاه‌ها', icon: Globe2 },
       { href: '/admin/seo', label: 'سئو و لندینگ‌ها', icon: BarChart3 },
     ],

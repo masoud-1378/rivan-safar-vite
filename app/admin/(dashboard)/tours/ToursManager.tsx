@@ -56,13 +56,13 @@ function transportBadge(tour: TourRow) {
     case 'mixed':
       return (
         <span className="inline-flex items-center gap-1 rounded bg-violet-500/10 px-1.5 py-0.5 text-violet-600 font-medium">
-          <Route className="size-3" /> ترکیبی ({carrier === 'پرواز' ? 'چندوسیله‌ای' : carrier})
+          <Route className="size-3" /> ترکیبی
         </span>
       );
     default:
       return (
         <span className="inline-flex items-center gap-1 rounded bg-sky-500/10 px-1.5 py-0.5 text-sky-600 font-medium">
-          <Plane className="size-3" /> هوایی ({carrier})
+          <Plane className="size-3" /> هوایی{carrier === 'پرواز' ? '' : ` (${carrier})`}
         </span>
       );
   }
@@ -123,7 +123,7 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
       if (bulkAction === 'archive') {
         await archiveToursBulk([...selected]);
         setTours((ts) => ts.filter((t) => !selected.has(t.id)));
-        toast({ title: `${fa(selected.size)} تور بایگانی شد`, description: 'از سایت پنهان شدند؛ از صفحهٔ بایگانی می‌توانید برگردانیدشان.' });
+        toast({ title: `${fa(selected.size)} تور بایگانی شد`, description: 'از سایت پنهان شدند؛ از صفحهٔ بایگانی می‌توانید بازیابی‌شان کنید.' });
       } else {
         const next = bulkAction === 'publish' ? 'published' : 'draft';
         await setToursPublishStatusBulk([...selected], next);
@@ -231,11 +231,11 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
   return (
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2"><div><h1 className="text-2xl font-bold text-foreground">تورها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول تورها — قیمت پایه را می‌توانید مستقیم از جدول ویرایش کنید</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="tours" title="تنظیمات تورها" tabs={['general']} values={sectionSettings} /><Link href="/admin/tours/new"><Button><Plus />افزودن تور جدید</Button></Link></div></div>
-      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">تورها ({fa(tours.length)})</h2><DataTable rows={visible} columns={columns} rowKey={(tour) => tour.id} searchKeys={['title', 'destination', 'typeLabel']} searchPlaceholder="جست‌وجوی عنوان، مقصد یا نوع تور…" selection={{ selected, onToggle: toggleSelected, onTogglePage: togglePageSelected }} toolbar={<><Select aria-label="فیلتر وضعیت ظرفیت" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} options={[{ value: 'all', label: 'همه ظرفیت‌ها' }, ...statusOptions]} className="h-9 w-40" /><Select aria-label="فیلتر انتشار" value={publishFilter} onChange={(e) => setPublishFilter(e.target.value as 'all' | 'draft' | 'published')} options={[{ value: 'all', label: 'همه (انتشار)' }, { value: 'draft', label: 'پیش‌نویس' }, { value: 'published', label: 'منتشرشده' }]} className="h-9 w-40" /></>} emptyTitle={statusFilter === 'all' && publishFilter === 'all' ? 'توری ثبت نشده است' : 'توری با این فیلتر پیدا نشد'} emptyDescription={statusFilter === 'all' && publishFilter === 'all' ? 'برای شروع، تور جدیدی اضافه کنید.' : 'فیلترها را عوض کنید یا جست‌وجو را پاک کنید.'} emptyAction={statusFilter === 'all' && publishFilter === 'all' ? { label: 'ساخت اولین تور', onClick: () => { window.location.href = '/admin/tours/new'; } } : undefined} /></CardContent></Card>
+      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">تورها ({fa(tours.length)})</h2><DataTable rows={visible} columns={columns} rowKey={(tour) => tour.id} searchKeys={['title', 'destination', 'typeLabel']} searchPlaceholder="جست‌وجوی عنوان، مقصد یا نوع تور…" selection={{ selected, onToggle: toggleSelected, onTogglePage: togglePageSelected }} toolbar={<><Select aria-label="فیلتر وضعیت ظرفیت" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} options={[{ value: 'all', label: 'همه ظرفیت‌ها' }, ...statusOptions]} className="h-9 w-40" /><Select aria-label="فیلتر انتشار" value={publishFilter} onChange={(e) => setPublishFilter(e.target.value as 'all' | 'draft' | 'published')} options={[{ value: 'all', label: 'همه' }, { value: 'draft', label: 'پیش‌نویس' }, { value: 'published', label: 'منتشرشده' }]} className="h-9 w-40" /></>} emptyTitle={statusFilter === 'all' && publishFilter === 'all' ? 'توری ثبت نشده است' : 'توری با این فیلتر پیدا نشد'} emptyDescription={statusFilter === 'all' && publishFilter === 'all' ? 'برای شروع، تور جدیدی اضافه کنید.' : 'فیلترها را عوض کنید یا جست‌وجو را پاک کنید.'} emptyAction={statusFilter === 'all' && publishFilter === 'all' ? { label: 'ساخت اولین تور', onClick: () => { window.location.href = '/admin/tours/new'; } } : undefined} /></CardContent></Card>
       {/* نوار عملیات گروهی (T15): فقط وقتی انتخابی هست دیده می‌شود */}
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-sm border border-brand/20 bg-brand/5 p-3">
-          <span className="text-xs font-bold text-foreground">{fa(selected.size)} تور انتخاب شده</span>
+          <span className="text-xs font-bold text-foreground">{fa(selected.size)} تور انتخاب‌شده</span>
           <span className="mx-1 h-5 w-px bg-border" aria-hidden="true" />
           <Button size="sm" onClick={() => setBulkAction('publish')} className="text-xs">
             انتشار
@@ -284,20 +284,20 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
                   ? 'این تورها منتشر می‌شوند و روی سایت دیده می‌شوند.'
                   : bulkAction === 'unpublish'
                     ? 'این تورها از سایت پنهان می‌شوند.'
-                    : 'این تورها بایگانی می‌شوند و از سایت پنهان می‌شوند؛ بعداً از صفحهٔ بایگانی می‌توانید برگردانیدشان.'}
+                    : 'این تورها بایگانی می‌شوند و از سایت پنهان می‌شوند؛ بعداً از صفحهٔ بایگانی می‌توانید بازیابی‌شان کنید.'}
               </p>
             </div>
           }
           confirmText={
             bulkAction === 'publish' ? 'انتشار تورها'
-            : bulkAction === 'unpublish' ? 'لغو انتشار'
+            : bulkAction === 'unpublish' ? 'لغو انتشار تورها'
             : 'بایگانی تورها'
           }
           destructive={bulkAction === 'archive'}
           onConfirm={() => void runBulk()}
         />
       )}
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی تور" description={deleting ? `تور «${deleting.title}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌شود؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.` : ''} confirmText="بایگانی تور" destructive onConfirm={onDelete} />
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی تور" description={deleting ? `تور «${deleting.title}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌شود؛ بعداً از صفحهٔ بایگانی می‌توانید آن را بازیابی کنید.` : ''} confirmText="بایگانی تور" destructive onConfirm={onDelete} />
     </div>
   );
 }

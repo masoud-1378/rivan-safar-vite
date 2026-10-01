@@ -82,7 +82,7 @@ try {
     if (existing.length > 0) console.log('[migrate-content] راهنما از قبل موجود است، به‌روزرسانی: ' + g.slug);
     await sql`
       INSERT INTO guides (slug, title_fa, category, category_label, read_time, author, reviewer, summary, hero_image, direct_answer, sections, faqs, related_destination_slug, related_tour_id, status)
-      VALUES (${g.slug}, ${g.title}, ${g.category}, ${g.categoryLabel}, ${g.readTime}, ${g.author}, ${g.reviewer ?? null}, ${g.summary}, ${g.heroImage}, ${g.directAnswer}, ${JSON.stringify(g.sections)}::jsonb, ${JSON.stringify(g.faqs)}::jsonb, ${g.relatedDestinationSlug ?? null}, ${g.relatedTourId ?? null}, 'published')
+      VALUES (${g.slug}, ${g.title}, ${g.category}, ${g.categoryLabel}, ${g.readTime}, ${g.author}, ${g.reviewer ?? null}, ${g.summary}, ${g.heroImage}, ${g.directAnswer}, ${JSON.stringify(g.sections)}::jsonb, ${JSON.stringify(g.faqs)}::jsonb, ${g.relatedDestinationSlug ?? null}, ${g.relatedTourSlug ?? null}, 'published')
       ON CONFLICT (slug) DO UPDATE SET
         title_fa = EXCLUDED.title_fa, category = EXCLUDED.category,
         category_label = EXCLUDED.category_label, read_time = EXCLUDED.read_time,

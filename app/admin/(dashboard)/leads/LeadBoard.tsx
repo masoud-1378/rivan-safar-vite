@@ -79,7 +79,8 @@ export function LeadBoard({ initial, variant = 'general' }: { initial: LeadRow[]
     });
 
   const selection: DataTableSelection = { selected, onToggle: toggleOne, onTogglePage: togglePage };
-  const selectedRows = rows.filter((r) => selected.has(r.id));
+  // F9: فهرست نام‌های دیالوگ گروهی از دادهٔ خام ساخته می‌شود، نه نمای فیلترشده.
+  const selectedRows = initial.filter((r) => selected.has(r.id));
 
   const changeStatus = (id: string, status: LeadStatus) => {
     setMessage('');
@@ -89,7 +90,7 @@ export function LeadBoard({ initial, variant = 'general' }: { initial: LeadRow[]
         setMessage('وضعیت به‌روزرسانی شد.');
       } catch {
         // L4: پیام خنثی؛ نه حدس دربارهٔ علت، نه سرزنش کاربر.
-        setMessage('تغییر وضعیت انجام نشد؛ دوباره تلاش کنید.');
+        setMessage('وضعیت عوض نشد؛ دوباره تلاش کنید.');
       }
     });
   };
@@ -105,7 +106,7 @@ export function LeadBoard({ initial, variant = 'general' }: { initial: LeadRow[]
         toast({ variant: 'success', title: `وضعیت ${fa(res.count)} درخواست تغییر کرد.` });
         setSelected(new Set());
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'تغییر گروهی انجام نشد؛ دوباره تلاش کنید.' });
+        toast({ variant: 'error', title: e instanceof Error ? e.message : 'تغییر گروهی اعمال نشد؛ دوباره تلاش کنید.' });
       }
     });
   };
@@ -121,7 +122,7 @@ export function LeadBoard({ initial, variant = 'general' }: { initial: LeadRow[]
         toast({ variant: 'success', title: `مسئول پیگیری ${fa(res.count)} درخواست مشخص شد.` });
         setSelected(new Set());
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'تخصیص گروهی انجام نشد؛ دوباره تلاش کنید.' });
+        toast({ variant: 'error', title: e instanceof Error ? e.message : 'مسئول تعیین نشد؛ دوباره تلاش کنید.' });
       }
     });
   };
@@ -154,7 +155,7 @@ export function LeadBoard({ initial, variant = 'general' }: { initial: LeadRow[]
   // L2/L3: متن خالی دوحالته + حالت آموزشی صفحهٔ لیدهای تور.
   const isTourEmpty = variant === 'tour' && initial.length === 0;
   const emptyTitle = isTourEmpty
-    ? 'هنوز درخواست توری ثبت نشده است'
+    ? 'هنوز درخواست تور ثبت نشده است'
     : filter !== 'all'
       ? 'با این فیلتر چیزی پیدا نشد'
       : 'هنوز درخواستی ثبت نشده است';
@@ -162,7 +163,7 @@ export function LeadBoard({ initial, variant = 'general' }: { initial: LeadRow[]
     ? 'درخواست‌هایی که از صفحه‌های تور ثبت می‌شوند این‌جا می‌آیند. درخواست‌های عمومی سایت در «درخواست‌های تماس» است.'
     : filter !== 'all'
       ? 'فیلتر وضعیت را عوض کنید یا جست‌وجو را پاک کنید.'
-      : 'درخواست‌های ثبت‌شده در سایت این‌جا می‌آیند؛ با تغییر وضعیت، پیگیری مشخص می‌شود.';
+      : 'درخواست‌های ثبت‌شده در سایت این‌جا می‌آیند؛ با تغییر وضعیت، روند پیگیری مشخص می‌شود.';
 
   return (
     <div className="space-y-4">
@@ -170,7 +171,7 @@ export function LeadBoard({ initial, variant = 'general' }: { initial: LeadRow[]
 
       {selected.size > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-brand/20 bg-brand/5 p-3">
-          <p className="text-sm font-bold">{fa(selected.size)} درخواست انتخاب شده</p>
+          <p className="text-sm font-bold">{fa(selected.size)} درخواست انتخاب‌شده</p>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setBulkStatus({ open: true, value: 'contacted' })} disabled={pending}>
               تغییر وضعیت گروهی
@@ -314,7 +315,7 @@ export function LeadBoard({ initial, variant = 'general' }: { initial: LeadRow[]
               انصراف
             </Button>
             <Button onClick={applyBulkAssignee} disabled={pending || !bulkAssignee?.value.trim()}>
-              تخصیص به {fa(selected.size)} درخواست
+              تعیین مسئول برای {fa(selected.size)} درخواست
             </Button>
           </div>
         }

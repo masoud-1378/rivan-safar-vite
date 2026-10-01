@@ -31,7 +31,7 @@ export default function ArchiveManager({ groups, isOwner }: Props) {
     setError(null);
     try {
       await restoreArchived(entity, id);
-      toast({ variant: 'success', title: 'بازیابی شد.' });
+      toast({ variant: 'success', title: 'بازیابی شد' });
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'خطای ناشناخته');

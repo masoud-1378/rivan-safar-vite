@@ -119,7 +119,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
     onChange({ includedServices: [...included, ...fresh] });
     toast({
       title: `${faNumber(fresh.length)} خدمت از «${tpl.label}» اضافه شد`,
-      description: fresh.length < tpl.items.length ? 'خدماتی که از قبل بودند رد شدند.' : undefined,
+      description: fresh.length < tpl.items.length ? 'خدمات تکراری دوباره اضافه نشدند.' : undefined,
     });
   };
 
@@ -150,8 +150,9 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
         </div>
         <Button
           type="button"
+          variant="brand"
           onClick={handleAddDay}
-          className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9"
+          className="gap-2 text-xs h-9"
         >
           <Plus className="size-4" />
           افزودن روز برنامه

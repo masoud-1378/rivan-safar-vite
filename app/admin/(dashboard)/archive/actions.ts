@@ -37,7 +37,7 @@ const ENTITIES: EntityMeta[] = [
   { key: 'origin_cities', label: 'مبدأها', table: originCities, titleCol: originCities.nameFa },
   { key: 'accommodations', label: 'هتل‌ها', table: accommodations, titleCol: accommodations.nameFa },
   { key: 'seo_landings', label: 'لندینگ‌های سئو', table: seoLandings, titleCol: seoLandings.titleFa },
-  { key: 'guides', label: 'مقالات و راهنماها', table: guides, titleCol: guides.titleFa },
+  { key: 'guides', label: 'راهنماها', table: guides, titleCol: guides.titleFa },
   { key: 'exhibitions', label: 'نمایشگاه‌ها', table: exhibitions, titleCol: exhibitions.titleFa },
   { key: 'content_blocks', label: 'بلوک‌های محتوایی', table: contentBlocks, titleCol: contentBlocks.blockKind, parentTable: seoLandings, parentIdCol: contentBlocks.landingId, parentTitleCol: seoLandings.titleFa },
   { key: 'seo_internal_links', label: 'لینک‌های داخلی', table: seoInternalLinks, titleCol: seoInternalLinks.anchorFa, parentTable: seoLandings, parentIdCol: seoInternalLinks.fromLandingId, parentTitleCol: seoLandings.titleFa },

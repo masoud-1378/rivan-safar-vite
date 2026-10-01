@@ -21,7 +21,8 @@ export interface GuideItem {
     };
   }>;
   relatedDestinationSlug?: string;
-  relatedTourId?: string;
+  // F8: نامک تور مرتبط (مقدار ذخیره‌شده نامک است، نه شناسه).
+  relatedTourSlug?: string;
   faqs: Array<{ question: string; answer: string }>;
 }
 
@@ -82,7 +83,7 @@ export const GUIDES: Record<string, GuideItem> = {
       }
     ],
     relatedDestinationSlug: 'istanbul',
-    relatedTourId: 'istanbul-sep',
+    relatedTourSlug: 'istanbul-sep',
     faqs: [
       {
         question: 'آیا هتل‌های منطقه آکسارای و لاله لی را پیشنهاد می‌کنید؟',

@@ -186,7 +186,7 @@ function restToGuide(r: Row): GuideItem {
     directAnswer: str(r.direct_answer),
     sections: arr<GuideItem['sections'][number]>(r.sections),
     relatedDestinationSlug: (r.related_destination_slug as string) ?? undefined,
-    relatedTourId: (r.related_tour_id as string) ?? undefined,
+    relatedTourSlug: (r.related_tour_id as string) ?? undefined,
     faqs: arr<GuideItem['faqs'][number]>(r.faqs),
   };
 }

@@ -10,6 +10,7 @@ import {
   Globe2,
   Inbox,
   LayoutDashboard,
+  LayoutList,
   MapPinned,
   Plane,
   Plus,
@@ -28,9 +29,9 @@ const NAV: Array<{ href: string; label: string; icon: typeof LayoutDashboard; ke
   { href: '/admin/leads', label: 'درخواست‌های تماس', icon: Inbox, keywords: 'lead سرنخ تماس' },
   { href: '/admin/tours', label: 'تورها', icon: BriefcaseBusiness, keywords: 'tour سفر' },
   { href: '/admin/catalog?tab=destinations', label: 'مقصدها', icon: MapPinned, keywords: 'destination شهر کشور مقصد' },
-  { href: '/admin/catalog?tab=origins', label: 'مبدأها', icon: Plane, keywords: 'origin مبدا' },
+  { href: '/admin/catalog?tab=origins', label: 'مبدأها', icon: Plane, keywords: 'origin مبدأ' },
   { href: '/admin/catalog?tab=hotels', label: 'هتل‌ها', icon: Building2, keywords: 'hotel اقامت هتل' },
-  { href: '/admin/guides', label: 'مقالات و راهنماها', icon: BookOpen, keywords: 'guide مقاله' },
+  { href: '/admin/guides', label: 'راهنماها', icon: BookOpen, keywords: 'guide راهنما' },
   { href: '/admin/exhibitions', label: 'نمایشگاه‌ها', icon: Globe2, keywords: 'exhibition نمایشگاه' },
   { href: '/admin/seo', label: 'سئو و لندینگ‌ها', icon: BarChart3, keywords: 'seo لندینگ' },
   { href: '/admin/settings', label: 'تنظیمات', icon: SlidersHorizontal, keywords: 'settings پیکربندی' },
@@ -38,13 +39,14 @@ const NAV: Array<{ href: string; label: string; icon: typeof LayoutDashboard; ke
   { href: '/admin/audit', label: 'گزارش تغییرات', icon: ShieldCheck, keywords: 'audit لاگ تاریخچه' },
 ];
 
-const ACTIONS: Array<{ href: string; label: string; icon: typeof Plus; keywords: string }> = [
+const ACTIONS: Array<{ href: string; label: string; icon: typeof LayoutList; keywords: string }> = [
   { href: '/admin/tours/new', label: 'ثبت تور جدید', icon: Plus, keywords: 'new tour افزودن' },
   // برچسب «افزودن» فقط وقتی که واقعاً فرم/دیالوگ را باز می‌کند؛ بقیه به صفحهٔ مدیریتشان می‌روند.
-  { href: '/admin/hotels', label: 'مدیریت هتل‌ها', icon: Plus, keywords: 'hotel هتل افزودن' },
-  { href: '/admin/catalog?tab=origins', label: 'مدیریت مبدأها', icon: Plus, keywords: 'origin مبدا افزودن' },
-  { href: '/admin/catalog?tab=destinations', label: 'مدیریت مقصدها', icon: Plus, keywords: 'new place شهر مقصد افزودن' },
-  { href: '/admin/seo', label: 'مدیریت لندینگ‌های سئو', icon: Plus, keywords: 'new landing seo لندینگ' },
+  // F11: آیتم‌های مدیریتی آیکون خنثی می‌گیرند؛ Plus فقط مال «ثبت تور جدید» است.
+  { href: '/admin/hotels', label: 'مدیریت هتل‌ها', icon: LayoutList, keywords: 'hotel هتل افزودن' },
+  { href: '/admin/catalog?tab=origins', label: 'مدیریت مبدأها', icon: LayoutList, keywords: 'origin مبدأ افزودن' },
+  { href: '/admin/catalog?tab=destinations', label: 'مدیریت مقصدها', icon: LayoutList, keywords: 'new place شهر مقصد افزودن' },
+  { href: '/admin/seo', label: 'مدیریت لندینگ‌های سئو', icon: LayoutList, keywords: 'new landing seo لندینگ' },
 ];
 
 const KIND_LABELS: Record<AdminSearchHit['kind'], string> = {
