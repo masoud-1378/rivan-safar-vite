@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-family-primary: "Vazirmatn", Tahoma, Arial, sans-serif;
-  --font-sans: var(--font-family-primary);
+  /* فونت‌ها در بلوک @theme inline جداگانه تعریف شده‌اند (پایین: «سیستم فونت ریوان سفر»)
+     تا ارجاع var() به متغیرهای ران‌تایم next/font زنده بماند. */
 
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -74,10 +74,29 @@
   --shadow-focus: 0 0 0 3px rgba(255, 102, 0, 0.16);
 }
 
+/* --- سیستم فونت ریوان سفر --- */
+/* قانون مسعود: عنوان‌ها همیشه پینار FD، متن معمولی وزیرمتن.
+   `--font-pinar` و `--font-vazirmatn` را next/font/local روی <html> می‌نشاند؛
+   `@theme inline` ارجاع var() را زنده نگه می‌دارد و یوتیلیتی‌های
+   `font-heading` / `font-body` / `font-sans` را می‌سازد. */
+@theme inline {
+  --font-heading: var(--font-pinar), "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-vazirmatn), Tahoma, ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body);
+}
+
 html, body {
-  font-family: var(--font-family-primary);
   background-color: var(--color-page-background);
   color: var(--color-text-primary);
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+  body {
+    font-family: var(--font-body);
+  }
 }
 
 @utility text-display {
@@ -1616,7 +1635,7 @@ html, body {
 }
 
 /* --- vibefarsi:theme-paper --- */
-/* کاغذ، مجله‌ای — فقط پنل مدیریت. تیترها با Noto Naskh Arabic؛ لهجهٔ برند نارنجی ریوان سفر (#FF6600). */
+/* کاغذ، مجله‌ای — فقط پنل مدیریت. تیترها با پینار FD؛ لهجهٔ برند نارنجی ریوان سفر (#FF6600). */
 /* `body:has(.admin-vibefarsi)` توکن‌ها را به هر پورتالی که روی body سوار می‌شود
    (تقویم، پالت فرمان، پاپ‌آور) می‌رساند؛ بدون دست‌زدن به فایل کامپوننت‌ها. */
 .admin-vibefarsi,
@@ -1651,8 +1670,8 @@ body:has(.admin-vibefarsi) {
 
   /* زبان طراحی: فونت، فرم، خط، عمق، حرکت و تراکم */
   --radius: 0.25rem;
-  --type-body: "Vazirmatn", "IRANSans", "Vazirmatn", system-ui, sans-serif;
-  --type-display: "Noto Naskh Arabic", "IRANSans", "Vazirmatn", serif;
+  --type-body: var(--font-body);
+  --type-display: var(--font-heading);
   --type-display-weight: 700;
   --shape-control: 0.125rem;
   --shape-field: 0rem;
@@ -1676,7 +1695,7 @@ body:has(.admin-vibefarsi) {
 }
 /* --- vibefarsi:theme-paper-end --- */
 
-/* کاغذ: تیترهای پنل با Noto Naskh Arabic وزن ۷۰۰ */
+/* کاغذ: تیترهای پنل با پینار FD وزن ۷۰۰ */
 .admin-vibefarsi h1,
 .admin-vibefarsi h2,
 .admin-vibefarsi h3,
@@ -1773,6 +1792,6 @@ body:has(.admin-vibefarsi) {
 
 /* --- vibefarsi:font --- */
 @theme inline {
-  --font-sans: var(--font-vazirmatn), "IRANSans", "IRANSansX", "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body);
 }
 /* --- vibefarsi:font-end --- */

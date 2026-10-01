@@ -24,6 +24,7 @@ import { submitLead } from '../../app/actions/lead';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import TourListItem from './TourListItem';
+import { fa } from '@/lib/utils';
 
 interface CountryPageProps {
   countrySlug: string;
@@ -204,7 +205,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
               </p>
             </div>
             <span className="text-caption font-semibold text-text-muted bg-surface-secondary px-3 py-1.5 rounded-full border border-border-default self-start sm:self-auto">
-              {countryCities.length} مقصد فعال
+              {fa(countryCities.length)} مقصد فعال
             </span>
           </div>
 

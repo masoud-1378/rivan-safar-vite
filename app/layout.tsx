@@ -5,7 +5,7 @@ import { organizationJsonLd } from './seo-helpers';
 import ClientChrome from './ClientChrome';
 import { getGaId } from '@/src/lib/site-contact';
 import '../src/index.css';
-import { vazirmatn } from "./fonts";
+import { pinar, vazirmatn } from "./fonts";
 
 
 export const metadata: Metadata = {
@@ -42,23 +42,8 @@ export default async function RootLayout({
 }) {
   const GA_ID = await getGaId();
   return (
-    <html lang="fa" dir="rtl" className={vazirmatn.variable}>
+    <html lang="fa" dir="rtl" className={`${pinar.variable} ${vazirmatn.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap"
-          rel="stylesheet"
-        />
-        {/* Noto Naskh Arabic — فقط تیترهای پنل مدیریت (تم کاغذ) از آن استفاده می‌کند */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

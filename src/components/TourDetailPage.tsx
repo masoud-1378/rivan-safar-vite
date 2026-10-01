@@ -10,6 +10,7 @@ import { useContact } from '@/src/lib/contact-context';
 import { submitLead } from '../../app/actions/lead';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
+import { fa } from '@/lib/utils';
 
 interface TourDetailPageProps {
   tourSlug: string;
@@ -261,7 +262,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                       </td>
                       <td className="py-4 px-4 text-center">
                         <span className="inline-flex px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold text-caption border border-amber-200">
-                          {opt.stars ? `${opt.stars} ستاره` : '—'}
+                          {opt.stars ? `${fa(opt.stars)} ستاره` : '—'}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-center text-text-secondary">

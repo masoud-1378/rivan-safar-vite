@@ -13,6 +13,7 @@ import { useContact } from '@/src/lib/contact-context';
 import { submitLead } from '../../app/actions/lead';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
+import { fa } from '@/lib/utils';
 import TourListItem from './TourListItem';
 
 interface ToursPageProps {
@@ -251,7 +252,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
             </h2>
             <p className="text-body-sm text-text-secondary mt-1">
               {filteredTours.length > 0 
-                ? `${filteredTours.length} تور متناسب با جست‌وجوی شما پیدا شد.`
+                ? `${fa(filteredTours.length)} تور متناسب با جست‌وجوی شما پیدا شد.`
                 : 'هیچ توری مطابق با فیلترهای انتخابی یافت نشد.'}
             </p>
           </div>
@@ -591,7 +592,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
       {comparedTourIds.length > 0 && (
         <div className="fixed bottom-16 md:bottom-6 left-1/2 -translate-x-1/2 z-40 bg-surface-dark text-white px-5 py-3 rounded-card shadow-2xl border border-white/20 flex items-center gap-4 dir-rtl">
           <span className="text-body-sm font-bold">
-            {comparedTourIds.length} تور برای مقایسه انتخاب شده
+            {fa(comparedTourIds.length)} تور برای مقایسه انتخاب شده
           </span>
           <button
             onClick={() => setShowCompareModal(true)}
@@ -993,7 +994,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                   onClick={() => setShowMobileFilters(false)}
                   className="btn btn-primary w-full"
                 >
-                  نمایش نتایج ({filteredTours.length} تور)
+                  نمایش نتایج ({fa(filteredTours.length)} تور)
                 </button>
                 <button 
                   onClick={clearAllFilters}

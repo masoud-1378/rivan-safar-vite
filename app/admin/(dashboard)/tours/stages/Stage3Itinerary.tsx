@@ -145,7 +145,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
                     روز {fa(dayItem.day)}
                   </span>
                   <span className="text-xs font-bold text-foreground">
-                    {dayItem.title || `فعالیت روز ${dayItem.day}`}
+                    {dayItem.title || `فعالیت روز ${fa(dayItem.day)}`}
                   </span>
                 </div>
                 <button
