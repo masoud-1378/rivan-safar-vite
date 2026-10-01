@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
 import { adminUsers } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { requireAdmin } from '@/src/lib/admin-auth';
+import { requireAdmin, createAdminDb } from '@/src/lib/admin-auth';
 
 export interface AdminUserRow {
   id: string;
@@ -23,18 +23,33 @@ export async function listAdminUsers() {
 }
 
 export async function inviteAdmin(email: string, role: 'owner' | 'editor') {
-  const session = await requireAdmin(['owner']);
+  await requireAdmin(['owner']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  // کاربر باید در Supabase Auth وجود داشته باشد
-  // این تابع فقط رکورد admin_users را می‌سازد/به‌روزرسانی می‌کند
-  await db
-    .insert(adminUsers)
-    .values({ userId: '', email: email.toLowerCase(), role, active: true })
-    .onConflictDoUpdate({
-      target: adminUsers.email,
-      set: { role, active: true },
-    });
+  const normalized = email.trim().toLowerCase();
+  if (!normalized || !normalized.includes('@')) throw new Error('ایمیل معتبر نیست.');
+
+  // ۱) ساخت کاربر در Supabase Auth و ارسال ایمیل دعوت (با service_role).
+  //    اگر کاربر از قبل وجود داشته باشد، فقط ایمیل دعوت دوباره فرستاده می‌شود.
+  const { data, error } = await createAdminDb().auth.admin.inviteUserByEmail(normalized);
+  if (error) throw new Error('ارسال دعوت ناموفق بود.');
+  const userId = data.user?.id;
+  if (!userId) throw new Error('ساخت کاربر ناموفق بود.');
+
+  // ۲) ثبت/به‌روزرسانی نقش در admin_users (بدون تکیه بر unique بودن ایمیل در دیتابیس).
+  const existing = await db
+    .select({ id: adminUsers.id })
+    .from(adminUsers)
+    .where(eq(adminUsers.email, normalized))
+    .limit(1);
+  if (existing.length > 0) {
+    await db
+      .update(adminUsers)
+      .set({ userId, role, active: true })
+      .where(eq(adminUsers.id, existing[0].id));
+  } else {
+    await db.insert(adminUsers).values({ userId, email: normalized, role, active: true });
+  }
   revalidatePath('/admin/users');
   return { ok: true };
 }

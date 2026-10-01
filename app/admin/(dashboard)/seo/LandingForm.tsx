@@ -46,10 +46,18 @@ export default function LandingForm({ onSaved }: { onSaved?: () => void }) {
   const [workflow, setWorkflow] = useState<NonNullable<LandingInput['workflow']>>('draft');
   const [indexStatus, setIndexStatus] = useState<NonNullable<LandingInput['indexStatus']>>('noindex');
   const [nextReviewAt, setNextReviewAt] = useState<Date | null>(null);
+  const [errors, setErrors] = useState<{ queryOwner?: string; urlPath?: string; titleFa?: string; h1Fa?: string }>({});
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
 
   const submit = () => {
+    const nextErrors: typeof errors = {};
+    if (!queryOwner.trim()) nextErrors.queryOwner = 'کد یکتای صفحه را بنویسید.';
+    if (!urlPath.trim()) nextErrors.urlPath = 'مسیر URL را بنویسید.';
+    if (!titleFa.trim()) nextErrors.titleFa = 'عنوان سئو را بنویسید.';
+    if (!h1Fa.trim()) nextErrors.h1Fa = 'تیتر صفحه (H1) را بنویسید.';
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
     const input: LandingInput = {
       queryOwner: queryOwner.trim(),
       urlPath: urlPath.trim().startsWith('/') ? urlPath.trim() : '/' + urlPath.trim(),
@@ -77,23 +85,23 @@ export default function LandingForm({ onSaved }: { onSaved?: () => void }) {
     <div className="space-y-4 rounded-xl border border-border bg-card p-5 admin-lift">
       <h2 className="font-semibold text-foreground">لندینگ جدید</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label="Query Owner" htmlFor="qo" hint="کد یکتای صفحه، مثلاً home:ریوان سفر">
-          <Input id="qo" dir="ltr" value={queryOwner} onChange={(e) => setQueryOwner(e.target.value)} placeholder="home:ریوان سفر" />
+        <Field label="Query Owner" htmlFor="qo" hint="کد یکتای صفحه، مثلاً home:ریوان سفر" error={errors.queryOwner}>
+          <Input id="qo" dir="ltr" value={queryOwner} onChange={(e) => { setQueryOwner(e.target.value); setErrors((prev) => ({ ...prev, queryOwner: undefined })); }} placeholder="home:ریوان سفر" />
         </Field>
-        <Field label="مسیر URL" htmlFor="up" hint="بدون نیم‌فاصله؛ مثلاً /destination/turkey/istanbul">
-          <Input id="up" dir="ltr" value={urlPath} onChange={(e) => setUrlPath(e.target.value)} placeholder="/destination/turkey/istanbul" />
+        <Field label="مسیر URL" htmlFor="up" hint="بدون نیم‌فاصله؛ مثلاً /destination/turkey/istanbul" error={errors.urlPath}>
+          <Input id="up" dir="ltr" value={urlPath} onChange={(e) => { setUrlPath(e.target.value); setErrors((prev) => ({ ...prev, urlPath: undefined })); }} placeholder="/destination/turkey/istanbul" />
         </Field>
         <Field label="نوع صفحه" htmlFor="pt">
           <Select id="pt" value={pageType} onChange={(e) => setPageType(e.target.value)} options={PAGE_TYPES} />
         </Field>
-        <Field label="عنوان سئو (Title)" htmlFor="tf" hint="حدود ۶۰ نویسه">
-          <Input id="tf" value={titleFa} onChange={(e) => setTitleFa(e.target.value)} placeholder="تور استانبول با اقامت در مرکز شهر" />
+        <Field label="عنوان سئو (Title)" htmlFor="tf" hint="حدود ۶۰ نویسه" error={errors.titleFa}>
+          <Input id="tf" value={titleFa} onChange={(e) => { setTitleFa(e.target.value); setErrors((prev) => ({ ...prev, titleFa: undefined })); }} placeholder="تور استانبول با اقامت در مرکز شهر" />
         </Field>
         <Field label="توضیحات متا (Meta Description)" htmlFor="md" hint="حدود ۱۵۵ نویسه">
           <Textarea id="md" autoResize showCount maxLength={200} value={metaDescriptionFa} onChange={(e) => setMetaDescriptionFa(e.target.value)} placeholder="توضیح کوتاهی که در نتایج جست‌وجو نمایش داده می‌شود." />
         </Field>
-        <Field label="تیتر صفحه (H1)" htmlFor="h1">
-          <Input id="h1" value={h1Fa} onChange={(e) => setH1Fa(e.target.value)} placeholder="تور استانبول" />
+        <Field label="تیتر صفحه (H1)" htmlFor="h1" error={errors.h1Fa}>
+          <Input id="h1" value={h1Fa} onChange={(e) => { setH1Fa(e.target.value); setErrors((prev) => ({ ...prev, h1Fa: undefined })); }} placeholder="تور استانبول" />
         </Field>
         <Field label="وضعیت انتشار" htmlFor="wf">
           <Select id="wf" value={workflow} onChange={(e) => setWorkflow(e.target.value as NonNullable<LandingInput['workflow']>)} options={WORKFLOW_OPTIONS} />
