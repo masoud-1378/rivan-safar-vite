@@ -177,7 +177,7 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
             <Input value={name} onChange={(e) => { setName(e.target.value); setNameError(undefined); }} placeholder="مثلاً Rixos Premium Dubai" data-autofocus />
           </Field>
           <Field label="ستاره" error={starsError}>
-            <NumberField value={stars ?? undefined} onChange={(v) => { setStars(v); setStarsError(undefined); }} min={0} max={7} aria-label="ستاره هتل" />
+            <NumberField value={stars} onChange={(v) => { setStars(v); setStarsError(undefined); }} min={0} max={7} aria-label="ستاره هتل" />
           </Field>
           <Field label="شهر / مقصد">
             <Select

@@ -135,8 +135,14 @@ export async function updateLanding(id: string, input: Partial<LandingInput>) {
     }
     throw e;
   }
+  // بازبینی مجدد: ویرایش فیلدهای گیت‌حساس (مثلاً پاک‌شدن متا) روی لندینگ
+  // منتشرشده نباید آن را گیت‌شکسته و منتشر رها کند.
+  let demoted = demotedToDraft;
+  if (!demoted && wasPublished && (input.workflow ?? current[0].workflow) === 'published') {
+    if (await demoteIfGateBroken(id)) demoted = true;
+  }
   revalidatePath('/admin/seo');
-  return { ok: true, demotedToDraft };
+  return { ok: true, demotedToDraft: demoted };
 }
 
 export async function deleteLanding(id: string) {
