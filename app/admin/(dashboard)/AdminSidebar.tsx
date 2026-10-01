@@ -1,17 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   BarChart3,
   BookOpen,
   Compass,
-  FileText,
   Gauge,
   Globe2,
   Inbox,
   LayoutDashboard,
-  LogOut,
   Settings,
   ShieldCheck,
   SlidersHorizontal,
@@ -49,38 +46,27 @@ const groups = [
   },
 ];
 
-export default function AdminSidebar({ role, email }: { role: 'owner' | 'editor'; email: string }) {
+export function AdminNavHeader() {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3 py-2">
+        <div className="grid size-10 place-items-center rounded-xl bg-brand text-brand-foreground">
+          <Gauge className="size-5" />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate font-bold">ریوان سفر</p>
+          <p className="truncate text-xs text-muted-foreground">مرکز مدیریت محتوا</p>
+        </div>
+      </div>
+      <AdminCommand />
+    </div>
+  );
+}
+
+export function AdminNavGroups({ role, onNavigate }: { role: 'owner' | 'editor'; onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
-    <Sidebar
-      className="admin-sidebar sticky top-4 hidden h-[calc(100dvh-2rem)] w-64 shrink-0 border-border bg-card md:flex"
-      header={
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 py-2">
-            <div className="grid size-10 place-items-center rounded-xl bg-brand text-brand-foreground">
-              <Gauge className="size-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate font-bold">ریوان سفر</p>
-              <p className="truncate text-xs text-muted-foreground">مرکز مدیریت محتوا</p>
-            </div>
-          </div>
-          <AdminCommand ownerOnly={role === 'owner'} />
-        </div>
-      }
-      footer={
-        <div className="space-y-3 pb-1">
-          <div className="flex items-center gap-2">
-            <Avatar name={email || 'مدیر پنل'} size="sm" />
-            <div className="min-w-0">
-              <p className="truncate text-xs font-medium" dir="ltr">{email}</p>
-              <p className="text-[11px] text-muted-foreground">{role === 'owner' ? 'مالک سامانه' : 'ویراستار'}</p>
-            </div>
-          </div>
-          <AdminSignOut />
-        </div>
-      }
-    >
+    <>
       {groups.map((group) => (
         <SidebarGroup key={group.title} title={group.title}>
           {group.items.filter((item) => !item.ownerOnly || role === 'owner').map((item) => (
@@ -89,9 +75,10 @@ export default function AdminSidebar({ role, email }: { role: 'owner' | 'editor'
               href={item.href}
               label={item.label}
               icon={item.icon}
+              onClick={onNavigate}
               active={
-                item.href === '/admin' 
-                  ? pathname === '/admin' 
+                item.href === '/admin'
+                  ? pathname === '/admin'
                   : item.href === '/admin/tours'
                     ? pathname.startsWith('/admin/tours') || pathname.startsWith('/admin/places') || pathname.startsWith('/admin/origins') || pathname.startsWith('/admin/hotels')
                     : pathname.startsWith(item.href)
@@ -100,6 +87,33 @@ export default function AdminSidebar({ role, email }: { role: 'owner' | 'editor'
           ))}
         </SidebarGroup>
       ))}
+    </>
+  );
+}
+
+export function AdminNavFooter({ email, role }: { email: string; role: 'owner' | 'editor' }) {
+  return (
+    <div className="space-y-3 pb-1">
+      <div className="flex items-center gap-2">
+        <Avatar name={email || 'مدیر پنل'} size="sm" />
+        <div className="min-w-0">
+          <p className="truncate text-xs font-medium" dir="ltr">{email}</p>
+          <p className="text-[11px] text-muted-foreground">{role === 'owner' ? 'مالک سامانه' : 'ویراستار'}</p>
+        </div>
+      </div>
+      <AdminSignOut />
+    </div>
+  );
+}
+
+export default function AdminSidebar({ role, email }: { role: 'owner' | 'editor'; email: string }) {
+  return (
+    <Sidebar
+      className="admin-sidebar sticky top-4 hidden h-[calc(100dvh-2rem)] w-64 shrink-0 border-border bg-card md:flex"
+      header={<AdminNavHeader />}
+      footer={<AdminNavFooter email={email} role={role} />}
+    >
+      <AdminNavGroups role={role} />
     </Sidebar>
   );
 }
