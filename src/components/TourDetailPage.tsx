@@ -150,7 +150,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 </div>
                 <div>
                   <span className="text-text-muted block mb-0.5">درجه هتل‌ها:</span>
-                  <span className="text-text-heading font-bold">{tour.hotelStars} ستاره و بالاتر</span>
+                  <span className="text-text-heading font-bold">{tour.hotelStars ? `${tour.hotelStars} ستاره و بالاتر` : '—'}</span>
                 </div>
               </div>
 

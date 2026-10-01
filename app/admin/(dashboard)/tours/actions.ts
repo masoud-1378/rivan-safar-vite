@@ -124,14 +124,6 @@ export type OriginRow = {
   parentSlug: string;
 };
 
-export interface HotelRow extends Record<string, unknown> {
-  id: string;
-  slug: string;
-  nameFa: string;
-  stars: number;
-  placeSlug: string;
-}
-
 function asStringArray(v: unknown): string[] {
   if (Array.isArray(v)) return v.map((x) => String(x)).filter((x) => x.trim() !== '');
   return [];
