@@ -56,11 +56,11 @@ try {
   console.log(`[migrate-content] [۳/۵] درج مقصدها (${countries.length} کشور + ${cities.length} شهر)...`);
   for (const { place: p, forcedType } of allPlaces) {
     await sql`
-      INSERT INTO site_destinations (slug, name, name_en, type, parent_country_slug, parent_country_name, category, image, hero_tagline, description, best_season, visa_required, visa_type, flight_duration, currency, starting_price, starting_price_note, last_verified_at, active_tours_count, popular_districts, key_highlights, travel_tips, faqs, related_guides, updated_at)
-      VALUES (${p.slug}, ${p.name}, ${p.nameEn}, ${forcedType}, ${p.parentCountrySlug ?? null}, ${p.parentCountryName ?? null}, ${p.category}, ${p.image}, ${p.heroTagline}, ${p.description}, ${p.bestSeason}, ${p.visaRequired}, ${p.visaType ?? null}, ${p.flightDuration ?? null}, ${p.currency}, ${p.startingPrice}, ${p.startingPriceNote}, ${p.lastVerifiedAt}, ${p.activeToursCount}, ${JSON.stringify(p.popularDistricts ?? [])}::jsonb, ${JSON.stringify(p.keyHighlights)}::jsonb, ${JSON.stringify(p.travelTips)}::jsonb, ${JSON.stringify(p.faqs)}::jsonb, ${JSON.stringify(p.relatedGuides ?? [])}::jsonb, now())
+      INSERT INTO site_destinations (slug, name, name_en, type, parent_country_slug, category, image, hero_tagline, description, best_season, visa_required, visa_type, flight_duration, currency, starting_price, starting_price_note, last_verified_at, active_tours_count, popular_districts, key_highlights, travel_tips, faqs, related_guides, updated_at)
+      VALUES (${p.slug}, ${p.name}, ${p.nameEn}, ${forcedType}, ${p.parentCountrySlug ?? null}, ${p.category}, ${p.image}, ${p.heroTagline}, ${p.description}, ${p.bestSeason}, ${p.visaRequired}, ${p.visaType ?? null}, ${p.flightDuration ?? null}, ${p.currency}, ${p.startingPrice}, ${p.startingPriceNote}, ${p.lastVerifiedAt}, ${p.activeToursCount}, ${JSON.stringify(p.popularDistricts ?? [])}::jsonb, ${JSON.stringify(p.keyHighlights)}::jsonb, ${JSON.stringify(p.travelTips)}::jsonb, ${JSON.stringify(p.faqs)}::jsonb, ${JSON.stringify(p.relatedGuides ?? [])}::jsonb, now())
       ON CONFLICT (slug) DO UPDATE SET
         name = EXCLUDED.name, name_en = EXCLUDED.name_en, type = EXCLUDED.type,
-        parent_country_slug = EXCLUDED.parent_country_slug, parent_country_name = EXCLUDED.parent_country_name,
+        parent_country_slug = EXCLUDED.parent_country_slug,
         category = EXCLUDED.category, image = EXCLUDED.image, hero_tagline = EXCLUDED.hero_tagline,
         description = EXCLUDED.description, best_season = EXCLUDED.best_season,
         visa_required = EXCLUDED.visa_required, visa_type = EXCLUDED.visa_type,
