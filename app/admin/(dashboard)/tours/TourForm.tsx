@@ -441,10 +441,12 @@ export default function TourForm({
             />
           )}
 
-          {/* Bottom Sticky Action Bar — یافتهٔ ۲۴: shadow-overlay حذف شد؛ زبان paper
-              بدون سایه است و جداسازی نوار با border + bg-card/95 + backdrop-blur
-              انجام می‌شود. در موبایل هر گروه دکمه تمام‌عرض و دکمه‌ها ۴۴px. */}
-          <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-border bg-card/95 p-3.5 backdrop-blur">
+          {/* نوار اکشن پایین — در موبایل با fixed واقعاً به کف ویوپورت می‌چسبد
+              (stickyِ bottom به‌عنوان آخرین فرزند کانتینر هیچ‌وقت مجال چسبیدن
+              پیدا نمی‌کرد)؛ در دسکتاپ همان نوار شناور قبلی. یافتهٔ ۲۴:
+              بدون سایه؛ جداسازی با border + bg-card/95 + backdrop-blur.
+              در موبایل هر گروه دکمه تمام‌عرض و دکمه‌ها ۴۴px. */}
+          <div className="fixed inset-x-0 bottom-0 z-40 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-card/95 p-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))] backdrop-blur md:sticky md:inset-x-auto md:bottom-4 md:z-20 md:rounded-sm md:border md:pb-3.5">
             {/* Step navigation buttons */}
             <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
               <Button
@@ -549,6 +551,9 @@ export default function TourForm({
               )}
             </div>
           </div>
+          {/* فاصلهٔ نگه‌دارنده در موبایل: نوار اکشن fixed است و نباید محتوای
+              پایانی فرم زیر آن برود */}
+          <div aria-hidden="true" className="h-40 md:hidden" />
         </div>
 
         {/* Live Preview Panel */}
