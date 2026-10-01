@@ -39,7 +39,7 @@ const NAV: Array<{ href: string; label: string; icon: typeof LayoutDashboard; ke
 ];
 
 const ACTIONS: Array<{ href: string; label: string; icon: typeof Plus; keywords: string }> = [
-  { href: '/admin/tours?new=1', label: 'ثبت تور جدید', icon: Plus, keywords: 'new tour افزودن' },
+  { href: '/admin/tours/new', label: 'ثبت تور جدید', icon: Plus, keywords: 'new tour افزودن' },
   { href: '/admin/hotels', label: 'افزودن هتل', icon: Plus, keywords: 'new hotel' },
   { href: '/admin/origins', label: 'افزودن مبدأ', icon: Plus, keywords: 'new origin' },
   { href: '/admin/places', label: 'افزودن مقصد', icon: Plus, keywords: 'new place شهر' },

@@ -13,9 +13,13 @@ import {
   Save, 
   Eye, 
   History,
-  X
+  X,
+  Send,
+  EyeOff,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/toast';
 import { fa, faNumber, cn } from '@/lib/utils';
 import type { 
@@ -39,7 +43,8 @@ import Stage5Consultant from './stages/Stage5Consultant';
 export interface TourFormProps {
   initial?: TourRow | null;
   editingId?: string | null;
-  onDone: () => void;
+  /** بعد از ذخیرهٔ موفق صدا زده می‌شود؛ برای تور تازه، شناسهٔ ساخته‌شده را می‌گیرد. */
+  onDone: (id?: string | null) => void;
   tree: DestinationTree;
   origins: OriginRow[];
   hotels: HotelRow[];
@@ -98,6 +103,8 @@ export default function TourForm({
       priceNote: initial?.priceNote || 'برای هر بزرگسال در اتاق دو تخته',
       status: initial?.status || 'pending',
       statusLabel: initial?.statusLabel || 'پیش‌نویس',
+      // گیت انتشار (مایگریشن 0011): پیش‌فرض همیشه پیش‌نویس؛ «انتشار» فقط با دکمهٔ خودش.
+      publishStatus: initial?.publishStatus === 'published' ? 'published' : 'draft',
       image: initial?.image || '',
       badge: initial?.badge || '',
       features: Array.isArray(initial?.features) ? (initial.features as string[]) : [],
@@ -158,7 +165,13 @@ export default function TourForm({
   }, [formData, touched]);
 
   // Handle Save
-  const handleSave = async () => {
+  /**
+   * نیت ذخیره:
+   * - 'draft': ذخیره به‌عنوان پیش‌نویس (روی سایت دیده نمی‌شود)
+   * - 'published': انتشار (روی سایت دیده می‌شود)
+   * - 'keep': ذخیرهٔ تغییرات بدون دست‌کاری وضعیت انتشار
+   */
+  const handleSave = async (intent: 'draft' | 'published' | 'keep') => {
     setTouched(true);
     const draftErrors = validateDraft({
       title: formData.title,
@@ -191,12 +204,34 @@ export default function TourForm({
           return;
         }
 
-        await saveTour(editingId ?? null, formData);
-        toast({
-          title: editingId ? 'تور با موفقیت بروزرسانی شد' : 'تور جدید با موفقیت ایجاد شد',
-          description: `تور «${formData.title}» ذخیره شد.`,
-        });
-        onDone();
+        const nextPublish: 'draft' | 'published' =
+          intent === 'keep' ? formData.publishStatus : intent;
+        const res = await saveTour(editingId ?? null, { ...formData, publishStatus: nextPublish });
+        updateFormData({ publishStatus: nextPublish });
+
+        const tourTitle = formData.title.trim();
+        if (intent === 'published') {
+          toast({
+            title: 'تور منتشر شد',
+            description: `تور «${tourTitle}» ذخیره شد و روی سایت دیده می‌شود.`,
+          });
+        } else if (intent === 'draft' && formData.publishStatus === 'published') {
+          toast({
+            title: 'انتشار لغو شد',
+            description: `تور «${tourTitle}» دیگر روی سایت دیده نمی‌شود.`,
+          });
+        } else if (intent === 'draft') {
+          toast({
+            title: editingId ? 'پیش‌نویس ذخیره شد' : 'پیش‌نویس ثبت شد',
+            description: `تور «${tourTitle}» به‌صورت پیش‌نویس ذخیره شد و روی سایت دیده نمی‌شود.`,
+          });
+        } else {
+          toast({
+            title: editingId ? 'تور با موفقیت بروزرسانی شد' : 'تور جدید با موفقیت ایجاد شد',
+            description: `تور «${tourTitle}» ذخیره شد.`,
+          });
+        }
+        onDone(res.id);
       } catch (err: any) {
         toast({
           title: 'خطا در ثبت تور',
@@ -209,6 +244,32 @@ export default function TourForm({
 
   return (
     <div className="space-y-6">
+      {/* نوار وضعیت انتشار + پیش‌نمایش در سایت (گیت انتشار، مایگریشن 0011) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Badge variant={formData.publishStatus === 'published' ? 'success' : 'warning'}>
+            {formData.publishStatus === 'published' ? 'منتشرشده' : 'پیش‌نویس'}
+          </Badge>
+          <span className="text-[11px] text-muted-foreground">
+            {formData.publishStatus === 'published'
+              ? 'این تور روی سایت دیده می‌شود.'
+              : 'پیش‌نویس روی سایت دیده نمی‌شود.'}
+          </span>
+        </div>
+        {formData.slug.trim() ? (
+          <a href={`/tour/${formData.slug.trim()}`} target="_blank" rel="noopener noreferrer">
+            <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs">
+              <ExternalLink className="size-4" />
+              پیش‌نمایش در سایت
+            </Button>
+          </a>
+        ) : (
+          <span className="text-[11px] text-muted-foreground">
+            برای پیش‌نمایش، اول نامک (مرحلهٔ ۱) را وارد کن.
+          </span>
+        )}
+      </div>
+
       {/* 5-Stage Step Navigation Header */}
       <div className="rounded-2xl border border-border bg-card p-2 sm:p-3 shadow-sm">
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -348,28 +409,67 @@ export default function TourForm({
               </Button>
             </div>
 
-            {/* Save / Cancel buttons */}
+            {/* Save / Cancel buttons — گیت انتشار (مایگریشن 0011) */}
             <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={onDone}
+                onClick={() => onDone()}
                 className="text-xs"
               >
                 انصراف
               </Button>
 
-              <Button
-                type="button"
-                size="sm"
-                disabled={isPending}
-                onClick={handleSave}
-                className="gap-2 bg-brand text-brand-foreground hover:bg-brand/90 text-xs px-4"
-              >
-                <Save className="size-4" />
-                {isPending ? 'در حال ثبت…' : editingId ? 'ذخیره تغییرات تور' : 'ثبت تور'}
-              </Button>
+              {(!editingId || formData.publishStatus === 'draft') ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isPending}
+                    onClick={() => handleSave('draft')}
+                    className="gap-2 text-xs px-4"
+                  >
+                    <Save className="size-4" />
+                    {isPending ? 'در حال ثبت…' : editingId ? 'ذخیره پیش‌نویس' : 'ثبت پیش‌نویس'}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={isPending}
+                    onClick={() => handleSave('published')}
+                    className="gap-2 bg-brand text-brand-foreground hover:bg-brand/90 text-xs px-4"
+                  >
+                    <Send className="size-4" />
+                    {isPending ? 'در حال انتشار…' : 'انتشار'}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isPending}
+                    onClick={() => handleSave('draft')}
+                    className="gap-2 text-xs px-4 text-destructive hover:text-destructive"
+                  >
+                    <EyeOff className="size-4" />
+                    {isPending ? 'در حال لغو…' : 'لغو انتشار'}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={isPending}
+                    onClick={() => handleSave('keep')}
+                    className="gap-2 bg-brand text-brand-foreground hover:bg-brand/90 text-xs px-4"
+                  >
+                    <Save className="size-4" />
+                    {isPending ? 'در حال ثبت…' : 'ذخیره تغییرات'}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

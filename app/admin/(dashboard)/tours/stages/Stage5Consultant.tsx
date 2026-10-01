@@ -21,10 +21,15 @@ interface Stage5ConsultantProps {
   onChange: (fields: Partial<TourInput>) => void;
 }
 
-const STATUS_OPTIONS = [
-  { value: 'published', label: 'منتشر شده (قابل رزرو روی سایت)' },
-  { value: 'pending', label: 'پیش‌نویس (فعلاً روی سایت هم دیده می‌شود)' },
-  { value: 'archived', label: 'بایگانی‌شده (تکمیل ظرفیت یا منقضی)' },
+/**
+ * وضعیت ظرفیت تور (ستون status) — ربطی به انتشار ندارد؛ انتشار از دکمه‌های
+ * «ثبت پیش‌نویس» / «انتشار» پایین فرم انجام می‌شود (گیت انتشار، مایگریشن 0011).
+ */
+const CAPACITY_OPTIONS = [
+  { value: 'pending', label: 'در انتظار تأیید ظرفیت' },
+  { value: 'confirmed', label: 'تأیید شده' },
+  { value: 'full', label: 'تکمیل ظرفیت' },
+  { value: 'updating', label: 'در حال به‌روزرسانی' },
 ];
 
 export default function Stage5Consultant({ data, onChange }: Stage5ConsultantProps) {
@@ -147,20 +152,20 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
       <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
         <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
           <Sparkles className="size-4 text-amber-500" />
-          <span>وضعیت نهایی تور</span>
+          <span>وضعیت ظرفیت تور</span>
         </h4>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Field label="وضعیت انتشار">
+            <Field label="وضعیت ظرفیت">
               <Select
-                value={data.status}
+                value={CAPACITY_OPTIONS.some((o) => o.value === data.status) ? data.status : 'pending'}
                 onChange={(e) => {
                   const val = e.target.value;
-                  const opt = STATUS_OPTIONS.find((s) => s.value === val);
+                  const opt = CAPACITY_OPTIONS.find((s) => s.value === val);
                   onChange({ status: val, statusLabel: opt?.label || val });
                 }}
-                options={STATUS_OPTIONS}
+                options={CAPACITY_OPTIONS}
               />
             </Field>
           </div>
@@ -168,7 +173,8 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
           <div className="flex flex-col justify-center rounded-xl bg-secondary/30 p-4 border border-border/60">
             <span className="text-xs font-bold text-foreground">راهنمای وضعیت</span>
             <p className="text-[11px] text-muted-foreground mt-1">
-              در وضعیت «منتشر شده»، تور در لیست تورهای عمومی سایت و فیلترهای جستجو قرار می‌گیرد. توجه: در حال حاضر «پیش‌نویس» تور را از سایت پنهان نمی‌کند و همهٔ تورها روی سایت دیده می‌شوند؛ پنهان‌ماندن واقعی پیش‌نویس به‌زودی فعال می‌شود.
+              این فقط وضعیت ظرفیت است (روی سایت به‌صورت برچسب دیده می‌شود). دیده‌شدن یا پنهان‌ماندن تور روی سایت
+              با «انتشار» کنترل می‌شود: تور «پیش‌نویس» روی سایت نیست و با دکمهٔ «انتشار» پایین همین فرم منتشر می‌شود.
             </p>
           </div>
         </div>

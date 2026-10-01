@@ -62,6 +62,8 @@ export interface TourInput {
   priceNote: string;
   status: string;
   statusLabel: string;
+  /** گیت انتشار (مایگریشن 0011): 'draft' پیش‌نویس، 'published' منتشرشده */
+  publishStatus: 'draft' | 'published';
   image: string;
   badge: string;
   features: string[];
@@ -169,12 +171,10 @@ function isDomesticSlug(slug: string, bySlug: Map<string, DestRecord>): boolean 
   return false;
 }
 
-export async function listTours() {
-  await requireAdmin(['owner', 'editor']);
-  const db = getDb();
-  if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db.select().from(siteTours).where(isNull(siteTours.deletedAt)).orderBy(desc(siteTours.updatedAt)).limit(300);
-  return rows.map((r) => ({
+type SiteTourRow = typeof siteTours.$inferSelect;
+
+function toTourRow(r: SiteTourRow) {
+  return {
     id: r.id,
     slug: r.slug,
     title: r.title,
@@ -192,6 +192,7 @@ export async function listTours() {
     priceNote: r.priceNote,
     status: r.status,
     statusLabel: r.statusLabel,
+    publishStatus: (r.publishStatus ?? 'draft') as 'draft' | 'published',
     image: r.image,
     badge: r.badge ?? '',
     features: asStringArray(r.features),
@@ -205,10 +206,42 @@ export async function listTours() {
     itineraryDays: Array.isArray(r.itineraryDays) ? (r.itineraryDays as TourItineraryDayItem[]) : [],
     trustSpecs: (r.trustSpecs as TourTrustSpecsItem | null) ?? null,
     consultantSpec: (r.consultantSpec as TourConsultantSpecItem | null) ?? null,
-  }));
+  };
+}
+
+export async function listTours() {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const rows = await db.select().from(siteTours).where(isNull(siteTours.deletedAt)).orderBy(desc(siteTours.updatedAt)).limit(300);
+  return rows.map(toTourRow);
 }
 
 export type TourRow = Awaited<ReturnType<typeof listTours>>[number];
+
+/** خواندن یک تور برای صفحهٔ ویرایش؛ بایگانی‌شده‌ها null برمی‌گردانند (→ صفحه ۴۰۴). */
+export async function getTourById(id: string): Promise<TourRow | null> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const rows = await db.select().from(siteTours).where(eq(siteTours.id, id)).limit(1);
+  const r = rows[0];
+  if (!r || r.deletedAt) return null;
+  return toTourRow(r);
+}
+
+/** خواندن یک تور با نامک (برای تکثیر از روی تور موجود). */
+export async function getTourBySlug(slug: string): Promise<TourRow | null> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const s = (slug || '').trim();
+  if (!s) return null;
+  const rows = await db.select().from(siteTours).where(eq(siteTours.slug, s)).limit(1);
+  const r = rows[0];
+  if (!r || r.deletedAt) return null;
+  return toTourRow(r);
+}
 
 export async function listDestinationTree(): Promise<DestinationTree> {
   await requireAdmin(['owner', 'editor']);
@@ -375,6 +408,8 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
     priceNote: 'برای هر بزرگسال در اتاق دو تخته',
     status: data.status || 'pending',
     statusLabel: data.statusLabel || '',
+    // گیت انتشار (مایگریشن 0011): تور تازه همیشه پیش‌نویس است، مگر این‌که صراحتاً «انتشار» زده شود.
+    publishStatus: (data.publishStatus === 'published' ? 'published' : 'draft') as 'draft' | 'published',
     image: data.image || '',
     badge,
     features: data.features ?? [],
@@ -394,10 +429,32 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
   if (id) {
     await db.update(siteTours).set(values).where(eq(siteTours.id, id));
   } else {
-    await db.insert(siteTours).values(values);
+    const inserted = await db.insert(siteTours).values(values).returning({ id: siteTours.id });
+    id = inserted[0]?.id ?? id;
   }
   revalidatePath('/admin/tours');
-  return { ok: true };
+  if (id) revalidatePath(`/admin/tours/${id}`);
+  return { ok: true, id: id ?? null };
+}
+
+/**
+ * تغییر وضعیت انتشار یک تور (گیت انتشار، مایگریشن 0011).
+ * 'published' یعنی تور واقعاً روی سایت دیده می‌شود؛ 'draft' یعنی پنهان است.
+ */
+export async function setTourPublishStatus(id: string, next: 'draft' | 'published') {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  if (next !== 'draft' && next !== 'published') throw new Error('وضعیت انتشار نامعتبر است.');
+  const cleanId = (id || '').trim();
+  if (!cleanId) throw new Error('شناسهٔ تور نامعتبر است.');
+  await db
+    .update(siteTours)
+    .set({ publishStatus: next, updatedAt: new Date() })
+    .where(eq(siteTours.id, cleanId));
+  revalidatePath('/admin/tours');
+  revalidatePath(`/admin/tours/${cleanId}`);
+  return { ok: true, publishStatus: next };
 }
 
 export async function deleteTour(id: string) {

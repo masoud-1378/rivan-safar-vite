@@ -46,6 +46,8 @@ function restToTour(r: Row): TourItem {
     priceNote: str(r.price_note),
     status: r.status as TourItem['status'],
     statusLabel: str(r.status_label),
+    // گیت انتشار تور (مایگریشن 0011)؛ ستون ممکن است هنوز روی دیتابیس نباشد.
+    publishStatus: (r.publish_status as TourItem['publishStatus']) ?? undefined,
     updatedAt: iso(r.updated_at),
     image: str(r.image),
     badge: (r.badge as string) ?? undefined,
@@ -71,7 +73,11 @@ export async function getTours(): Promise<TourItem[]> {
       .order('created_at', { ascending: true });
     if (error) throw error;
     if (!data || data.length === 0) return SAMPLE_TOURS;
-    return (data as Row[]).map(restToTour);
+    const tours = (data as Row[]).map(restToTour);
+    // گیت انتشار تور (مایگریشن 0011): فقط «منتشرشده»ها روی سایت دیده می‌شوند.
+    // ردیف‌های قدیمی‌تر از ستون publish_status (undefined) منتشرشده حساب می‌شوند
+    // تا پیش از اجرای مایگریشن، رفتار سایت عوض نشود.
+    return tours.filter((t) => t.publishStatus === undefined || t.publishStatus === 'published');
   } catch (error) {
     console.error('[db-content] tours read failed:', (error as Error).message);
     return SAMPLE_TOURS;
