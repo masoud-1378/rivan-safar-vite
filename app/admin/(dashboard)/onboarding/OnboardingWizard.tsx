@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import Link from 'next/link';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { Check, Database, Flag, MapPin, Plane, Rocket, Send } from 'lucide-react';
 import { Alert } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Button, buttonClasses } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
-import { fa } from '@/lib/utils';
+import { cn, fa } from '@/lib/utils';
 import { completeOnboarding, getOnboardingState, runSampleSeed, type OnboardingState } from './actions';
 
 export default function OnboardingWizard({ initial }: { initial: OnboardingState }) {
@@ -16,10 +15,30 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
 
-  if (hidden) return null;
-
   const { counts, isOwner } = state;
   const hasBaseData = counts.destinations > 0 && counts.origins > 0;
+  // یافتهٔ ۲: هر داده‌ای (مقصد/مبدأ/لندینگ/تور) که باشد، دکمه disable بی‌صدا نمی‌شود؛ هشدار می‌دهد.
+  const hasAnyData =
+    counts.destinations > 0 || counts.origins > 0 || counts.tours > 0 || counts.landings > 0;
+  // یافتهٔ ۱۳: هر ۴ قدم داده کامل باشد، ویزارد خودش «اتمام» می‌خورد.
+  const allDataStepsDone =
+    hasBaseData && counts.destinations > 0 && counts.origins > 0 && counts.tours > 0;
+  const autoCompleted = useRef(false);
+  useEffect(() => {
+    if (allDataStepsDone && !initial.completed && !autoCompleted.current) {
+      autoCompleted.current = true;
+      startTransition(async () => {
+        try {
+          await completeOnboarding();
+          setHidden(true);
+        } catch {
+          autoCompleted.current = false;
+        }
+      });
+    }
+  }, [allDataStepsDone, initial.completed]);
+
+  if (hidden) return null;
 
   const steps = [
     {
@@ -30,25 +49,32 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
         : 'وارد کردن دادهٔ نمونه فقط با نقش مالک ممکن است.',
       done: hasBaseData,
       action: isOwner ? (
-        <Button
-          size="sm"
-          variant={hasBaseData ? 'ghost' : 'outline'}
-          disabled={pending || hasBaseData}
-          onClick={() =>
-            startTransition(async () => {
-              try {
-                await runSampleSeed();
-                const next = await getOnboardingState();
-                setState(next);
-                toast({ variant: 'success', title: 'دادهٔ نمونه وارد شد.' });
-              } catch (e) {
-                toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ورود دادهٔ نمونه.' });
-              }
-            })
-          }
-        >
-          {pending ? 'در حال ورود…' : hasBaseData ? 'وارد شده است' : 'شروع با دادهٔ نمونه'}
-        </Button>
+        <div>
+          <Button
+            size="sm"
+            variant={hasBaseData ? 'ghost' : 'outline'}
+            disabled={pending}
+            onClick={() =>
+              startTransition(async () => {
+                try {
+                  await runSampleSeed();
+                  const next = await getOnboardingState();
+                  setState(next);
+                  toast({ variant: 'success', title: 'دادهٔ نمونه وارد شد.' });
+                } catch (e) {
+                  toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ورود دادهٔ نمونه.' });
+                }
+              })
+            }
+          >
+            {pending ? 'در حال ورود…' : 'شروع با دادهٔ نمونه'}
+          </Button>
+          {hasAnyData ? (
+            <p className="mt-1 max-w-60 text-[11px] leading-5 text-warning">
+              داده‌ای در پنل هست؛ «دادهٔ نمونه» فقط نمونه‌های گمشدهٔ خودش را کامل می‌کند و به داده‌های شما دست نمی‌زند.
+            </p>
+          ) : null}
+        </div>
       ) : null,
     },
     {
@@ -56,10 +82,11 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
       title: 'اولین مقصد',
       description: `تا اینجا ${fa(counts.destinations)} مقصد ثبت شده است.`,
       done: counts.destinations > 0,
+      // یافتهٔ ۱۰: به‌جای Buttonِ asChild (‏a داخل button نامعتبر است)، ‏a استایل‌دار.
       action: (
-        <Button size="sm" variant="outline" asChild>
-          <Link href="/admin/places">مدیریت مقصدها</Link>
-        </Button>
+        <a href="/admin/places" className={buttonClasses('outline', 'sm')}>
+          مدیریت مقصدها
+        </a>
       ),
     },
     {
@@ -68,9 +95,9 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
       description: `تا اینجا ${fa(counts.origins)} مبدأ ثبت شده است.`,
       done: counts.origins > 0,
       action: (
-        <Button size="sm" variant="outline" asChild>
-          <Link href="/admin/origins">مدیریت مبدأها</Link>
-        </Button>
+        <a href="/admin/origins" className={buttonClasses('outline', 'sm')}>
+          مدیریت مبدأها
+        </a>
       ),
     },
     {
@@ -81,9 +108,13 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
         : 'اول مقصد و مبدأ را ثبت کنید، بعد تور بسازید.',
       done: counts.tours > 0,
       action: (
-        <Button size="sm" variant="outline" asChild disabled={!hasBaseData}>
-          <Link href="/admin/tours">مدیریت تورها</Link>
-        </Button>
+        <a
+          href="/admin/tours"
+          aria-disabled={!hasBaseData}
+          className={cn(buttonClasses('outline', 'sm'), !hasBaseData && 'pointer-events-none opacity-50')}
+        >
+          مدیریت تورها
+        </a>
       ),
     },
     {

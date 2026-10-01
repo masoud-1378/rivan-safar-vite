@@ -1,7 +1,7 @@
 'use server';
 
 import { getDb } from '@/db/client';
-import { originCities, siteDestinations, siteSettings, siteTours } from '@/db/schema';
+import { originCities, seoLandings, siteDestinations, siteSettings, siteTours } from '@/db/schema';
 import { count, eq } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import { requireAdmin } from '@/src/lib/admin-auth';
@@ -24,7 +24,7 @@ export interface OnboardingState {
   completed: boolean;
   isOwner: boolean;
   email: string;
-  counts: { destinations: number; origins: number; tours: number };
+  counts: { destinations: number; origins: number; tours: number; landings: number };
 }
 
 export async function getOnboardingState(): Promise<OnboardingState> {
@@ -34,12 +34,13 @@ export async function getOnboardingState(): Promise<OnboardingState> {
   const key = keyFor(session.email);
   const rows = await db.select().from(siteSettings).where(eq(siteSettings.settingKey, key)).limit(1);
   const completed = rows[0]?.settingValue === '1';
-  const [destinations, origins, tours] = await Promise.all([
+  const [destinations, origins, tours, landings] = await Promise.all([
     countRows(db, siteDestinations),
     countRows(db, originCities),
     countRows(db, siteTours),
+    countRows(db, seoLandings),
   ]);
-  return { completed, isOwner: session.role === 'owner', email: session.email, counts: { destinations, origins, tours } };
+  return { completed, isOwner: session.role === 'owner', email: session.email, counts: { destinations, origins, tours, landings } };
 }
 
 /** علامت‌گذاری پایان راه‌اندازی برای کاربر جاری. */
@@ -56,7 +57,14 @@ export async function completeOnboarding(): Promise<void> {
   }
 }
 
-/** اجرای دادهٔ نمونه — فقط مالک. */
+/**
+ * اجرای دادهٔ نمونه — فقط مالک.
+ *
+ * گارد یافتهٔ ۲: هر سه INSERT…SELECT انتهاییِ db/seed.reference.sql فقط روی
+ * url_pathهای خودِ seed محدود شده‌اند (WHERE url_path IN (...))، پس حتی اگر
+ * لندینگی خارج از seed وجود داشته باشد، seed به آن لینک/بلوک اضافه نمی‌کند؛
+ * فقط رکوردهای گمشدهٔ خودش را می‌سازد (بقیهٔ INSERTها هم ON CONFLICT DO NOTHING اند).
+ */
 export async function runSampleSeed(): Promise<{ ok: true }> {
   await requireAdmin(['owner']);
   await runReferenceSeed(process.env.DATABASE_URL || '');

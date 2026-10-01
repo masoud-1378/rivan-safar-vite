@@ -199,15 +199,19 @@ export const carriers = pgTable('carriers', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const accommodations = pgTable('accommodations', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  slug: varchar('slug', { length: 160 }).notNull(),
-  nameFa: varchar('name_fa', { length: 200 }).notNull(),
-  stars: integer('stars'),
-  placeSlug: varchar('place_slug', { length: 120 }),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const accommodations = pgTable(
+  'accommodations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    slug: varchar('slug', { length: 160 }).notNull(),
+    nameFa: varchar('name_fa', { length: 200 }).notNull(),
+    stars: integer('stars'),
+    placeSlug: varchar('place_slug', { length: 120 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
     deletedAt: timestamp('deleted_at'),
-});
+  },
+  (t) => [uniqueIndex('accommodations_slug_uidx').on(t.slug)],
+);
 
 export const services = pgTable('services', {
   id: uuid('id').primaryKey().defaultRandom(),

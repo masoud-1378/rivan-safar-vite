@@ -28,10 +28,13 @@ const PAGE_TYPES = [
   { value: 'privacy', label: 'حریم خصوصی' },
 ];
 
-// «منتشرشده» عمداً این‌جا نیست؛ انتشار فقط از مسیر بازبینی (انتخاب وضعیت در جدول) با اجرای کامل گیت انجام می‌شود.
+// «منتشرشده» این‌جا هست تا سلکت برای لندینگ منتشرشده خالی نماند؛
+// گذار به published (از draft و…) سمت سرور گیت کامل می‌خواهد، ولی نگه‌داشتن
+// وضعیت publishedِ فعلی گیت دوباره نمی‌خواهد (یافتهٔ ۳).
 const WORKFLOW_OPTIONS = [
   { value: 'draft', label: 'پیش‌نویس' },
   { value: 'review', label: 'بازبینی' },
+  { value: 'published', label: 'منتشرشده' },
   { value: 'paused', label: 'متوقف' },
   { value: 'archived', label: 'بایگانی' },
 ];
@@ -70,6 +73,12 @@ export default function LandingForm({
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
 
+  // یافتهٔ ۴: هشدار پیشاپیشِ تغییر مسیرِ لندینگ منتشرشده.
+  const urlPathChanged =
+    editing &&
+    initial?.workflow === 'published' &&
+    urlPath.trim() !== (initial?.urlPath ?? '').trim();
+
   const submit = () => {
     const nextErrors: typeof errors = {};
     if (!queryOwner.trim()) nextErrors.queryOwner = 'کد یکتای صفحه را بنویسید.';
@@ -92,8 +101,15 @@ export default function LandingForm({
     startTransition(async () => {
       try {
         if (editing && initial) {
-          await updateLanding(initial.id, input);
-          toast({ variant: 'success', title: 'تغییرات لندینگ ذخیره شد.' });
+          const result = await updateLanding(initial.id, input);
+          if (result.demotedToDraft) {
+            toast({
+              variant: 'warning',
+              title: 'مسیر عوض شد و لینک‌های ورودی صفحه مردند؛ لندینگ به پیش‌نویس برگشت.',
+            });
+          } else {
+            toast({ variant: 'success', title: 'تغییرات لندینگ ذخیره شد.' });
+          }
         } else {
           await createLanding(input);
           toast({ variant: 'success', title: 'لندینگ ساخته شد.' });
@@ -115,6 +131,11 @@ export default function LandingForm({
         </Field>
         <Field label="مسیر URL" htmlFor="up" hint="بدون نیم‌فاصله؛ مثلاً /destination/turkey/istanbul" error={errors.urlPath}>
           <Input id="up" dir="ltr" value={urlPath} onChange={(e) => { setUrlPath(e.target.value); setErrors((prev) => ({ ...prev, urlPath: undefined })); }} placeholder="/destination/turkey/istanbul" />
+          {urlPathChanged ? (
+            <p className="text-xs font-medium text-warning">
+              هشدار: این لندینگ منتشرشده است؛ با تغییر مسیر، لینک‌های ورودی‌اش می‌میرند و صفحه به پیش‌نویس برمی‌گردد.
+            </p>
+          ) : null}
         </Field>
         <Field label="نوع صفحه" htmlFor="pt">
           <Select id="pt" value={pageType} onChange={(e) => setPageType(e.target.value)} options={PAGE_TYPES} />

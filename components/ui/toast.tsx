@@ -1,14 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { AlertCircle, Check, Info, X } from "lucide-react";
+import { AlertCircle, AlertTriangle, Check, Info, X } from "lucide-react";
 import { cn, fa } from "@/lib/utils";
 
 export type Toast = {
   id: number;
   title: React.ReactNode;
   description?: React.ReactNode;
-  variant?: "default" | "success" | "error";
+  variant?: "default" | "success" | "error" | "warning";
   action?: { label: string; onClick: () => void };
   duration?: number;
 };
@@ -65,7 +65,7 @@ export function useToast() {
   return ctx;
 }
 
-const icons = { default: Info, success: Check, error: AlertCircle };
+const icons = { default: Info, success: Check, error: AlertCircle, warning: AlertTriangle };
 
 /** اعلان. The card itself; rendered by the provider, exported for previews. */
 export function ToastCard({ toast, onClose, className }: { toast: Omit<Toast, "id">; onClose?: () => void; className?: string }) {
@@ -79,7 +79,10 @@ export function ToastCard({ toast, onClose, className }: { toast: Omit<Toast, "i
         className,
       )}
     >
-      <span className={cn("mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full", toast.variant === "error" ? "bg-destructive text-white" : "bg-foreground text-background")}>
+      <span className={cn("mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full",
+        toast.variant === "error" ? "bg-destructive text-white"
+        : toast.variant === "warning" ? "bg-warning/15 text-warning"
+        : "bg-foreground text-background")}>
         <Icon className="size-3" />
       </span>
       <div className="min-w-0 flex-1 text-sm">

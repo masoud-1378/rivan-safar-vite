@@ -22,9 +22,11 @@ export function NumberField({ value, defaultValue = 0, onChange, min = -Infinity
   const n = value ?? internal;
 
   function set(next: number) {
-    const clamped = Math.min(max, Math.max(min, next));
-    if (value === undefined) setInternal(clamped);
-    onChange?.(clamped);
+    // یافتهٔ ۶: clamp بی‌صدا برداشته شد — مقدار خارج از بازه نگه داشته می‌شود
+    // تا ولیدیشن (سرور/فیلد) خطای فارسی‌اش را نشان بدهد. دکمه‌های +/− همچنان
+    // در کرانه‌ها غیرفعال‌اند و خودشان از بازه بیرون نمی‌زنند.
+    if (value === undefined) setInternal(next);
+    onChange?.(next);
   }
 
   const btn = "flex w-10 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40";

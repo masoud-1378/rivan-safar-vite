@@ -10,7 +10,7 @@ export interface HotelRow extends Record<string, unknown> {
   id: string;
   slug: string;
   nameFa: string;
-  stars: number;
+  stars: number | null;
   placeSlug: string;
 }
 
@@ -18,7 +18,8 @@ export interface HotelInput {
   id?: string;
   slug: string;
   nameFa: string;
-  stars: number;
+  // یافتهٔ ۱۵: ستاره می‌تواند NULL بماند (دست‌نخورده) — سرور فقط مقدار داده‌شده را اعتبارسنجی می‌کند.
+  stars: number | null;
   placeSlug: string;
 }
 
@@ -31,7 +32,7 @@ export async function listHotels(): Promise<HotelRow[]> {
     id: r.id,
     slug: r.slug,
     nameFa: r.nameFa,
-    stars: r.stars ?? 0,
+    stars: r.stars,
     placeSlug: r.placeSlug ?? '',
   }));
 }
@@ -40,10 +41,13 @@ export async function saveHotel(data: HotelInput) {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const nameFa = (data.nameFa || '').trim();
+  // یافتهٔ ۷: نرمال‌سازی نام (trim + یکی‌کردن فاصله‌ها) پیش از ساخت slug،
+  // تا «هتل  اسپیناس» و «هتل اسپیناس» یک slug نگیرند.
+  const nameFa = (data.nameFa || '').replace(/\s+/g, ' ').trim();
   if (nameFa.length < 2) throw new Error('نام هتل لازم است.');
-  const stars = Number(data.stars);
-  if (!Number.isInteger(stars) || stars < 0 || stars > 7) {
+  // یافتهٔ ۱۵: NULL یعنی «دست‌نخورده» — اعتبارسنجی فقط روی مقدار واقعی.
+  const stars = data.stars == null ? null : Number(data.stars);
+  if (stars !== null && (!Number.isInteger(stars) || stars < 0 || stars > 7)) {
     throw new Error('ستارهٔ هتل باید بین ۰ تا ۷ باشد.');
   }
   const placeSlug = data.placeSlug || null;
@@ -70,7 +74,15 @@ export async function saveHotel(data: HotelInput) {
   if (data.id) {
     await db.update(accommodations).set(values).where(eq(accommodations.id, data.id));
   } else {
-    await db.insert(accommodations).values(values);
+    try {
+      await db.insert(accommodations).values(values);
+    } catch (e) {
+      // یافتهٔ ۸: مسابقهٔ هم‌زمان — خطای یکتایی هم همان پیام فارسی را می‌گیرد (مثل مقصد).
+      if (e instanceof Error && 'code' in e && (e as { code?: string }).code === '23505') {
+        throw new Error('این نام قبلاً ثبت شده');
+      }
+      throw e;
+    }
   }
   revalidatePath('/admin/hotels');
   revalidatePath('/admin/tours');

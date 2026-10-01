@@ -15,7 +15,7 @@ import { fa } from '@/lib/utils';
  *   فاز      { name, date, categories: string[] }
  *   خدمات/نکات  string[]
  * کلیدهای ناشناسِ آیتم‌های قدیمی روی ذخیره حفظ می‌شوند (pass-through)؛
- * فقط `title` قدیمی موقع باز شدن به `heading` نگاشت داده می‌شود.
+ * `title` قدیمی از همان باز شدن به `heading` تبدیل و حذف می‌شود (normalizeItem).
  */
 export type BlockEditorKind = 'section' | 'faq' | 'phase' | 'lines';
 
@@ -42,11 +42,25 @@ function asStringArray(v: unknown): string[] {
   return [];
 }
 
+/**
+ * یافتهٔ ۱۱: نرمال‌سازی واقعی رکورد در حافظهٔ فرم — `title` قدیمی به `heading`
+ * تبدیل و حذف می‌شود تا writeItem روی همان بنویسد و `title` کهنه در رکورد نماند.
+ * Idempotent است؛ روی رکوردهای سالم هیچ تغییری نمی‌دهد.
+ */
+export function normalizeItem(kind: BlockEditorKind, raw: unknown): unknown {
+  if (kind !== 'section') return raw;
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return raw;
+  const r = raw as Record<string, unknown>;
+  if (!('title' in r)) return raw;
+  const { title, ...rest } = r;
+  return { ...rest, heading: str(r.heading ?? title) };
+}
+
 /** خوانش نمایشی فیلدها از آیتم خام (با تحمل شکل‌های قدیمی). */
 export function readItem(kind: BlockEditorKind, raw: unknown): Record<string, unknown> {
-  const r = asRecord(raw);
+  const r = asRecord(normalizeItem(kind, raw));
   if (kind === 'section') {
-    return { heading: str(r.heading ?? r.title), content: str(r.content ?? r.text ?? r.body) };
+    return { heading: str(r.heading), content: str(r.content ?? r.text ?? r.body) };
   }
   if (kind === 'faq') {
     return { question: str(r.question ?? r.q), answer: str(r.answer ?? r.a) };
@@ -65,8 +79,14 @@ export function readItem(kind: BlockEditorKind, raw: unknown): Record<string, un
 
 /** نوشتن فیلد ویرایش‌شده در آیتم خام با حفظ کلیدهای ناشناس. */
 export function writeItem(kind: BlockEditorKind, raw: unknown, patch: Record<string, unknown>): unknown {
-  if (kind === 'lines') return str(patch.text);
-  return { ...asRecord(raw), ...patch };
+  // یافتهٔ ۱۱: pass-through واقعی برای آیتم آبجکتی قدیمیِ lines — کلیدهای
+  // اضافه‌اش (غیر از text) موقع ویرایش حفظ می‌شوند.
+  if (kind === 'lines') {
+    if (typeof raw === 'string') return str(patch.text);
+    const r = asRecord(raw);
+    return Object.keys(r).length > 0 ? { ...r, text: str(patch.text) } : str(patch.text);
+  }
+  return { ...asRecord(normalizeItem(kind, raw)), ...patch };
 }
 
 function isEmptyItem(kind: BlockEditorKind, raw: unknown): boolean {
@@ -80,9 +100,11 @@ function isEmptyItem(kind: BlockEditorKind, raw: unknown): boolean {
   return !str(f.text).trim();
 }
 
-/** حذف آیتم‌های کاملاً خالی پیش از ذخیره. */
+/** حذف آیتم‌های کاملاً خالی پیش از ذخیره (همراه با نرمال‌سازی واقعی رکوردها). */
 export function cleanBlocks(kind: BlockEditorKind, items: unknown[]): unknown[] {
-  return items.filter((it) => !isEmptyItem(kind, it));
+  return items
+    .map((it) => normalizeItem(kind, it))
+    .filter((it) => !isEmptyItem(kind, it));
 }
 
 /** اولین ایراد فارسی برای نمایش زیر همان فیلد؛ null یعنی معتبر. */
@@ -125,7 +147,9 @@ export interface BlockEditorProps {
 export default function BlockEditor({ kind, value, onChange, addLabel, title, hint, error }: BlockEditorProps) {
   const baseId = useId().replace(/:/g, '');
   const meta = KIND_META[kind];
-  const items = Array.isArray(value) ? value : [];
+  // یافتهٔ ۱۱: حافظهٔ فرم همیشه نرمال است — title قدیمی از همان اول به heading
+  // تبدیل شده و دیگر به والد/سرور برنمی‌گردد.
+  const items = (Array.isArray(value) ? value : []).map((it) => normalizeItem(kind, it));
 
   const patch = (index: number, p: Record<string, unknown>) => {
     onChange(items.map((it, i) => (i === index ? writeItem(kind, it, p) : it)));

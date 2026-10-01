@@ -11,11 +11,10 @@ import { fa } from '@/lib/utils';
 import BlockEditor, { cleanBlocks, readItem, validateBlocks } from '@/components/ui/block-editor';
 import {
   checkQualityGate,
-  createBlock,
   createLink,
-  deleteBlock,
   deleteLink,
   getLanding,
+  replaceBlocks,
   type LinkInput,
 } from './actions';
 
@@ -24,11 +23,6 @@ interface LandingContentProps {
   titleFa: string;
   urlPath: string;
   landings: Array<{ id: string; titleFa: string; urlPath: string }>;
-}
-
-interface BlockRow {
-  id: string;
-  bodyFa: string | null;
 }
 
 interface LinkRow {
@@ -53,9 +47,9 @@ function blockToValue(bodyFa: string | null): unknown {
 }
 
 export default function LandingContent({ landingId, titleFa, urlPath, landings }: LandingContentProps) {
-  const [blocks, setBlocks] = useState<BlockRow[]>([]);
   const [sections, setSections] = useState<unknown[]>([]);
   const [links, setLinks] = useState<LinkRow[]>([]);
+  const [inLinks, setInLinks] = useState<LinkRow[]>([]);
   const [gate, setGate] = useState<Awaited<ReturnType<typeof checkQualityGate>> | null>(null);
   const [loading, setLoading] = useState(true);
   const [blocksError, setBlocksError] = useState<string | undefined>();
@@ -72,10 +66,18 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
     try {
       const data = await getLanding(landingId);
       if (!data) return;
-      setBlocks(data.blocks.map((b) => ({ id: b.id, bodyFa: b.bodyFa })));
       setSections(data.blocks.map((b) => blockToValue(b.bodyFa)));
       setLinks(
         data.links.map((l) => ({
+          id: l.id,
+          fromLandingId: l.fromLandingId,
+          fromPath: l.fromPath,
+          toPath: l.toPath,
+          anchorFa: l.anchorFa,
+        })),
+      );
+      setInLinks(
+        data.inLinks.map((l) => ({
           id: l.id,
           fromLandingId: l.fromLandingId,
           fromPath: l.fromPath,
@@ -108,18 +110,23 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
     const clean = cleanBlocks('section', sections);
     startTransition(async () => {
       try {
-        for (const b of blocks) await deleteBlock(b.id);
-        let order = 1;
-        for (const s of clean) {
-          const f = readItem('section', s);
-          await createBlock({
-            landingId,
-            blockKind: 'section',
-            bodyFa: JSON.stringify({ heading: String(f.heading ?? ''), content: String(f.content ?? '') }),
-            blockOrder: order++,
-          });
+        // یافتهٔ ۱: ذخیرهٔ اتمیک — یک تراکنش سمت سرور، نه حذف تکی + درج تکی.
+        const result = await replaceBlocks(
+          landingId,
+          clean.map((s, i) => {
+            const f = readItem('section', s);
+            return {
+              blockKind: 'section',
+              bodyFa: JSON.stringify({ heading: String(f.heading ?? ''), content: String(f.content ?? '') }),
+              blockOrder: i + 1,
+            };
+          }),
+        );
+        if (result.demoted) {
+          toast({ variant: 'warning', title: 'با حذف این بخش، صفحه دیگر شرط انتشار را ندارد و به پیش‌نویس برگشت.' });
+        } else {
+          toast({ variant: 'success', title: 'بلوک‌ها ذخیره شدند.' });
         }
-        toast({ variant: 'success', title: 'بلوک‌ها ذخیره شدند.' });
         await load();
       } catch (e) {
         toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ذخیره بلوک‌ها.' });
@@ -166,8 +173,12 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
   const removeLink = (id: string) => {
     startTransition(async () => {
       try {
-        await deleteLink(id);
-        toast({ variant: 'success', title: 'لینک حذف شد.' });
+        const result = await deleteLink(id);
+        if (result.demoted) {
+          toast({ variant: 'warning', title: 'با حذف این لینک، صفحه دیگر شرط انتشار را ندارد و به پیش‌نویس برگشت.' });
+        } else {
+          toast({ variant: 'success', title: 'لینک حذف شد.' });
+        }
         await load();
       } catch (e) {
         toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در حذف لینک.' });
@@ -318,6 +329,32 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
             {pending ? 'در حال ثبت…' : 'افزودن لینک داخلی'}
           </Button>
         </div>
+      </div>
+
+      <div className="border-t border-border pt-5">
+        <h3 className="text-sm font-semibold text-foreground">لینک‌های ورودی به این صفحه</h3>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          فقط‌خواندنی — همین‌ها هستند که چک «دست‌کم یک لینک ورودی» گیت را سبز می‌کنند.
+        </p>
+        {inLinks.length === 0 ? (
+          <p className="mt-3 rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+            هنوز لینک ورودی‌ای به این صفحه ثبت نشده است.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {inLinks.map((l) => (
+              <li key={l.id} className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm">
+                <Link2 className="size-4 shrink-0 text-muted-foreground" />
+                <span className="min-w-0 truncate">
+                  <span className="text-muted-foreground">{landingName(l.fromLandingId) ?? l.fromPath ?? '—'}</span>
+                  <span className="mx-1 text-muted-foreground">←</span>
+                  <span className="text-muted-foreground">این صفحه</span>
+                  <span className="text-muted-foreground"> («{l.anchorFa}»)</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="flex justify-end">

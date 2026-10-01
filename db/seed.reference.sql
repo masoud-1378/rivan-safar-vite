@@ -50,6 +50,7 @@ ON CONFLICT DO NOTHING;
 
 -- بلوک محتوای لندینگ‌های seed: هر لندینگ seed یک بلوک بخش می‌گیرد تا گیت انتشار
 -- (دست‌کم ۱ بلوک) را واقعاً رد کند؛ بدون این بلوک‌ها باید draft می‌ماندند.
+-- گارد یافتهٔ ۲: فقط روی لندینگ‌های خودِ seed (نه لندینگ‌های کاربر).
 INSERT INTO content_blocks (landing_id, block_order, block_kind, body_fa)
 SELECT id, 1, 'section',
   json_build_object(
@@ -58,13 +59,19 @@ SELECT id, 1, 'section',
   )::text
 FROM seo_landings
 WHERE workflow = 'published'
+  AND url_path IN ('/', '/tours', '/tours/foreign', '/tours/domestic', '/destination/turkey',
+    '/destination/turkey/istanbul', '/destination/turkey/antalya', '/destination/thailand',
+    '/destination/thailand/phuket', '/destination/iran/kish', '/destination/iran/mashhad')
   AND NOT EXISTS (SELECT 1 FROM content_blocks cb WHERE cb.landing_id = seo_landings.id);
 
--- لینک خروجی هر لندینگ seed به صفحهٔ خانه
+-- لینک خروجی هر لندینگ seed به صفحهٔ خانه (فقط seed — یافتهٔ ۲)
 INSERT INTO seo_internal_links (from_landing_id, to_path, anchor_fa)
 SELECT id, '/', 'ریوان سفر'
 FROM seo_landings
 WHERE url_path <> '/'
+  AND url_path IN ('/tours', '/tours/foreign', '/tours/domestic', '/destination/turkey',
+    '/destination/turkey/istanbul', '/destination/turkey/antalya', '/destination/thailand',
+    '/destination/thailand/phuket', '/destination/iran/kish', '/destination/iran/mashhad')
   AND NOT EXISTS (
     SELECT 1 FROM seo_internal_links l
     WHERE l.from_landing_id = seo_landings.id AND l.to_path = '/'
@@ -72,20 +79,27 @@ WHERE url_path <> '/'
 
 -- لینک ورودی: از خانه به هر لندینگ seed، و از «همه تورها» به خانه
 -- (تا شرط «دست‌کم ۱ لینک ورودی» گیت برای همه — از جمله خود خانه — برقرار شود)
+-- یافتهٔ ۱۴: مبدأ با JOIN گرفته می‌شود تا اگر خانه/«همه تورها» حذف شده بود،
+-- ردیفی با from_landing_id=NULL تکثیر نشود. یافتهٔ ۲: فقط مقصدهای seed.
 INSERT INTO seo_internal_links (from_landing_id, to_path, anchor_fa)
-SELECT (SELECT id FROM seo_landings WHERE url_path = '/' LIMIT 1), url_path, title_fa
-FROM seo_landings
-WHERE url_path <> '/'
+SELECT home.id, s.url_path, s.title_fa
+FROM seo_landings s
+JOIN seo_landings home ON home.url_path = '/'
+WHERE s.url_path IN ('/tours', '/tours/foreign', '/tours/domestic', '/destination/turkey',
+    '/destination/turkey/istanbul', '/destination/turkey/antalya', '/destination/thailand',
+    '/destination/thailand/phuket', '/destination/iran/kish', '/destination/iran/mashhad')
   AND NOT EXISTS (
     SELECT 1 FROM seo_internal_links l
-    WHERE l.to_path = seo_landings.url_path
-      AND l.from_landing_id = (SELECT id FROM seo_landings WHERE url_path = '/' LIMIT 1)
+    WHERE l.to_path = s.url_path
+      AND l.from_landing_id = home.id
   );
 
 INSERT INTO seo_internal_links (from_landing_id, to_path, anchor_fa)
-SELECT (SELECT id FROM seo_landings WHERE url_path = '/tours' LIMIT 1), '/', 'ریوان سفر'
-WHERE NOT EXISTS (
-  SELECT 1 FROM seo_internal_links l
-  WHERE l.to_path = '/'
-    AND l.from_landing_id = (SELECT id FROM seo_landings WHERE url_path = '/tours' LIMIT 1)
-);
+SELECT tours.id, '/', 'ریوان سفر'
+FROM seo_landings tours
+WHERE tours.url_path = '/tours'
+  AND NOT EXISTS (
+    SELECT 1 FROM seo_internal_links l
+    WHERE l.to_path = '/'
+      AND l.from_landing_id = tours.id
+  );

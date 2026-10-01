@@ -53,7 +53,15 @@ export async function saveOrigin(data: { id?: string; slug: string; nameFa: stri
   if (data.id) {
     await db.update(originCities).set(values).where(eq(originCities.id, data.id));
   } else {
-    await db.insert(originCities).values(values);
+    try {
+      await db.insert(originCities).values(values);
+    } catch (e) {
+      // یافتهٔ ۸: مسابقهٔ هم‌زمان — خطای یکتایی هم همان پیام فارسی را می‌گیرد (مثل مقصد).
+      if (e instanceof Error && 'code' in e && (e as { code?: string }).code === '23505') {
+        throw new Error('این نام قبلاً ثبت شده');
+      }
+      throw e;
+    }
   }
   revalidatePath('/admin/origins');
   revalidatePath('/admin/tours');
