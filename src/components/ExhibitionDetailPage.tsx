@@ -52,7 +52,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
   const validateForm = () => {
     const errs = { name: '', phone: '' };
     if (formData.name.trim().length < 3) errs.name = 'نام و نام خانوادگی را کامل وارد کنید.';
-    if (!isValidMobile(formData.phone)) errs.phone = 'شماره موبایل باید ۱۱ رقم باشد و با ۰۹ شروع شود.';
+    if (!isValidMobile(formData.phone)) errs.phone = 'شماره موبایل معتبر نیست؛ مثل ۰۹۱۲۳۴۵۶۷۸۹.';
     setFormErrors(errs);
     return !errs.name && !errs.phone;
   };

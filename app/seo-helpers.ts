@@ -78,7 +78,10 @@ export function resolveSeo(path: string): ResolvedSeo {
     const series = EXHIBITION_SERIES[route.params.eventSeriesSlug];
     if (series) {
       title = `${series.title} · ریوان سفر`;
-      description = `${series.heroTagline}. تاریخ: ${series.upcomingEdition.solarDate}.`;
+      const solarStatic = series.upcomingEdition.solarDate?.trim();
+      description = solarStatic
+        ? `${series.heroTagline}. تاریخ: ${solarStatic}.`
+        : series.heroTagline;
       breadcrumbs[breadcrumbs.length - 1] = { name: series.title };
     } else {
       robots = 'noindex,nofollow';
@@ -140,10 +143,13 @@ export async function resolveSeoLive(path: string): Promise<ResolvedSeo> {
     } else if (route.type === 'exhibition_detail') {
       const series = await getExhibition(route.params.eventSeriesSlug);
       if (series) {
+        const solarLive = series.upcomingEdition.solarDate?.trim();
         return {
           ...fallback,
           title: `${series.title} · ریوان سفر`,
-          description: `${series.heroTagline}. تاریخ: ${series.upcomingEdition.solarDate}.`,
+          description: solarLive
+            ? `${series.heroTagline}. تاریخ: ${solarLive}.`
+            : series.heroTagline,
           robots: 'index,follow',
           breadcrumbs: withCrumb(series.title),
         };
