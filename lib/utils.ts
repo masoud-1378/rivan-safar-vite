@@ -59,3 +59,54 @@ export function mulberry32(seed: number) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+const FA_SLUG_MAP: Record<string, string> = {
+  'ا': 'a', 'آ': 'a', 'ب': 'b', 'پ': 'p', 'ت': 't', 'ث': 's',
+  'ج': 'j', 'چ': 'ch', 'ح': 'h', 'خ': 'kh', 'د': 'd', 'ذ': 'z',
+  'ر': 'r', 'ز': 'z', 'ژ': 'zh', 'س': 's', 'ش': 'sh', 'ص': 's',
+  'ض': 'z', 'ط': 't', 'ظ': 'z', 'ع': 'a', 'غ': 'gh', 'ف': 'f',
+  'ق': 'gh', 'ک': 'k', 'ك': 'k', 'گ': 'g', 'ل': 'l', 'م': 'm',
+  'ن': 'n', 'ه': 'h', 'ة': 'h', 'ی': 'i', 'ي': 'i', 'ئ': 'y',
+  'ؤ': 'v', 'ء': '',
+};
+
+/**
+ * نام فارسی → نامک لاتین: «تهران» → «tehran».
+ * فقط پیشنهاد اولیه است؛ و و ی بر اساس جایگاه (اول واژه یا میان آن)
+ * به v/y یا u/i تبدیل می‌شوند. نویسه‌های ناشناس حذف و فاصله‌ها خط تیره می‌شوند.
+ */
+export function faSlug(name: string): string {
+  const chars = [...(name || '')];
+  let out = '';
+  let prevWasLetter = false;
+  for (const ch of chars) {
+    if (ch === 'و') {
+      out += prevWasLetter ? 'u' : 'v';
+      prevWasLetter = true;
+      continue;
+    }
+    if (ch === 'ی' || ch === 'ي') {
+      out += prevWasLetter ? 'i' : 'y';
+      prevWasLetter = true;
+      continue;
+    }
+    const mapped = FA_SLUG_MAP[ch];
+    if (mapped !== undefined) {
+      out += mapped;
+      prevWasLetter = mapped !== '';
+      continue;
+    }
+    if (/[a-zA-Z0-9]/.test(ch)) {
+      out += ch.toLowerCase();
+      prevWasLetter = true;
+      continue;
+    }
+    // نیم‌فاصله، کشیده، اعراب و هر جداکنندهٔ دیگر → مرز واژه
+    out += '-';
+    prevWasLetter = false;
+  }
+  return out
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120);
+}

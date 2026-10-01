@@ -136,11 +136,21 @@ export async function saveDestination(id: string | undefined | null, data: Desti
   return { ok: true };
 }
 
-export async function deleteDestination(id: string) {
-  await requireAdmin(['owner', 'editor']);
+export async function deleteDestination(id: string) {  await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   await db.delete(siteDestinations).where(eq(siteDestinations.id, id));
   revalidatePath('/admin/places');
   return { ok: true };
+}
+
+export async function checkDestinationSlugUnique(slug: string, excludeId?: string | null) {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const s = (slug || '').trim();
+  if (!s) return { unique: false };
+  const rows = await db.select().from(siteDestinations).where(eq(siteDestinations.slug, s)).limit(2);
+  const taken = rows.some((r) => r.id !== excludeId);
+  return { unique: !taken };
 }

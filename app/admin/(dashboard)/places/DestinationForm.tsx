@@ -1,21 +1,35 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible } from '@/components/ui/collapsible';
 import { Field, Input } from '@/components/ui/input';
 import { NumberField } from '@/components/ui/number-field';
 import { Select } from '@/components/ui/select';
 import { TagsInput } from '@/components/ui/tags-input';
 import { useToast } from '@/components/ui/toast';
 import { Textarea } from '@/components/ui/textarea';
-import { fa } from '@/lib/utils';
-import { saveDestination, type DestinationInput, type DestinationRow, type FaqItem } from './actions';
+import { fa, faSlug } from '@/lib/utils';
+import { saveDestination, checkDestinationSlugUnique, type DestinationInput, type DestinationRow, type FaqItem } from './actions';
 
 const EMPTY: DestinationInput = { slug: '', name: '', nameEn: '', type: 'city', parentCountrySlug: '', parentCountryName: '', category: '', image: '', heroTagline: '', description: '', bestSeason: '', visaRequired: false, visaType: '', flightDuration: '', currency: '', startingPrice: '', startingPriceNote: '', lastVerifiedAt: '', activeToursCount: 0, popularDistricts: [], keyHighlights: [], travelTips: [], faqs: [], relatedGuides: [] };
 const nlToArray = (v: string) => v.split('\n').map((s) => s.trim()).filter(Boolean);
 
-export default function DestinationForm({ initial, editingId, onDone }: { initial?: DestinationRow | null; editingId?: string | null; onDone: () => void }) {
+export interface CountryOption {
+  slug: string;
+  name: string;
+}
+
+interface DestinationFormProps {
+  initial?: DestinationRow | null;
+  editingId?: string | null;
+  onDone: () => void;
+  countries: CountryOption[];
+}
+
+export default function DestinationForm({ initial, editingId, onDone, countries: initialCountries }: DestinationFormProps) {
   const src: DestinationInput = initial ? { slug: initial.slug, name: initial.name, nameEn: initial.nameEn, type: initial.type, parentCountrySlug: initial.parentCountrySlug, parentCountryName: initial.parentCountryName, category: initial.category, image: initial.image, heroTagline: initial.heroTagline, description: initial.description, bestSeason: initial.bestSeason, visaRequired: initial.visaRequired, visaType: initial.visaType, flightDuration: initial.flightDuration, currency: initial.currency, startingPrice: initial.startingPrice, startingPriceNote: initial.startingPriceNote, lastVerifiedAt: initial.lastVerifiedAt, activeToursCount: initial.activeToursCount, popularDistricts: initial.popularDistricts, keyHighlights: initial.keyHighlights, travelTips: initial.travelTips, faqs: initial.faqs, relatedGuides: initial.relatedGuides } : EMPTY;
   const [form, setForm] = useState<DestinationInput>(src);
   const [guidesTxt, setGuidesTxt] = useState((src.relatedGuides ?? []).join('\n'));
@@ -23,14 +37,52 @@ export default function DestinationForm({ initial, editingId, onDone }: { initia
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
 
+  // قلم ۱۱: نامک خودکار از نام فارسی؛ ویرایش دستی فقط در «پیشرفته».
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [nameError, setNameError] = useState('');
+  const [slugError, setSlugError] = useState('');
+
+  // قلم ۱۲: انتخاب کشور مادر از فهرست + افزودن کشور تازه همان‌جا.
+  const [countries, setCountries] = useState<CountryOption[]>(initialCountries);
+  const [showAddCountry, setShowAddCountry] = useState(false);
+  const [newCountryName, setNewCountryName] = useState('');
+  const [newCountrySlug, setNewCountrySlug] = useState('');
+  const [newCountrySlugTouched, setNewCountrySlugTouched] = useState(false);
+  const [newCountryError, setNewCountryError] = useState('');
+
   const set = <K extends keyof DestinationInput>(k: K, v: DestinationInput[K]) => setForm((f) => ({ ...f, [k]: v }));
+
+  const setName = (v: string) => {
+    setForm((f) => ({
+      ...f,
+      name: v,
+      // فقط برای رکورد تازه و تا وقتی کاربر دستی به نامک دست نزده، نامک از نام ساخته می‌شود.
+      slug: !editingId && !slugTouched ? faSlug(v) : f.slug,
+    }));
+    setNameError('');
+  };
+
   const addFaq = () => setFaqs((arr) => [...arr, { question: '', answer: '' }]);
   const removeFaq = (idx: number) => setFaqs((arr) => arr.filter((_, i) => i !== idx));
   const updateFaq = (idx: number, patch: Partial<FaqItem>) => setFaqs((arr) => arr.map((item, i) => (i === idx ? { ...item, ...patch } : item)));
 
   const submit = () => {
+    const name = (form.name || '').trim();
+    const slug = (form.slug || '').trim();
+    if (name.length < 2) {
+      setNameError('نام مقصد لازم است.');
+      return;
+    }
+    if (!slug) {
+      setSlugError('نامک لازم است؛ اول نام فارسی را بنویسید تا خودکار ساخته شود.');
+      setAdvancedOpen(true);
+      return;
+    }
     const payload: DestinationInput = {
       ...form,
+      name,
+      slug,
       activeToursCount: Number(form.activeToursCount) || 0,
       popularDistricts: form.popularDistricts ?? [],
       keyHighlights: form.keyHighlights ?? [],
@@ -40,10 +92,50 @@ export default function DestinationForm({ initial, editingId, onDone }: { initia
     };
     startTransition(async () => {
       try {
+        const { unique } = await checkDestinationSlugUnique(slug, editingId ?? null);
+        if (!unique) {
+          setSlugError('این نامک قبلاً برای مقصد دیگری ثبت شده.');
+          setAdvancedOpen(true);
+          return;
+        }
         await saveDestination(editingId ?? null, payload);
         onDone();
       } catch (e) {
         toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ذخیره.' });
+      }
+    });
+  };
+
+  const handleAddCountry = () => {
+    const name = newCountryName.trim();
+    const slug = newCountrySlug.trim();
+    if (name.length < 2) {
+      setNewCountryError('نام کشور لازم است.');
+      return;
+    }
+    if (!slug) {
+      setNewCountryError('نامک لازم است.');
+      return;
+    }
+    startTransition(async () => {
+      try {
+        const { unique } = await checkDestinationSlugUnique(slug);
+        if (!unique) {
+          setNewCountryError('این نامک قبلاً برای مقصد دیگری ثبت شده.');
+          return;
+        }
+        await saveDestination(null, { ...EMPTY, slug, name, type: 'country' });
+        setCountries((cs) => [...cs, { slug, name }].sort((a, b) => a.name.localeCompare(b.name, 'fa')));
+        // کشور تازه ساخته‌شده همان‌جا انتخاب می‌شود و نامش هم پر می‌شود.
+        setForm((f) => ({ ...f, parentCountrySlug: slug, parentCountryName: name }));
+        setNewCountryName('');
+        setNewCountrySlug('');
+        setNewCountrySlugTouched(false);
+        setNewCountryError('');
+        setShowAddCountry(false);
+        toast({ title: `کشور «${name}» ثبت و انتخاب شد.` });
+      } catch (e) {
+        setNewCountryError(e instanceof Error ? e.message : 'خطا در ثبت کشور.');
       }
     });
   };
@@ -56,11 +148,92 @@ export default function DestinationForm({ initial, editingId, onDone }: { initia
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="نامک"><Input value={form.slug} dir="ltr" onChange={(e) => set('slug', e.target.value)} /></Field>
-          <Field label="نام فارسی"><Input value={form.name} onChange={(e) => set('name', e.target.value)} /></Field>
+          <Field label="نام فارسی *" error={nameError}><Input value={form.name} onChange={(e) => setName(e.target.value)} /></Field>
           <Field label="نام انگلیسی"><Input value={form.nameEn} dir="ltr" onChange={(e) => set('nameEn', e.target.value)} /></Field>
           <Field label="نوع"><Select value={form.type} onChange={(e) => set('type', e.target.value)} options={[{ value: 'city', label: 'شهر' }, { value: 'country', label: 'کشور' }]} /></Field>
-          <Field label="نامک کشور مادر"><Input value={form.parentCountrySlug} dir="ltr" onChange={(e) => set('parentCountrySlug', e.target.value)} /></Field>
+          <Field
+            label="کشور مادر"
+            hint="شهری که ثبت می‌کنید زیر کدام کشور می‌نشیند؟ از فهرست انتخاب کنید."
+          >
+            <div className="flex gap-2">
+              <Select
+                className="grow"
+                value={form.parentCountrySlug}
+                onChange={(e) => {
+                  const slug = e.target.value;
+                  const country = countries.find((c) => c.slug === slug);
+                  setForm((f) => ({
+                    ...f,
+                    parentCountrySlug: slug,
+                    parentCountryName: country ? country.name : f.parentCountryName,
+                  }));
+                }}
+                options={[
+                  { value: '', label: 'بدون کشور مادر' },
+                  ...countries.map((c) => ({ value: c.slug, label: `${c.name} (${c.slug})` })),
+                ]}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-1.5"
+                onClick={() => setShowAddCountry((v) => !v)}
+              >
+                <Plus className="size-4" />
+                کشور تازه
+              </Button>
+            </div>
+          </Field>
+          {showAddCountry && (
+            <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3 sm:col-span-2">
+              <div className="text-sm font-semibold">افزودن کشور تازه</div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="نام فارسی کشور *">
+                  <Input
+                    value={newCountryName}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setNewCountryName(v);
+                      if (!newCountrySlugTouched) setNewCountrySlug(faSlug(v));
+                      setNewCountryError('');
+                    }}
+                    placeholder="مثلاً گرجستان"
+                  />
+                </Field>
+                <Field label="نامک" hint="خودکار از نام ساخته می‌شود؛ اگر خواستید عوضش کنید" error={newCountryError}>
+                  <Input
+                    dir="ltr"
+                    value={newCountrySlug}
+                    onChange={(e) => {
+                      setNewCountrySlugTouched(true);
+                      setNewCountrySlug(e.target.value);
+                      setNewCountryError('');
+                    }}
+                  />
+                </Field>
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" size="sm" disabled={pending} onClick={handleAddCountry}>
+                  {pending ? 'در حال ثبت…' : 'ثبت کشور'}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setShowAddCountry(false);
+                    setNewCountryName('');
+                    setNewCountrySlug('');
+                    setNewCountrySlugTouched(false);
+                    setNewCountryError('');
+                  }}
+                >
+                  انصراف
+                </Button>
+              </div>
+            </div>
+          )}
           <Field label="نام کشور مادر"><Input value={form.parentCountryName} onChange={(e) => set('parentCountryName', e.target.value)} /></Field>
           <Field label="دسته‌بندی"><Input value={form.category} onChange={(e) => set('category', e.target.value)} /></Field>
           <Field label="تصویر" hint="آدرس کامل تصویر"><Input value={form.image} dir="ltr" onChange={(e) => set('image', e.target.value)} /></Field>
@@ -106,6 +279,30 @@ export default function DestinationForm({ initial, editingId, onDone }: { initia
             </div>
           )}
         </div>
+
+        <Collapsible
+          trigger="پیشرفته"
+          openLabel="بستن بخش پیشرفته"
+          open={advancedOpen}
+          onOpenChange={setAdvancedOpen}
+          className="rounded-xl border border-border bg-muted/20 p-4"
+        >
+          <Field
+            label="نامک"
+            hint="آدرس اینترنتی این مقصد در سایت؛ خودکار از نام فارسی ساخته می‌شود و معمولاً لازم نیست دست بزنید"
+            error={slugError}
+          >
+            <Input
+              dir="ltr"
+              value={form.slug}
+              onChange={(e) => {
+                setSlugTouched(true);
+                set('slug', e.target.value);
+                setSlugError('');
+              }}
+            />
+          </Field>
+        </Collapsible>
 
         <div className="flex gap-2">
           <Button onClick={submit} disabled={pending}>{pending ? 'در حال ذخیره...' : editingId ? 'ذخیره تغییرات' : 'ثبت مقصد'}</Button>
