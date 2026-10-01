@@ -258,7 +258,23 @@ function restToGuide(r: Row): GuideItem {
   };
 }
 
+/**
+ * QA1-04: کش پرومیس راهنماها (همان الگوی toursCache/destinationsCache).
+ * تریادآف پذیرفته‌شده: انتشار/عدم‌انتشار تا ۵ دقیقه تأخیر می‌خورد —
+ * همان که برای تورها و مقصدها پذیرفته شده.
+ */
+const GUIDES_TTL_MS = 5 * 60 * 1000;
+let guidesCache: { promise: Promise<Record<string, GuideItem>>; at: number } | null = null;
+
 export async function getGuides(): Promise<Record<string, GuideItem>> {
+  const now = Date.now();
+  if (!guidesCache || now - guidesCache.at > GUIDES_TTL_MS) {
+    guidesCache = { promise: fetchGuides(), at: now };
+  }
+  return guidesCache.promise;
+}
+
+async function fetchGuides(): Promise<Record<string, GuideItem>> {
   try {
     const rest = getRest();
     if (!rest) return GUIDES;
@@ -327,7 +343,24 @@ function restToExhibition(r: Row): ExhibitionSeries {
   };
 }
 
+/**
+ * QA1-04: کش پرومیس نمایشگاه‌ها (همان الگوی toursCache/destinationsCache).
+ * تریادآف پذیرفته‌شده: انتشار/عدم‌انتشار تا ۵ دقیقه تأخیر می‌خورد —
+ * همان که برای تورها و مقصدها پذیرفته شده.
+ */
+const EXHIBITIONS_TTL_MS = 5 * 60 * 1000;
+let exhibitionsCache: { promise: Promise<Record<string, ExhibitionSeries>>; at: number } | null =
+  null;
+
 export async function getExhibitions(): Promise<Record<string, ExhibitionSeries>> {
+  const now = Date.now();
+  if (!exhibitionsCache || now - exhibitionsCache.at > EXHIBITIONS_TTL_MS) {
+    exhibitionsCache = { promise: fetchExhibitions(), at: now };
+  }
+  return exhibitionsCache.promise;
+}
+
+async function fetchExhibitions(): Promise<Record<string, ExhibitionSeries>> {
   try {
     const rest = getRest();
     if (!rest) return EXHIBITION_SERIES;
@@ -514,4 +547,48 @@ export async function getTourDetailContent(): Promise<{
   tours: TourItem[];
 }> {
   return { tours: await getTours() };
+}
+
+/**
+ * کارت نمایشگاه (هاب `/exhibitions`): فقط id/slug/title/description/image/
+ * city/country/industry/industrySlug/venue و سه فیلد upcomingEdition
+ * (solarDate/gregorianDate/startingPrice) خوانده می‌شود؛ phases/businessTips/
+ * faqs/servicesIncluded و جزئیات دیگر edition فقط در صفحهٔ جزئیات لازم‌اند.
+ */
+export function slimExhibitionForHub(s: ExhibitionSeries): ExhibitionSeries {
+  return {
+    ...s,
+    upcomingEdition: {
+      ...s.upcomingEdition,
+      phases: [],
+      visaDeadline: '',
+      hotelArea: '',
+      startingPriceNote: '',
+    },
+    servicesIncluded: [],
+    businessTips: [],
+    faqs: [],
+  };
+}
+
+function slimExhibitionRecord(
+  exhibitions: Record<string, ExhibitionSeries>,
+): Record<string, ExhibitionSeries> {
+  return Object.fromEntries(
+    Object.entries(exhibitions).map(([k, s]) => [k, slimExhibitionForHub(s)] as const),
+  );
+}
+
+/** محتوای هاب `/guides`: کارت‌های سبک‌شدهٔ راهنما (همان پروجکشن خانه و `/tours`). */
+export async function getGuidesHubContent(): Promise<{
+  guides: Record<string, GuideItem>;
+}> {
+  return { guides: slimGuideRecord(await getGuides()) };
+}
+
+/** محتوای هاب `/exhibitions`: کارت‌های سبک‌شدهٔ نمایشگاه. */
+export async function getExhibitionsHubContent(): Promise<{
+  exhibitions: Record<string, ExhibitionSeries>;
+}> {
+  return { exhibitions: slimExhibitionRecord(await getExhibitions()) };
 }

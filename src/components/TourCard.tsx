@@ -149,12 +149,12 @@ export default function TourCard({
       </div>
 
       {/* 2. Card Content Body */}
-      <div className="p-4 sm:p-5 flex flex-col justify-between flex-grow text-center dir-rtl">
+      <div className="p-4 sm:p-5 flex flex-col justify-between flex-grow text-center">
         <div>
           {/* Main Orange Tour Title */}
           <h3 
             title={title}
-            className="text-card-title text-brand-orange mb-1.5 group-hover:opacity-90 transition-opacity [text-wrap:balance]"
+            className="text-card-title text-brand-orange-strong mb-1.5 group-hover:opacity-90 transition-opacity [text-wrap:balance]"
           >
             {title}
           </h3>
@@ -177,7 +177,7 @@ export default function TourCard({
             {/* 1. Transport (نوع واقعی حمل‌ونقل تور) */}
             <div className="flex flex-col items-center justify-center gap-1 flex-1">
               <TransportIcon className="w-4 h-4 text-text-heading stroke-[1.8]" />
-              <span className="text-[11.5px] sm:text-[12px] font-bold text-text-heading whitespace-nowrap">{transportLabel(transportKind)}</span>
+              <span className="text-[12px] font-bold text-text-heading whitespace-nowrap">{transportLabel(transportKind)}</span>
             </div>
 
             <span className="text-border-default/90 text-[13px] font-light shrink-0 select-none">+</span>
@@ -185,7 +185,7 @@ export default function TourCard({
             {/* 2. Transfer (ترنسفر) */}
             <div className="flex flex-col items-center justify-center gap-1 flex-1">
               <Car className="w-4 h-4 text-text-heading stroke-[1.8]" />
-              <span className="text-[11.5px] sm:text-[12px] font-bold text-text-heading">ترنسفر</span>
+              <span className="text-[12px] font-bold text-text-heading">ترنسفر</span>
             </div>
 
             <span className="text-border-default/90 text-[13px] font-light shrink-0 select-none">+</span>
@@ -193,7 +193,7 @@ export default function TourCard({
             {/* 3. Hotel (هتل ۴★) */}
             <div className="flex flex-col items-center justify-center gap-1 flex-1">
               <Building2 className="w-4 h-4 text-text-heading stroke-[1.8]" />
-              <span className="text-[11.5px] sm:text-[12px] font-bold text-text-heading whitespace-nowrap">{hotelLabel}</span>
+              <span className="text-[12px] font-bold text-text-heading whitespace-nowrap">{hotelLabel}</span>
             </div>
 
             {/* 4. Visa (ویزا / بدون ویزا) - فقط برای تورهای خارجی */}
@@ -202,7 +202,7 @@ export default function TourCard({
                 <span className="text-border-default/90 text-[13px] font-light shrink-0 select-none">+</span>
                 <div className="flex flex-col items-center justify-center gap-1 flex-1">
                   <ShieldCheck className="w-4 h-4 text-text-heading stroke-[1.8]" />
-                  <span className="text-[11.5px] sm:text-[12px] font-bold text-text-heading whitespace-nowrap">
+                  <span className="text-[12px] font-bold text-text-heading whitespace-nowrap">
                     {requiresVisa ? 'ویزا' : 'بدون ویزا'}
                   </span>
                 </div>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Search, Filter, ChevronDown, Check, ArrowLeft, Phone, Calendar, 
@@ -14,7 +14,7 @@ import { safeCreateLead } from '../lib/lead-submit-safe';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import { fa, faSlug } from '@/lib/utils';
-import { uniqueOrigins } from './tour-live';
+import { uniqueOrigins, isValidMobile, normalizeMobile } from './tour-live';
 import TourListItem from './TourListItem';
 
 interface ToursPageProps {
@@ -54,6 +54,43 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
   // Modal / Drawer
   const [selectedDetailTour, setSelectedDetailTour] = useState<TourItem | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false);
+
+  // QA2-5: مدیریت فوکوس و Escape برای مودال‌ها و شیت فیلتر موبایل
+  const compareCloseRef = useRef<HTMLButtonElement>(null);
+  const detailCloseRef = useRef<HTMLButtonElement>(null);
+  const sheetCloseRef = useRef<HTMLButtonElement>(null);
+  const modalOpenerRef = useRef<HTMLElement | null>(null);
+
+  // قفل اسکرول body + انتقال فوکوس به داخل مودال بازشده و برگرداندن آن هنگام بسته شدن
+  useEffect(() => {
+    const isOpen = showCompareModal || selectedDetailTour !== null || showMobileFilters;
+    if (!isOpen) {
+      document.body.style.overflow = 'unset';
+      modalOpenerRef.current?.focus();
+      modalOpenerRef.current = null;
+      return;
+    }
+    modalOpenerRef.current = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = 'hidden';
+    const closeBtn = showCompareModal
+      ? compareCloseRef.current
+      : selectedDetailTour !== null
+        ? detailCloseRef.current
+        : sheetCloseRef.current;
+    closeBtn?.focus();
+  }, [showCompareModal, selectedDetailTour, showMobileFilters]);
+
+  // بستن مودال/شیت باز با Escape (اولویت با بالایی‌ترین لایه)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (showMobileFilters) setShowMobileFilters(false);
+      else if (selectedDetailTour !== null) closeDetailModal();
+      else if (showCompareModal) setShowCompareModal(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showCompareModal, selectedDetailTour, showMobileFilters]);
 
   // Booking Form Modal State inside Detail Modal
   const [bookingSubmitted, setBookingSubmitted] = useState<boolean>(false);
@@ -208,11 +245,21 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (bookingSubmitted) return;
+    // QA1-07: ولیدیشن کلاینتی قبل از سابمیت (همان الگوی TourDetailPage) —
+    // برای خطای سادهٔ نام/موبایل یک راندتریپ به سرور نمی‌زنیم.
+    if (bookingForm.name.trim().length < 3) {
+      setBookingError('نام و نام خانوادگی را کامل وارد کنید.');
+      return;
+    }
+    if (!isValidMobile(bookingForm.mobile)) {
+      setBookingError('شماره موبایل معتبر نیست؛ مثل ۰۹۱۲۳۴۵۶۷۸۹.');
+      return;
+    }
     setBookingSubmitted(true);
     setBookingError('');
     const result = await safeCreateLead({
       fullName: bookingForm.name.trim(),
-      phone: bookingForm.mobile,
+      phone: normalizeMobile(bookingForm.mobile),
       sourcePath: '/tours',
       tourContext: selectedDetailTour?.title,
       destinationHint: selectedDetailTour?.destination,
@@ -229,18 +276,18 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
   };
 
   return (
-    <div className="bg-page-background text-text-primary min-h-screen pb-24 lg:pb-12 dir-rtl">
+    <div className="bg-page-background text-text-primary min-h-screen pb-24 lg:pb-12">
       
       {/* ---------------- 1. Breadcrumb ---------------- */}
       <div className="container-main px-4 sm:px-6 lg:px-8 pt-3 pb-2">
-        <nav className="flex items-center gap-2 text-caption md:text-body-sm text-text-secondary font-medium">
+        <nav aria-label="مسیر صفحه" className="flex items-center gap-2 text-caption md:text-body-sm text-text-secondary font-medium">
           <button 
             onClick={onGoHome}
             className="hover:text-brand-orange transition-colors focus:outline-none"
           >
             صفحه اصلی
           </button>
-          <span className="text-text-secondary/50">←</span>
+          <span aria-hidden="true" className="text-text-secondary/50">←</span>
           <span className="text-text-heading font-semibold">تورها</span>
         </nav>
       </div>
@@ -304,8 +351,9 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
 
             {/* Sorting */}
             <div className="flex items-center gap-2 text-body-sm">
-              <span className="text-text-secondary font-medium shrink-0 hidden sm:inline">مرتب‌سازی:</span>
+              <label htmlFor="tours-sort" className="text-text-secondary font-medium shrink-0 hidden sm:inline">مرتب‌سازی:</label>
               <select 
+                id="tours-sort"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="form-input form-select font-bold shadow-subtle !h-11"
@@ -326,31 +374,31 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
             {selectedType !== 'all' && (
               <span className="chip chip-small chip-selected">
                 {selectedType === 'foreign' ? 'خارجی' : selectedType === 'domestic' ? 'داخلی' : 'نمایشگاهی'}
-                <button onClick={() => setSelectedType('all')} className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setSelectedType('all')} aria-label="حذف فیلتر نوع سفر" className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {searchDestination && (
               <span className="chip chip-small chip-selected">
                 {searchDestination}
-                <button onClick={() => setSearchDestination('')} className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setSearchDestination('')} aria-label="حذف فیلتر جست‌وجوی مقصد" className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {originFilter !== 'all' && (
               <span className="chip chip-small chip-selected">
                 مبدأ: {originOptions.find((o) => o.slug === originFilter)?.label || originFilter}
-                <button onClick={() => setOriginFilter('all')} className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setOriginFilter('all')} aria-label="حذف فیلتر مبدأ" className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {visaFreeOnly && (
               <span className="chip chip-small chip-selected">
                 بدون ویزا
-                <button onClick={() => setVisaFreeOnly(false)} className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setVisaFreeOnly(false)} aria-label="حذف فیلتر بدون ویزا" className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {priceRange !== 'all' && (
               <span className="chip chip-small chip-selected">
                 {priceRange === 'under-30m' ? 'تا ۳۰ میلیون' : priceRange === '30m-60m' ? '۳۰ تا ۶۰ میلیون' : 'بالای ۶۰ میلیون'}
-                <button onClick={() => setPriceRange('all')} className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setPriceRange('all')} aria-label="حذف فیلتر قیمت" className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             <button
@@ -623,7 +671,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
 
       {/* ---------------- 12. Comparison Floating Bar & Modal ---------------- */}
       {comparedTourIds.length > 0 && (
-        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-6 left-1/2 -translate-x-1/2 z-40 bg-surface-dark text-white px-5 py-3 rounded-card shadow-floating border border-border-on-dark flex items-center justify-center flex-wrap gap-x-4 gap-y-2 max-w-[calc(100vw-2rem)] dir-rtl">
+        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-6 left-1/2 -translate-x-1/2 z-40 bg-surface-dark text-white px-5 py-3 rounded-card shadow-floating border border-border-on-dark flex items-center justify-center flex-wrap gap-x-4 gap-y-2 max-w-[calc(100vw-2rem)]">
           <span className="text-body-sm font-bold">
             {fa(comparedTourIds.length)} تور برای مقایسه انتخاب شده
           </span>
@@ -645,7 +693,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
       {/* Comparison Modal */}
       <AnimatePresence>
         {showCompareModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center p-4 dir-rtl">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -654,7 +702,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
             >
               <div className="flex items-center justify-between mb-6 pb-3 border-b border-border-default">
                 <h3 className="text-h3 text-text-heading">جدول مقایسه تورهای انتخابی</h3>
-                <button onClick={() => setShowCompareModal(false)} className="icon-btn icon-btn-medium text-text-secondary hover:text-text-heading">
+                <button ref={compareCloseRef} onClick={() => setShowCompareModal(false)} aria-label="بستن مقایسه تورها" className="icon-btn icon-btn-medium text-text-secondary hover:text-text-heading">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -832,11 +880,12 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
           <p className="text-body-sm text-text-secondary">پاسخ شفاف به متداول‌ترین ابهامات مسافران پیش از ثبت درخواست تماس</p>
         </div>
 
-        <div className="max-w-3xl mx-auto space-y-3 dir-rtl text-start">
+        <div className="max-w-3xl mx-auto space-y-3 text-start">
           {TOUR_FAQ_ITEMS.map((faq, idx) => (
             <div key={idx} className="bg-surface-primary rounded-control border border-border-default overflow-hidden">
               <button
                 onClick={() => setOpenFaqIndex(openFaqIndex === idx ? null : idx)}
+                aria-expanded={openFaqIndex === idx}
                 className="w-full p-4 font-bold text-[14px] text-text-heading flex items-center justify-between text-start hover:text-brand-orange transition-colors"
               >
                 <span>{faq.q}</span>
@@ -855,7 +904,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
       {/* ---------------- Tour Detail & Reservation Modal ---------------- */}
       <AnimatePresence>
         {selectedDetailTour && (
-          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[90] flex items-center justify-center p-4 dir-rtl">
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -863,7 +912,9 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               className="bg-surface-primary rounded-card max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-start shadow-floating"
             >
               <button 
+                ref={detailCloseRef}
                 onClick={closeDetailModal}
+                aria-label="بستن جزئیات تور"
                 className="absolute top-4 end-4 icon-btn icon-btn-medium bg-page-background text-text-secondary hover:text-text-heading rounded-full"
               >
                 <X className="w-5 h-5" />
@@ -1015,7 +1066,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
       {/* ---------------- Mobile Bottom Sheet Filters ---------------- */}
       <AnimatePresence>
         {showMobileFilters && (
-          <div className="fixed inset-0 bg-black/60 z-[95] flex items-end dir-rtl">
+          <div className="fixed inset-0 bg-black/60 z-[95] flex items-end">
             <motion.div 
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -1024,7 +1075,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
             >
               <div className="filter-panel-header">
                 <h3 className="text-h4 text-text-heading">فیلترهای انتخاب تور</h3>
-                <button onClick={() => setShowMobileFilters(false)} className="icon-btn icon-btn-medium text-text-secondary hover:text-text-heading">
+                <button ref={sheetCloseRef} onClick={() => setShowMobileFilters(false)} aria-label="بستن فیلترها" className="icon-btn icon-btn-medium text-text-secondary hover:text-text-heading">
                   <X className="w-5 h-5 text-text-secondary" />
                 </button>
               </div>

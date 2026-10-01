@@ -20,7 +20,7 @@ export default function TourDetailError({
   }, [error]);
 
   return (
-    <div className="bg-page-background text-text-primary dir-rtl">
+    <div className="bg-page-background text-text-primary">
       <div className="container-main px-4 sm:px-6 lg:px-8 py-16 sm:py-24 max-w-2xl mx-auto text-center">
         <div className="bg-surface-primary border border-border-default rounded-card p-8 sm:p-12">
           <div

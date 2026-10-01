@@ -84,7 +84,7 @@ export default function TourListItem({
     <a 
       href={href || '#'}
       onClick={handleClick}
-      className={`group block bg-surface-primary border border-border-default rounded-card shadow-subtle hover:-translate-y-0.5 hover:shadow-card hover:border-border-default/80 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col md:flex-row min-h-[100px] w-full dir-rtl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange ${soldOut ? 'opacity-85' : ''} ${className}`}
+      className={`group block bg-surface-primary border border-border-default rounded-card shadow-subtle hover:-translate-y-0.5 hover:shadow-card hover:border-border-default/80 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col md:flex-row min-h-[100px] w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange ${soldOut ? 'opacity-85' : ''} ${className}`}
     >
       {/* --- Image Area --- */}
       <div className="relative w-full md:w-[140px] lg:w-[160px] shrink-0 aspect-[16/9] md:aspect-auto">
@@ -153,7 +153,7 @@ export default function TourListItem({
           </span>
           <div className="flex flex-wrap items-baseline gap-1">
             {pricePending ? (
-              <span className="text-body font-extrabold text-brand-orange">
+              <span className="text-body font-extrabold text-brand-orange-strong">
                 در حال بررسی
               </span>
             ) : soldOut ? (
@@ -162,7 +162,7 @@ export default function TourListItem({
               </span>
             ) : (
               <>
-                <span className="text-h5 lg:text-h4 font-extrabold text-brand-orange">
+                <span className="text-h5 lg:text-h4 font-extrabold text-brand-orange-strong">
                   {price}
                 </span>
                 <span className="text-caption text-text-secondary font-medium">
@@ -183,7 +183,7 @@ export default function TourListItem({
             </span>
             <div className="flex items-baseline gap-1">
               {pricePending ? (
-                <span className="text-body font-extrabold text-brand-orange">
+                <span className="text-body font-extrabold text-brand-orange-strong">
                   در حال بررسی
                 </span>
               ) : soldOut ? (
@@ -192,7 +192,7 @@ export default function TourListItem({
                 </span>
               ) : (
                 <>
-                  <span className="text-body font-extrabold text-brand-orange">
+                  <span className="text-body font-extrabold text-brand-orange-strong">
                     {price}
                   </span>
                   <span className="text-caption text-text-secondary font-medium">

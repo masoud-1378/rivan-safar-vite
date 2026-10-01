@@ -40,7 +40,7 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
   });
 
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       {/* ---------------- Hero & Search ---------------- */}
       <section className="bg-surface-primary border-b border-border-default section-compact">
         <div className="container-main px-4 sm:px-6 lg:px-8 text-start">

@@ -187,7 +187,7 @@ export default function Footer({ onNavigate }: FooterProps) {
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-brand-orange shrink-0" />
-                <span>ایمیل: {contact.email}</span>
+                <span>ایمیل: <bdi>{contact.email}</bdi></span>
               </div>
             </div>
           </div>

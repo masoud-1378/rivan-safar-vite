@@ -42,7 +42,7 @@ export default function DestinationsCatalogPage({ onNavigate }: DestinationsCata
   }, [allDestinations, searchTerm, selectedCategory]);
 
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       {/* ---------------- Header & Search ---------------- */}
       <section className="bg-surface-primary border-b border-border-default section-compact">
         <div className="container-main px-4 sm:px-6 lg:px-8 text-start">
@@ -146,7 +146,7 @@ export default function DestinationsCatalogPage({ onNavigate }: DestinationsCata
                   <div className="pt-4 border-t border-border-default/60 flex items-center justify-between">
                     <div>
                       <span className="block text-caption text-text-secondary">شروع قیمت از:</span>
-                      <span className="text-body font-extrabold text-brand-orange">{dest.startingPrice}</span>
+                      <span className="text-body font-extrabold text-brand-orange-strong">{dest.startingPrice}</span>
                     </div>
                     <span className="inline-flex items-center gap-1 text-caption font-bold text-text-heading group-hover:text-brand-orange transition-colors">
                       <span>مشاهده جزئیات</span>

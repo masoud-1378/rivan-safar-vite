@@ -35,7 +35,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
 
   if (!city) {
     return (
-      <div className="container-main py-16 px-4 text-center dir-rtl">
+      <div className="container-main py-16 px-4 text-center">
         <h2 className="text-h3 font-bold mb-4">مقصد مورد نظر یافت نشد</h2>
         <button onClick={() => onNavigate('/destinations')} className="btn btn-primary btn-medium">
           بازگشت به فهرست مقصدها
@@ -78,7 +78,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
   };
 
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       {/* ---------------- Breadcrumb ---------------- */}
       <div className="bg-surface-secondary border-b border-border-default/60 py-2.5">
         <div className="container-main px-4 sm:px-6 lg:px-8">

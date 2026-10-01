@@ -166,6 +166,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                     onChange={handleSearchInputChange}
                     onFocus={() => setIsFocused(true)}
                     placeholder={isDesktop ? "مقصد یا تور (مثلاً استانبول)" : "نام مقصد…"} 
+                    aria-label="جست‌وجوی مقصد یا تور"
                     className="w-full bg-transparent border-none outline-none text-text-heading placeholder:text-text-secondary/60 text-form-input"
                   />
                 </div>
@@ -228,6 +229,8 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.15 }}
                     className="absolute top-full end-0 start-0 z-50 mt-2 bg-surface-primary border border-border-default/80 rounded-card shadow-floating overflow-hidden text-start"
+                    role="listbox"
+                    aria-label="پیشنهادهای مقصد"
                   >
                     <div className="py-1.5">
                       {filteredSuggestions.length > 0 ? (
@@ -235,6 +238,8 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                           <button
                             key={index}
                             type="button"
+                            role="option"
+                            aria-selected="false"
                             onMouseDown={(e) => {
                               e.preventDefault();
                               handleSuggestionClick(dest.name);

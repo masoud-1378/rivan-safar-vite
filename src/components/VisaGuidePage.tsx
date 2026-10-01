@@ -26,7 +26,7 @@ export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePage
   };
 
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       {/* ---------------- Breadcrumb ---------------- */}
       <div className="bg-surface-secondary border-b border-border-default/60 py-2.5">
         <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl">

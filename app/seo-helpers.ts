@@ -6,7 +6,7 @@ import { SAMPLE_TOURS, type TourItem } from '@/src/data/toursData';
 import { COUNTRIES, CITIES } from '@/src/data/destinationsData';
 import { GUIDES } from '@/src/data/guidesData';
 import { EXHIBITION_SERIES } from '@/src/data/exhibitionsData';
-import { getTour, getGuide, getExhibition } from '@/src/lib/db-content';
+import { getTour, getGuide, getExhibition, getCountries, getCities } from '@/src/lib/db-content';
 import { isIndexingEnabled } from '@/src/lib/site-contact';
 
 export interface ResolvedSeo {
@@ -131,6 +131,8 @@ export function resolveSeo(path: string): ResolvedSeo {
  * نسخهٔ زندهٔ resolveSeo (ردیف ۱-۳): برای سه شاخهٔ تور/راهنما/نمایشگاه اول
  * رکورد همان موجودیت را از DB می‌خواند (از همان getTours/getGuides/getExhibitions
  * که صفحه‌ها استفاده می‌کنند) و تایتل/توضیحات را از فیلدهای رکورد می‌سازد؛
+ * برای کشور/شهر/ویزا هم از getCountries/getCities زنده lookup گرفته می‌شود
+ * تا موجودیت‌های فقط-DB متای اختصاصی بگیرند.
  * اگر در DB نبود، به رجیستری استاتیک (همان resolveSeo) برمی‌گردد.
  *
  * قانون robots: «شناخته‌شده در DB یا استاتیک» — رکورد منتشرشده‌ای که در DB هست
@@ -183,6 +185,54 @@ export async function resolveSeoLive(path: string): Promise<ResolvedSeo> {
             : series.heroTagline,
           robots: 'index,follow',
           breadcrumbs: withCrumb(series.title),
+        };
+      }
+    } else if (route.type === 'country') {
+      // QA1-02: کشورهای فقط-DB هم متای اختصاصی می‌گیرند.
+      const country = (await getCountries())[route.params.countrySlug];
+      if (country) {
+        seo = {
+          ...fallback,
+          title: `تور ${country.name}؛ تاریخ‌ها، قیمت و شرایط سفر · ریوان سفر`,
+          description: `${country.description.slice(0, 140)}…`,
+          robots: 'index,follow',
+          breadcrumbs: withCrumb(`تور ${country.name}`),
+        };
+      }
+    } else if (route.type === 'destination_city') {
+      // QA1-02: شهرهای فقط-DB هم متای اختصاصی می‌گیرند.
+      const cities = await getCities();
+      const city = cities[route.params.placeSlug];
+      if (city) {
+        const allCountries = await getCountries();
+        const country =
+          allCountries[route.params.countrySlug] ??
+          (city.parentCountrySlug ? allCountries[city.parentCountrySlug] : undefined);
+        const crumbs = withCrumb(`تور ${city.name}`);
+        if (country && crumbs.length >= 3) {
+          crumbs[crumbs.length - 2] = {
+            name: `تور ${country.name}`,
+            url: `/destination/${country.slug}`,
+          };
+        }
+        seo = {
+          ...fallback,
+          title: `تور ${city.name}؛ تاریخ‌ها، قیمت و شرایط سفر · ریوان سفر`,
+          description: `${city.description.slice(0, 140)}…`,
+          robots: 'index,follow',
+          breadcrumbs: crumbs,
+        };
+      }
+    } else if (route.type === 'visa_country') {
+      // QA1-02: کشورهای فقط-DB در صفحهٔ ویزا هم متای اختصاصی می‌گیرند.
+      const country = (await getCountries())[route.params.countrySlug];
+      if (country) {
+        seo = {
+          ...fallback,
+          title: `ویزای ${country.name}؛ مدارک و مراحل برای ایرانیان · ریوان سفر`,
+          description: `مدارک و مراحل ویزای ${country.name} برای ایرانیان با منبع رسمی و تاریخ بازبینی.`,
+          robots: 'index,follow',
+          breadcrumbs: withCrumb(`ویزای ${country.name}`),
         };
       }
     }

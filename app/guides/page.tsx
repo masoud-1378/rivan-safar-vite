@@ -7,7 +7,7 @@ import {
   breadcrumbJsonLd,
   itemListJsonLd,
 } from '../seo-helpers';
-import { getGuides } from '@/src/lib/db-content';
+import { getGuidesHubContent } from '@/src/lib/db-content';
 import { getContactInfo } from '@/src/lib/site-contact';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function GuidesPage() {
   const seo = resolveSeo('/guides');
-  const [guidesData, contact] = await Promise.all([getGuides(), getContactInfo()]);
+  const [hubContent, contact] = await Promise.all([getGuidesHubContent(), getContactInfo()]);
+  const guidesData = hubContent.guides;
   const guides = Object.values(guidesData).map((g) => ({
     name: g.title,
     url: `/guide/${g.slug}`,

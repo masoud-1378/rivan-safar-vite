@@ -7,7 +7,7 @@ interface TermsPageProps {
 
 export default function TermsPage({ onNavigate }: TermsPageProps) {
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       <section className="bg-surface-primary border-b border-border-default section-compact">
         <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl text-start">
           <span className="badge badge-standard mb-3">

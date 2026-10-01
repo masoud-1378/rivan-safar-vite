@@ -40,7 +40,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
 
   if (!ex) {
     return (
-      <div className="container-main py-16 px-4 text-center dir-rtl">
+      <div className="container-main py-16 px-4 text-center">
         <h2 className="text-h3 font-bold mb-4">نمایشگاه مورد نظر یافت نشد</h2>
         <button onClick={() => onNavigate('/exhibitions')} className="btn btn-primary btn-medium">
           مشاهده فهرست نمایشگاه‌ها
@@ -104,7 +104,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
       : null;
 
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       {faqJsonLd && (
         <script
           type="application/ld+json"

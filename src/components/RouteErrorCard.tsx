@@ -3,22 +3,31 @@
 import { useEffect } from 'react';
 
 /**
- * میز P-B فاز ۲ (PB-07): مرز خطای اختصاصی مسیرهای تور (P0).
- * این باندری /tours و هر دو زیرمسیر /tours/foreign و /tours/domestic را پوشش
- * می‌دهد. پیام فارسیِ راه‌گشا: کاربر را به‌جای بن‌بست، به صفحهٔ اصلی یا تماس
- * تلفنی (مسیر پول) هدایت می‌کند. prop رسمی نکست ۱۶: `retry`.
+ * QA1-05: مرز خطای مشترک مسیرهای سایت عمومی (الگوی error.tsx تور،
+ * prop رسمی نکست ۱۶: `retry`). فارسی، با دکمهٔ «تلاش دوباره» و تماس تلفنی
+ * مستقیم — هیچ بن‌بستی برای کاربر نمی‌گذارد.
  */
-export default function ToursError({
+export default function RouteErrorCard({
   error,
   retry,
+  logTag,
+  title,
+  description,
+  linkHref,
+  linkLabel,
 }: {
   error: Error & { digest?: string };
   retry: () => void;
+  logTag: string;
+  title: string;
+  description: string;
+  linkHref: string;
+  linkLabel: string;
 }) {
   useEffect(() => {
     // فقط برای عیب‌یابی؛ هیچ دادهٔ شخصی لاگ نمی‌شود.
-    console.error('[rivan-safar] tours error:', error.message, error.digest ?? '');
-  }, [error]);
+    console.error(`[rivan-safar] ${logTag} error:`, error.message, error.digest ?? '');
+  }, [error, logTag]);
 
   return (
     <div className="bg-page-background text-text-primary">
@@ -31,12 +40,10 @@ export default function ToursError({
             !
           </div>
           <h1 className="text-h2 text-text-heading font-extrabold mb-3">
-            فهرست تورها بارگذاری نشد
+            {title}
           </h1>
           <p className="text-body text-text-secondary leading-relaxed mb-8">
-            تورها سر جایشان‌اند؛ فقط این بار صفحه درست باز نشد. یک بار دیگر تلاش
-            کنید؛ اگر درست نشد، مستقیم با ما تماس بگیرید تا تور مناسب را
-            پیشنهاد بدهیم.
+            {description}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
@@ -53,10 +60,10 @@ export default function ToursError({
               تماس: ۰۲۶-۳۳۳۵۰۱۳۹
             </a>
             <a
-              href="/"
+              href={linkHref}
               className="btn btn-medium btn-outline px-6 font-bold"
             >
-              صفحه اصلی
+              {linkLabel}
             </a>
           </div>
         </div>

@@ -9,13 +9,13 @@ interface NotFoundPageProps {
 export default function NotFoundPage({ onNavigate }: NotFoundPageProps) {
   const contact = useContact();
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl flex items-center justify-center py-16 px-4">
+    <div className="min-h-screen bg-page-background text-text-primary flex items-center justify-center py-16 px-4">
       <div className="bg-surface-primary border border-border-default rounded-card p-8 md:p-12 text-center max-w-lg shadow-card">
         <div className="w-16 h-16 rounded-full bg-brand-orange/10 text-brand-orange flex items-center justify-center mx-auto mb-4">
           <Compass className="w-8 h-8" />
         </div>
 
-        <span className="text-caption font-mono font-bold text-text-muted">خطای ۴۰۴</span>
+        <span className="text-caption font-bold text-text-muted">خطای ۴۰۴</span>
         <h1 className="text-h2 font-extrabold text-text-heading mt-1 mb-3">
           صفحه مورد نظر یافت نشد
         </h1>

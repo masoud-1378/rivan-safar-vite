@@ -44,7 +44,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
 
   if (!tour) {
     return (
-      <div className="container-main py-16 px-4 text-center dir-rtl">
+      <div className="container-main py-16 px-4 text-center">
         <h2 className="text-h3 font-bold mb-4">تور مورد نظر یافت نشد</h2>
         <button onClick={() => onNavigate('/tours')} className="btn btn-primary btn-medium">
           مشاهده فهرست تورها
@@ -116,19 +116,19 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
   };
 
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       {/* ---------------- Breadcrumb ---------------- */}
       <div className="bg-surface-secondary border-b border-border-default/60 py-2.5">
         <div className="container-main px-4 sm:px-6 lg:px-8">
-          <nav className="flex items-center gap-2 text-caption text-text-secondary font-medium">
+          <nav aria-label="مسیر صفحه" className="flex items-center gap-2 text-caption text-text-secondary font-medium">
             <button onClick={() => onNavigate('/')} className="hover:text-brand-orange transition-colors">
               صفحه اصلی
             </button>
-            <span className="text-text-muted">/</span>
+            <span aria-hidden="true" className="text-text-muted">/</span>
             <button onClick={() => onNavigate('/tours')} className="hover:text-brand-orange transition-colors">
               تورها
             </button>
-            <span className="text-text-muted">/</span>
+            <span aria-hidden="true" className="text-text-muted">/</span>
             <span className="text-text-heading font-semibold truncate max-w-[200px] sm:max-w-none">{tour.title}</span>
           </nav>
         </div>
@@ -200,7 +200,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   <div>
                     <span className="text-caption text-text-secondary block mb-1">شروع قیمت پایه:</span>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-h2 font-extrabold text-brand-orange">
+                      <span className="text-h2 font-extrabold text-brand-orange-strong">
                         {tour.formattedPrice}
                       </span>
                       <span className="text-body font-bold text-text-secondary">تومان</span>
@@ -213,7 +213,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                     }`}>
                       {tour.statusLabel}
                     </span>
-                    <div className="text-[11px] text-text-muted mt-1">{faDateTime(tour.updatedAt) ?? '—'}</div>
+                    <div className="text-caption text-text-secondary mt-1">{faDateTime(tour.updatedAt) ?? '—'}</div>
                   </div>
                 </div>
 
@@ -496,7 +496,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
       </section>
 
       {/* ---------------- Callback Request Form (Strictly "درخواست تماس", never "رزرو") ---------------- */}
-      <section id="booking-form" className="bg-surface-primary border-t border-border-default section-standard scroll-mt-12">
+      <section id="booking-form" className="bg-surface-primary border-t border-border-default section-standard scroll-mt-28">
         <div className="container-main px-4 sm:px-6 lg:px-8 max-w-2xl">
           <div className="text-center mb-6">
             <span className="badge badge-standard mb-2">پیگیری با کارشناس</span>

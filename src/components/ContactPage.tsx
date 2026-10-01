@@ -64,7 +64,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       {/* ---------------- Hero Section ---------------- */}
       <section className="bg-surface-primary border-b border-border-default section-compact">
         <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl text-start">
@@ -96,12 +96,12 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                 </div>
                 <div>
                   <h3 className="text-body font-bold text-text-heading">شماره تلفن مستقیم</h3>
-                  <span className="text-caption text-text-muted">پاسخگویی در ساعات کاری</span>
+                  <span className="text-caption text-text-secondary">پاسخگویی در ساعات کاری</span>
                 </div>
               </div>
               <a
                 href={contact.phoneHref}
-                className="text-h3 font-extrabold text-brand-navy hover:text-brand-orange transition-colors block font-mono"
+                className="text-h3 font-extrabold text-brand-navy hover:text-brand-orange transition-colors block"
                 dir="ltr"
               >
                 {contact.phoneDisplay}
@@ -116,7 +116,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                 </div>
                 <div>
                   <h3 className="text-body font-bold text-text-heading">آدرس دفتر مرکزی</h3>
-                  <span className="text-caption text-text-muted">برای عقد قرارداد حضوری</span>
+                  <span className="text-caption text-text-secondary">برای عقد قرارداد حضوری</span>
                 </div>
               </div>
               <p className="text-body-sm text-text-secondary leading-relaxed">
@@ -132,7 +132,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                 </div>
                 <div>
                   <h3 className="text-body font-bold text-text-heading">ساعات کاری آژانس</h3>
-                  <span className="text-caption text-text-muted">پشتیبانی و استعلام</span>
+                  <span className="text-caption text-text-secondary">پشتیبانی و استعلام</span>
                 </div>
               </div>
               <div className="space-y-1.5 text-body-sm text-text-secondary">
@@ -142,7 +142,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                 </div>
                 <div className="flex justify-between text-text-muted pt-1">
                   <span>ایمیل:</span>
-                  <span>{contact.email}</span>
+                  <bdi>{contact.email}</bdi>
                 </div>
               </div>
             </div>

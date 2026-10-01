@@ -180,6 +180,10 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
+  // QA2-4: مدیریت فوکوس دراور موبایل — رفت و برگشت بین دکمهٔ منو و دکمهٔ بستن
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+  const drawerWasOpenRef = useRef(false);
 
   const handleMouseEnter = (menuName: string) => {
     if (closeTimeout.current) clearTimeout(closeTimeout.current);
@@ -204,11 +208,12 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
     }
   };
 
-  // Close megamenu on Escape key
+  // Close megamenu and mobile drawer on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setActiveMenu(null);
+        setMobileMenuOpen(false); // QA2-4: بستن دراور موبایل با Escape
       }
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -240,6 +245,18 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
+    }
+  }, [mobileMenuOpen]);
+
+  // QA2-4: انتقال فوکوس به دکمهٔ بستن هنگام باز شدن دراور و برگرداندن
+  // آن به دکمهٔ منو هنگام بسته شدن
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      drawerWasOpenRef.current = true;
+      drawerCloseRef.current?.focus();
+    } else if (drawerWasOpenRef.current) {
+      drawerWasOpenRef.current = false;
+      menuButtonRef.current?.focus();
     }
   }, [mobileMenuOpen]);
 
@@ -521,9 +538,11 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
 
             {/* Mobile / Tablet Menu Toggle */}
             <button
+              ref={menuButtonRef}
               className="lg:!hidden flex items-center justify-center w-11 h-11 rounded-control text-text-heading hover:text-brand-orange hover:bg-page-background transition-colors"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="باز کردن منو"
+              aria-expanded={mobileMenuOpen}
             >
               <Menu className="w-7 h-7" />
             </button>
@@ -551,6 +570,9 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
               exit={{ x: '100%' }}
               transition={{ type: "spring", bounce: 0, duration: 0.4 }}
               className="fixed top-0 start-0 bottom-0 w-[85%] max-w-[400px] bg-surface-primary z-[70] shadow-floating flex flex-col lg:hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-label="منوی موبایل"
             >
               {/* Drawer Header */}
               <div className="flex items-center justify-center p-5 pt-[calc(1.25rem+env(safe-area-inset-top))] border-b border-border-default relative">
@@ -560,7 +582,9 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                   <span className="text-lg font-black text-text-heading ms-2 border-s-2 border-border-default ps-2">ریوان سفر</span>
                 </div>
                 <button
+                  ref={drawerCloseRef}
                   onClick={() => setMobileMenuOpen(false)}
+                  aria-label="بستن منو"
                   className="icon-btn icon-btn-medium absolute end-5 bg-page-background text-text-secondary hover:bg-brand-orange-soft hover:text-brand-orange"
                 >
                   <X className="w-5 h-5" />

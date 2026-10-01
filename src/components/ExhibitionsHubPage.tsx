@@ -38,7 +38,7 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
   });
 
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       {/* ---------------- Hero Section ---------------- */}
       <section className="bg-surface-primary border-b border-border-default section-compact">
         <div className="container-main px-4 sm:px-6 lg:px-8 text-start">

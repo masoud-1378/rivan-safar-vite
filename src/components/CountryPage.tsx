@@ -49,7 +49,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
 
   if (!country) {
     return (
-      <div className="container-main py-16 px-4 text-center dir-rtl">
+      <div className="container-main py-16 px-4 text-center">
         <div className="max-w-md mx-auto bg-surface-primary border border-border-default rounded-card p-8 shadow-card">
           <Globe className="w-12 h-12 text-text-muted mx-auto mb-4" />
           <h2 className="text-h3 font-bold text-text-heading mb-2">کشور مورد نظر یافت نشد</h2>
@@ -105,7 +105,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
   };
 
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       
       {/* ---------------- 1. Breadcrumb ---------------- */}
       <div className="bg-surface-secondary border-b border-border-default/60 py-2.5">
