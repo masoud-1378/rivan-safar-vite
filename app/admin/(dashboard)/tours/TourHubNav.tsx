@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { 
   BriefcaseBusiness, 
   Inbox, 
@@ -41,28 +41,40 @@ const TABS = [
   {
     id: 'places',
     label: 'مقصدها و شهرها',
-    href: '/admin/places',
+    href: '/admin/catalog?tab=destinations',
     icon: MapPinned,
     desc: 'کشورها، شهرها و درخت مقاصد',
   },
   {
     id: 'origins',
     label: 'مبدأهای حرکت',
-    href: '/admin/origins',
+    href: '/admin/catalog?tab=origins',
     icon: Navigation,
     desc: 'شهرهای مبدأ حرکت (هوایی، زمینی، ریلی)',
   },
   {
     id: 'hotels',
     label: 'هتل‌ها',
-    href: '/admin/hotels',
+    href: '/admin/catalog?tab=hotels',
     icon: Building2,
     desc: 'بانک هتل‌ها، ستاره و امکانات اقامتی',
   },
 ];
 
+function isTabActive(tabId: string, tabHref: string, pathname: string, catalogTab: string | null): boolean {
+  if (tabId === 'tours') return pathname === '/admin/tours';
+  if (tabHref.startsWith('/admin/catalog')) {
+    if (!pathname.startsWith('/admin/catalog')) return false;
+    const want = new URLSearchParams(tabHref.split('?')[1] ?? '').get('tab');
+    return (catalogTab ?? 'destinations') === want;
+  }
+  return pathname.startsWith(tabHref);
+}
+
 export default function TourHubNav({ counts }: TourHubNavProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const catalogTab = searchParams.get('tab');
 
   return (
     <div className="mb-6 rounded-2xl border border-border bg-card/60 p-4 backdrop-blur-md">
@@ -82,14 +94,11 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
       {/* Navigation Tabs */}
       <div className="flex flex-wrap items-center gap-2">
         {TABS.map((tab) => {
-          const isActive = tab.href === '/admin/tours' 
-            ? pathname === '/admin/tours' 
-            : pathname.startsWith(tab.href);
-          
+          const isActive = isTabActive(tab.id, tab.href, pathname, catalogTab);
           const Icon = tab.icon;
 
           return (
-            <a
+            <Link
               key={tab.id}
               href={tab.href}
               className={cn(
@@ -109,7 +118,7 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
                   {counts[tab.id as keyof typeof counts]}
                 </span>
               )}
-            </a>
+            </Link>
           );
         })}
       </div>

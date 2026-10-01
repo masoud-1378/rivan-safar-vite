@@ -10,6 +10,7 @@ import {
   Globe2,
   Inbox,
   LayoutDashboard,
+  LayoutGrid,
   Settings,
   ShieldCheck,
   SlidersHorizontal,
@@ -26,6 +27,7 @@ const groups = [
     items: [
       { href: '/admin', label: 'داشبورد', icon: LayoutDashboard },
       { href: '/admin/tours', label: 'مرکز مدیریت تورها', icon: Compass },
+      { href: '/admin/catalog', label: 'کاتالوگ', icon: LayoutGrid },
       { href: '/admin/leads', label: 'درخواست‌های تماس عمومی', icon: Inbox },
     ],
   },
@@ -82,7 +84,7 @@ export function AdminNavGroups({ role, onNavigate }: { role: 'owner' | 'editor';
                 item.href === '/admin'
                   ? pathname === '/admin'
                   : item.href === '/admin/tours'
-                    ? pathname.startsWith('/admin/tours') || pathname.startsWith('/admin/places') || pathname.startsWith('/admin/origins') || pathname.startsWith('/admin/hotels')
+                    ? pathname.startsWith('/admin/tours')
                     : pathname.startsWith(item.href)
               }
             />

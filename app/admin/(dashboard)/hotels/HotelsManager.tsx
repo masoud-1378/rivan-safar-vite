@@ -17,16 +17,18 @@ import { fa } from '@/lib/utils';
 interface HotelsManagerProps {
   initial: HotelRow[];
   places: Array<{ slug: string; name: string; type: string; parent: string }>;
+  /** وقتی از ردیف مقصد «افزودن هتل» زده می‌شود: شهر از پیش پر و دیالوگ باز می‌شود. */
+  initialCitySlug?: string;
 }
 
-export default function HotelsManager({ initial, places }: HotelsManagerProps) {
-  const [open, setOpen] = useState(false);
+export default function HotelsManager({ initial, places, initialCitySlug = '' }: HotelsManagerProps) {
+  const [open, setOpen] = useState(initialCitySlug !== '');
   const [editing, setEditing] = useState<HotelRow | null>(null);
   const [deleting, setDeleting] = useState<HotelRow | null>(null);
   const [name, setName] = useState('');
   // یافتهٔ ۱۵: ستاره می‌تواند null (دست‌نخورده) بماند — مثل رکوردهای قدیمیِ stars=NULL.
   const [stars, setStars] = useState<number | null>(5);
-  const [placeSlug, setPlaceSlug] = useState('');
+  const [placeSlug, setPlaceSlug] = useState(initialCitySlug);
   const [nameError, setNameError] = useState<string | undefined>();
   const [starsError, setStarsError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();

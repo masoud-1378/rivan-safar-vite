@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
 import { siteDestinations, siteTours } from '@/db/schema';
-import { and, count, desc, eq, isNull, ne, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, isNull, ne, sql } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 
@@ -59,7 +59,9 @@ export async function listDestinations() {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db.select().from(siteDestinations).where(isNull(siteDestinations.deletedAt)).orderBy(desc(siteDestinations.updatedAt)).limit(300);
+  // قلم ۳ کتابچه: ترتیب و سقف یکسان با listDestinationTree (توی tours/actions.ts)
+  // تا هیچ مقصدی در یکی از دو فهرست دیده شود و در دیگری نه.
+  const rows = await db.select().from(siteDestinations).where(isNull(siteDestinations.deletedAt)).orderBy(asc(siteDestinations.name)).limit(1000);
   return rows.map((r) => ({
     id: r.id,
     slug: r.slug,

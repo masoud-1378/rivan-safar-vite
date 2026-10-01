@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Pencil, Plus, Archive } from 'lucide-react';
-import { deleteOrigin, saveOrigin, countOriginTours, type OriginRow } from './actions';
+import { Pencil, Plus, Archive, Copy } from 'lucide-react';
+import { deleteOrigin, saveOrigin, copyOrigin, countOriginTours, type OriginRow } from './actions';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -87,6 +87,18 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
     });
   };
 
+  const onCopy = async (origin: OriginRow) => {
+    startTransition(async () => {
+      try {
+        const res = await copyOrigin(origin.id);
+        toast({ variant: 'success', title: `کپی ساخته شد: ${res.nameFa}` });
+        reload();
+      } catch (e) {
+        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در کپی.' });
+      }
+    });
+  };
+
   const parentName = (slug: string) => initial.find((o) => o.slug === slug)?.nameFa ?? '—';
   // شهرهای زیرمجموعه‌ای که با بایگانی این والد یتیم می‌شوند
   const childCount = deleting ? initial.filter((o) => o.parentSlug === deleting.slug).length : 0;
@@ -97,12 +109,16 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
     {
       key: 'id',
       header: 'عملیات',
-      className: 'w-36',
+      className: 'w-44',
       cell: (o) => (
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
           <Button variant="ghost" size="sm" onClick={() => startEdit(o)}>
             <Pencil />
             ویرایش
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => onCopy(o)} disabled={pending} title="ساخت یک کپی از این مبدأ">
+            <Copy />
+            کپی
           </Button>
           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => openDelete(o)} disabled={pending}>
             <Archive />
@@ -155,10 +171,10 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
         }
       >
         <div className="space-y-4">
-          <Field label="نام مبدأ" error={nameError}>
+          <Field label="نام مبدأ" error={nameError} hint="همین نام در فهرست مبدأهای فرم تور و روی سایت دیده می‌شود">
             <Input value={name} onChange={(e) => { setName(e.target.value); setNameError(undefined); }} placeholder="مثل تهران" />
           </Field>
-          <Field label="نوع">
+          <Field label="نوع" hint="شهر، کشور یا قاره/ناحیه؛ ترتیب نمایش در درخت مبدأها">
             <Select
               value={type}
               onChange={(e) => setType(e.target.value)}
@@ -169,7 +185,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
               ]}
             />
           </Field>
-          <Field label="والد" hint="اختیاری؛ برای ساختار سلسله‌مراتبی">
+          <Field label="والد" hint="اختیاری؛ مشخص می‌کند این مبدأ زیر کدام والد در درخت سایت می‌نشیند">
             <Select
               value={parentSlug}
               onChange={(e) => setParentSlug(e.target.value)}

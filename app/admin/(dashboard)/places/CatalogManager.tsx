@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Pencil, Plus, Archive } from 'lucide-react';
+import Link from 'next/link';
+import { Pencil, Plus, Archive, Building2 } from 'lucide-react';
+import { buttonClasses } from '@/components/ui/button';
 import DestinationForm from './DestinationForm';
 import { deleteDestination, countDestinationTours, type DestinationRow } from './actions';
 import SectionSettingsDialog from '../SectionSettingsDialog';
@@ -46,7 +48,7 @@ export default function CatalogManager({ initial, sectionSettings }: { initial: 
     { key: 'type', header: 'نوع', sortable: true },
     { key: 'category', header: 'دسته‌بندی', sortable: true, cell: (destination) => destination.category || '—' },
     { key: 'startingPrice', header: 'قیمت شروع', cell: (destination) => destination.startingPrice || '—' },
-    { key: 'id', header: 'عملیات', className: 'w-36', cell: (destination) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(destination)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" className="text-destructive" onClick={() => openDelete(destination)} disabled={pending}><Archive />بایگانی</Button></div> },
+    { key: 'id', header: 'عملیات', className: 'w-44', cell: (destination) => <div className="flex flex-wrap gap-1"><Button variant="ghost" size="sm" onClick={() => edit(destination)}><Pencil />ویرایش</Button><Link href={`/admin/catalog?tab=hotels&city=${encodeURIComponent(destination.slug)}`} title={`افزودن هتل در ${destination.name}`} className={buttonClasses('ghost', 'sm')}><Building2 />هتل</Link><Button variant="ghost" size="sm" className="text-destructive" onClick={() => openDelete(destination)} disabled={pending}><Archive />بایگانی</Button></div> },
   ];
 
   return (

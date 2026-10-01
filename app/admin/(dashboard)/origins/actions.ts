@@ -99,3 +99,50 @@ export async function deleteOrigin(id: string) {
   revalidatePath('/admin/tours');
   return { ok: true };
 }
+
+/** قلم ۶ کتابچه: کپی یک مبدأ — نام + « (کپی)» و نامک یکتای تازه. */
+export async function copyOrigin(id: string) {
+  const session = await requireAdmin(['owner', 'editor']);
+  void session;
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const src = await db
+    .select()
+    .from(originCities)
+    .where(and(eq(originCities.id, id), isNull(originCities.deletedAt)))
+    .limit(1);
+  const row = src[0];
+  if (!row) throw new Error('ORIGIN_NOT_FOUND');
+  const alive = and(isNull(originCities.deletedAt));
+  // نام یکتا: «نام (کپی)»، بعد «نام (کپی ۲)»…
+  let nameFa = `${row.nameFa} (کپی)`;
+  for (let n = 2; ; n += 1) {
+    const dup = await db
+      .select({ id: originCities.id })
+      .from(originCities)
+      .where(and(alive, eq(originCities.nameFa, nameFa), eq(originCities.type, row.type)))
+      .limit(1);
+    if (dup.length === 0) break;
+    nameFa = `${row.nameFa} (کپی ${n})`;
+  }
+  // نامک یکتا: «slug-copy»، بعد «slug-copy-2»…
+  let slug = `${row.slug}-copy`;
+  for (let n = 2; ; n += 1) {
+    const dup = await db
+      .select({ id: originCities.id })
+      .from(originCities)
+      .where(and(alive, eq(originCities.slug, slug)))
+      .limit(1);
+    if (dup.length === 0) break;
+    slug = `${row.slug}-copy-${n}`;
+  }
+  await db.insert(originCities).values({
+    slug,
+    nameFa,
+    type: row.type,
+    parentSlug: row.parentSlug,
+  });
+  revalidatePath('/admin/catalog');
+  revalidatePath('/admin/origins');
+  return { ok: true, nameFa };
+}
