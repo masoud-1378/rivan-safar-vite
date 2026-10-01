@@ -58,7 +58,7 @@ export default function AnnouncementBar({ onClose }: AnnouncementBarProps) {
         {onClose && (
           <button 
             onClick={onClose}
-            className="absolute end-0 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-small transition-colors text-white/80 hover:text-white shrink-0"
+            className="absolute end-0 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-small transition-colors text-white/80 hover:text-white shrink-0"
             title="بستن"
             aria-label="بستن اطلاع‌رسانی"
           >

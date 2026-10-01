@@ -64,7 +64,7 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="جست‌وجو در موضوعات راهنمای سفر…"
-                className="w-full bg-surface-secondary border border-border-default rounded-control ps-11 pe-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                className="w-full bg-surface-secondary border border-border-default rounded-control ps-11 pe-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
               />
             </div>
 
