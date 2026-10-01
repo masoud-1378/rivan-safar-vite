@@ -7,10 +7,18 @@ import { asc, desc, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 
+export type HotelBookingType = 'guarantee' | 'semi_charter' | 'on_request';
+
 export interface TourHotelOptionItem {
   name?: string;
   stars?: number;
   board?: string;
+  /**
+   * نوع رزرو هتل در این تور (کتابچه §۳، فاز ۲): راهنمای ترتیبِ فیلدهای نرخ.
+   * اختیاری است تا ردیف‌های قدیمی بی‌نوع هم معتبر بمانند.
+   * مقدار ذخیره‌شده کد لاتین است؛ برچسب فارسی در UI.
+   */
+  bookingType?: HotelBookingType;
   pricePerPerson?: string;
   priceDouble?: string;
   priceSingle?: string;
@@ -315,6 +323,7 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
     name: h.name ?? '',
     stars: Number(h.stars) || 3,
     board: h.board ?? 'BB',
+    bookingType: h.bookingType === 'guarantee' || h.bookingType === 'semi_charter' || h.bookingType === 'on_request' ? h.bookingType : undefined,
     pricePerPerson: h.pricePerPerson || h.priceDouble || '',
     priceDouble: h.priceDouble || h.pricePerPerson || '',
     priceSingle: h.priceSingle || '',

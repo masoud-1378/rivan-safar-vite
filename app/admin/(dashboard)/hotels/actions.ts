@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
-import { accommodations } from '@/db/schema';
-import { and, desc, eq, isNull, ne } from 'drizzle-orm';
+import { accommodations, siteDestinations } from '@/db/schema';
+import { and, asc, desc, eq, isNull, ne } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 
@@ -19,7 +19,7 @@ export interface HotelInput {
   id?: string;
   slug: string;
   nameFa: string;
-  // یافتهٔ ۱۵: ستاره می‌تواند NULL بماند (دست‌نخورده) — سرور فقط مقدار داده‌شده را اعتبارسنجی می‌کند.
+  // کتابچه §۳ (فاز ۲): ستاره اجباری است — null دیگر پذیرفته نیست.
   stars: number | null;
   placeSlug: string;
 }
@@ -46,9 +46,13 @@ export async function saveHotel(data: HotelInput) {
   // تا «هتل  اسپیناس» و «هتل اسپیناس» یک slug نگیرند.
   const nameFa = (data.nameFa || '').replace(/\s+/g, ' ').trim();
   if (nameFa.length < 2) throw new Error('نام هتل لازم است.');
-  // یافتهٔ ۱۵: NULL یعنی «دست‌نخورده» — اعتبارسنجی فقط روی مقدار واقعی.
+  // کتابچه §۳ (فاز ۲): ستاره اجباری است؛ پیش‌فرض خالی دیگر پذیرفته نیست.
+  // رکوردهای قدیمیِ NULL در «خواندن» همان «—» می‌مانند، ولی «ذخیرهٔ» تازه بی‌ستاره خطا می‌دهد.
   const stars = data.stars == null ? null : Number(data.stars);
-  if (stars !== null && (!Number.isInteger(stars) || stars < 0 || stars > 7)) {
+  if (stars === null) {
+    throw new Error('ستارهٔ هتل را انتخاب کنید.');
+  }
+  if (!Number.isInteger(stars) || stars < 0 || stars > 7) {
     throw new Error('ستارهٔ هتل باید بین ۰ تا ۷ باشد.');
   }
   const placeSlug = data.placeSlug || null;
@@ -110,4 +114,53 @@ export async function deleteHotel(id: string) {
   revalidatePath('/admin/hotels');
   revalidatePath('/admin/tours');
   return { ok: true };
+}
+
+/**
+ * قرارداد میز T3 (فاز ۲، کتابچه §۳): فهرست خواندنی هتل‌ها برای انتخاب‌گر مرحلهٔ ۲ تور.
+ *
+ * امضا: `listHotelsForPicker(): Promise<HotelPickerItem[]>`
+ * دسترسی: owner/editor (همان requireAdmin).
+ * مرتب‌سازی: الفبای نام فارسی. سقف ۵۰۰ رکورد؛ بایگانی‌شده‌ها برمی‌گردند نه.
+ *
+ * نکتهٔ قراردادی: کاتالوگ هتل فقط «هویت» نگه می‌دارد (نام، ستاره، شهر).
+ * «قیمت پیش‌فرض» در سطح کاتالوگ تعریف نشده و همیشه null است؛ قیمت هتل
+ * ویژهٔ هر تور است و در ماتریس مرحلهٔ ۲ (hotelOptions / accommodationOffers)
+ * با برچسب «ویژهٔ این تور» بازنویسی می‌شود. این همان تقسیم‌کاری است که
+ * کتابچه §۳ می‌خواهد: فیلدهای «فقط برای فرم تور» در فرم هتل نیستند.
+ */
+export interface HotelPickerItem {
+  id: string;
+  slug: string;
+  nameFa: string;
+  /** نام شهر از روی placeSlug؛ خالی اگر شهری ثبت نشده باشد. */
+  cityName: string;
+  /** ستاره؛ null یعنی رکورد قدیمیِ بدون ستاره (نمایش: «—»). */
+  stars: number | null;
+  /** همیشه null — قیمت در سطح کاتالوگ تعریف نشده است. */
+  defaultPrice: null;
+}
+
+export async function listHotelsForPicker(): Promise<HotelPickerItem[]> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const [hotels, dests] = await Promise.all([
+    db
+      .select()
+      .from(accommodations)
+      .where(isNull(accommodations.deletedAt))
+      .orderBy(asc(accommodations.nameFa))
+      .limit(500),
+    db.select().from(siteDestinations).where(isNull(siteDestinations.deletedAt)).limit(1000),
+  ]);
+  const cityBySlug = new Map(dests.map((d) => [d.slug, d.name]));
+  return hotels.map((r) => ({
+    id: r.id,
+    slug: r.slug,
+    nameFa: r.nameFa,
+    cityName: (r.placeSlug && cityBySlug.get(r.placeSlug)) || '',
+    stars: r.stars,
+    defaultPrice: null,
+  }));
 }
