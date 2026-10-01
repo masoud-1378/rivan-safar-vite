@@ -209,7 +209,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                           e.preventDefault();
                           handleSuggestionClick(dest.name);
                         }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-caption font-medium bg-surface-primary hover:bg-brand-orange-soft text-text-heading hover:text-brand-orange border border-border-default/80 hover:border-brand-orange/40 transition-all cursor-pointer shadow-subtle"
+                        className="inline-flex min-h-11 items-center gap-1.5 px-3 py-1.5 rounded-full text-caption font-medium bg-surface-primary hover:bg-brand-orange-soft text-text-heading hover:text-brand-orange border border-border-default/80 hover:border-brand-orange/40 transition-all cursor-pointer shadow-subtle"
                       >
                         <MapPin className="w-3.5 h-3.5 text-brand-orange" />
                         <span>{dest.name}</span>
@@ -239,7 +239,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                               e.preventDefault();
                               handleSuggestionClick(dest.name);
                             }}
-                            className="flex items-center gap-2.5 w-full px-4 py-2 text-start hover:bg-page-background transition-colors cursor-pointer"
+                            className="flex min-h-11 items-center gap-2.5 w-full px-4 py-2 text-start hover:bg-page-background transition-colors cursor-pointer"
                           >
                             <MapPin className="w-4 h-4 text-brand-orange shrink-0" />
                             <span className="font-medium text-body-sm text-text-heading">{dest.name}</span>

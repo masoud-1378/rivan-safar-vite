@@ -169,7 +169,7 @@ export default function Footer({ onNavigate }: FooterProps) {
               <a
                 href={contact.phoneHref}
                 dir="ltr"
-                className="text-body-lg font-bold text-white hover:text-brand-orange transition-colors"
+                className="text-body-lg font-bold text-white hover:text-brand-orange transition-colors py-2"
               >
                 {contact.phoneDisplay}
               </a>
@@ -242,7 +242,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                           <a
                             href={link.path}
                             onClick={(e) => handleNav(link.path, e)}
-                            className="text-body-sm text-text-on-dark-secondary hover:text-brand-orange transition-colors block py-0.5 cursor-pointer"
+                            className="text-body-sm text-text-on-dark-secondary hover:text-brand-orange transition-colors block py-3 cursor-pointer"
                           >
                             {link.label}
                           </a>
@@ -296,7 +296,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             <a
               href="/privacy"
               onClick={(e) => handleNav('/privacy', e)}
-              className="hover:text-white transition-colors cursor-pointer"
+              className="hover:text-white transition-colors cursor-pointer py-2"
             >
               حریم خصوصی
             </a>
@@ -304,7 +304,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             <a
               href="/terms"
               onClick={(e) => handleNav('/terms', e)}
-              className="hover:text-white transition-colors cursor-pointer"
+              className="hover:text-white transition-colors cursor-pointer py-2"
             >
               قوانین استفاده
             </a>

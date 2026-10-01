@@ -296,7 +296,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
             {/* Mobile filter button */}
             <button
               onClick={() => setShowMobileFilters(true)}
-              className="lg:hidden flex items-center gap-2 bg-surface-primary border border-border-default px-3.5 py-2 rounded-control text-body-sm font-bold text-text-heading shadow-subtle"
+              className="lg:hidden flex items-center gap-2 bg-surface-primary border border-border-default px-3.5 py-3 rounded-control text-body-sm font-bold text-text-heading shadow-subtle"
             >
               <SlidersHorizontal className="w-4 h-4 text-brand-orange" />
               <span>فیلترها ({fa(activeFiltersCount)})</span>
@@ -308,7 +308,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               <select 
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="form-input form-select font-bold shadow-subtle !h-10"
+                className="form-input form-select font-bold shadow-subtle !h-11"
               >
                 <option value="default">پیشنهاد ریوان سفر</option>
                 <option value="price-low">قیمت پایه (کم به زیاد)</option>
@@ -326,31 +326,31 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
             {selectedType !== 'all' && (
               <span className="chip chip-small chip-selected">
                 {selectedType === 'foreign' ? 'خارجی' : selectedType === 'domestic' ? 'داخلی' : 'نمایشگاهی'}
-                <button onClick={() => setSelectedType('all')} className="ms-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setSelectedType('all')} className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {searchDestination && (
               <span className="chip chip-small chip-selected">
                 {searchDestination}
-                <button onClick={() => setSearchDestination('')} className="ms-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setSearchDestination('')} className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {originFilter !== 'all' && (
               <span className="chip chip-small chip-selected">
                 مبدأ: {originOptions.find((o) => o.slug === originFilter)?.label || originFilter}
-                <button onClick={() => setOriginFilter('all')} className="ms-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setOriginFilter('all')} className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {visaFreeOnly && (
               <span className="chip chip-small chip-selected">
                 بدون ویزا
-                <button onClick={() => setVisaFreeOnly(false)} className="ms-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setVisaFreeOnly(false)} className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {priceRange !== 'all' && (
               <span className="chip chip-small chip-selected">
                 {priceRange === 'under-30m' ? 'تا ۳۰ میلیون' : priceRange === '30m-60m' ? '۳۰ تا ۶۰ میلیون' : 'بالای ۶۰ میلیون'}
-                <button onClick={() => setPriceRange('all')} className="ms-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setPriceRange('all')} className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             <button
