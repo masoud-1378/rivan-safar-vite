@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Pencil, Plus, Archive } from 'lucide-react';
-import { deleteOrigin, saveOrigin, type OriginRow } from './actions';
+import { deleteOrigin, saveOrigin, countOriginTours, type OriginRow } from './actions';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,6 +19,12 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<OriginRow | null>(null);
   const [deleting, setDeleting] = useState<OriginRow | null>(null);
+  const [usage, setUsage] = useState<number | null>(null);
+  const openDelete = (origin: OriginRow) => {
+    setDeleting(origin);
+    setUsage(null);
+    countOriginTours(origin.slug, origin.nameFa).then(setUsage).catch(() => setUsage(null));
+  };
   const [name, setName] = useState('');
   const [type, setType] = useState('city');
   const [parentSlug, setParentSlug] = useState('');
@@ -86,7 +92,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
             <Pencil />
             ویرایش
           </Button>
-          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(o)} disabled={pending}>
+          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => openDelete(o)} disabled={pending}>
             <Archive />
             بایگانی
           </Button>
@@ -160,7 +166,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
           </Field>
         </div>
       </Dialog>
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی مبدأ" description={deleting ? `مبدأ «${deleting.nameFa}» بایگانی می‌شود و از فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.` : ''} confirmText="بایگانی مبدأ" destructive onConfirm={onDelete} />
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => { if (!open) { setDeleting(null); setUsage(null); } }} title="بایگانی مبدأ" description={deleting ? (<span className="block space-y-2"><span className="block">مبدأ «{deleting.nameFa}» بایگانی می‌شود و از فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.</span>{usage !== null && usage > 0 ? <span className="block font-medium text-amber-600 dark:text-amber-400">این مبدأ در {fa(usage)} تور استفاده شده است؛ آن تورها سر جایشان می‌مانند و فقط این مبدأ از دسترس خارج می‌شود.</span> : null}</span>) : ''} confirmText="بایگانی مبدأ" destructive onConfirm={onDelete} />
     </div>
   );
 }

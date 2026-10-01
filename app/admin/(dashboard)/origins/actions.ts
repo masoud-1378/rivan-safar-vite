@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
-import { originCities } from '@/db/schema';
-import { and, asc, eq, isNull } from 'drizzle-orm';
+import { originCities, siteTours } from '@/db/schema';
+import { and, asc, count, eq, isNull, or } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 
@@ -55,6 +55,18 @@ export async function saveOrigin(data: { id?: string; slug: string; nameFa: stri
   revalidatePath('/admin/origins');
   revalidatePath('/admin/tours');
   return { ok: true };
+}
+
+/** چند تورِ فعال این مبدأ را دارند (origin در تور، نام فارسی ذخیره می‌شود؛ اسلاگ هم برای رکوردهای قدیمی چک می‌شود). */
+export async function countOriginTours(slug: string, nameFa: string): Promise<number> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const rows = await db
+    .select({ n: count() })
+    .from(siteTours)
+    .where(and(isNull(siteTours.deletedAt), or(eq(siteTours.origin, nameFa), eq(siteTours.origin, slug))));
+  return rows[0]?.n ?? 0;
 }
 
 export async function deleteOrigin(id: string) {

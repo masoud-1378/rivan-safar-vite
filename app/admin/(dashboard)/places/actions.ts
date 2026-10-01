@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
-import { siteDestinations } from '@/db/schema';
-import { desc, eq, isNull } from 'drizzle-orm';
+import { siteDestinations, siteTours } from '@/db/schema';
+import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 
@@ -135,6 +135,18 @@ export async function saveDestination(id: string | undefined | null, data: Desti
   }
   revalidatePath('/admin/places');
   return { ok: true };
+}
+
+/** چند تورِ فعال این مقصد را در destinationSlugs دارند — برای هشدارِ پیش از بایگانی. */
+export async function countDestinationTours(slug: string): Promise<number> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const rows = await db
+    .select({ n: count() })
+    .from(siteTours)
+    .where(and(isNull(siteTours.deletedAt), sql`${siteTours.destinationSlugs}::jsonb ? ${slug}`));
+  return rows[0]?.n ?? 0;
 }
 
 export async function deleteDestination(id: string) {

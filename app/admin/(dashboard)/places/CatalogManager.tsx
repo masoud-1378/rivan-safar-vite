@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { Pencil, Plus, Archive } from 'lucide-react';
 import DestinationForm from './DestinationForm';
-import { deleteDestination, type DestinationRow } from './actions';
+import { deleteDestination, countDestinationTours, type DestinationRow } from './actions';
 import SectionSettingsDialog from '../SectionSettingsDialog';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,14 @@ export default function CatalogManager({ initial, sectionSettings }: { initial: 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<DestinationRow | null>(null);
   const [deleting, setDeleting] = useState<DestinationRow | null>(null);
+  const [usage, setUsage] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
+  const openDelete = (destination: DestinationRow) => {
+    setDeleting(destination);
+    setUsage(null);
+    countDestinationTours(destination.slug).then(setUsage).catch(() => setUsage(null));
+  };
   const reload = () => { setShowForm(false); setEditing(null); window.location.reload(); };
   const onDelete = async () => {
     if (!deleting) return;
@@ -34,7 +40,7 @@ export default function CatalogManager({ initial, sectionSettings }: { initial: 
     { key: 'type', header: 'نوع', sortable: true },
     { key: 'category', header: 'دسته‌بندی', sortable: true, cell: (destination) => destination.category || '—' },
     { key: 'startingPrice', header: 'قیمت شروع', cell: (destination) => destination.startingPrice || '—' },
-    { key: 'id', header: 'عملیات', className: 'w-36', cell: (destination) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(destination)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(destination)} disabled={pending}><Archive />بایگانی</Button></div> },
+    { key: 'id', header: 'عملیات', className: 'w-36', cell: (destination) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(destination)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" className="text-destructive" onClick={() => openDelete(destination)} disabled={pending}><Archive />بایگانی</Button></div> },
   ];
 
   return (
@@ -42,7 +48,7 @@ export default function CatalogManager({ initial, sectionSettings }: { initial: 
       <div className="flex flex-wrap items-center justify-between gap-2"><div><h1 className="text-2xl font-bold text-foreground">مکان‌ها و مقصدها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول مقصدها</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="places" title="تنظیمات مقصدها" tabs={['general']} values={sectionSettings} /><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن مقصد جدید</Button></div></div>
       {showForm || editing ? <Card><CardContent className="p-5"><DestinationForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onDone={reload} /></CardContent></Card> : null}
       <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">مقصدها ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(destination) => destination.id} searchKeys={['name', 'nameEn', 'type', 'category']} searchPlaceholder="جست‌وجوی نام، نوع یا دسته‌بندی…" emptyTitle="مقصدی ثبت نشده است" emptyDescription="برای شروع، مقصد جدیدی اضافه کنید." /></CardContent></Card>
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی مقصد" description={deleting ? `مقصد «${deleting.name}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.` : ''} confirmText="بایگانی مقصد" destructive onConfirm={onDelete} />
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => { if (!open) { setDeleting(null); setUsage(null); } }} title="بایگانی مقصد" description={deleting ? (<span className="block space-y-2"><span className="block">مقصد «{deleting.name}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.</span>{usage !== null && usage > 0 ? <span className="block font-medium text-amber-600 dark:text-amber-400">این مقصد در {fa(usage)} تور استفاده شده است؛ آن تورها سر جایشان می‌مانند و فقط این مقصد از دسترس خارج می‌شود.</span> : null}</span>) : ''} confirmText="بایگانی مقصد" destructive onConfirm={onDelete} />
     </div>
   );
 }
