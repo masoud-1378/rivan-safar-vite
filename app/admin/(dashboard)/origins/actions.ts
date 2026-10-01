@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
 import { originCities } from '@/db/schema';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq, ne } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 
 export interface OriginRow extends Record<string, unknown> {
@@ -35,20 +35,32 @@ export async function saveOrigin(data: { id?: string; slug: string; nameFa: stri
   const nameFa = (data.nameFa || '').trim();
   if (nameFa.length < 2) throw new Error('نام مبدأ لازم است.');
   const slug = (data.slug || '').trim() || nameFa.replace(/\s+/g, '-').slice(0, 120);
+  const type = data.type || 'city';
+  // کلید تکراری مبدأ: نام + نوع.
+  const dupWhere = and(eq(originCities.nameFa, nameFa), eq(originCities.type, type));
+  const dup = await db
+    .select({ id: originCities.id })
+    .from(originCities)
+    .where(data.id ? and(dupWhere, ne(originCities.id, data.id)) : dupWhere)
+    .limit(1);
+  if (dup.length > 0) throw new Error('این نام قبلاً ثبت شده');
   const values = {
     slug,
     nameFa,
-    type: data.type || 'city',
+    type,
     parentSlug: data.parentSlug || null,
   };
   if (data.id) {
     await db.update(originCities).set(values).where(eq(originCities.id, data.id));
   } else {
-    const existing = await db.select().from(originCities).where(eq(originCities.slug, slug)).limit(1);
-    if (existing.length > 0) {
-      await db.update(originCities).set(values).where(eq(originCities.slug, slug));
-    } else {
+    try {
       await db.insert(originCities).values(values);
+    } catch (e) {
+      // یافتهٔ ۸: مسابقهٔ هم‌زمان — خطای یکتایی هم همان پیام فارسی را می‌گیرد (مثل مقصد).
+      if (e instanceof Error && 'code' in e && (e as { code?: string }).code === '23505') {
+        throw new Error('این نام قبلاً ثبت شده');
+      }
+      throw e;
     }
   }
   revalidatePath('/admin/origins');

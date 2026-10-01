@@ -10,6 +10,8 @@ import { formatJalali } from '@/lib/jalali';
 import { formatToman, fa } from '@/lib/utils';
 import { getDashboardTrend } from './actions-search';
 import { getDb } from '@/db/client';
+import OnboardingWizard from './onboarding/OnboardingWizard';
+import { getOnboardingState } from './onboarding/actions';
 import {
   accommodationOffers,
   exhibitions,
@@ -125,6 +127,16 @@ export default async function AdminDashboard() {
     }
   }
 
+  // ویزارد راه‌اندازی: فقط در اولین ورود هر کاربر (پرچم per-user در site_settings).
+  let onboarding: Awaited<ReturnType<typeof getOnboardingState>> | null = null;
+  if (!dbDown) {
+    try {
+      onboarding = await getOnboardingState();
+    } catch {
+      onboarding = null;
+    }
+  }
+
   const last7 = (series: number[]) => {
     const slice = series.slice(-7);
     return slice.length ? slice : [0, 0, 0, 0, 0, 0, 0];
@@ -156,6 +168,7 @@ export default async function AdminDashboard() {
           اتصال به دیتابیس در این لحظه برقرار نشد؛ آمار صفر نمایش داده می‌شود. چند لحظه بعد صفحه را تازه کنید.
         </div>
       ) : null}
+      {onboarding && !onboarding.completed ? <OnboardingWizard initial={onboarding} /> : null}
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="mb-1 text-sm font-medium text-brand">مرکز کنترل ریوان سفر</p>

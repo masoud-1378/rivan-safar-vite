@@ -5,7 +5,7 @@ import { Minus, Plus } from "lucide-react";
 import { cn, en, fa } from "@/lib/utils";
 
 export interface NumberFieldProps {
-  value?: number;
+  value?: number | null;
   defaultValue?: number;
   onChange?: (value: number) => void;
   min?: number;
@@ -19,12 +19,17 @@ export interface NumberFieldProps {
 /** عدد. Plus sits at the inline-start (right in RTL), display uses Persian digits. */
 export function NumberField({ value, defaultValue = 0, onChange, min = -Infinity, max = Infinity, step = 1, disabled, className, ...aria }: NumberFieldProps) {
   const [internal, setInternal] = React.useState(defaultValue);
+  // بازبینی مجدد: value=null یعنی «تنظیم‌نشده» — خالی نمایش داده می‌شود،
+  // نه صفرِ پیش‌فرضِ داخلی (که با state والد ناسازگار بود).
+  const isUnset = value === null;
   const n = value ?? internal;
 
   function set(next: number) {
-    const clamped = Math.min(max, Math.max(min, next));
-    if (value === undefined) setInternal(clamped);
-    onChange?.(clamped);
+    // یافتهٔ ۶: clamp بی‌صدا برداشته شد — مقدار خارج از بازه نگه داشته می‌شود
+    // تا ولیدیشن (سرور/فیلد) خطای فارسی‌اش را نشان بدهد. دکمه‌های +/− همچنان
+    // در کرانه‌ها غیرفعال‌اند و خودشان از بازه بیرون نمی‌زنند.
+    if (value === undefined) setInternal(next);
+    onChange?.(next);
   }
 
   const btn = "flex w-10 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40";
@@ -36,7 +41,8 @@ export function NumberField({ value, defaultValue = 0, onChange, min = -Infinity
       </button>
       <input
         inputMode="numeric"
-        value={fa(n)}
+        value={isUnset ? '' : fa(n)}
+        placeholder={isUnset ? '—' : undefined}
         disabled={disabled}
         onChange={(e) => {
           const parsed = Number(en(e.target.value).replace(/[^\d.-]/g, ""));

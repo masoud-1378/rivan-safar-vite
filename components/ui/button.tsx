@@ -26,19 +26,26 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   asChild?: boolean;
 }
 
-export function Button({ className, variant = "default", size = "md", type = "button", ...props }: ButtonProps) {
+/** کلاس‌های دکمه — برای جاهایی که به‌جای <button> یک <a> استایل‌دار لازم است
+ * (یافتهٔ ۱۰: ‏a داخل button هم نامعتبر است هم با کیبورد دور زده می‌شود). */
+export function buttonClasses(variant: Variant = "default", size: Size = "md", className?: string) {
+  return cn(
+    "inline-flex items-center justify-center whitespace-nowrap font-semibold transition-all duration-200",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    "disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
+    "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+    variants[variant],
+    sizes[size],
+    className,
+  );
+}
+
+export function Button({ className, variant = "default", size = "md", type = "button", asChild, ...props }: ButtonProps) {
+  void asChild; // نگهداشته برای سازگاری؛ پیاده‌سازی واقعی Slot نداریم (یافتهٔ ۱۰).
   return (
     <button
       type={type}
-      className={cn(
-        "inline-flex items-center justify-center whitespace-nowrap font-semibold transition-all duration-200",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        "disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
-        "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
-        variants[variant],
-        sizes[size],
-        className,
-      )}
+      className={buttonClasses(variant, size, className)}
       {...props}
     />
   );

@@ -24,8 +24,11 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
   const [editing, setEditing] = useState<HotelRow | null>(null);
   const [deleting, setDeleting] = useState<HotelRow | null>(null);
   const [name, setName] = useState('');
-  const [stars, setStars] = useState(5);
+  // یافتهٔ ۱۵: ستاره می‌تواند null (دست‌نخورده) بماند — مثل رکوردهای قدیمیِ stars=NULL.
+  const [stars, setStars] = useState<number | null>(5);
   const [placeSlug, setPlaceSlug] = useState('');
+  const [nameError, setNameError] = useState<string | undefined>();
+  const [starsError, setStarsError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
 
@@ -36,6 +39,8 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
     setName('');
     setStars(5);
     setPlaceSlug('');
+    setNameError(undefined);
+    setStarsError(undefined);
     setOpen(true);
   };
 
@@ -44,12 +49,19 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
     setName(hotel.nameFa);
     setStars(hotel.stars);
     setPlaceSlug(hotel.placeSlug);
+    setNameError(undefined);
+    setStarsError(undefined);
     setOpen(true);
   };
 
   const submit = () => {
     if (name.trim().length < 2) {
-      toast({ variant: 'error', title: 'نام هتل لازم است.' });
+      setNameError('نام هتل لازم است.');
+      return;
+    }
+    // یافتهٔ ۱۵: null یعنی دست‌نخورده — خطا نده.
+    if (stars !== null && (!Number.isInteger(stars) || stars < 0 || stars > 7)) {
+      setStarsError('ستارهٔ هتل باید بین ۰ تا ۷ باشد.');
       return;
     }
     startTransition(async () => {
@@ -58,13 +70,20 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
           id: editing?.id,
           slug: editing?.slug ?? '',
           nameFa: name.trim(),
-          stars: Math.max(0, Number(stars) || 0),
+          stars,
           placeSlug,
         });
         setOpen(false);
         reload();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ذخیره.' });
+        const message = e instanceof Error ? e.message : 'خطا در ذخیره.';
+        if (message === 'این نام قبلاً ثبت شده') {
+          setNameError(message);
+        } else if (message === 'ستارهٔ هتل باید بین ۰ تا ۷ باشد.') {
+          setStarsError(message);
+        } else {
+          toast({ variant: 'error', title: message });
+        }
       }
     });
   };
@@ -91,7 +110,7 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
   const placeName = (slug: string) => places.find((p) => p.slug === slug)?.name ?? slug ?? '—';
   const columns: Column<HotelRow>[] = [
     { key: 'nameFa', header: 'نام هتل', sortable: true, cell: (h) => <span className="font-semibold">{h.nameFa}</span> },
-    { key: 'stars', header: 'ستاره', numeric: true, sortable: true, cell: (h) => fa(h.stars) },
+    { key: 'stars', header: 'ستاره', numeric: true, sortable: true, cell: (h) => (h.stars == null ? '—' : fa(h.stars)) },
     { key: 'placeSlug', header: 'مقصد', sortable: true, cell: (h) => (h.placeSlug ? placeName(h.placeSlug) : '—') },
     {
       key: 'id',
@@ -154,11 +173,11 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
         }
       >
         <div className="space-y-4">
-          <Field label="نام هتل">
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="مثلاً Rixos Premium Dubai" data-autofocus />
+          <Field label="نام هتل" error={nameError}>
+            <Input value={name} onChange={(e) => { setName(e.target.value); setNameError(undefined); }} placeholder="مثلاً Rixos Premium Dubai" data-autofocus />
           </Field>
-          <Field label="ستاره">
-            <NumberField value={stars} onChange={setStars} min={0} max={7} aria-label="ستاره هتل" />
+          <Field label="ستاره" error={starsError}>
+            <NumberField value={stars} onChange={(v) => { setStars(v); setStarsError(undefined); }} min={0} max={7} aria-label="ستاره هتل" />
           </Field>
           <Field label="شهر / مقصد">
             <Select

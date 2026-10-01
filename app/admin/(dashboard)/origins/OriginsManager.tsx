@@ -22,6 +22,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
   const [name, setName] = useState('');
   const [type, setType] = useState('city');
   const [parentSlug, setParentSlug] = useState('');
+  const [nameError, setNameError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
 
@@ -32,6 +33,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
     setName('');
     setType('city');
     setParentSlug('');
+    setNameError(undefined);
     setOpen(true);
   };
 
@@ -40,12 +42,13 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
     setName(o.nameFa);
     setType(o.type);
     setParentSlug(o.parentSlug);
+    setNameError(undefined);
     setOpen(true);
   };
 
   const submit = () => {
     if (name.trim().length < 2) {
-      toast({ variant: 'error', title: 'نام مبدأ لازم است.' });
+      setNameError('نام مبدأ لازم است.');
       return;
     }
     startTransition(async () => {
@@ -54,7 +57,12 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
         setOpen(false);
         reload();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ذخیره.' });
+        const message = e instanceof Error ? e.message : 'خطا در ذخیره.';
+        if (message === 'این نام قبلاً ثبت شده') {
+          setNameError(message);
+        } else {
+          toast({ variant: 'error', title: message });
+        }
       }
     });
   };
@@ -137,8 +145,8 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
         }
       >
         <div className="space-y-4">
-          <Field label="نام مبدأ">
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="مثل تهران" />
+          <Field label="نام مبدأ" error={nameError}>
+            <Input value={name} onChange={(e) => { setName(e.target.value); setNameError(undefined); }} placeholder="مثل تهران" />
           </Field>
           <Field label="نوع">
             <Select

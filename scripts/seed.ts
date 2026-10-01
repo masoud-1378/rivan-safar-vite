@@ -1,25 +1,19 @@
 /**
  * اجرای Seed مرجع (فقط Draft و داده مرجع — بدون قیمت/ظرفیت واقعی).
  * اجرا: $env:DATABASE_URL="<direct>" ; npx tsx scripts/seed.ts
+ *
+ * منطق اجرا در src/lib/run-seed.ts مشترک است تا دکمهٔ «دادهٔ نمونه»
+ * در پنل هم دقیقاً همین seed را اجرا کند.
  */
-import fs from 'node:fs';
-import path from 'node:path';
-import postgres from 'postgres';
+import { runReferenceSeed } from '../src/lib/run-seed';
 
 const connectionString = process.env.DATABASE_URL || '';
-if (!connectionString) {
-  console.error('[db:seed] DATABASE_URL تنظیم نشده.');
-  process.exit(1);
-}
 
-const seedFile = path.join(process.cwd(), 'db', 'seed.reference.sql');
-const sqlText = fs.readFileSync(seedFile, 'utf8');
-
-const sql = postgres(connectionString, { max: 1 });
 try {
   console.log('[db:seed] applying seed.reference.sql ...');
-  await sql.unsafe(sqlText);
+  await runReferenceSeed(connectionString);
   console.log('[db:seed] done.');
-} finally {
-  await sql.end();
+} catch (e) {
+  console.error('[db:seed]', e instanceof Error ? e.message : e);
+  process.exit(1);
 }

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
 import { siteDestinations } from '@/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, ne } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 
 export interface FaqItem {
@@ -99,14 +99,13 @@ export async function saveDestination(id: string | undefined | null, data: Desti
   if (!slug) throw new Error('نامک (slug) لازم است.');
   if (name.length < 2) throw new Error('نام مقصد لازم است.');
 
-  // گارد تکراری سمت سرور: مسابقهٔ دو درخواست هم‌زمان یا فراخوانی مستقیم اکشن
-  // را هم می‌گیرد تا خطای خام انگلیسی دیتابیس به کاربر نرسد.
+  // کلید تکراری مقصد: نامک (گارد سمت سرور؛ مسابقهٔ هم‌زمان را هم می‌گیرد).
   const dup = await db
     .select({ id: siteDestinations.id })
     .from(siteDestinations)
-    .where(eq(siteDestinations.slug, slug))
+    .where(id ? and(eq(siteDestinations.slug, slug), ne(siteDestinations.id, id)) : eq(siteDestinations.slug, slug))
     .limit(1);
-  if (dup.length > 0 && dup[0].id !== id) throw new Error('این نامک قبلاً ثبت شده است.');
+  if (dup.length > 0) throw new Error('این نامک قبلاً ثبت شده است.');
 
   const values = {
     slug,
@@ -143,7 +142,10 @@ export async function saveDestination(id: string | undefined | null, data: Desti
       await db.insert(siteDestinations).values(values);
     }
   } catch (e) {
-    if ((e as { code?: string })?.code === '23505') throw new Error('این نامک قبلاً ثبت شده است.');
+    // مسابقهٔ هم‌زمان: خطای یکتایی نامک هم همان پیام فارسی را می‌گیرد.
+    if (e instanceof Error && 'code' in e && (e as { code?: string }).code === '23505') {
+      throw new Error('این نامک قبلاً ثبت شده است.');
+    }
     throw e;
   }
   revalidatePath('/admin/places');

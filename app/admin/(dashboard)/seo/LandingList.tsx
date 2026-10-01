@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Layers, Pencil, Plus, Trash2 } from 'lucide-react';
 import { AlertDialog } from '@/components/ui/alert-dialog';
+import { Dialog } from '@/components/ui/dialog';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,8 @@ import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
 import { listLandings, checkQualityGate, setLandingWorkflow, deleteLanding } from './actions';
-import LandingForm from './LandingForm';
+import LandingForm, { type LandingFormInitial } from './LandingForm';
+import LandingContent from './LandingContent';
 import SectionSettingsDialog from '../SectionSettingsDialog';
 
 type LandingRow = Awaited<ReturnType<typeof listLandings>>[number];
@@ -31,10 +33,27 @@ const WORKFLOW_OPTIONS = (Object.keys(WORKFLOW_MAP) as Workflow[]).map((value) =
 export default function LandingList({ initial, sectionSettings }: { initial: LandingRow[]; sectionSettings: Record<string, string> }) {
   const [data, setData] = useState(initial);
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<LandingRow | null>(null);
+  const [contentFor, setContentFor] = useState<LandingRow | null>(null);
   const [deleting, setDeleting] = useState<LandingRow | null>(null);
   const [gateIssues, setGateIssues] = useState<string[] | null>(null);
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
+
+  const editingInitial: LandingFormInitial | null = editing
+    ? {
+        id: editing.id,
+        queryOwner: editing.queryOwner,
+        urlPath: editing.urlPath,
+        pageType: editing.pageType,
+        titleFa: editing.titleFa,
+        metaDescriptionFa: editing.metaDescriptionFa,
+        h1Fa: editing.h1Fa,
+        workflow: (editing.workflow ?? 'draft') as LandingFormInitial['workflow'],
+        indexStatus: (editing.indexStatus ?? 'noindex') as LandingFormInitial['indexStatus'],
+        nextReviewAt: editing.nextReviewAt ? new Date(editing.nextReviewAt) : null,
+      }
+    : null;
 
   const refresh = () => startTransition(async () => {
     try {
@@ -86,9 +105,9 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
     {
       key: 'id',
       header: 'عملیات',
-      className: 'w-56',
+      className: 'w-64',
       cell: (l) => (
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           <Select
             aria-label={`تغییر وضعیت ${l.titleFa}`}
             value={l.workflow ?? 'draft'}
@@ -97,6 +116,14 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
             className="h-8 min-w-32 text-xs"
             options={WORKFLOW_OPTIONS}
           />
+          <Button variant="ghost" size="sm" onClick={() => setEditing(l)} disabled={pending}>
+            <Pencil />
+            ویرایش
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setContentFor(l)} disabled={pending}>
+            <Layers />
+            محتوا
+          </Button>
           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(l)} disabled={pending}>
             <Trash2 />
             حذف
@@ -146,6 +173,40 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
           />
         </CardContent>
       </Card>
+
+      <Dialog
+        open={Boolean(editing)}
+        onOpenChange={(openState) => !openState && setEditing(null)}
+        title={`ویرایش لندینگ «${editing?.titleFa ?? ''}»`}
+        className="max-w-3xl"
+      >
+        {editingInitial ? (
+          <LandingForm
+            initial={editingInitial}
+            onSaved={() => {
+              setEditing(null);
+              refresh();
+            }}
+          />
+        ) : null}
+      </Dialog>
+
+      <Dialog
+        open={Boolean(contentFor)}
+        onOpenChange={(openState) => !openState && setContentFor(null)}
+        title={contentFor ? `محتوای لندینگ «${contentFor.titleFa}»` : ''}
+        description="بلوک‌های محتوا و لینک‌های داخلی — همان‌هایی که گیت انتشار می‌خواهد."
+        className="max-w-3xl"
+      >
+        {contentFor ? (
+          <LandingContent
+            landingId={contentFor.id}
+            titleFa={contentFor.titleFa}
+            urlPath={contentFor.urlPath}
+            landings={data.map((l) => ({ id: l.id, titleFa: l.titleFa, urlPath: l.urlPath }))}
+          />
+        ) : null}
+      </Dialog>
 
       <AlertDialog
         open={Boolean(deleting)}
