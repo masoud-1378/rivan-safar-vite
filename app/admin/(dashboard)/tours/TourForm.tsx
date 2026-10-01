@@ -365,7 +365,7 @@ export default function TourForm({
                 className="gap-2 bg-brand text-brand-foreground hover:bg-brand/90 text-xs px-4"
               >
                 <Save className="size-4" />
-                {isPending ? 'در حال ثبت…' : editingId ? 'ذخیره تغییرات تور' : 'ثبت و انتشار تور'}
+                {isPending ? 'در حال ثبت…' : editingId ? 'ذخیره تغییرات تور' : 'ثبت تور'}
               </Button>
             </div>
           </div>

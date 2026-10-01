@@ -168,7 +168,7 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
           <div className="flex flex-col justify-center rounded-xl bg-secondary/30 p-4 border border-border/60">
             <span className="text-xs font-bold text-foreground">راهنمای وضعیت</span>
             <p className="text-[11px] text-muted-foreground mt-1">
-              در وضعیت «منتشر شده»، تور فوراً در لیست تورهای عمومی سایت و فیلترهای جستجو قرار می‌گیرد. در حالت «پیش‌نویس»، فقط مدیران در این پنل می‌توانند آن را ببینند و ویرایش کنند.
+              در وضعیت «منتشر شده»، تور در لیست تورهای عمومی سایت و فیلترهای جستجو قرار می‌گیرد. توجه: در حال حاضر «پیش‌نویس» تور را از سایت پنهان نمی‌کند و همهٔ تورها روی سایت دیده می‌شوند؛ پنهان‌ماندن واقعی پیش‌نویس به‌زودی فعال می‌شود.
             </p>
           </div>
         </div>
