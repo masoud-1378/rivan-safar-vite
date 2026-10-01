@@ -28,6 +28,14 @@ const ENTITY_LABELS: Record<string, string> = {
   seo_landings: 'لندینگ سئو',
   lead_requests: 'درخواست تماس',
   admin_users: 'مدیر',
+  site_tours: 'تور',
+  site_destinations: 'مقصد',
+  origin_cities: 'مبدأ',
+  accommodations: 'هتل',
+  guides: 'مقاله',
+  exhibitions: 'نمایشگاه',
+  content_blocks: 'بلوک محتوایی',
+  seo_internal_links: 'لینک داخلی',
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -43,6 +51,12 @@ const ACTION_LABELS: Record<string, string> = {
   'catalog.hotel': 'هتل',
   'catalog.place.delete': 'حذف مکان',
   'settings.update': 'تنظیمات',
+  archive: 'بایگانی',
+  restore: 'بازیابی',
+  hard_delete: 'حذف دائمی',
+  'user.invite': 'دعوت کاربر',
+  'user.role': 'تغییر نقش کاربر',
+  'user.active': 'تغییر وضعیت کاربر',
 };
 
 const faTime = (date: Date) => `${fa(String(date.getHours()).padStart(2, '0'))}:${fa(String(date.getMinutes()).padStart(2, '0'))}`;

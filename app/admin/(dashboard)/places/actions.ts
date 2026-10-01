@@ -2,9 +2,10 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
-import { siteDestinations } from '@/db/schema';
-import { and, desc, eq, ne } from 'drizzle-orm';
+import { siteDestinations, siteTours } from '@/db/schema';
+import { and, count, desc, eq, isNull, ne, sql } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
+import { archiveOne } from '@/src/lib/archive';
 
 export interface FaqItem {
   question: string;
@@ -58,7 +59,7 @@ export async function listDestinations() {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db.select().from(siteDestinations).orderBy(desc(siteDestinations.updatedAt)).limit(300);
+  const rows = await db.select().from(siteDestinations).where(isNull(siteDestinations.deletedAt)).orderBy(desc(siteDestinations.updatedAt)).limit(300);
   return rows.map((r) => ({
     id: r.id,
     slug: r.slug,
@@ -100,10 +101,15 @@ export async function saveDestination(id: string | undefined | null, data: Desti
   if (name.length < 2) throw new Error('نام مقصد لازم است.');
 
   // کلید تکراری مقصد: نامک (گارد سمت سرور؛ مسابقهٔ هم‌زمان را هم می‌گیرد).
+  // ردیف‌های بایگانی‌شده نامک را اشغال نمی‌کنند (هم‌خوان با ایندکس جزئی مایگریشن 0010).
   const dup = await db
     .select({ id: siteDestinations.id })
     .from(siteDestinations)
-    .where(id ? and(eq(siteDestinations.slug, slug), ne(siteDestinations.id, id)) : eq(siteDestinations.slug, slug))
+    .where(
+      id
+        ? and(eq(siteDestinations.slug, slug), ne(siteDestinations.id, id), isNull(siteDestinations.deletedAt))
+        : and(eq(siteDestinations.slug, slug), isNull(siteDestinations.deletedAt)),
+    )
     .limit(1);
   if (dup.length > 0) throw new Error('این نامک قبلاً ثبت شده است.');
 
@@ -152,10 +158,32 @@ export async function saveDestination(id: string | undefined | null, data: Desti
   return { ok: true };
 }
 
-export async function deleteDestination(id: string) {  await requireAdmin(['owner', 'editor']);
+/** چند تورِ فعال این مقصد را در destinationSlugs دارند — برای هشدارِ پیش از بایگانی. */
+export async function countDestinationTours(slug: string): Promise<number> {
+  await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(siteDestinations).where(eq(siteDestinations.id, id));
+  const rows = await db
+    .select({ n: count() })
+    .from(siteTours)
+    .where(and(isNull(siteTours.deletedAt), sql`${siteTours.destinationSlugs}::jsonb ? ${slug}`));
+  return rows[0]?.n ?? 0;
+}
+
+export async function deleteDestination(id: string) {
+  const session = await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const rows = await db
+    .select({ name: siteDestinations.name })
+    .from(siteDestinations)
+    .where(eq(siteDestinations.id, id))
+    .limit(1);
+  await archiveOne(db, siteDestinations, id, {
+    actor: session.email,
+    entity: 'site_destinations',
+    reasonFa: `بایگانی مقصد «${rows[0]?.name ?? id}»`,
+  });
   revalidatePath('/admin/places');
   return { ok: true };
 }

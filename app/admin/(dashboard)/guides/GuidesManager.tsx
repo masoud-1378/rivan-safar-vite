@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Archive } from 'lucide-react';
 import GuideForm from './GuideForm';
 import { deleteGuide, setGuideStatus, type GuideRow, type GuideStatus } from './actions';
 import { AlertDialog } from '@/components/ui/alert-dialog';
@@ -38,14 +38,14 @@ export default function GuidesManager({ initial }: { initial: GuideRow[] }) {
     { key: 'readTime', header: 'زمان مطالعه', cell: (guide) => guide.readTime || '—' },
     { key: 'status', header: 'وضعیت', cell: (guide) => <Badge variant={STATUS_MAP[guide.status].variant}>{STATUS_MAP[guide.status].label}</Badge> },
     { key: 'id', header: 'تغییر وضعیت', cell: (guide) => <Select aria-label={`تغییر وضعیت ${guide.titleFa}`} value={guide.status} disabled={pending} onChange={(event) => onStatusChange(guide.id, event.target.value as GuideStatus)} className="h-8 min-w-36 text-xs" options={statusOptions} /> },
-    { key: 'updatedAt', header: 'عملیات', className: 'w-36', cell: (guide) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(guide)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" className="text-destructive" disabled={pending} onClick={() => setDeleting(guide)}><Trash2 />حذف</Button></div> },
+    { key: 'updatedAt', header: 'عملیات', className: 'w-36', cell: (guide) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(guide)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" className="text-destructive" disabled={pending} onClick={() => setDeleting(guide)}><Archive />بایگانی</Button></div> },
   ];
   return (
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-foreground">مقالات و راهنماها</h1><p className="mt-1 text-sm text-muted-foreground">مجموع مقالات ثبت‌شده: {fa(initial.length)} مورد</p></div><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />مقاله جدید</Button></div>
       {(showForm || editing) && <Card><CardContent className="p-5"><GuideForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onSaved={reload} onCancel={() => { setShowForm(false); setEditing(null); }} /></CardContent></Card>}
       <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">لیست مقالات ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(guide) => guide.id} searchKeys={['titleFa', 'slug', 'category', 'categoryLabel']} searchPlaceholder="جست‌وجوی عنوان، نامک یا دسته‌بندی…" emptyTitle="مقاله‌ای یافت نشد" emptyDescription="برای شروع، مقاله جدیدی اضافه کنید." /></CardContent></Card>
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="حذف مقاله" description={deleting ? `آیا از حذف مقاله «${deleting.titleFa}» اطمینان دارید؟` : ''} confirmText="حذف مقاله" destructive onConfirm={onDelete} />
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی مقاله" description={deleting ? `مقالهٔ «${deleting.titleFa}» بایگانی می‌شود و از فهرست‌ها پنهان می‌ماند؛ لینک‌هایش برای همیشه پاک می‌شوند و با بازیابی برنمی‌گردند. خود مقاله بعداً از صفحهٔ بایگانی قابل بازیابی است.` : ''} confirmText="بایگانی مقاله" destructive onConfirm={onDelete} />
     </div>
   );
 }

@@ -67,6 +67,7 @@ export async function getTours(): Promise<TourItem[]> {
     const { data, error } = await rest
       .from('site_tours')
       .select('*')
+      .is('deleted_at', null)
       .order('created_at', { ascending: true });
     if (error) throw error;
     if (!data || data.length === 0) return SAMPLE_TOURS;
@@ -123,6 +124,7 @@ export async function getDestinations(): Promise<Place[]> {
     const { data, error } = await rest
       .from('site_destinations')
       .select('*')
+      .is('deleted_at', null)
       .order('created_at', { ascending: true });
     if (error) throw error;
     if (!data || data.length === 0) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
@@ -190,6 +192,7 @@ export async function getGuides(): Promise<Record<string, GuideItem>> {
     const { data, error } = await rest
       .from('guides')
       .select('*')
+      .is('deleted_at', null)
       .order('updated_at', { ascending: false });
     if (error) throw error;
     if (!data || data.length === 0) return GUIDES;
@@ -249,6 +252,7 @@ export async function getExhibitions(): Promise<Record<string, ExhibitionSeries>
     const { data, error } = await rest
       .from('exhibitions')
       .select('*')
+      .is('deleted_at', null)
       .order('updated_at', { ascending: false });
     if (error) throw error;
     if (!data || data.length === 0) return EXHIBITION_SERIES;

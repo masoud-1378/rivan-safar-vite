@@ -6,11 +6,14 @@ import {
   seoLandings,
   contentBlocks,
   seoInternalLinks,
+  seoLandingProducts,
   siteSettings,
   auditLogs,
 } from '@/db/schema';
-import { desc, eq, and } from 'drizzle-orm';
+import { desc, eq, and, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
+import { archiveOne } from '@/src/lib/archive';
+import { fa } from '@/lib/utils';
 
 export interface LandingInput {
   queryOwner: string;
@@ -28,7 +31,7 @@ export async function listLandings() {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  return db.select().from(seoLandings).orderBy(desc(seoLandings.updatedAt)).limit(200);
+  return db.select().from(seoLandings).where(isNull(seoLandings.deletedAt)).orderBy(desc(seoLandings.updatedAt)).limit(200);
 }
 
 export async function getLanding(id: string) {
@@ -149,7 +152,37 @@ export async function deleteLanding(id: string) {
   const session = await requireAdmin(['owner']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(seoLandings).where(eq(seoLandings.id, id));
+  const rows = await db
+    .select({ titleFa: seoLandings.titleFa })
+    .from(seoLandings)
+    .where(eq(seoLandings.id, id))
+    .limit(1);
+  const title = rows[0]?.titleFa ?? id;
+  // بلوک‌ها، لینک‌ها و محصولاتِ لندینگ بیرون از آن معنایی ندارند؛
+  // با بایگانی والد برای همیشه پاک می‌شوند (حتی آن‌هایی که قبلاً تکی بایگانی شده‌اند)
+  // و با «بازیابی» برنمی‌گردند. همه‌چیز در یک تراکنش تا حذف نصفه نماند.
+  await db.transaction(async (tx) => {
+    const [blocks, links, products] = await Promise.all([
+      tx.delete(contentBlocks).where(eq(contentBlocks.landingId, id)).returning({ id: contentBlocks.id }),
+      tx.delete(seoInternalLinks).where(eq(seoInternalLinks.fromLandingId, id)).returning({ id: seoInternalLinks.id }),
+      tx.delete(seoLandingProducts).where(eq(seoLandingProducts.landingId, id)).returning({ id: seoLandingProducts.id }),
+    ]);
+    await tx.update(seoLandings).set({ deletedAt: new Date() }).where(eq(seoLandings.id, id));
+    await tx.insert(auditLogs).values({
+      actor: session.email,
+      action: 'hard_delete',
+      entity: 'seo_landings',
+      entityId: id,
+      reasonFa: `حذف دائمی فرزندهای لندینگ «${title}»: ${fa(blocks.length)} بلوک، ${fa(links.length)} لینک داخلی و ${fa(products.length)} محصول.`,
+    });
+    await tx.insert(auditLogs).values({
+      actor: session.email,
+      action: 'archive',
+      entity: 'seo_landings',
+      entityId: id,
+      reasonFa: `بایگانی لندینگ «${title}»؛ فرزندهایش برای همیشه حذف شدند و با بازیابی برنمی‌گردند.`,
+    });
+  });
   revalidatePath('/admin/seo');
   return { ok: true };
 }
@@ -158,7 +191,7 @@ export async function listBlocks(landingId: string) {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  return db.select().from(contentBlocks).where(eq(contentBlocks.landingId, landingId)).orderBy(contentBlocks.blockOrder);
+  return db.select().from(contentBlocks).where(and(eq(contentBlocks.landingId, landingId), isNull(contentBlocks.deletedAt))).orderBy(contentBlocks.blockOrder);
 }
 
 export interface BlockInput {
@@ -222,7 +255,13 @@ export async function deleteBlock(id: string) {
     .limit(1);
   if (!rows[0]) throw new Error('بلوک یافت نشد.');
   const landingId = rows[0].landingId;
-  await db.delete(contentBlocks).where(eq(contentBlocks.id, id));
+  // بایگانی (نرم) — مثل همهٔ حذف‌های پنل؛ ولی چون بلوکِ لندینگ منتشرشده
+  // می‌تواند گیت را بشکند، بعدش تنزل خودکار هم چک می‌شود.
+  await archiveOne(db, contentBlocks, id, {
+    actor: session.email,
+    entity: 'content_blocks',
+    reasonFa: 'بایگانی بلوک محتوایی',
+  });
   const demoted = await demoteIfGateBroken(landingId);
   revalidatePath('/admin/seo');
   return { ok: true, demoted };
@@ -278,7 +317,7 @@ export async function listLinks(landingId: string) {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  return db.select().from(seoInternalLinks).where(eq(seoInternalLinks.fromLandingId, landingId));
+  return db.select().from(seoInternalLinks).where(and(eq(seoInternalLinks.fromLandingId, landingId), isNull(seoInternalLinks.deletedAt)));
 }
 
 export interface LinkInput {
@@ -313,7 +352,12 @@ export async function deleteLink(id: string) {
   const rows = await db.select().from(seoInternalLinks).where(eq(seoInternalLinks.id, id)).limit(1);
   if (!rows[0]) throw new Error('لینک یافت نشد.');
   const { fromLandingId, toPath } = rows[0];
-  await db.delete(seoInternalLinks).where(eq(seoInternalLinks.id, id));
+  // بایگانی (نرم) — مثل همهٔ حذف‌های پنل؛ بعدش گیت هر دو سمت چک می‌شود.
+  await archiveOne(db, seoInternalLinks, id, {
+    actor: session.email,
+    entity: 'seo_internal_links',
+    reasonFa: 'بایگانی لینک داخلی',
+  });
   // یافتهٔ ۱: حذف لینک هم گیت را بازبینی می‌کند — هم برای لندینگ مبدأ
   // (لینک خروجی) و هم برای لندینگ مقصد (لینک ورودی، اگر مسیرش لندینگ باشد).
   const affected = new Set<string>();
@@ -352,11 +396,11 @@ export async function checkQualityGate(landingId: string): Promise<QualityCheck>
   if (!landing[0].queryOwner) reasons.push('queryOwner خالی است.');
   if (!landing[0].metaDescriptionFa) reasons.push('metaDescriptionFa خالی است.');
   if (!landing[0].h1Fa) reasons.push('h1Fa خالی است.');
-  const blocks = await db.select().from(contentBlocks).where(eq(contentBlocks.landingId, landingId));
+  const blocks = await db.select().from(contentBlocks).where(and(eq(contentBlocks.landingId, landingId), isNull(contentBlocks.deletedAt)));
   if (blocks.length === 0) reasons.push('هیچ بلوک محتوایی ندارد.');
-  const links = await db.select().from(seoInternalLinks).where(eq(seoInternalLinks.fromLandingId, landingId));
+  const links = await db.select().from(seoInternalLinks).where(and(eq(seoInternalLinks.fromLandingId, landingId), isNull(seoInternalLinks.deletedAt)));
   if (links.length === 0) reasons.push('هیچ لینک داخلی خروجی ندارد.');
-  const inLinks = await db.select().from(seoInternalLinks).where(eq(seoInternalLinks.toPath, landing[0].urlPath));
+  const inLinks = await db.select().from(seoInternalLinks).where(and(eq(seoInternalLinks.toPath, landing[0].urlPath), isNull(seoInternalLinks.deletedAt)));
   if (inLinks.length === 0) reasons.push('هیچ لینک ورودی داخلی ندارد (صفحه یتیم).');
   return {
     hasQueryOwner: !!landing[0].queryOwner,

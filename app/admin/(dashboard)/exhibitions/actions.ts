@@ -3,8 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
 import { exhibitions } from '@/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
+import { archiveOne } from '@/src/lib/archive';
 
 export type ExhibitionStatus = 'draft' | 'review' | 'published' | 'paused' | 'archived';
 
@@ -50,7 +51,7 @@ export async function listExhibitions() {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db.select().from(exhibitions).orderBy(desc(exhibitions.updatedAt)).limit(300);
+  const rows = await db.select().from(exhibitions).where(isNull(exhibitions.deletedAt)).orderBy(desc(exhibitions.updatedAt)).limit(300);
   return rows.map((r) => ({
     id: r.id,
     slug: r.slug,
@@ -136,10 +137,19 @@ export async function saveExhibition(id: string | null | undefined, data: Exhibi
 }
 
 export async function deleteExhibition(id: string) {
-  await requireAdmin(['owner', 'editor']);
+  const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(exhibitions).where(eq(exhibitions.id, id));
+  const rows = await db
+    .select({ titleFa: exhibitions.titleFa })
+    .from(exhibitions)
+    .where(eq(exhibitions.id, id))
+    .limit(1);
+  await archiveOne(db, exhibitions, id, {
+    actor: session.email,
+    entity: 'exhibitions',
+    reasonFa: `بایگانی نمایشگاه «${rows[0]?.titleFa ?? id}»`,
+  });
   revalidatePath('/admin/exhibitions');
   return { ok: true };
 }

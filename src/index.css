@@ -1682,6 +1682,12 @@ body:has(.admin-vibefarsi) {
   }
 }
 
+/* کشوی ناوبری موبایل: هدف لمسیِ دست‌کم ۴۴ پیکسل (قلم ۳ بازسازی) —
+   بیرون از @media حرکت است تا با reduced-motion هم برقرار بماند. */
+.admin-mobile-nav nav a {
+  min-height: 44px;
+}
+
 @keyframes admin-rise {
   from {
     opacity: 0;

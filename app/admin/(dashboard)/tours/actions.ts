@@ -3,8 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
 import { accommodations, originCities, siteDestinations, siteTours } from '@/db/schema';
-import { asc, desc, eq } from 'drizzle-orm';
+import { asc, desc, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
+import { archiveOne } from '@/src/lib/archive';
 
 export interface TourHotelOptionItem {
   name?: string;
@@ -172,7 +173,7 @@ export async function listTours() {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db.select().from(siteTours).orderBy(desc(siteTours.updatedAt)).limit(300);
+  const rows = await db.select().from(siteTours).where(isNull(siteTours.deletedAt)).orderBy(desc(siteTours.updatedAt)).limit(300);
   return rows.map((r) => ({
     id: r.id,
     slug: r.slug,
@@ -213,7 +214,7 @@ export async function listDestinationTree(): Promise<DestinationTree> {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db.select().from(siteDestinations).orderBy(asc(siteDestinations.name)).limit(1000);
+  const rows = await db.select().from(siteDestinations).where(isNull(siteDestinations.deletedAt)).orderBy(asc(siteDestinations.name)).limit(1000);
   const all = rows.map((r) => ({
     slug: r.slug,
     name: r.name,
@@ -264,7 +265,7 @@ export async function listOrigins(): Promise<OriginRow[]> {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db.select().from(originCities).orderBy(asc(originCities.nameFa)).limit(500);
+  const rows = await db.select().from(originCities).where(isNull(originCities.deletedAt)).orderBy(asc(originCities.nameFa)).limit(500);
   return rows.map((r) => ({
     slug: r.slug,
     nameFa: r.nameFa,
@@ -284,8 +285,8 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
 
   const destSlugs = asStringArray(data.destinationSlugs);
   const [destRows, originRows] = await Promise.all([
-    db.select().from(siteDestinations).limit(2000),
-    db.select().from(originCities).limit(2000),
+    db.select().from(siteDestinations).where(isNull(siteDestinations.deletedAt)).limit(2000),
+    db.select().from(originCities).where(isNull(originCities.deletedAt)).limit(2000),
   ]);
   const destBySlug = new Map(destRows.map((r) => [r.slug, r]));
   const originBySlug = new Map(originRows.map((r) => [r.slug, r.nameFa]));
@@ -400,10 +401,19 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
 }
 
 export async function deleteTour(id: string) {
-  await requireAdmin(['owner', 'editor']);
+  const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(siteTours).where(eq(siteTours.id, id));
+  const rows = await db
+    .select({ title: siteTours.title })
+    .from(siteTours)
+    .where(eq(siteTours.id, id))
+    .limit(1);
+  await archiveOne(db, siteTours, id, {
+    actor: session.email,
+    entity: 'site_tours',
+    reasonFa: `بایگانی تور «${rows[0]?.title ?? id}»`,
+  });
   revalidatePath('/admin/tours');
   return { ok: true };
 }

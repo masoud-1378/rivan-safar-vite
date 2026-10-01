@@ -5,6 +5,7 @@ import { getDb } from '@/db/client';
 import { accommodations } from '@/db/schema';
 import { and, desc, eq, isNull, ne } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
+import { archiveOne } from '@/src/lib/archive';
 
 export interface HotelRow extends Record<string, unknown> {
   id: string;
@@ -27,7 +28,7 @@ export async function listHotels(): Promise<HotelRow[]> {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db.select().from(accommodations).orderBy(desc(accommodations.createdAt)).limit(500);
+  const rows = await db.select().from(accommodations).where(isNull(accommodations.deletedAt)).orderBy(desc(accommodations.createdAt)).limit(500);
   return rows.map((r) => ({
     id: r.id,
     slug: r.slug,
@@ -56,9 +57,12 @@ export async function saveHotel(data: HotelInput) {
     nameFa.replace(/\s+/g, '-').slice(0, 120) ||
     `hotel-${Date.now()}`;
   // کلید تکراری هتل: نام + شهر (هم‌نام در شهر دیگر مجاز است).
-  const dupWhere = placeSlug
-    ? and(eq(accommodations.nameFa, nameFa), eq(accommodations.placeSlug, placeSlug))
-    : and(eq(accommodations.nameFa, nameFa), isNull(accommodations.placeSlug));
+  // ردیف‌های بایگانی‌شده نام را اشغال نمی‌کنند (هم‌خوان با ایندکس جزئی مایگریشن 0010).
+  const dupWhere = and(
+    eq(accommodations.nameFa, nameFa),
+    isNull(accommodations.deletedAt),
+    placeSlug ? eq(accommodations.placeSlug, placeSlug) : isNull(accommodations.placeSlug),
+  );
   const dup = await db
     .select({ id: accommodations.id })
     .from(accommodations)
@@ -90,10 +94,19 @@ export async function saveHotel(data: HotelInput) {
 }
 
 export async function deleteHotel(id: string) {
-  await requireAdmin(['owner', 'editor']);
+  const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(accommodations).where(eq(accommodations.id, id));
+  const rows = await db
+    .select({ nameFa: accommodations.nameFa })
+    .from(accommodations)
+    .where(eq(accommodations.id, id))
+    .limit(1);
+  await archiveOne(db, accommodations, id, {
+    actor: session.email,
+    entity: 'accommodations',
+    reasonFa: `بایگانی هتل «${rows[0]?.nameFa ?? id}»`,
+  });
   revalidatePath('/admin/hotels');
   revalidatePath('/admin/tours');
   return { ok: true };

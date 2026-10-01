@@ -19,6 +19,7 @@ import {
   uniqueIndex,
   index,
 } from 'drizzle-orm/pg-core';
+import { isNull } from 'drizzle-orm';
 
 // ---------- Enumها ----------
 
@@ -69,7 +70,7 @@ export const siteTours = pgTable(
   'site_tours',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    slug: varchar('slug', { length: 160 }).notNull().unique(), // e.g. "istanbul-sep"
+    slug: varchar('slug', { length: 160 }).notNull(), // e.g. "istanbul-sep"
     title: varchar('title', { length: 260 }).notNull(),
     type: varchar('type', { length: 60 }).notNull(), // 'foreign' | 'domestic' | 'exhibition'
     typeLabel: varchar('type_label', { length: 120 }).notNull(),
@@ -104,6 +105,8 @@ export const siteTours = pgTable(
   },
   (table) => ({
     slugIdx: index('idx_site_tours_slug').on(table.slug),
+    // یکتایی جزئی: ردیف‌های بایگانی‌شده (deleted_at) نامک را اشغال نمی‌کنند (مایگریشن 0010).
+    slugUid: uniqueIndex('site_tours_slug_key').on(table.slug).where(isNull(table.deletedAt)),
   }),
 );
 
@@ -111,7 +114,7 @@ export const siteDestinations = pgTable(
   'site_destinations',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    slug: varchar('slug', { length: 160 }).notNull().unique(),
+    slug: varchar('slug', { length: 160 }).notNull(),
     name: varchar('name', { length: 160 }).notNull(),
     nameEn: varchar('name_en', { length: 160 }).notNull(),
     type: varchar('type', { length: 60 }).notNull(), // 'country' | 'city'
@@ -137,9 +140,12 @@ export const siteDestinations = pgTable(
     relatedGuides: jsonb('related_guides').default('[]').notNull(), // string[]
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
   },
   (table) => ({
     slugIdx: index('idx_site_destinations_slug').on(table.slug),
+    // یکتایی جزئی: ردیف‌های بایگانی‌شده نامک را اشغال نمی‌کنند (مایگریشن 0010).
+    slugUid: uniqueIndex('site_destinations_slug_key').on(table.slug).where(isNull(table.deletedAt)),
   }),
 );
 
@@ -177,8 +183,9 @@ export const originCities = pgTable(
     parentSlug: varchar('parent_slug', { length: 120 }),
     type: varchar('type', { length: 60 }).notNull().default('city'), // region | country | city
     createdAt: timestamp('created_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
   },
-  (t) => [uniqueIndex('origin_cities_slug_uidx').on(t.slug)],
+  (t) => [uniqueIndex('origin_cities_slug_uidx').on(t.slug).where(isNull(t.deletedAt))],
 );
 
 export const terminals = pgTable('terminals', {
@@ -346,10 +353,11 @@ export const seoLandings = pgTable(
     nextReviewAt: timestamp('next_review_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
   },
   (t) => [
-    uniqueIndex('seo_landings_url_uidx').on(t.urlPath),
-    uniqueIndex('seo_landings_query_uidx').on(t.queryOwner),
+    uniqueIndex('seo_landings_url_uidx').on(t.urlPath).where(isNull(t.deletedAt)),
+    uniqueIndex('seo_landings_query_uidx').on(t.queryOwner).where(isNull(t.deletedAt)),
   ],
 );
 
@@ -370,6 +378,7 @@ export const contentBlocks = pgTable('content_blocks', {
   blockOrder: integer('block_order').notNull().default(1),
   blockKind: varchar('block_kind', { length: 60 }).notNull().default('text'),
   bodyFa: text('body_fa'),
+  deletedAt: timestamp('deleted_at'),
 });
 
 export const seoInternalLinks = pgTable('seo_internal_links', {
@@ -378,6 +387,7 @@ export const seoInternalLinks = pgTable('seo_internal_links', {
   fromPath: varchar('from_path', { length: 300 }),
   toPath: varchar('to_path', { length: 300 }).notNull(),
   anchorFa: varchar('anchor_fa', { length: 220 }).notNull(),
+  deletedAt: timestamp('deleted_at'),
 });
 
 export const siteSettings = pgTable('site_settings', {
@@ -415,7 +425,7 @@ export const guides = pgTable(
   'guides',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    slug: varchar('slug', { length: 160 }).notNull().unique(),
+    slug: varchar('slug', { length: 160 }).notNull(),
     titleFa: varchar('title_fa', { length: 260 }).notNull(),
     category: varchar('category', { length: 60 }).notNull().default('general'),
     categoryLabel: varchar('category_label', { length: 120 }),
@@ -433,7 +443,10 @@ export const guides = pgTable(
     lastReviewedAt: timestamp('last_reviewed_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
   },
+  // یکتایی جزئی: ردیف‌های بایگانی‌شده نامک را اشغال نمی‌کنند (مایگریشن 0010).
+  (t) => [uniqueIndex('guides_slug_key').on(t.slug).where(isNull(t.deletedAt))],
 );
 
 export const guideLinks = pgTable('guide_links', {
@@ -451,7 +464,7 @@ export const exhibitions = pgTable(
   'exhibitions',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    slug: varchar('slug', { length: 160 }).notNull().unique(),
+    slug: varchar('slug', { length: 160 }).notNull(),
     titleFa: varchar('title_fa', { length: 260 }).notNull(),
     titleEn: varchar('title_en', { length: 260 }),
     country: varchar('country', { length: 120 }),
@@ -479,7 +492,10 @@ export const exhibitions = pgTable(
     status: publishStatusEnum('status').notNull().default('draft'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
   },
+  // یکتایی جزئی: ردیف‌های بایگانی‌شده نامک را اشغال نمی‌کنند (مایگریشن 0010).
+  (t) => [uniqueIndex('exhibitions_slug_key').on(t.slug).where(isNull(t.deletedAt))],
 );
 
 export const media = pgTable('media', {

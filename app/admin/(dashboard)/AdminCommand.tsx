@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   BarChart3,
   BookOpen,
@@ -52,7 +52,18 @@ const KIND_LABELS: Record<AdminSearchHit['kind'], string> = {
   destination: 'مقصد',
 };
 
-export default function AdminCommand({ ownerOnly }: { ownerOnly: boolean }) {
+const PaletteContext = createContext<{ openPalette: () => void }>({ openPalette: () => {} });
+
+export function useAdminPalette() {
+  return useContext(PaletteContext);
+}
+
+/**
+ * نگه‌دارندهٔ یگانهٔ پالت فرمان (⌘K).
+ * دور شل ادمین پیچیده می‌شود تا هم دکمهٔ جست‌وجوی سایدبار و هم دکمهٔ هدر موبایل
+ * همان یک دیالوگ را باز کنند و شنوندهٔ ⌘K فقط یک بار ثبت شود.
+ */
+export function AdminPaletteProvider({ ownerOnly, children }: { ownerOnly: boolean; children: ReactNode }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [term, setTerm] = useState('');
@@ -86,6 +97,8 @@ export default function AdminCommand({ ownerOnly }: { ownerOnly: boolean }) {
     router.push(href);
   };
 
+  const openPalette = useCallback(() => setOpen(true), []);
+
   const items: CommandItem[] = [
     ...NAV.filter((n) => (ownerOnly ? true : n.href !== '/admin/users')).map((n) => ({
       id: `nav-${n.href}`,
@@ -113,16 +126,8 @@ export default function AdminCommand({ ownerOnly }: { ownerOnly: boolean }) {
   ];
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex w-full cursor-pointer items-center gap-2 rounded-lg border border-input bg-background/60 px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-ring/50 hover:text-foreground"
-      >
-        <Search className="size-4" />
-        <span className="flex-1 text-start">جست‌وجو در پنل…</span>
-        <Kbd keys={['⌘', 'K']} />
-      </button>
+    <PaletteContext.Provider value={{ openPalette }}>
+      {children}
       <CommandDialog
         open={open}
         onOpenChange={(next) => {
@@ -134,6 +139,37 @@ export default function AdminCommand({ ownerOnly }: { ownerOnly: boolean }) {
         placeholder="برو به… یا نام تور، لید و مقصد را بنویس"
         emptyText={searching && term.trim().length >= 2 ? 'در حال جست‌وجو در پایگاه داده…' : 'چیزی پیدا نشد'}
       />
-    </>
+    </PaletteContext.Provider>
+  );
+}
+
+/** دکمهٔ تمام‌عرض جست‌وجو — سایدبار دسکتاپ. */
+export default function AdminCommand() {
+  const { openPalette } = useAdminPalette();
+  return (
+    <button
+      type="button"
+      onClick={openPalette}
+      className="flex w-full cursor-pointer items-center gap-2 rounded-lg border border-input bg-background/60 px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-ring/50 hover:text-foreground"
+    >
+      <Search className="size-4" />
+      <span className="flex-1 text-start">جست‌وجو در پنل…</span>
+      <Kbd keys={['⌘', 'K']} />
+    </button>
+  );
+}
+
+/** دکمهٔ آیکونی جست‌وجو — هدر موبایل (هدف لمسی ۴۴ پیکسل). */
+export function AdminCommandIconButton() {
+  const { openPalette } = useAdminPalette();
+  return (
+    <button
+      type="button"
+      onClick={openPalette}
+      aria-label="جست‌وجو در پنل"
+      className="grid size-11 cursor-pointer place-items-center rounded-xl border border-border bg-card text-foreground transition-colors hover:bg-accent"
+    >
+      <Search className="size-5" />
+    </button>
   );
 }

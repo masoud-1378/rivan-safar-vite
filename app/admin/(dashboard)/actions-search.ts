@@ -1,6 +1,6 @@
 'use server';
 
-import { or, count, desc, ilike, gte, sql } from 'drizzle-orm';
+import { or, count, desc, ilike, gte, sql, and, isNull } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { guides, leadRequests, siteDestinations, siteTours } from '@/db/schema';
 import { requireAdmin } from '@/src/lib/admin-auth';
@@ -31,7 +31,7 @@ export async function searchAdmin(term: string): Promise<AdminSearchHit[]> {
     db
       .select({ id: siteTours.id, title: siteTours.title, slug: siteTours.slug, status: siteTours.status, price: siteTours.price })
       .from(siteTours)
-      .where(or(ilike(siteTours.title, like), ilike(siteTours.slug, like)))
+      .where(and(or(ilike(siteTours.title, like), ilike(siteTours.slug, like)), isNull(siteTours.deletedAt)))
       .orderBy(desc(siteTours.updatedAt))
       .limit(6),
     db
@@ -43,7 +43,7 @@ export async function searchAdmin(term: string): Promise<AdminSearchHit[]> {
     db
       .select({ id: siteDestinations.id, name: siteDestinations.name, slug: siteDestinations.slug, type: siteDestinations.type })
       .from(siteDestinations)
-      .where(or(ilike(siteDestinations.name, like), ilike(siteDestinations.slug, like)))
+      .where(and(or(ilike(siteDestinations.name, like), ilike(siteDestinations.slug, like)), isNull(siteDestinations.deletedAt)))
       .orderBy(desc(siteDestinations.updatedAt))
       .limit(6),
   ]);
@@ -108,19 +108,19 @@ export async function getDashboardTrend(days = 30) {
     db
       .select({ day: sql<string>`to_char(${tourDay}, 'YYYY-MM-DD')`, n: count() })
       .from(siteTours)
-      .where(gte(siteTours.createdAt, since))
+      .where(and(gte(siteTours.createdAt, since), isNull(siteTours.deletedAt)))
       .groupBy(tourDay)
       .orderBy(tourDay),
     db
       .select({ day: sql<string>`to_char(${destDay}, 'YYYY-MM-DD')`, n: count() })
       .from(siteDestinations)
-      .where(gte(siteDestinations.createdAt, since))
+      .where(and(gte(siteDestinations.createdAt, since), isNull(siteDestinations.deletedAt)))
       .groupBy(destDay)
       .orderBy(destDay),
     db
       .select({ day: sql<string>`to_char(${guideDay}, 'YYYY-MM-DD')`, n: count() })
       .from(guides)
-      .where(gte(guides.createdAt, since))
+      .where(and(gte(guides.createdAt, since), isNull(guides.deletedAt)))
       .groupBy(guideDay)
       .orderBy(guideDay),
   ]);

@@ -2,9 +2,10 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
-import { originCities } from '@/db/schema';
-import { and, asc, eq, ne } from 'drizzle-orm';
+import { originCities, siteTours } from '@/db/schema';
+import { and, asc, count, eq, isNull, ne, or } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
+import { archiveOne } from '@/src/lib/archive';
 
 export interface OriginRow extends Record<string, unknown> {
   id: string;
@@ -18,7 +19,7 @@ export async function listOriginsAdmin(): Promise<OriginRow[]> {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db.select().from(originCities).orderBy(asc(originCities.nameFa)).limit(500);
+  const rows = await db.select().from(originCities).where(isNull(originCities.deletedAt)).orderBy(asc(originCities.nameFa)).limit(500);
   return rows.map((r) => ({
     id: r.id,
     slug: r.slug,
@@ -36,8 +37,8 @@ export async function saveOrigin(data: { id?: string; slug: string; nameFa: stri
   if (nameFa.length < 2) throw new Error('نام مبدأ لازم است.');
   const slug = (data.slug || '').trim() || nameFa.replace(/\s+/g, '-').slice(0, 120);
   const type = data.type || 'city';
-  // کلید تکراری مبدأ: نام + نوع.
-  const dupWhere = and(eq(originCities.nameFa, nameFa), eq(originCities.type, type));
+  // کلید تکراری مبدأ: نام + نوع. ردیف‌های بایگانی‌شده نام را اشغال نمی‌کنند.
+  const dupWhere = and(eq(originCities.nameFa, nameFa), eq(originCities.type, type), isNull(originCities.deletedAt));
   const dup = await db
     .select({ id: originCities.id })
     .from(originCities)
@@ -68,11 +69,32 @@ export async function saveOrigin(data: { id?: string; slug: string; nameFa: stri
   return { ok: true };
 }
 
-export async function deleteOrigin(id: string) {
+/** چند تورِ فعال این مبدأ را دارند (origin در تور، نام فارسی ذخیره می‌شود؛ اسلاگ هم برای رکوردهای قدیمی چک می‌شود). */
+export async function countOriginTours(slug: string, nameFa: string): Promise<number> {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(originCities).where(eq(originCities.id, id));
+  const rows = await db
+    .select({ n: count() })
+    .from(siteTours)
+    .where(and(isNull(siteTours.deletedAt), or(eq(siteTours.origin, nameFa), eq(siteTours.origin, slug))));
+  return rows[0]?.n ?? 0;
+}
+
+export async function deleteOrigin(id: string) {
+  const session = await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const rows = await db
+    .select({ nameFa: originCities.nameFa })
+    .from(originCities)
+    .where(eq(originCities.id, id))
+    .limit(1);
+  await archiveOne(db, originCities, id, {
+    actor: session.email,
+    entity: 'origin_cities',
+    reasonFa: `بایگانی مبدأ «${rows[0]?.nameFa ?? id}»`,
+  });
   revalidatePath('/admin/origins');
   revalidatePath('/admin/tours');
   return { ok: true };

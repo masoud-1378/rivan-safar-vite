@@ -2,9 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
-import { guides } from '@/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { guideLinks, guides, auditLogs } from '@/db/schema';
+import { desc, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
+import { archiveOne } from '@/src/lib/archive';
+import { fa } from '@/lib/utils';
 
 export type GuideStatus = 'draft' | 'review' | 'published' | 'paused' | 'archived';
 
@@ -34,7 +36,7 @@ export async function listGuides() {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db.select().from(guides).orderBy(desc(guides.updatedAt)).limit(300);
+  const rows = await db.select().from(guides).where(isNull(guides.deletedAt)).orderBy(desc(guides.updatedAt)).limit(300);
   return rows.map((r) => ({
     id: r.id,
     slug: r.slug,
@@ -129,10 +131,30 @@ export async function saveGuide(id: string | null | undefined, data: GuideInput)
 }
 
 export async function deleteGuide(id: string) {
-  await requireAdmin(['owner', 'editor']);
+  const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(guides).where(eq(guides.id, id));
+  const rows = await db
+    .select({ titleFa: guides.titleFa })
+    .from(guides)
+    .where(eq(guides.id, id))
+    .limit(1);
+  // لینک‌های مقاله بیرون از مقاله معنایی ندارند؛ با بایگانی والد برای همیشه پاک می‌شوند
+  // (حتی آن‌هایی که قبلاً تکی بایگانی شده‌اند) و با «بازیابی» برنمی‌گردند.
+  const links = await db.delete(guideLinks).where(eq(guideLinks.guideId, id)).returning({ id: guideLinks.id });
+  const title = rows[0]?.titleFa ?? id;
+  await db.insert(auditLogs).values({
+    actor: session.email,
+    action: 'hard_delete',
+    entity: 'guides',
+    entityId: id,
+    reasonFa: `حذف دائمی فرزندهای مقالهٔ «${title}»: ${fa(links.length)} لینک.`,
+  });
+  await archiveOne(db, guides, id, {
+    actor: session.email,
+    entity: 'guides',
+    reasonFa: `بایگانی مقالهٔ «${title}»؛ لینک‌های متصلش برای همیشه حذف شدند و با بازیابی برنمی‌گردند.`,
+  });
   revalidatePath('/admin/guides');
   return { ok: true };
 }

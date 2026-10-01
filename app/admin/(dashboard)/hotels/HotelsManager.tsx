@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Archive } from 'lucide-react';
 import { deleteHotel, saveHotel, type HotelRow } from './actions';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
@@ -123,8 +123,8 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
             ویرایش
           </Button>
           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(h)} disabled={pending}>
-            <Trash2 />
-            حذف
+            <Archive />
+            بایگانی
           </Button>
         </div>
       ),
@@ -191,9 +191,9 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
       <AlertDialog
         open={Boolean(deleting)}
         onOpenChange={(openState) => !openState && setDeleting(null)}
-        title="حذف هتل"
-        description={deleting ? `آیا از حذف هتل «${deleting.nameFa}» اطمینان دارید؟` : ''}
-        confirmText="حذف هتل"
+        title="بایگانی هتل"
+        description={deleting ? `هتل «${deleting.nameFa}» بایگانی می‌شود و از فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.` : ''}
+        confirmText="بایگانی هتل"
         destructive
         onConfirm={onDelete}
       />
