@@ -409,6 +409,29 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
   return { ok: true };
 }
 
+/**
+ * قلم بخش ۲ کتابچه: ویرایش در جای «قیمت پایه» از جدول تورها.
+ * فقط قیمت تومانی (همان که مشتری می‌بیند) را عوض می‌کند؛ بقیهٔ فیلدها دست نمی‌خورند.
+ */
+export async function updateTourPrice(id: string, price: number) {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const cleanId = (id || '').trim();
+  if (!cleanId) throw new Error('تور مشخص نیست.');
+  const amount = Math.round(Number(price));
+  if (!Number.isFinite(amount) || amount < 0) throw new Error('قیمت باید عددی نامنفی باشد.');
+  const rows = await db.select({ id: siteTours.id }).from(siteTours).where(eq(siteTours.id, cleanId)).limit(1);
+  if (rows.length === 0) throw new Error('تور پیدا نشد.');
+  const formatted = faPrice(amount);
+  await db
+    .update(siteTours)
+    .set({ price: String(amount), formattedPrice: formatted, updatedAt: new Date() })
+    .where(eq(siteTours.id, cleanId));
+  revalidatePath('/admin/tours');
+  return { ok: true, price: amount, formattedPrice: formatted };
+}
+
 export async function deleteTour(id: string) {
   const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
