@@ -60,8 +60,9 @@ export async function createLanding(input: LandingInput) {
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   if (!input.queryOwner.trim() || !input.urlPath.trim() || !input.titleFa.trim() || !input.h1Fa.trim()) {
-    throw new Error('فیلدهای ضروری: queryOwner, urlPath, titleFa, h1Fa');
+    throw new Error('فیلدهای ضروری: کد یکتای صفحه، مسیر URL، عنوان سئو، تیتر صفحه');
   }
+  // ساخت همیشه پیش‌نویس است؛ انتشار فقط از مسیر بازبینی با گیت کامل انجام می‌شود.
   const [row] = await db
     .insert(seoLandings)
     .values({
@@ -72,7 +73,7 @@ export async function createLanding(input: LandingInput) {
       titleFa: input.titleFa.trim(),
       metaDescriptionFa: input.metaDescriptionFa?.trim() || null,
       h1Fa: input.h1Fa.trim(),
-      workflow: input.workflow || 'draft',
+      workflow: 'draft',
       indexStatus: input.indexStatus || 'noindex',
       nextReviewAt: input.nextReviewAt ? new Date(input.nextReviewAt) : null,
     })
@@ -95,7 +96,14 @@ export async function updateLanding(id: string, input: Partial<LandingInput>) {
   if (input.titleFa) data.titleFa = input.titleFa.trim();
   if (input.metaDescriptionFa !== undefined) data.metaDescriptionFa = input.metaDescriptionFa?.trim() || null;
   if (input.h1Fa) data.h1Fa = input.h1Fa.trim();
-  if (input.workflow) data.workflow = input.workflow;
+  if (input.workflow) {
+    // انتشار از هر مسیری (فرم ویرایش یا انتخاب وضعیت) باید گیت کامل را پاس کند.
+    if (input.workflow === 'published') {
+      const gate = await checkQualityGate(id);
+      if (!gate.canPublish) throw new Error('گیت انتشار پاس نشد: ' + gate.reasons.join(' '));
+    }
+    data.workflow = input.workflow;
+  }
   if (input.indexStatus) data.indexStatus = input.indexStatus;
   if (input.nextReviewAt !== undefined) data.nextReviewAt = input.nextReviewAt ? new Date(input.nextReviewAt) : null;
   if (Object.keys(data).length <= 1) return { ok: true };
@@ -209,11 +217,9 @@ export async function deleteLink(id: string) {
   return { ok: true };
 }
 
-/** چک‌لیست انتشار (سند ۰۱) */
+/** چک‌لیست انتشار (سند ۰۱) — تعریف نهایی: همین ۶ چک. */
 export interface QualityCheck {
   hasQueryOwner: boolean;
-  hasDemand: boolean;
-  hasInventory: boolean;
   contentReady: boolean;
   canPublish: boolean;
   reasons: string[];
@@ -237,8 +243,6 @@ export async function checkQualityGate(landingId: string): Promise<QualityCheck>
   if (inLinks.length === 0) reasons.push('هیچ لینک ورودی داخلی ندارد (صفحه یتیم).');
   return {
     hasQueryOwner: !!landing[0].queryOwner,
-    hasDemand: true, // در آینده از seoLandings.demand بررسی می‌شود
-    hasInventory: true, // در آینده از محصولات متصل بررسی می‌شود
     contentReady: blocks.length > 0 && !!landing[0].metaDescriptionFa && !!landing[0].h1Fa,
     canPublish: reasons.length === 0,
     reasons,

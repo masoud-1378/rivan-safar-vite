@@ -28,10 +28,10 @@ const PAGE_TYPES = [
   { value: 'privacy', label: 'حریم خصوصی' },
 ];
 
+// «منتشرشده» عمداً این‌جا نیست؛ انتشار فقط از مسیر بازبینی (انتخاب وضعیت در جدول) با اجرای کامل گیت انجام می‌شود.
 const WORKFLOW_OPTIONS = [
   { value: 'draft', label: 'پیش‌نویس' },
   { value: 'review', label: 'بازبینی' },
-  { value: 'published', label: 'منتشرشده' },
   { value: 'paused', label: 'متوقف' },
   { value: 'archived', label: 'بایگانی' },
 ];

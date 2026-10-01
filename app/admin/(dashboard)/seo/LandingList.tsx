@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Layers, Pencil, Plus, Trash2 } from 'lucide-react';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Dialog } from '@/components/ui/dialog';
 import { Alert } from '@/components/ui/alert';
@@ -14,6 +14,7 @@ import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
 import { listLandings, checkQualityGate, setLandingWorkflow, deleteLanding } from './actions';
 import LandingForm, { type LandingFormInitial } from './LandingForm';
+import LandingContent from './LandingContent';
 import SectionSettingsDialog from '../SectionSettingsDialog';
 
 type LandingRow = Awaited<ReturnType<typeof listLandings>>[number];
@@ -33,6 +34,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
   const [data, setData] = useState(initial);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<LandingRow | null>(null);
+  const [contentFor, setContentFor] = useState<LandingRow | null>(null);
   const [deleting, setDeleting] = useState<LandingRow | null>(null);
   const [gateIssues, setGateIssues] = useState<string[] | null>(null);
   const [pending, startTransition] = useTransition();
@@ -118,6 +120,10 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
             <Pencil />
             ویرایش
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => setContentFor(l)} disabled={pending}>
+            <Layers />
+            محتوا
+          </Button>
           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(l)} disabled={pending}>
             <Trash2 />
             حذف
@@ -181,6 +187,23 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
               setEditing(null);
               refresh();
             }}
+          />
+        ) : null}
+      </Dialog>
+
+      <Dialog
+        open={Boolean(contentFor)}
+        onOpenChange={(openState) => !openState && setContentFor(null)}
+        title={contentFor ? `محتوای لندینگ «${contentFor.titleFa}»` : ''}
+        description="بلوک‌های محتوا و لینک‌های داخلی — همان‌هایی که گیت انتشار می‌خواهد."
+        className="max-w-3xl"
+      >
+        {contentFor ? (
+          <LandingContent
+            landingId={contentFor.id}
+            titleFa={contentFor.titleFa}
+            urlPath={contentFor.urlPath}
+            landings={data.map((l) => ({ id: l.id, titleFa: l.titleFa, urlPath: l.urlPath }))}
           />
         ) : null}
       </Dialog>
