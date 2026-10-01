@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import { Sheet } from '@/components/ui/sheet';
@@ -33,9 +34,14 @@ export default function AdminHeader({ role, email }: { role: 'owner' | 'editor';
           >
             <Menu className="size-5" />
           </button>
-          <span className="flex items-center gap-2 font-bold">
-            <span className="grid size-11 place-items-center rounded-sm bg-brand text-brand-foreground">ر</span>
-            ریوان سفر
+          <span className="flex items-center gap-2">
+            <Image
+              src="/images/logo-rivan-safar.png"
+              alt="ریوان سفر البرز"
+              width={1200}
+              height={657}
+              className="h-9 w-auto max-w-full"
+            />
           </span>
         </div>
         <AdminCommandIconButton />

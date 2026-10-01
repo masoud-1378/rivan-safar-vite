@@ -272,10 +272,10 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
             title="صفحه اصلی ریوان سفر"
           >
             <Image
-              src="/logo.png"
+              src="/images/logo-rivan-safar.png"
               alt="آژانس مسافرتی ریوان سفر"
-              width={170}
-              height={44}
+              width={1200}
+              height={657}
               className="h-[40px] md:h-[44px] w-auto max-w-[150px] md:max-w-[170px] object-contain"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';

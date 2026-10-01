@@ -1,12 +1,12 @@
 'use client';
 
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   Archive,
   BarChart3,
   BookOpen,
   Compass,
-  Gauge,
   Globe2,
   Inbox,
   LayoutDashboard,
@@ -54,11 +54,14 @@ export function AdminNavHeader() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3 py-2">
-        <div className="grid size-10 place-items-center rounded-sm bg-brand text-brand-foreground">
-          <Gauge className="size-5" />
-        </div>
+        <Image
+          src="/images/logo-rivan-safar.png"
+          alt="ریوان سفر البرز"
+          width={1200}
+          height={657}
+          className="h-10 w-auto max-w-full"
+        />
         <div className="min-w-0">
-          <p className="truncate font-bold">ریوان سفر</p>
           <p className="truncate text-xs text-muted-foreground">مرکز مدیریت محتوا</p>
         </div>
       </div>

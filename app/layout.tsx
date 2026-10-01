@@ -18,6 +18,10 @@ export const metadata: Metadata = {
     'تورهای داخلی، خارجی و نمایشگاهی را با تاریخ، خدمات و قیمت پایه بررسی کنید و برای تأیید مسیر و ظرفیت با کارشناس در تماس باشید.',
   // تا عبور از Launch Gate ایندکس عمومی بسته است
   robots: 'noindex,nofollow',
+  icons: {
+    icon: '/images/favicon-64.png',
+    apple: '/images/apple-touch-icon.png',
+  },
   openGraph: {
     siteName: 'ریوان سفر',
     locale: 'fa_IR',
