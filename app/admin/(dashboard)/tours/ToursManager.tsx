@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { Copy, Pencil, Plus, Archive, Plane, Train, Bus, ShieldCheck } from 'lucide-react';
 import TourForm from './TourForm';
 import { deleteTour, type DestinationTree, type OriginRow, type TourRow } from './actions';
@@ -11,8 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DataTable, type Column } from '@/components/ui/data-table';
+import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
-import { fa, formatToman } from '@/lib/utils';
+import { fa } from '@/lib/utils';
+import { PriceCell } from './PriceCell';
+import { DuplicateTourDialog } from './DuplicateTourDialog';
 
 interface ToursManagerProps {
   initial: TourRow[];
@@ -22,12 +25,33 @@ interface ToursManagerProps {
   hotels: HotelRow[];
 }
 
+/**
+ * قرارداد یکدست دیالوگ‌ها (قلم ۳ بخش ۲ کتابچه):
+ * - غیرمخرب (افزودن تور جدید): فرم مستقیم باز می‌شود، بدون «تأیید ترسناک».
+ * - غیرمخربِ سازنده (تکثیر): دیالوگِ «تنظیمات تکثیر» باز می‌شود؛ دکمه‌اش از بایگانی جداست.
+ * - مخربِ برگشت‌پذیر (بایگانی): دیالوگ با نام تور + توضیح برگشت‌پذیری.
+ * - مخربِ برگشت‌ناپذیر (حذف دائمی در صفحهٔ بایگانی): دیالوگ با نام تور + هشدار صریح برگشت‌ناپذیری.
+ */
 export default function ToursManager({ initial, sectionSettings, tree, origins, hotels }: ToursManagerProps) {
+  const [tours, setTours] = useState(initial);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<TourRow | null>(null);
   const [deleting, setDeleting] = useState<TourRow | null>(null);
+  const [duplicating, setDuplicating] = useState<TourRow | null>(null);
   const [pending, startTransition] = useTransition();
+  const [statusFilter, setStatusFilter] = useState('all');
   const { toast } = useToast();
+
+  // قلم ۴: فیلتر وضعیت — گزینه‌ها از وضعیت‌های واقعیِ همین فهرست ساخته می‌شوند.
+  const statusOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const t of tours) {
+      if (!seen.has(t.status)) seen.set(t.status, t.statusLabel || t.status);
+    }
+    return [...seen.entries()].map(([value, label]) => ({ value, label }));
+  }, [tours]);
+
+  const visible = statusFilter === 'all' ? tours : tours.filter((t) => t.status === statusFilter);
 
   const reload = () => { setShowForm(false); setEditing(null); window.location.reload(); };
   const onDelete = async () => {
@@ -40,16 +64,11 @@ export default function ToursManager({ initial, sectionSettings, tree, origins, 
     } catch (error) { toast({ variant: 'error', title: error instanceof Error ? error.message : 'خطا در حذف.' }); }
   };
   const edit = (tour: TourRow) => { setEditing(tour); setShowForm(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
-  const duplicate = (tour: TourRow) => {
-    setEditing({ ...tour, id: '', slug: '', title: `${tour.title} (کپی)` });
-    setShowForm(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
   const columns: Column<TourRow>[] = [
-    { 
-      key: 'title', 
-      header: 'عنوان و شیوه سفر', 
-      sortable: true, 
+    {
+      key: 'title',
+      header: 'عنوان و شیوه سفر',
+      sortable: true,
       cell: (tour) => {
         const isRail = /قطار|بن ریل|فدک|رجاء/i.test(tour.airline || '');
         const isLand = /اتوبوس|زمینی|vip/i.test(tour.airline || '');
@@ -78,30 +97,64 @@ export default function ToursManager({ initial, sectionSettings, tree, origins, 
             </div>
           </div>
         );
-      } 
+      }
     },
-    { 
-      key: 'destination', 
-      header: 'مسیر (مبدأ به مقصد)', 
+    {
+      key: 'destination',
+      header: 'مسیر (مبدأ به مقصد)',
       sortable: true,
+      // قلم ۵: مبدأ خالی «—» خاکستری نشان داده می‌شود، نه سلول خالی.
       cell: (tour) => (
         <div className="text-xs">
-          <span className="text-foreground font-medium">{tour.destination || '—'}</span>
-          {tour.origin && <span className="block text-[11px] text-muted-foreground">از مبدأ: {tour.origin}</span>}
+          <span className={tour.destination ? 'text-foreground font-medium' : 'text-muted-foreground'}>
+            {tour.destination || '—'}
+          </span>
+          <span className="block text-[11px] text-muted-foreground">
+            از مبدأ:{' '}
+            {tour.origin ? (
+              <span className="text-foreground/80">{tour.origin}</span>
+            ) : (
+              <span className="text-muted-foreground/60">—</span>
+            )}
+          </span>
         </div>
       )
     },
     { key: 'typeLabel', header: 'نوع', cell: (tour) => tour.typeLabel || '—' },
-    { key: 'price', header: 'قیمت پایه', numeric: true, sortable: true, cell: (tour) => formatToman(Number(tour.price)) },
+    {
+      key: 'price',
+      header: 'قیمت پایه',
+      numeric: true,
+      sortable: true,
+      // قلم ۱: ویرایش در جای قیمت — کلیک روی قیمت، تایپ، Enter. بدون رفرش صفحه.
+      cell: (tour) => (
+        <PriceCell
+          id={tour.id}
+          price={tour.price}
+          onSaved={(price, formattedPrice) =>
+            setTours((ts) => ts.map((t) => (t.id === tour.id ? { ...t, price, formattedPrice } : t)))
+          }
+        />
+      ),
+    },
     { key: 'status', header: 'وضعیت', cell: (tour) => <Badge variant={tour.status === 'published' ? 'success' : tour.status === 'pending' ? 'warning' : 'secondary'}>{tour.statusLabel || tour.status}</Badge> },
-    { key: 'id', header: 'عملیات', className: 'w-44', cell: (tour) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(tour)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" onClick={() => duplicate(tour)}><Copy />تکثیر</Button><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(tour)} disabled={pending}><Archive />بایگانی</Button></div> },
+    // قلم ۲ و ۳: تکثیر دیگر بین ویرایش و بایگانی نیست؛ بایگانیِ مخرب آخر و جداست.
+    { key: 'id', header: 'عملیات', className: 'w-60', cell: (tour) => <div className="flex items-center gap-1"><Button variant="ghost" size="sm" onClick={() => edit(tour)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" onClick={() => setDuplicating(tour)}><Copy />تکثیر</Button><span className="mx-1 h-5 w-px bg-border" aria-hidden="true" /><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(tour)} disabled={pending}><Archive />بایگانی</Button></div> },
   ];
 
   return (
     <div className="admin-enter space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2"><div><h1 className="text-2xl font-bold text-foreground">تورها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول تورها</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="tours" title="تنظیمات تورها" tabs={['general']} values={sectionSettings} /><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن تور جدید</Button></div></div>
+      <div className="flex flex-wrap items-center justify-between gap-2"><div><h1 className="text-2xl font-bold text-foreground">تورها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول تورها — قیمت پایه را می‌توانید مستقیم از جدول ویرایش کنید</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="tours" title="تنظیمات تورها" tabs={['general']} values={sectionSettings} /><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن تور جدید</Button></div></div>
       {showForm || editing ? <Card><CardContent className="p-5"><TourForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onDone={reload} tree={tree} origins={origins} hotels={hotels} /></CardContent></Card> : null}
-      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">تورها ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(tour) => tour.id} searchKeys={['title', 'destination', 'typeLabel']} searchPlaceholder="جست‌وجوی عنوان، مقصد یا نوع تور…" emptyTitle="توری ثبت نشده است" emptyDescription="برای شروع، تور جدیدی اضافه کنید." /></CardContent></Card>
+      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">تورها ({fa(tours.length)})</h2><DataTable rows={visible} columns={columns} rowKey={(tour) => tour.id} searchKeys={['title', 'destination', 'typeLabel']} searchPlaceholder="جست‌وجوی عنوان، مقصد یا نوع تور…" toolbar={<Select aria-label="فیلتر وضعیت" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} options={[{ value: 'all', label: 'همه وضعیت‌ها' }, ...statusOptions]} className="h-11 w-40" />} emptyTitle={statusFilter === 'all' ? 'توری ثبت نشده است' : 'توری با این وضعیت پیدا نشد'} emptyDescription={statusFilter === 'all' ? 'برای شروع، تور جدیدی اضافه کنید.' : 'فیلتر وضعیت را عوض کنید یا جست‌وجو را پاک کنید.'} /></CardContent></Card>
+      {duplicating && (
+        <DuplicateTourDialog
+          key={duplicating.id}
+          tour={duplicating}
+          onClose={() => setDuplicating(null)}
+          onDone={reload}
+        />
+      )}
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی تور" description={deleting ? `تور «${deleting.title}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.` : ''} confirmText="بایگانی تور" destructive onConfirm={onDelete} />
     </div>
   );
