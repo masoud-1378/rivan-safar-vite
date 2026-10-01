@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Trash2, UserPlus } from 'lucide-react';
+import { Archive, UserPlus } from 'lucide-react';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -77,7 +77,7 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
     run(async () => {
       await removeAdmin(removing.id);
       setRemoving(null);
-    }, 'کاربر حذف شد.');
+    }, 'کاربر بایگانی شد.');
   };
 
   const columns: Column<UserRow>[] = [
@@ -113,8 +113,8 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
             {u.active ? 'غیرفعال' : 'فعال'}
           </Button>
           <Button variant="ghost" size="sm" className="text-destructive" disabled={pending} onClick={() => setRemoving(u)}>
-            <Trash2 />
-            حذف
+            <Archive />
+            بایگانی
           </Button>
         </div>
       ),
@@ -125,7 +125,7 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
     <div className="admin-enter space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">مدیریت کاربران پنل</h1>
-        <p className="mt-1 text-sm text-muted-foreground">فقط مالک می‌تواند کاربران را دعوت، تغییر نقش، غیرفعال یا حذف کند.</p>
+        <p className="mt-1 text-sm text-muted-foreground">فقط مالک می‌تواند کاربران را دعوت، تغییر نقش، غیرفعال یا بایگانی کند.</p>
       </div>
 
       <Card>
@@ -176,9 +176,9 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
       <AlertDialog
         open={Boolean(removing)}
         onOpenChange={(openState) => !openState && setRemoving(null)}
-        title="حذف کاربر"
-        description={removing ? `آیا از حذف «${removing.email}» اطمینان دارید؟ دسترسی او به پنل بلافاصله قطع می‌شود.` : ''}
-        confirmText="حذف کاربر"
+        title="بایگانی کاربر"
+        description={removing ? `«${removing.email}» بایگانی می‌شود و دسترسی او به پنل بلافاصله قطع می‌شود؛ بعداً از صفحهٔ بایگانی می‌توان او را برگرداند.` : ''}
+        confirmText="بایگانی کاربر"
         destructive
         onConfirm={onRemove}
       />

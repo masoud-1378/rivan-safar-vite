@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import {
+  Archive,
   BarChart3,
   BookOpen,
   Compass,
@@ -42,6 +43,7 @@ const groups = [
       { href: '/admin/settings', label: 'تنظیمات', icon: SlidersHorizontal },
       { href: '/admin/users', label: 'کاربران', icon: Users, ownerOnly: true },
       { href: '/admin/audit', label: 'گزارش تغییرات', icon: ShieldCheck },
+      { href: '/admin/archive', label: 'بایگانی', icon: Archive },
     ],
   },
 ];

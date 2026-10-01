@@ -3,8 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
 import { accommodations } from '@/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
+import { archiveOne } from '@/src/lib/archive';
 
 export interface HotelRow extends Record<string, unknown> {
   id: string;
@@ -26,7 +27,7 @@ export async function listHotels(): Promise<HotelRow[]> {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db.select().from(accommodations).orderBy(desc(accommodations.createdAt)).limit(500);
+  const rows = await db.select().from(accommodations).where(isNull(accommodations.deletedAt)).orderBy(desc(accommodations.createdAt)).limit(500);
   return rows.map((r) => ({
     id: r.id,
     slug: r.slug,
@@ -55,7 +56,7 @@ export async function saveHotel(data: HotelInput) {
   if (data.id) {
     await db.update(accommodations).set(values).where(eq(accommodations.id, data.id));
   } else {
-    const existing = await db.select().from(accommodations).where(eq(accommodations.slug, slug)).limit(1);
+    const existing = await db.select().from(accommodations).where(and(eq(accommodations.slug, slug), isNull(accommodations.deletedAt))).limit(1);
     if (existing.length > 0) {
       await db.update(accommodations).set(values).where(eq(accommodations.slug, slug));
     } else {
@@ -68,10 +69,19 @@ export async function saveHotel(data: HotelInput) {
 }
 
 export async function deleteHotel(id: string) {
-  await requireAdmin(['owner', 'editor']);
+  const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(accommodations).where(eq(accommodations.id, id));
+  const rows = await db
+    .select({ nameFa: accommodations.nameFa })
+    .from(accommodations)
+    .where(eq(accommodations.id, id))
+    .limit(1);
+  await archiveOne(db, accommodations, id, {
+    actor: session.email,
+    entity: 'accommodations',
+    reasonFa: `بایگانی هتل «${rows[0]?.nameFa ?? id}»`,
+  });
   revalidatePath('/admin/hotels');
   revalidatePath('/admin/tours');
   return { ok: true };

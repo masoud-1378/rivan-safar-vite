@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Archive } from 'lucide-react';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -49,7 +49,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
     startTransition(async () => {
       try {
         await deleteLanding(deleting.id);
-        toast({ variant: 'success', title: 'لندینگ حذف شد.' });
+        toast({ variant: 'success', title: 'لندینگ بایگانی شد.' });
         setDeleting(null);
         refresh();
       } catch (e) {
@@ -98,8 +98,8 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
             options={WORKFLOW_OPTIONS}
           />
           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(l)} disabled={pending}>
-            <Trash2 />
-            حذف
+            <Archive />
+            بایگانی
           </Button>
         </div>
       ),
@@ -150,9 +150,9 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
       <AlertDialog
         open={Boolean(deleting)}
         onOpenChange={(openState) => !openState && setDeleting(null)}
-        title="حذف لندینگ"
-        description={deleting ? `آیا از حذف «${deleting.titleFa}» اطمینان دارید؟ این کار برگشت‌پذیر نیست.` : ''}
-        confirmText="حذف لندینگ"
+        title="بایگانی لندینگ"
+        description={deleting ? `لندینگ «${deleting.titleFa}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند؛ بلوک‌ها، لینک‌ها و محصولاتش برای همیشه پاک می‌شوند و با بازیابی برنمی‌گردند. خود لندینگ بعداً از صفحهٔ بایگانی قابل بازیابی است.` : ''}
+        confirmText="بایگانی لندینگ"
         destructive
         onConfirm={onDelete}
       />

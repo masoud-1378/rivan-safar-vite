@@ -137,6 +137,7 @@ export const siteDestinations = pgTable(
     relatedGuides: jsonb('related_guides').default('[]').notNull(), // string[]
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
   },
   (table) => ({
     slugIdx: index('idx_site_destinations_slug').on(table.slug),
@@ -177,6 +178,7 @@ export const originCities = pgTable(
     parentSlug: varchar('parent_slug', { length: 120 }),
     type: varchar('type', { length: 60 }).notNull().default('city'), // region | country | city
     createdAt: timestamp('created_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
   },
   (t) => [uniqueIndex('origin_cities_slug_uidx').on(t.slug)],
 );
@@ -342,6 +344,7 @@ export const seoLandings = pgTable(
     nextReviewAt: timestamp('next_review_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
   },
   (t) => [
     uniqueIndex('seo_landings_url_uidx').on(t.urlPath),
@@ -366,6 +369,7 @@ export const contentBlocks = pgTable('content_blocks', {
   blockOrder: integer('block_order').notNull().default(1),
   blockKind: varchar('block_kind', { length: 60 }).notNull().default('text'),
   bodyFa: text('body_fa'),
+  deletedAt: timestamp('deleted_at'),
 });
 
 export const seoInternalLinks = pgTable('seo_internal_links', {
@@ -374,6 +378,7 @@ export const seoInternalLinks = pgTable('seo_internal_links', {
   fromPath: varchar('from_path', { length: 300 }),
   toPath: varchar('to_path', { length: 300 }).notNull(),
   anchorFa: varchar('anchor_fa', { length: 220 }).notNull(),
+  deletedAt: timestamp('deleted_at'),
 });
 
 export const siteSettings = pgTable('site_settings', {
@@ -429,6 +434,7 @@ export const guides = pgTable(
     lastReviewedAt: timestamp('last_reviewed_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
   },
 );
 
@@ -475,6 +481,7 @@ export const exhibitions = pgTable(
     status: publishStatusEnum('status').notNull().default('draft'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
   },
 );
 

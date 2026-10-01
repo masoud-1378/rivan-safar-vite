@@ -3,8 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
 import { adminUsers } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 import { requireAdmin, createAdminDb } from '@/src/lib/admin-auth';
+import { archiveOne } from '@/src/lib/archive';
 
 export interface AdminUserRow {
   id: string;
@@ -19,7 +20,7 @@ export async function listAdminUsers() {
   await requireAdmin(['owner']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  return db.select().from(adminUsers).orderBy(adminUsers.createdAt);
+  return db.select().from(adminUsers).where(isNull(adminUsers.deletedAt)).orderBy(adminUsers.createdAt);
 }
 
 export async function inviteAdmin(email: string, role: 'owner' | 'editor') {
@@ -73,10 +74,19 @@ export async function toggleUserActive(userId: string, active: boolean) {
 }
 
 export async function removeAdmin(userId: string) {
-  await requireAdmin(['owner']);
+  const session = await requireAdmin(['owner']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(adminUsers).where(eq(adminUsers.id, userId));
+  const rows = await db
+    .select({ email: adminUsers.email })
+    .from(adminUsers)
+    .where(eq(adminUsers.id, userId))
+    .limit(1);
+  await archiveOne(db, adminUsers, userId, {
+    actor: session.email,
+    entity: 'admin_users',
+    reasonFa: `بایگانی کاربر «${rows[0]?.email ?? userId}»`,
+  });
   revalidatePath('/admin/users');
   return { ok: true };
 }

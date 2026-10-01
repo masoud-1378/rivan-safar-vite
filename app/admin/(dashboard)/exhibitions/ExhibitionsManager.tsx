@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Archive } from 'lucide-react';
 import ExhibitionForm from './ExhibitionForm';
 import { deleteExhibition, setExhibitionStatus, type ExhibitionRow, type ExhibitionStatus } from './actions';
 import { AlertDialog } from '@/components/ui/alert-dialog';
@@ -38,14 +38,14 @@ export default function ExhibitionsManager({ initial }: { initial: ExhibitionRow
     { key: 'solarDate', header: 'تاریخ شمسی', cell: (exhibition) => exhibition.solarDate || '—' },
     { key: 'status', header: 'وضعیت', cell: (exhibition) => <Badge variant={STATUS_MAP[exhibition.status].variant}>{STATUS_MAP[exhibition.status].label}</Badge> },
     { key: 'id', header: 'تغییر وضعیت', cell: (exhibition) => <Select aria-label={`تغییر وضعیت ${exhibition.titleFa}`} value={exhibition.status} disabled={pending} onChange={(event) => onStatusChange(exhibition.id, event.target.value as ExhibitionStatus)} className="h-8 min-w-36 text-xs" options={statusOptions} /> },
-    { key: 'updatedAt', header: 'عملیات', className: 'w-36', cell: (exhibition) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(exhibition)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" className="text-destructive" disabled={pending} onClick={() => setDeleting(exhibition)}><Trash2 />حذف</Button></div> },
+    { key: 'updatedAt', header: 'عملیات', className: 'w-36', cell: (exhibition) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(exhibition)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" className="text-destructive" disabled={pending} onClick={() => setDeleting(exhibition)}><Archive />بایگانی</Button></div> },
   ];
   return (
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-foreground">نمایشگاه‌ها</h1><p className="mt-1 text-sm text-muted-foreground">مجموع نمایشگاه‌های ثبت‌شده: {fa(initial.length)} مورد</p></div><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />نمایشگاه جدید</Button></div>
       {(showForm || editing) && <Card><CardContent className="p-5"><ExhibitionForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onSaved={reload} onCancel={() => { setShowForm(false); setEditing(null); }} /></CardContent></Card>}
       <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">لیست نمایشگاه‌ها ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(exhibition) => exhibition.id} searchKeys={['titleFa', 'slug', 'country', 'city']} searchPlaceholder="جست‌وجوی عنوان، نامک، کشور یا شهر…" emptyTitle="نمایشگاهی یافت نشد" emptyDescription="برای شروع، نمایشگاه جدیدی اضافه کنید." /></CardContent></Card>
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="حذف نمایشگاه" description={deleting ? `آیا از حذف نمایشگاه «${deleting.titleFa}» اطمینان دارید؟` : ''} confirmText="حذف نمایشگاه" destructive onConfirm={onDelete} />
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی نمایشگاه" description={deleting ? `نمایشگاه «${deleting.titleFa}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.` : ''} confirmText="بایگانی نمایشگاه" destructive onConfirm={onDelete} />
     </div>
   );
 }

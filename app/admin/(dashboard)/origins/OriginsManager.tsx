@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Archive } from 'lucide-react';
 import { deleteOrigin, saveOrigin, type OriginRow } from './actions';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
@@ -87,8 +87,8 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
             ویرایش
           </Button>
           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(o)} disabled={pending}>
-            <Trash2 />
-            حذف
+            <Archive />
+            بایگانی
           </Button>
         </div>
       ),
@@ -160,7 +160,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
           </Field>
         </div>
       </Dialog>
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="حذف مبدأ" description={deleting ? `آیا از حذف «${deleting.nameFa}» اطمینان دارید؟` : ''} confirmText="حذف مبدأ" destructive onConfirm={onDelete} />
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی مبدأ" description={deleting ? `مبدأ «${deleting.nameFa}» بایگانی می‌شود و از فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.` : ''} confirmText="بایگانی مبدأ" destructive onConfirm={onDelete} />
     </div>
   );
 }

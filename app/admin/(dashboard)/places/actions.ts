@@ -3,8 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
 import { siteDestinations } from '@/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
+import { archiveOne } from '@/src/lib/archive';
 
 export interface FaqItem {
   question: string;
@@ -58,7 +59,7 @@ export async function listDestinations() {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db.select().from(siteDestinations).orderBy(desc(siteDestinations.updatedAt)).limit(300);
+  const rows = await db.select().from(siteDestinations).where(isNull(siteDestinations.deletedAt)).orderBy(desc(siteDestinations.updatedAt)).limit(300);
   return rows.map((r) => ({
     id: r.id,
     slug: r.slug,
@@ -137,10 +138,19 @@ export async function saveDestination(id: string | undefined | null, data: Desti
 }
 
 export async function deleteDestination(id: string) {
-  await requireAdmin(['owner', 'editor']);
+  const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(siteDestinations).where(eq(siteDestinations.id, id));
+  const rows = await db
+    .select({ name: siteDestinations.name })
+    .from(siteDestinations)
+    .where(eq(siteDestinations.id, id))
+    .limit(1);
+  await archiveOne(db, siteDestinations, id, {
+    actor: session.email,
+    entity: 'site_destinations',
+    reasonFa: `بایگانی مقصد «${rows[0]?.name ?? id}»`,
+  });
   revalidatePath('/admin/places');
   return { ok: true };
 }

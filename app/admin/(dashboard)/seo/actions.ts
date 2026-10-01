@@ -6,11 +6,14 @@ import {
   seoLandings,
   contentBlocks,
   seoInternalLinks,
+  seoLandingProducts,
   siteSettings,
   auditLogs,
 } from '@/db/schema';
-import { desc, eq, and } from 'drizzle-orm';
+import { desc, eq, and, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
+import { archiveOne } from '@/src/lib/archive';
+import { fa } from '@/lib/utils';
 
 export interface LandingInput {
   queryOwner: string;
@@ -28,7 +31,7 @@ export async function listLandings() {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  return db.select().from(seoLandings).orderBy(desc(seoLandings.updatedAt)).limit(200);
+  return db.select().from(seoLandings).where(isNull(seoLandings.deletedAt)).orderBy(desc(seoLandings.updatedAt)).limit(200);
 }
 
 export async function getLanding(id: string) {
@@ -108,7 +111,23 @@ export async function deleteLanding(id: string) {
   const session = await requireAdmin(['owner']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(seoLandings).where(eq(seoLandings.id, id));
+  const rows = await db
+    .select({ titleFa: seoLandings.titleFa })
+    .from(seoLandings)
+    .where(eq(seoLandings.id, id))
+    .limit(1);
+  // بلوک‌ها، لینک‌ها و محصولاتِ لندینگ بیرون از آن معنایی ندارند؛
+  // با بایگانی والد برای همیشه پاک می‌شوند و با «بازیابی» برنمی‌گردند.
+  const [blocks, links, products] = await Promise.all([
+    db.delete(contentBlocks).where(eq(contentBlocks.landingId, id)).returning({ id: contentBlocks.id }),
+    db.delete(seoInternalLinks).where(eq(seoInternalLinks.fromLandingId, id)).returning({ id: seoInternalLinks.id }),
+    db.delete(seoLandingProducts).where(eq(seoLandingProducts.landingId, id)).returning({ id: seoLandingProducts.id }),
+  ]);
+  await archiveOne(db, seoLandings, id, {
+    actor: session.email,
+    entity: 'seo_landings',
+    reasonFa: `بایگانی لندینگ «${rows[0]?.titleFa ?? id}»؛ ${fa(blocks.length)} بلوک، ${fa(links.length)} لینک داخلی و ${fa(products.length)} محصول متصلش برای همیشه حذف شد و با بازیابی برنمی‌گردد.`,
+  });
   revalidatePath('/admin/seo');
   return { ok: true };
 }
@@ -117,7 +136,7 @@ export async function listBlocks(landingId: string) {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  return db.select().from(contentBlocks).where(eq(contentBlocks.landingId, landingId)).orderBy(contentBlocks.blockOrder);
+  return db.select().from(contentBlocks).where(and(eq(contentBlocks.landingId, landingId), isNull(contentBlocks.deletedAt))).orderBy(contentBlocks.blockOrder);
 }
 
 export interface BlockInput {
@@ -152,7 +171,11 @@ export async function deleteBlock(id: string) {
   const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(contentBlocks).where(eq(contentBlocks.id, id));
+  await archiveOne(db, contentBlocks, id, {
+    actor: session.email,
+    entity: 'content_blocks',
+    reasonFa: 'بایگانی بلوک محتوایی',
+  });
   revalidatePath('/admin/seo');
   return { ok: true };
 }
@@ -172,7 +195,7 @@ export async function listLinks(landingId: string) {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  return db.select().from(seoInternalLinks).where(eq(seoInternalLinks.fromLandingId, landingId));
+  return db.select().from(seoInternalLinks).where(and(eq(seoInternalLinks.fromLandingId, landingId), isNull(seoInternalLinks.deletedAt)));
 }
 
 export interface LinkInput {
@@ -204,7 +227,11 @@ export async function deleteLink(id: string) {
   const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(seoInternalLinks).where(eq(seoInternalLinks.id, id));
+  await archiveOne(db, seoInternalLinks, id, {
+    actor: session.email,
+    entity: 'seo_internal_links',
+    reasonFa: 'بایگانی لینک داخلی',
+  });
   revalidatePath('/admin/seo');
   return { ok: true };
 }
@@ -229,11 +256,11 @@ export async function checkQualityGate(landingId: string): Promise<QualityCheck>
   if (!landing[0].queryOwner) reasons.push('queryOwner خالی است.');
   if (!landing[0].metaDescriptionFa) reasons.push('metaDescriptionFa خالی است.');
   if (!landing[0].h1Fa) reasons.push('h1Fa خالی است.');
-  const blocks = await db.select().from(contentBlocks).where(eq(contentBlocks.landingId, landingId));
+  const blocks = await db.select().from(contentBlocks).where(and(eq(contentBlocks.landingId, landingId), isNull(contentBlocks.deletedAt)));
   if (blocks.length === 0) reasons.push('هیچ بلوک محتوایی ندارد.');
-  const links = await db.select().from(seoInternalLinks).where(eq(seoInternalLinks.fromLandingId, landingId));
+  const links = await db.select().from(seoInternalLinks).where(and(eq(seoInternalLinks.fromLandingId, landingId), isNull(seoInternalLinks.deletedAt)));
   if (links.length === 0) reasons.push('هیچ لینک داخلی خروجی ندارد.');
-  const inLinks = await db.select().from(seoInternalLinks).where(eq(seoInternalLinks.toPath, landing[0].urlPath));
+  const inLinks = await db.select().from(seoInternalLinks).where(and(eq(seoInternalLinks.toPath, landing[0].urlPath), isNull(seoInternalLinks.deletedAt)));
   if (inLinks.length === 0) reasons.push('هیچ لینک ورودی داخلی ندارد (صفحه یتیم).');
   return {
     hasQueryOwner: !!landing[0].queryOwner,

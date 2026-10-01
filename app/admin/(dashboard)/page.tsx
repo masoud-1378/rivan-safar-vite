@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { and, count, eq, lte } from 'drizzle-orm';
+import { and, count, eq, isNull, lte } from 'drizzle-orm';
 import { ArrowLeft, BookOpen, BriefcaseBusiness, Globe2, Inbox, MapPinned } from 'lucide-react';
 import { DashboardStats } from '@/components/blocks/dashboard-stats';
 import { Badge } from '@/components/ui/badge';
@@ -78,12 +78,12 @@ export default async function AdminDashboard() {
   if (db) {
     // ترتیبی اجرا می‌شوند تا روی اتصال تکی serverless قفل نکنند
     leads = await safeCount(() => db.select({ n: count() }).from(leadRequests));
-    tours = await safeCount(() => db.select({ n: count() }).from(siteTours));
-    destinations = await safeCount(() => db.select({ n: count() }).from(siteDestinations));
-    guidesCount = await safeCount(() => db.select({ n: count() }).from(guides));
-    exhibitionsCount = await safeCount(() => db.select({ n: count() }).from(exhibitions));
+    tours = await safeCount(() => db.select({ n: count() }).from(siteTours).where(isNull(siteTours.deletedAt)));
+    destinations = await safeCount(() => db.select({ n: count() }).from(siteDestinations).where(isNull(siteDestinations.deletedAt)));
+    guidesCount = await safeCount(() => db.select({ n: count() }).from(guides).where(isNull(guides.deletedAt)));
+    exhibitionsCount = await safeCount(() => db.select({ n: count() }).from(exhibitions).where(isNull(exhibitions.deletedAt)));
     drafts = await safeCount(() =>
-      db.select({ n: count() }).from(seoLandings).where(eq(seoLandings.workflow, 'draft')),
+      db.select({ n: count() }).from(seoLandings).where(and(eq(seoLandings.workflow, 'draft'), isNull(seoLandings.deletedAt))),
     );
     departures = await safeCount(() => db.select({ n: count() }).from(tourDepartures));
     expiringPrices = await safeCount(() =>

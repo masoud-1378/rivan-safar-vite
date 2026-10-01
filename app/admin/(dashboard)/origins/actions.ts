@@ -3,8 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
 import { originCities } from '@/db/schema';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
+import { archiveOne } from '@/src/lib/archive';
 
 export interface OriginRow extends Record<string, unknown> {
   id: string;
@@ -18,7 +19,7 @@ export async function listOriginsAdmin(): Promise<OriginRow[]> {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db.select().from(originCities).orderBy(asc(originCities.nameFa)).limit(500);
+  const rows = await db.select().from(originCities).where(isNull(originCities.deletedAt)).orderBy(asc(originCities.nameFa)).limit(500);
   return rows.map((r) => ({
     id: r.id,
     slug: r.slug,
@@ -44,7 +45,7 @@ export async function saveOrigin(data: { id?: string; slug: string; nameFa: stri
   if (data.id) {
     await db.update(originCities).set(values).where(eq(originCities.id, data.id));
   } else {
-    const existing = await db.select().from(originCities).where(eq(originCities.slug, slug)).limit(1);
+    const existing = await db.select().from(originCities).where(and(eq(originCities.slug, slug), isNull(originCities.deletedAt))).limit(1);
     if (existing.length > 0) {
       await db.update(originCities).set(values).where(eq(originCities.slug, slug));
     } else {
@@ -57,10 +58,19 @@ export async function saveOrigin(data: { id?: string; slug: string; nameFa: stri
 }
 
 export async function deleteOrigin(id: string) {
-  await requireAdmin(['owner', 'editor']);
+  const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  await db.delete(originCities).where(eq(originCities.id, id));
+  const rows = await db
+    .select({ nameFa: originCities.nameFa })
+    .from(originCities)
+    .where(eq(originCities.id, id))
+    .limit(1);
+  await archiveOne(db, originCities, id, {
+    actor: session.email,
+    entity: 'origin_cities',
+    reasonFa: `بایگانی مبدأ «${rows[0]?.nameFa ?? id}»`,
+  });
   revalidatePath('/admin/origins');
   revalidatePath('/admin/tours');
   return { ok: true };

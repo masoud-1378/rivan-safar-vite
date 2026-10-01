@@ -33,6 +33,7 @@ export const getAdminSession = cache(async (): Promise<AdminSession> => {
     .from('admin_users')
     .select('user_id, email, role, active')
     .eq('user_id', user.id)
+    .is('deleted_at', null)
     .maybeSingle();
   if (adminError || !adminUser || !adminUser.active) {
     throw new Error(adminError ? 'ADMIN_LOOKUP_FAILED' : 'FORBIDDEN');

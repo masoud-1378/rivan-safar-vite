@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Archive } from 'lucide-react';
 import DestinationForm from './DestinationForm';
 import { deleteDestination, type DestinationRow } from './actions';
 import SectionSettingsDialog from '../SectionSettingsDialog';
@@ -34,7 +34,7 @@ export default function CatalogManager({ initial, sectionSettings }: { initial: 
     { key: 'type', header: 'نوع', sortable: true },
     { key: 'category', header: 'دسته‌بندی', sortable: true, cell: (destination) => destination.category || '—' },
     { key: 'startingPrice', header: 'قیمت شروع', cell: (destination) => destination.startingPrice || '—' },
-    { key: 'id', header: 'عملیات', className: 'w-36', cell: (destination) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(destination)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(destination)} disabled={pending}><Trash2 />حذف</Button></div> },
+    { key: 'id', header: 'عملیات', className: 'w-36', cell: (destination) => <div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => edit(destination)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(destination)} disabled={pending}><Archive />بایگانی</Button></div> },
   ];
 
   return (
@@ -42,7 +42,7 @@ export default function CatalogManager({ initial, sectionSettings }: { initial: 
       <div className="flex flex-wrap items-center justify-between gap-2"><div><h1 className="text-2xl font-bold text-foreground">مکان‌ها و مقصدها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول مقصدها</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="places" title="تنظیمات مقصدها" tabs={['general']} values={sectionSettings} /><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن مقصد جدید</Button></div></div>
       {showForm || editing ? <Card><CardContent className="p-5"><DestinationForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onDone={reload} /></CardContent></Card> : null}
       <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">مقصدها ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(destination) => destination.id} searchKeys={['name', 'nameEn', 'type', 'category']} searchPlaceholder="جست‌وجوی نام، نوع یا دسته‌بندی…" emptyTitle="مقصدی ثبت نشده است" emptyDescription="برای شروع، مقصد جدیدی اضافه کنید." /></CardContent></Card>
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="حذف مقصد" description={deleting ? `آیا از حذف مقصد «${deleting.name}» اطمینان دارید؟` : ''} confirmText="حذف مقصد" destructive onConfirm={onDelete} />
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی مقصد" description={deleting ? `مقصد «${deleting.name}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.` : ''} confirmText="بایگانی مقصد" destructive onConfirm={onDelete} />
     </div>
   );
 }
