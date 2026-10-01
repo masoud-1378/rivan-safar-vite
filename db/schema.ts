@@ -95,6 +95,10 @@ export const siteTours = pgTable(
     excludedServices: jsonb('excluded_services').default('[]').notNull(), // string[]
     hotelOptions: jsonb('hotel_options').default('[]').notNull(), // Array<{ name, stars, board, pricePerPerson }>
     description: text('description').notNull(),
+    itineraryDays: jsonb('itinerary_days').default('[]').notNull(),
+    trustSpecs: jsonb('trust_specs'),
+    consultantSpec: jsonb('consultant_spec'),
+    deletedAt: timestamp('deleted_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -161,6 +165,7 @@ export const placeAliases = pgTable('place_aliases', {
     .references(() => places.id),
   aliasFa: varchar('alias_fa', { length: 120 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
 });
 
 export const originCities = pgTable(
@@ -183,6 +188,7 @@ export const terminals = pgTable('terminals', {
   kind: varchar('kind', { length: 40 }).notNull().default('airport'),
   citySlug: varchar('city_slug', { length: 120 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
 });
 
 export const carriers = pgTable('carriers', {
@@ -200,6 +206,7 @@ export const accommodations = pgTable('accommodations', {
   stars: integer('stars'),
   placeSlug: varchar('place_slug', { length: 120 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
 });
 
 export const services = pgTable('services', {
@@ -348,6 +355,7 @@ export const seoLandingProducts = pgTable('seo_landing_products', {
     .notNull()
     .references(() => seoLandings.id),
   productSlug: varchar('product_slug', { length: 160 }).notNull(),
+    deletedAt: timestamp('deleted_at'),
 });
 
 export const contentBlocks = pgTable('content_blocks', {
@@ -396,6 +404,7 @@ export const adminUsers = pgTable('admin_users', {
   role: adminRoleEnum('role').notNull().default('editor'),
   active: boolean('active').notNull().default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
 });
 
 export const guides = pgTable(
@@ -431,6 +440,7 @@ export const guideLinks = pgTable('guide_links', {
   toPath: varchar('to_path', { length: 300 }).notNull(),
   anchorFa: varchar('anchor_fa', { length: 220 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
 });
 
 export const exhibitions = pgTable(
@@ -474,6 +484,7 @@ export const media = pgTable('media', {
   altFa: varchar('alt_fa', { length: 260 }).notNull(),
   source: varchar('source', { length: 260 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
 });
 
 export const leadStatusEnum = pgEnum('lead_status', [
