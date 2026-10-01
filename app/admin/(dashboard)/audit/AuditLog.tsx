@@ -54,6 +54,9 @@ const ACTION_LABELS: Record<string, string> = {
   archive: 'بایگانی',
   restore: 'بازیابی',
   hard_delete: 'حذف دائمی',
+  'user.invite': 'دعوت کاربر',
+  'user.role': 'تغییر نقش کاربر',
+  'user.active': 'تغییر وضعیت کاربر',
 };
 
 const faTime = (date: Date) => `${fa(String(date.getHours()).padStart(2, '0'))}:${fa(String(date.getMinutes()).padStart(2, '0'))}`;
