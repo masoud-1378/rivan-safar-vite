@@ -94,10 +94,19 @@ export async function saveDestination(id: string | undefined | null, data: Desti
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const slug = (data.slug || '').trim();
+  const slug = (data.slug || '').trim().toLowerCase();
   const name = (data.name || '').trim();
   if (!slug) throw new Error('نامک (slug) لازم است.');
   if (name.length < 2) throw new Error('نام مقصد لازم است.');
+
+  // گارد تکراری سمت سرور: مسابقهٔ دو درخواست هم‌زمان یا فراخوانی مستقیم اکشن
+  // را هم می‌گیرد تا خطای خام انگلیسی دیتابیس به کاربر نرسد.
+  const dup = await db
+    .select({ id: siteDestinations.id })
+    .from(siteDestinations)
+    .where(eq(siteDestinations.slug, slug))
+    .limit(1);
+  if (dup.length > 0 && dup[0].id !== id) throw new Error('این نامک قبلاً ثبت شده است.');
 
   const values = {
     slug,
@@ -127,20 +136,35 @@ export async function saveDestination(id: string | undefined | null, data: Desti
     updatedAt: new Date(),
   };
 
-  if (id) {
-    await db.update(siteDestinations).set(values).where(eq(siteDestinations.id, id));
-  } else {
-    await db.insert(siteDestinations).values(values);
+  try {
+    if (id) {
+      await db.update(siteDestinations).set(values).where(eq(siteDestinations.id, id));
+    } else {
+      await db.insert(siteDestinations).values(values);
+    }
+  } catch (e) {
+    if ((e as { code?: string })?.code === '23505') throw new Error('این نامک قبلاً ثبت شده است.');
+    throw e;
   }
   revalidatePath('/admin/places');
   return { ok: true };
 }
 
-export async function deleteDestination(id: string) {
-  await requireAdmin(['owner', 'editor']);
+export async function deleteDestination(id: string) {  await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   await db.delete(siteDestinations).where(eq(siteDestinations.id, id));
   revalidatePath('/admin/places');
   return { ok: true };
+}
+
+export async function checkDestinationSlugUnique(slug: string, excludeId?: string | null) {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const s = (slug || '').trim().toLowerCase();
+  if (!s) return { unique: false };
+  const rows = await db.select().from(siteDestinations).where(eq(siteDestinations.slug, s)).limit(2);
+  const taken = rows.some((r) => r.id !== excludeId);
+  return { unique: !taken };
 }

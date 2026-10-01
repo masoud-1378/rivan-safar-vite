@@ -22,7 +22,8 @@ import type {
   DestinationTree, 
   OriginRow, 
   TourInput, 
-  TourRow 
+  TourRow,
+  TourItineraryDayItem,
 } from './actions';
 import { saveTour, checkSlugUnique } from './actions';
 import type { HotelRow } from '../hotels/actions';
@@ -113,21 +114,28 @@ export default function TourForm({
       guaranteedDeparture: initial?.badge === 'حرکت تضمین‌شده',
       splitPriceCurrency: 'USD',
       splitPriceAmount: '',
-      itineraryDays: [],
+      itineraryDays: Array.isArray(initial?.itineraryDays)
+        ? (initial.itineraryDays as TourItineraryDayItem[])
+        : [],
       trustSpecs: {
-        returnGuarantee: '',
-        cityTax: '',
-        tipsNote: '',
-        luggageKg: 30,
-        activityLevel: 'easy',
-        requiredDocs: [],
+        returnGuarantee: initial?.trustSpecs?.returnGuarantee || '',
+        cityTax: initial?.trustSpecs?.cityTax || '',
+        tipsNote: initial?.trustSpecs?.tipsNote || '',
+        luggageKg: ((): number => {
+          const v: unknown = initial?.trustSpecs?.luggageKg;
+          return v === '' || v == null ? 30 : Number(v);
+        })(),
+        activityLevel: initial?.trustSpecs?.activityLevel || 'easy',
+        requiredDocs: Array.isArray(initial?.trustSpecs?.requiredDocs)
+          ? (initial.trustSpecs.requiredDocs as string[])
+          : [],
       },
       consultantSpec: {
-        name: '',
-        title: '',
-        phone: '',
-        audioUrl: '',
-        emergencyPhone: '',
+        name: initial?.consultantSpec?.name || '',
+        title: initial?.consultantSpec?.title || '',
+        phone: initial?.consultantSpec?.phone || '',
+        audioUrl: initial?.consultantSpec?.audioUrl || '',
+        emergencyPhone: initial?.consultantSpec?.emergencyPhone || '',
       },
     };
   });
@@ -360,7 +368,7 @@ export default function TourForm({
                 className="gap-2 bg-brand text-brand-foreground hover:bg-brand/90 text-xs px-4"
               >
                 <Save className="size-4" />
-                {isPending ? 'در حال ثبت…' : editingId ? 'ذخیره تغییرات تور' : 'ثبت و انتشار تور'}
+                {isPending ? 'در حال ثبت…' : editingId ? 'ذخیره تغییرات تور' : 'ثبت تور'}
               </Button>
             </div>
           </div>

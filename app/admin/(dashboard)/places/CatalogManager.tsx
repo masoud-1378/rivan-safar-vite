@@ -19,6 +19,10 @@ export default function CatalogManager({ initial, sectionSettings }: { initial: 
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
   const reload = () => { setShowForm(false); setEditing(null); window.location.reload(); };
+  const countries = initial
+    .filter((d) => d.type === 'country')
+    .map((d) => ({ slug: d.slug, name: d.name }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'fa'));
   const onDelete = async () => {
     if (!deleting) return;
     try {
@@ -40,7 +44,7 @@ export default function CatalogManager({ initial, sectionSettings }: { initial: 
   return (
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2"><div><h1 className="text-2xl font-bold text-foreground">مکان‌ها و مقصدها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول مقصدها</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="places" title="تنظیمات مقصدها" tabs={['general']} values={sectionSettings} /><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن مقصد جدید</Button></div></div>
-      {showForm || editing ? <Card><CardContent className="p-5"><DestinationForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onDone={reload} /></CardContent></Card> : null}
+      {showForm || editing ? <Card><CardContent className="p-5"><DestinationForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onDone={reload} countries={countries} /></CardContent></Card> : null}
       <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">مقصدها ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(destination) => destination.id} searchKeys={['name', 'nameEn', 'type', 'category']} searchPlaceholder="جست‌وجوی نام، نوع یا دسته‌بندی…" emptyTitle="مقصدی ثبت نشده است" emptyDescription="برای شروع، مقصد جدیدی اضافه کنید." /></CardContent></Card>
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="حذف مقصد" description={deleting ? `آیا از حذف مقصد «${deleting.name}» اطمینان دارید؟` : ''} confirmText="حذف مقصد" destructive onConfirm={onDelete} />
     </div>
