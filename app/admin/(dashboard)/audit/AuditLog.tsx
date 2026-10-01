@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, Input } from '@/components/ui/input';
-import { Pagination } from '@/components/ui/pagination';
+import { ResponsivePagination } from '@/components/ui/data-table';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Select } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -104,7 +104,7 @@ export default function AuditLog({ logs, page, totalPages, total, filters }: { l
 
   return (
     <div className="admin-enter space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">گزارش تغییرات</h1>
           <p className="mt-1 text-sm text-muted-foreground">تمام عملیات حساس مدیریتی ثبت‌شده‌اند. مجموع {fa(total)} رویداد.</p>
@@ -156,36 +156,63 @@ export default function AuditLog({ logs, page, totalPages, total, filters }: { l
       </form>
 
       <Card>
-        <CardContent className="p-5">
+        {/* یافتهٔ ۳۷: بدون پدینگ دستی — پیش‌فرض تم */}
+        <CardContent>
           {logs.length === 0 ? (
             <EmptyState title="رویدادی ثبت نشده است" />
           ) : view === 'table' ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>زمان</TableHead>
-                  <TableHead>انجام‌دهنده</TableHead>
-                  <TableHead>عملیات</TableHead>
-                  <TableHead>موجودیت</TableHead>
-                  <TableHead>شناسه</TableHead>
-                  <TableHead>دلیل</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* میز ۲: موبایل — هر رویداد یک کارت عمودی */}
+              <div className="grid gap-2 md:hidden">
                 {logs.map((l) => (
-                  <TableRow key={l.id}>
-                    <TableCell className="whitespace-nowrap text-muted-foreground">
-                      {formatJalali(new Date(l.createdAt))} · {faTime(new Date(l.createdAt))}
-                    </TableCell>
-                    <TableCell dir="ltr" className="font-medium">{l.actor}</TableCell>
-                    <TableCell><Badge variant="secondary">{ACTION_LABELS[l.action] ?? l.action}</Badge></TableCell>
-                    <TableCell className="text-muted-foreground">{ENTITY_LABELS[l.entity] ?? l.entity}</TableCell>
-                    <TableCell dir="ltr" className="font-mono text-xs text-muted-foreground">{l.entityId}</TableCell>
-                    <TableCell className="max-w-xs truncate text-muted-foreground">{l.reasonFa || '—'}</TableCell>
-                  </TableRow>
+                  <div key={l.id} className="rounded-sm border border-border bg-card p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="whitespace-nowrap text-xs text-muted-foreground">
+                        {formatJalali(new Date(l.createdAt))} · {faTime(new Date(l.createdAt))}
+                      </span>
+                      <Badge variant="secondary">{ACTION_LABELS[l.action] ?? l.action}</Badge>
+                    </div>
+                    <p className="mt-1.5 text-sm font-medium">{ENTITY_LABELS[l.entity] ?? l.entity}</p>
+                    <p dir="ltr" className="mt-0.5 text-start font-mono text-[11px] text-muted-foreground">
+                      {l.actor}
+                    </p>
+                    {l.reasonFa ? <p className="mt-1.5 text-xs text-muted-foreground">{l.reasonFa}</p> : null}
+                    <p dir="ltr" className="mt-1 text-start font-mono text-[11px] text-muted-foreground/70">
+                      {l.entityId}
+                    </p>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+              {/* دسکتاپ/تبلت: جدول */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>زمان</TableHead>
+                      <TableHead>انجام‌دهنده</TableHead>
+                      <TableHead>عملیات</TableHead>
+                      <TableHead>موجودیت</TableHead>
+                      <TableHead>شناسه</TableHead>
+                      <TableHead>دلیل</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {logs.map((l) => (
+                      <TableRow key={l.id}>
+                        <TableCell className="whitespace-nowrap text-muted-foreground">
+                          {formatJalali(new Date(l.createdAt))} · {faTime(new Date(l.createdAt))}
+                        </TableCell>
+                        <TableCell dir="ltr" className="font-medium">{l.actor}</TableCell>
+                        <TableCell><Badge variant="secondary">{ACTION_LABELS[l.action] ?? l.action}</Badge></TableCell>
+                        <TableCell className="text-muted-foreground">{ENTITY_LABELS[l.entity] ?? l.entity}</TableCell>
+                        <TableCell dir="ltr" className="font-mono text-xs text-muted-foreground">{l.entityId}</TableCell>
+                        <TableCell className="max-w-xs truncate text-muted-foreground">{l.reasonFa || '—'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           ) : (
             <Timeline items={timeline} />
           )}
@@ -193,15 +220,13 @@ export default function AuditLog({ logs, page, totalPages, total, filters }: { l
       </Card>
 
       {totalPages > 1 ? (
-        <div className="flex justify-center">
-          <Pagination
-            page={page}
-            total={totalPages}
-            onChange={(next) => {
-              applyFilters(next);
-            }}
-          />
-        </div>
+        <ResponsivePagination
+          page={page}
+          total={totalPages}
+          onChange={(next) => {
+            applyFilters(next);
+          }}
+        />
       ) : null}
     </div>
   );

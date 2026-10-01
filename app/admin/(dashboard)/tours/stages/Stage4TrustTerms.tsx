@@ -219,7 +219,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
 
       {/* Required Documents Checklist */}
       <div className="rounded-sm border border-border bg-card p-5 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
             <FileText className="size-4 text-blue-500" />
             <span>مدارک لازم برای ثبت‌نام و ویزا</span>
@@ -229,7 +229,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
 
         {/* Quick presets */}
         <div>
-          <div className="mb-1.5 flex items-center justify-between">
+          <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
             <span className="text-[11px] text-muted-foreground">پیشنهادهای سریع برای افزودن:</span>
             <button
               type="button"
@@ -271,7 +271,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
             placeholder="مدرک سفارشی دیگر را تایپ کنید و Enter بزنید…"
             className="text-xs grow"
           />
-          <Button type="button" size="sm" onClick={() => addDoc(customDoc)} className="text-xs">
+          <Button type="button" size="sm" onClick={() => addDoc(customDoc)} className="shrink-0 text-xs">
             افزودن مدرک
           </Button>
         </div>
@@ -283,14 +283,15 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
               key={idx}
               className="flex items-center justify-between rounded-sm border border-border/70 bg-secondary/15 px-3 py-2 text-xs"
             >
-              <div className="flex items-center gap-2 text-foreground font-medium">
-                <Check className="size-3.5 text-emerald-500" />
-                <span>{doc}</span>
+              <div className="flex min-w-0 items-center gap-2 text-foreground font-medium">
+                <Check className="size-3.5 shrink-0 text-emerald-500" />
+                <span className="truncate">{doc}</span>
               </div>
               <button
                 type="button"
                 onClick={() => removeDoc(idx)}
-                className="text-muted-foreground hover:text-destructive p-1"
+                aria-label={`حذف «${doc}»`}
+                className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-destructive"
               >
                 <Trash2 className="size-3.5" />
               </button>

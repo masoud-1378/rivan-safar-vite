@@ -148,7 +148,7 @@ export default function SettingsPage({ initial, role }: { initial: Record<string
                 </CardHeader>
                 <CardContent className="space-y-5">
                   {(tabDefs.get(t.id) ?? []).map((d) => (
-                    <div key={d.key} className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
+                    <div key={d.key} className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
                       <div>
                         {/* ST1: کلید فقط در tooltip برچسب، نه در نما. */}
                         <p className="text-sm font-semibold" title={`کلید: ${d.key}`}>{d.label}</p>

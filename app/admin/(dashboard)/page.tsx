@@ -170,12 +170,13 @@ export default async function AdminDashboard() {
         </div>
       ) : null}
       {onboarding && !onboarding.completed ? <OnboardingWizard initial={onboarding} /> : null}
-      <header className="flex flex-wrap items-end justify-between gap-3">
+      {/* قرارداد سربرگ صفحه‌ها (یافتهٔ ۲۲): کانتینر wrap با تیتر text-2xl و زیرتیتر muted. */}
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">داشبورد مدیریت</h1>
           <p className="mt-1 text-sm text-muted-foreground">محتوا، تورها و درخواست‌های مشتری را از یکجا مدیریت کنید.</p>
         </div>
-        <Link href="/admin/leads" className={buttonClasses('outline', 'md')}>
+        <Link href="/admin/leads" className={buttonClasses('outline', 'md', 'h-11 lg:h-10')}>
           <Inbox className="size-4" /> مشاهده درخواست‌ها <ArrowLeft className="size-4" />
         </Link>
       </header>

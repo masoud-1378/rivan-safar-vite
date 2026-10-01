@@ -441,17 +441,19 @@ export default function TourForm({
             />
           )}
 
-          {/* Bottom Sticky Action Bar */}
-          <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-border bg-card/95 p-3.5 shadow-overlay backdrop-blur">
+          {/* Bottom Sticky Action Bar — یافتهٔ ۲۴: shadow-overlay حذف شد؛ زبان paper
+              بدون سایه است و جداسازی نوار با border + bg-card/95 + backdrop-blur
+              انجام می‌شود. در موبایل هر گروه دکمه تمام‌عرض و دکمه‌ها ۴۴px. */}
+          <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-border bg-card/95 p-3.5 backdrop-blur">
             {/* Step navigation buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 disabled={activeStage === 1}
                 onClick={() => setActiveStage((p) => Math.max(1, p - 1) as StageId)}
-                className="gap-1.5 text-xs"
+                className="h-11 flex-1 gap-1.5 text-xs sm:h-8 sm:flex-none"
               >
                 <ChevronRight className="size-4" />
                 مرحله قبلی
@@ -463,7 +465,7 @@ export default function TourForm({
                 size="sm"
                 disabled={activeStage === 5}
                 onClick={() => setActiveStage((p) => Math.min(5, p + 1) as StageId)}
-                className="gap-1.5 text-xs"
+                className="h-11 flex-1 gap-1.5 text-xs sm:h-8 sm:flex-none"
               >
                 مرحله بعدی
                 <ChevronLeft className="size-4" />
@@ -474,7 +476,7 @@ export default function TourForm({
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowLivePreview(!showLivePreview)}
-                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                className="h-11 flex-1 gap-1.5 text-xs text-muted-foreground hover:text-foreground sm:h-8 sm:flex-none"
               >
                 <Eye className="size-4" />
                 {showLivePreview ? 'بستن پیش‌نمایش' : 'پیش‌نمایش زنده'}
@@ -482,7 +484,7 @@ export default function TourForm({
             </div>
 
             {/* Save / Cancel buttons — شرایط انتشار (مایگریشن 0011) */}
-            <div className="flex items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
               <Button
                 type="button"
                 variant="ghost"
@@ -491,7 +493,7 @@ export default function TourForm({
                   if (dirty) setShowCancelConfirm(true);
                   else onDone();
                 }}
-                className="text-xs"
+                className="h-11 flex-1 text-xs sm:h-8 sm:flex-none"
               >
                 انصراف
               </Button>
@@ -504,7 +506,7 @@ export default function TourForm({
                     size="sm"
                     disabled={isPending}
                     onClick={() => handleSave('draft')}
-                    className="gap-2 text-xs px-4"
+                    className="h-11 flex-1 gap-2 px-4 text-xs sm:h-8 sm:flex-none"
                   >
                     <Save className="size-4" />
                     {isPending ? 'در حال ثبت…' : editingId ? 'ذخیره پیش‌نویس' : 'ثبت پیش‌نویس'}
@@ -514,7 +516,7 @@ export default function TourForm({
                     size="sm"
                     disabled={isPending}
                     onClick={() => handleSave('published')}
-                    className="gap-2 bg-brand text-brand-foreground hover:bg-brand/90 text-xs px-4"
+                    className="h-11 flex-1 gap-2 bg-brand px-4 text-xs text-brand-foreground hover:bg-brand/90 sm:h-8 sm:flex-none"
                   >
                     <Send className="size-4" />
                     {isPending ? 'در حال انتشار…' : 'انتشار'}
@@ -528,7 +530,7 @@ export default function TourForm({
                     size="sm"
                     disabled={isPending}
                     onClick={() => handleSave('draft')}
-                    className="gap-2 text-xs px-4 text-destructive hover:text-destructive"
+                    className="h-11 flex-1 gap-2 px-4 text-xs text-destructive hover:text-destructive sm:h-8 sm:flex-none"
                   >
                     <EyeOff className="size-4" />
                     {isPending ? 'در حال لغو…' : 'لغو انتشار'}
@@ -538,7 +540,7 @@ export default function TourForm({
                     size="sm"
                     disabled={isPending}
                     onClick={() => handleSave('keep')}
-                    className="gap-2 bg-brand text-brand-foreground hover:bg-brand/90 text-xs px-4"
+                    className="h-11 flex-1 gap-2 bg-brand px-4 text-xs text-brand-foreground hover:bg-brand/90 sm:h-8 sm:flex-none"
                   >
                     <Save className="size-4" />
                     {isPending ? 'در حال ثبت…' : 'ذخیره تغییرات'}
@@ -558,7 +560,7 @@ export default function TourForm({
                 <span className="text-[11px] text-muted-foreground">مشاهده زنده</span>
               </div>
 
-              <div className="overflow-hidden rounded-sm border border-border/80 bg-background shadow-xs">
+              <div className="overflow-hidden rounded-sm border border-border/80 bg-background">
                 {formData.image ? (
                   <img
                     src={formData.image}

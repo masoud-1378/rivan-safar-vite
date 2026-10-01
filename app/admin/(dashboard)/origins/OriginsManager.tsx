@@ -112,15 +112,15 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
       className: 'w-44',
       cell: (o) => (
         <div className="flex flex-wrap gap-1">
-          <Button variant="ghost" size="sm" onClick={() => startEdit(o)}>
+          <Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => startEdit(o)}>
             <Pencil />
             ویرایش
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => onCopy(o)} disabled={pending} title="ساخت یک کپی از این مبدأ">
+          <Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => onCopy(o)} disabled={pending} title="ساخت یک کپی از این مبدأ">
             <Copy />
             کپی
           </Button>
-          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => openDelete(o)} disabled={pending}>
+          <Button variant="ghost" size="sm" className="text-destructive max-md:min-h-11" onClick={() => openDelete(o)} disabled={pending}>
             <Archive />
             بایگانی
           </Button>
@@ -131,12 +131,12 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
 
   return (
     <div className="admin-enter space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">مبدأها</h1>
           <p className="mt-1 text-sm text-muted-foreground">شهرهای مبدأ حرکت تورها با ساختار سلسله‌مراتبی</p>
         </div>
-        <Button onClick={startCreate}>
+        <Button className="h-11 lg:h-10" onClick={startCreate}>
           <Plus />
           افزودن مبدأ جدید
         </Button>

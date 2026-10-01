@@ -49,7 +49,7 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
 
       {/* Consultant Card Details */}
       <div className="rounded-sm border border-border bg-card p-5 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
             <UserCheck className="size-4 text-purple-600" />
             <span>مشخصات کارشناس اختصاصی این مسیر گردشگری</span>

@@ -194,7 +194,7 @@ export default function ExhibitionForm({
         <Alert variant="destructive">{error}</Alert>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="عنوان فارسی" htmlFor="ex-title-fa">
           <Input id="ex-title-fa" value={titleFa} onChange={(e) => onTitleFa(e.target.value)} placeholder="مثال: نمایشگاه جیتکس دبی" required />
         </Field>
@@ -236,7 +236,7 @@ export default function ExhibitionForm({
 
       {/* E4: فیلدهای کم‌کاربرد در بخش تاشوی «تکمیلی» */}
       <Collapsible trigger="تکمیلی" openLabel="بستن بخش تکمیلی" className="rounded-sm border border-border bg-muted/20 p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="نامک انگلیسی" htmlFor="ex-slug" hint="خودکار از عنوان فارسی ساخته می‌شود؛ فقط اگر لازم بود تغییرش دهید." error={slugError}>
             <Input id="ex-slug" value={slug} onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); setSlugError(undefined); }} className="text-start" dir="ltr" placeholder="e.g. gitex-2025" />
           </Field>

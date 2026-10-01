@@ -173,7 +173,7 @@ export default function GuideForm({
         <Alert variant="destructive">{error}</Alert>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="نامک انگلیسی" htmlFor="guide-slug" hint="خودکار از عنوان فارسی ساخته می‌شود؛ فقط اگر لازم بود تغییرش دهید.">
           <Input
             id="guide-slug"

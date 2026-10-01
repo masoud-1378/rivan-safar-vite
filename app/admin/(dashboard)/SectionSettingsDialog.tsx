@@ -63,6 +63,7 @@ export default function SectionSettingsDialog({
     <>
       <Button
         variant="outline"
+        className="h-11 lg:h-10"
         onClick={openDialog}
       >
         <Settings2 />
@@ -75,10 +76,10 @@ export default function SectionSettingsDialog({
         description="این تنظیمات فقط همین بخش را کنترل می‌کنند."
         footer={
           <div className="flex items-center justify-between gap-2">
-            <Button variant="ghost" onClick={() => setOpen(false)}>
+            <Button variant="ghost" className="h-11 lg:h-10" onClick={() => setOpen(false)}>
               بستن
             </Button>
-            <Button onClick={saveAll} disabled={pending || dirtyKeys.length === 0}>
+            <Button className="h-11 lg:h-10" onClick={saveAll} disabled={pending || dirtyKeys.length === 0}>
               {pending ? 'در حال ذخیره…' : 'ذخیرهٔ همهٔ تغییرات'}
             </Button>
           </div>

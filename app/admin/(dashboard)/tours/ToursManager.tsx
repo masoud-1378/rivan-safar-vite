@@ -11,10 +11,11 @@ import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
-import { fa } from '@/lib/utils';
+import { cn, fa } from '@/lib/utils';
 import { PriceCell } from './PriceCell';
 import { DuplicateTourDialog } from './DuplicateTourDialog';
 
@@ -161,6 +162,66 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
     } catch (error) { toast({ variant: 'error', title: error instanceof Error ? error.message : 'حذف انجام نشد؛ دوباره تلاش کنید.' }); }
   };
 
+  // میز ۲: دکمه‌های عملیات ردیف — یک تعریف برای جدول دسکتاپ و کارت موبایل؛
+  // در موبایل تارگت لمسی ۴۴px (max-md:min-h-11) و در کارت تمام‌عرض.
+  const tourActions = (tour: TourRow, card = false) => (
+    <div className={cn(card ? "flex gap-1.5" : "flex items-center gap-1")} onClick={(e) => e.stopPropagation()}>
+      <Button variant="ghost" size="sm" className={cn("max-md:min-h-11", card && "flex-1")} onClick={() => router.push(`/admin/tours/${tour.id}`)}>
+        <Pencil />ویرایش
+      </Button>
+      <Button variant="ghost" size="sm" className={cn("max-md:min-h-11", card && "flex-1")} onClick={() => setDuplicating(tour)}>
+        <Copy />تکثیر
+      </Button>
+      {!card && <span className="mx-1 h-5 w-px bg-border" aria-hidden="true" />}
+      <Button variant="ghost" size="sm" className={cn("text-destructive max-md:min-h-11", card && "flex-1")} onClick={() => setDeleting(tour)} disabled={pending}>
+        <Archive />بایگانی
+      </Button>
+    </div>
+  );
+
+  const onPriceSaved = (id: string) => (price: number, formattedPrice: string) =>
+    setTours((ts) => ts.map((t) => (t.id === id ? { ...t, price, formattedPrice } : t)));
+
+  // میز ۲: کارت موبایل تور — زیر md هر ردیف یک کارت عمودی است.
+  const tourCard = (tour: TourRow & Record<string, unknown>) => (
+    <div className="rounded-sm border border-border bg-card p-3">
+      <div className="flex items-start justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={selected.has(tour.id)}
+            onCheckedChange={() => toggleSelected(tour.id)}
+            aria-label={`انتخاب تور ${tour.title}`}
+          />
+          <span className="truncate font-semibold text-foreground">{tour.title}</span>
+        </span>
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+        {transportBadge(tour as TourRow)}
+        {tour.badge === 'حرکت تضمین‌شده' && (
+          <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-600 font-bold">
+            <ShieldCheck className="size-3" /> حرکت تضمین‌شده
+          </span>
+        )}
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">{tour.destination || '—'}</span>
+        <span className="block">از مبدأ: {tour.origin || '—'} · {tour.typeLabel || '—'}</span>
+      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <Badge variant={tour.status === 'confirmed' ? 'success' : tour.status === 'pending' ? 'warning' : 'secondary'}>
+          {(tour.statusLabel as string) || (tour.status as string)}
+        </Badge>
+        <Badge variant={tour.publishStatus === 'published' ? 'success' : 'warning'}>
+          {tour.publishStatus === 'published' ? 'منتشرشده' : 'پیش‌نویس'}
+        </Badge>
+      </div>
+      <div className="mt-1" onClick={(e) => e.stopPropagation()}>
+        <PriceCell id={tour.id} price={tour.price as number} onSaved={onPriceSaved(tour.id)} />
+      </div>
+      <div className="mt-2 border-t border-border pt-2">{tourActions(tour as TourRow, true)}</div>
+    </div>
+  );
+
   const columns: Column<TourRow>[] = [
     {
       key: 'title',
@@ -214,9 +275,7 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
         <PriceCell
           id={tour.id}
           price={tour.price}
-          onSaved={(price, formattedPrice) =>
-            setTours((ts) => ts.map((t) => (t.id === tour.id ? { ...t, price, formattedPrice } : t)))
-          }
+          onSaved={onPriceSaved(tour.id)}
         />
       ),
     },
@@ -225,13 +284,13 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
     // شرایط انتشار (میز T2، مایگریشن 0011): پیش‌نویس روی سایت دیده نمی‌شود.
     { key: 'publishStatus', header: 'انتشار', cell: (tour) => <Badge variant={tour.publishStatus === 'published' ? 'success' : 'warning'}>{tour.publishStatus === 'published' ? 'منتشرشده' : 'پیش‌نویس'}</Badge> },
     // قلم ۲ و ۳ (میز T1): تکثیر با دیالوگ تنظیمات و دور از بایگانی؛ ویرایش به مسیر جدا می‌رود (میز T2).
-    { key: 'id', header: 'عملیات', cell: (tour) => <div className="flex items-center gap-1"><Button variant="ghost" size="sm" onClick={() => router.push(`/admin/tours/${tour.id}`)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" onClick={() => setDuplicating(tour)}><Copy />تکثیر</Button><span className="mx-1 h-5 w-px bg-border" aria-hidden="true" /><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(tour)} disabled={pending}><Archive />بایگانی</Button></div> },
+    { key: 'id', header: 'عملیات', cell: (tour) => tourActions(tour) },
   ];
 
   return (
     <div className="admin-enter space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2"><div><h1 className="text-2xl font-bold text-foreground">تورها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول تورها — قیمت پایه را می‌توانید مستقیم از جدول ویرایش کنید</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="tours" title="تنظیمات تورها" tabs={['general']} values={sectionSettings} /><Link href="/admin/tours/new"><Button><Plus />افزودن تور جدید</Button></Link></div></div>
-      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">تورها ({fa(tours.length)})</h2><DataTable rows={visible} columns={columns} rowKey={(tour) => tour.id} searchKeys={['title', 'destination', 'typeLabel']} searchPlaceholder="جست‌وجوی عنوان، مقصد یا نوع تور…" selection={{ selected, onToggle: toggleSelected, onTogglePage: togglePageSelected }} toolbar={<><Select aria-label="فیلتر وضعیت ظرفیت" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} options={[{ value: 'all', label: 'همه ظرفیت‌ها' }, ...statusOptions]} className="h-9 w-40" /><Select aria-label="فیلتر انتشار" value={publishFilter} onChange={(e) => setPublishFilter(e.target.value as 'all' | 'draft' | 'published')} options={[{ value: 'all', label: 'همه' }, { value: 'draft', label: 'پیش‌نویس' }, { value: 'published', label: 'منتشرشده' }]} className="h-9 w-40" /></>} emptyTitle={statusFilter === 'all' && publishFilter === 'all' ? 'توری ثبت نشده است' : 'توری با این فیلتر پیدا نشد'} emptyDescription={statusFilter === 'all' && publishFilter === 'all' ? 'برای شروع، تور جدیدی اضافه کنید.' : 'فیلترها را عوض کنید یا جست‌وجو را پاک کنید.'} emptyAction={statusFilter === 'all' && publishFilter === 'all' ? { label: 'ساخت اولین تور', onClick: () => { window.location.href = '/admin/tours/new'; } } : undefined} /></CardContent></Card>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-foreground">تورها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول تورها — قیمت پایه را می‌توانید مستقیم از جدول ویرایش کنید</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="tours" title="تنظیمات تورها" tabs={['general']} values={sectionSettings} /><Link href="/admin/tours/new"><Button className="h-11 lg:h-10"><Plus />افزودن تور جدید</Button></Link></div></div>
+      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">تورها ({fa(tours.length)})</h2><DataTable rows={visible} columns={columns} rowKey={(tour) => tour.id} searchKeys={['title', 'destination', 'typeLabel']} searchPlaceholder="جست‌وجوی عنوان، مقصد یا نوع تور…" selection={{ selected, onToggle: toggleSelected, onTogglePage: togglePageSelected }} mobileCard={tourCard} toolbar={<><Select aria-label="فیلتر وضعیت ظرفیت" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} options={[{ value: 'all', label: 'همه ظرفیت‌ها' }, ...statusOptions]} className="h-9 w-40 max-md:min-h-11" /><Select aria-label="فیلتر انتشار" value={publishFilter} onChange={(e) => setPublishFilter(e.target.value as 'all' | 'draft' | 'published')} options={[{ value: 'all', label: 'همه' }, { value: 'draft', label: 'پیش‌نویس' }, { value: 'published', label: 'منتشرشده' }]} className="h-9 w-40 max-md:min-h-11" /></>} emptyTitle={statusFilter === 'all' && publishFilter === 'all' ? 'توری ثبت نشده است' : 'توری با این فیلتر پیدا نشد'} emptyDescription={statusFilter === 'all' && publishFilter === 'all' ? 'برای شروع، تور جدیدی اضافه کنید.' : 'فیلترها را عوض کنید یا جست‌وجو را پاک کنید.'} emptyAction={statusFilter === 'all' && publishFilter === 'all' ? { label: 'ساخت اولین تور', onClick: () => { window.location.href = '/admin/tours/new'; } } : undefined} /></CardContent></Card>
       {/* نوار عملیات گروهی (T15): فقط وقتی انتخابی هست دیده می‌شود */}
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-sm border border-brand/20 bg-brand/5 p-3">

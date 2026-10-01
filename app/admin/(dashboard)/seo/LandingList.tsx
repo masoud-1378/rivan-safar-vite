@@ -116,15 +116,15 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
             className="h-8 min-w-36 text-xs"
             options={WORKFLOW_OPTIONS}
           />
-          <Button variant="ghost" size="sm" onClick={() => setEditing(l)} disabled={pending}>
+          <Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => setEditing(l)} disabled={pending}>
             <Pencil />
             ویرایش
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setContentFor(l)} disabled={pending}>
+          <Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => setContentFor(l)} disabled={pending}>
             <Layers />
             محتوا
           </Button>
-          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(l)} disabled={pending}>
+          <Button variant="ghost" size="sm" className="text-destructive max-md:min-h-11" onClick={() => setDeleting(l)} disabled={pending}>
             <Archive />
             بایگانی
           </Button>
@@ -135,14 +135,14 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
 
   return (
     <div className="admin-enter space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">مدیریت لندینگ‌ها</h1>
           <p className="mt-1 text-sm text-muted-foreground">مدیریت صفحات سئو، چک‌لیست انتشار و کنترل ایندکس.</p>
         </div>
         <div className="flex items-center gap-2">
           <SectionSettingsDialog sectionKey="seo" title="تنظیمات سئو" tabs={['seo']} values={sectionSettings} />
-          <Button onClick={() => setShowForm((v) => !v)}>
+          <Button className="h-11 lg:h-10" onClick={() => setShowForm((v) => !v)}>
             <Plus />
             {showForm ? 'بستن فرم' : 'لندینگ جدید'}
           </Button>

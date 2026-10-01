@@ -23,7 +23,7 @@ export default function AdminHeader({ role, email }: { role: 'owner' | 'editor';
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between md:hidden">
+      <div className="mb-4 flex items-center justify-between lg:hidden">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -40,16 +40,17 @@ export default function AdminHeader({ role, email }: { role: 'owner' | 'editor';
               alt="ریوان سفر البرز"
               width={1200}
               height={657}
-              className="h-9 w-auto max-w-full"
+              className="h-11 w-auto max-w-full"
             />
           </span>
         </div>
         <AdminCommandIconButton />
       </div>
-      <Sheet open={navOpen} onOpenChange={setNavOpen} side="start" title="منوی ناوبری">
+      {/* کشو در موبایل تمام‌عرض (یافتهٔ ۳۶: لوگو هم‌قد دکمه‌های ۴۴px). */}
+      <Sheet open={navOpen} onOpenChange={setNavOpen} side="start" title="منوی ناوبری" className="max-sm:max-w-none">
         <div className="admin-mobile-nav flex h-full flex-col gap-3">
           <AdminNavHeader />
-          <nav aria-label="ناوبری اصلی" className="min-h-0 flex-1 overflow-y-auto">
+          <nav aria-label="ناوبری اصلی" className="min-h-0 flex-1 overflow-y-auto [&_a]:py-3">
             <AdminNavGroups role={role} onNavigate={() => setNavOpen(false)} />
           </nav>
           <div className="border-t border-border pt-3">

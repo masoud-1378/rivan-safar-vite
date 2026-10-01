@@ -14,7 +14,7 @@ export default function AdminSignOut() {
     router.refresh();
   };
   return (
-    <Button variant="ghost" onClick={handleSignOut} className="w-full justify-start text-muted-foreground">
+    <Button variant="ghost" onClick={handleSignOut} className="h-11 w-full justify-start text-muted-foreground">
       <LogOut />
       خروج
     </Button>

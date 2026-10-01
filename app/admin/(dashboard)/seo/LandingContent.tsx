@@ -292,7 +292,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
             ))}
           </ul>
         )}
-        <div className="mt-4 grid grid-cols-1 gap-3 rounded-sm border border-border bg-accent/30 p-4 sm:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-4 rounded-sm border border-border bg-accent/30 p-4 sm:grid-cols-2">
           <Field label="از (مبدأ)" htmlFor="lk-from">
             <Select
               id="lk-from"

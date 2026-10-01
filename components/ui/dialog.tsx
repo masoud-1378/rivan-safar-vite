@@ -58,7 +58,7 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={() => role === "dialog" && onOpenChange(false)}
     >
       <div
@@ -69,7 +69,10 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
         aria-describedby={description ? descId : undefined}
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "w-full max-w-md rounded-overlay border-line border-border bg-popover p-5 text-popover-foreground shadow-overlay",
+          // موبایل‌اول: bottom-sheet — چسبیده به پایین، تمام‌عرض، فقط گوشه‌های بالای
+          // گرد، سقف ۹۰dvh با اسکرول داخلی بدنه. از sm به بعد دیالوگ وسط‌چین دسکتاپ.
+          "max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-b-none rounded-t-2xl border-line border-border bg-popover p-5 text-popover-foreground shadow-overlay",
+          "sm:rounded-overlay",
           "animate-fade-up [animation-duration:var(--motion)]",
           className,
         )}
@@ -81,7 +84,7 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
               {description && <p id={descId} className="mt-1 text-sm text-muted-foreground">{description}</p>}
             </div>
             {role === "dialog" && (
-              <button type="button" aria-label="بستن" onClick={() => onOpenChange(false)} className="-me-1 -mt-1 flex size-8 cursor-pointer items-center justify-center rounded-control text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+              <button type="button" aria-label="بستن" onClick={() => onOpenChange(false)} className="-me-1 -mt-1 flex size-8 min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-control text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:min-h-8 sm:min-w-8">
                 <X className="size-4" />
               </button>
             )}

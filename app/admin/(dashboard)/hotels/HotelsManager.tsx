@@ -197,11 +197,11 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
       className: 'w-36',
       cell: (h) => (
         <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => startEdit(h)}>
+          <Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => startEdit(h)}>
             <Pencil />
             ویرایش
           </Button>
-          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(h)} disabled={pending}>
+          <Button variant="ghost" size="sm" className="text-destructive max-md:min-h-11" onClick={() => setDeleting(h)} disabled={pending}>
             <Archive />
             بایگانی
           </Button>
@@ -212,12 +212,12 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
 
   return (
     <div className="admin-enter space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">هتل‌ها</h1>
           <p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول اقامتگاه‌ها</p>
         </div>
-        <Button onClick={startCreate}>
+        <Button className="h-11 lg:h-10" onClick={startCreate}>
           <Plus />
           افزودن هتل جدید
         </Button>

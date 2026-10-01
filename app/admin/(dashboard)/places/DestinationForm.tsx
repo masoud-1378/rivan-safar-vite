@@ -355,8 +355,8 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
 
         <div className="sticky bottom-0 z-10 -mx-5 -mb-5 border-t border-border bg-card/95 px-5 py-3 backdrop-blur">
           <div className="flex gap-2">
-            <Button onClick={submit} disabled={pending}>{pending ? 'در حال ذخیره…' : editingId ? 'ذخیره تغییرات' : 'ثبت مقصد'}</Button>
-            <Button type="button" variant="outline" onClick={onDone}>انصراف</Button>
+            <Button onClick={submit} disabled={pending} className="min-h-11 flex-1 sm:min-h-0 sm:flex-none">{pending ? 'در حال ذخیره…' : editingId ? 'ذخیره تغییرات' : 'ثبت مقصد'}</Button>
+            <Button type="button" variant="outline" onClick={onDone} className="min-h-11 flex-1 sm:min-h-0 sm:flex-none">انصراف</Button>
           </div>
         </div>
       </CardContent>

@@ -118,28 +118,28 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
 
   return (
     <div className="rounded-sm border border-border bg-card p-5 space-y-4 transition-all hover:border-border/80">
-      {/* Hotel header line */}
-      <div className="flex items-center justify-between pb-3 border-b border-border/60">
-        <div className="flex items-center gap-2">
-          <span className="flex size-6 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">
-            {idx + 1}
+      {/* Hotel header line — در موبایل می‌شکند؛ دکمه‌های عملیات ۴۴px */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">
+            {fa(idx + 1)}
           </span>
-          <span className="text-xs font-bold text-foreground">
+          <span className="truncate text-xs font-bold text-foreground">
             {hotel.name ? `هتل ${hotel.name}` : `بستهٔ اقامتی شماره ${fa(idx + 1)}`}
           </span>
           {hotel.hotelId && (
-            <span className="inline-flex items-center gap-1 rounded-sm bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
               <Check className="size-3" />
               متصل به جدول هتل‌ها
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1">
           {hotel.hotelId && (
             <button
               type="button"
               onClick={onUnlink}
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors p-1"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
               title="نام و ستاره دستی می‌ماند؛ فقط پیوندش با فهرست هتل‌ها قطع می‌شود"
             >
               <Unlink className="size-4" />
@@ -149,7 +149,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
           <button
             type="button"
             onClick={onRemove}
-            className="inline-flex items-center gap-1.5 text-xs text-destructive/80 hover:text-destructive transition-colors p-1"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2 text-xs text-destructive/80 transition-colors hover:text-destructive"
           >
             <Trash2 className="size-4" />
             حذف هتل
@@ -171,19 +171,21 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
 
         <div className="md:col-span-3">
           <Field label="درجه / ستاره">
-            <div className="flex items-center gap-1 mt-1">
+            <div className="flex items-center gap-1.5">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   type="button"
                   key={star}
                   onClick={() => onUpdate({ stars: star })}
                   className={cn(
-                    "flex size-9 items-center justify-center rounded-sm border transition-colors",
+                    // ۴۴px برای لمس؛ ۵ × ۴۴ + فاصله‌ها در ۳۶۰ جا می‌شود.
+                    "flex size-11 items-center justify-center rounded-sm border transition-colors",
                     (hotel.stars ?? 0) >= star
-                      ? "bg-amber-500/10 border-amber-500/30 text-amber-500"
-                      : "bg-secondary/30 border-border/60 text-muted-foreground"
+                      ? "border-amber-500/30 bg-amber-500/10 text-amber-500"
+                      : "border-border/60 bg-secondary/30 text-muted-foreground"
                   )}
                   title={`${fa(star)} ستاره`}
+                  aria-label={`${fa(star)} ستاره`}
                 >
                   <Star className={cn("size-4", (hotel.stars ?? 0) >= star ? "fill-amber-500" : "")} />
                 </button>
@@ -443,26 +445,26 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
 
   return (
     <div className="space-y-6">
-      {/* Stage Header (T16: الگوی تک‌رنگ با لهجهٔ برند) */}
-      <div className="flex items-center justify-between rounded-sm border border-brand/20 bg-brand/5 p-4">
+      {/* Stage Header (T16: الگوی تک‌رنگ با لهجهٔ برند) — در موبایل ستونی و دکمه‌ها تمام‌عرض */}
+      <div className="flex flex-col gap-3 rounded-sm border border-brand/20 bg-brand/5 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-sm bg-brand text-brand-foreground">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-sm bg-brand text-brand-foreground">
             <Building2 className="size-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h3 className="text-sm font-bold text-foreground">مرحله دوم: ماتریس هتل‌ها و ظرفیت اتاق‌ها</h3>
             <p className="text-xs text-muted-foreground">
               تعریف بسته‌های اقامتی، ستاره هتل، نوع پذیرایی (صبحانه بوفه، همه‌چیز شامل و…) و تفکیک شفاف قیمت اتاق ۲تخته، ۱تخته و کودکان
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <Button
             type="button"
             variant="outline"
             onClick={toggleHotelPicker}
             aria-expanded={showHotelPicker}
-            className={cn('gap-2 text-xs h-9', showHotelPicker && 'border-brand bg-brand/10 text-foreground')}
+            className={cn('w-full gap-2 text-xs sm:w-auto', showHotelPicker && 'border-brand bg-brand/10 text-foreground')}
           >
             <Search className="size-4" />
             {showHotelPicker ? 'بستن فهرست هتل‌ها' : 'انتخاب از هتل‌های ثبت‌شده'}
@@ -470,7 +472,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
           <Button
             type="button"
             onClick={handleAddHotel}
-            className="gap-2 text-xs h-9"
+            className="w-full gap-2 text-xs sm:w-auto"
           >
             <Plus className="size-4" />
             افزودن هتل جدید

@@ -6,6 +6,7 @@ import { LEAD_STATUSES, LEAD_STATUS_FA, LEAD_STATUS_VARIANT } from './lead-statu
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, type Column, type DataTableSelection } from '@/components/ui/data-table';
 import { Dialog } from '@/components/ui/dialog';
 import { Field, Input } from '@/components/ui/input';
@@ -159,7 +160,7 @@ export function LeadBoard({ initial, variant = 'general', pageSize = 8 }: { init
       header: 'تلفن',
       cell: (row) => (
         <a href={`tel:${row.phone}`} dir="ltr" className="text-brand" onClick={(e) => e.stopPropagation()}>
-          {row.phone}
+          {fa(row.phone)}
         </a>
       ),
     },
@@ -171,11 +172,50 @@ export function LeadBoard({ initial, variant = 'general', pageSize = 8 }: { init
       cell: (row) => (
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Badge variant={LEAD_STATUS_VARIANT[row.status]}>{LEAD_STATUS_FA[row.status]}</Badge>
-          <Select aria-label="تغییر وضعیت درخواست" value={row.status} disabled={pending} onChange={(event) => changeStatus(row.id, event.target.value as LeadStatus)} className="h-8 min-w-36 text-xs" options={LEAD_STATUSES.map((status) => ({ value: status, label: LEAD_STATUS_FA[status] }))} />
+          <Select aria-label="تغییر وضعیت درخواست" value={row.status} disabled={pending} onChange={(event) => changeStatus(row.id, event.target.value as LeadStatus)} className="h-8 min-w-36 text-xs max-md:min-h-11" options={LEAD_STATUSES.map((status) => ({ value: status, label: LEAD_STATUS_FA[status] }))} />
         </div>
       ),
     },
   ];
+
+  // میز ۲: کارت موبایل درخواست — زیر md هر ردیف یک کارت عمودی است؛
+  // tap روی کارت همان دیالوگ جزئیات (onRowClick) را باز می‌کند.
+  const leadCard = (row: LeadRow & Record<string, unknown>) => (
+    <div className="rounded-sm border border-border bg-card p-3">
+      <div className="flex items-start justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={selected.has(row.id)}
+            onCheckedChange={() => toggleOne(row.id)}
+            aria-label={`انتخاب درخواست ${row.fullName}`}
+          />
+          <span className="truncate font-semibold">{row.fullName}</span>
+        </span>
+        <Badge variant={LEAD_STATUS_VARIANT[row.status]} className="shrink-0">
+          {LEAD_STATUS_FA[row.status]}
+        </Badge>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <a href={`tel:${row.phone}`} dir="ltr" className="font-medium text-brand" onClick={(e) => e.stopPropagation()}>
+          {fa(row.phone)}
+        </a>
+        <span className="whitespace-nowrap text-xs text-muted-foreground">{faDate(row.createdAt)}</span>
+      </div>
+      <p className="mt-1.5 text-xs text-muted-foreground">
+        {[row.tourContext, row.destinationHint].filter(Boolean).join(' — ') || '—'}
+      </p>
+      <div className="mt-2.5" onClick={(e) => e.stopPropagation()}>
+        <Select
+          aria-label="تغییر وضعیت درخواست"
+          value={row.status}
+          disabled={pending}
+          onChange={(event) => changeStatus(row.id, event.target.value as LeadStatus)}
+          className="h-8 min-w-36 text-xs max-md:min-h-11"
+          options={LEAD_STATUSES.map((status) => ({ value: status, label: LEAD_STATUS_FA[status] }))}
+        />
+      </div>
+    </div>
+  );
 
   // L2/L3: متن خالی دوحالته + حالت آموزشی صفحهٔ لیدهای تور.
   const isTourEmpty = variant === 'tour' && initial.length === 0;
@@ -225,13 +265,14 @@ export function LeadBoard({ initial, variant = 'general', pageSize = 8 }: { init
             emptyDescription={emptyDescription}
             onRowClick={(row) => setDetail(row)}
             selection={selection}
+            mobileCard={leadCard}
             toolbar={
               <div className="w-48">
                 <Select
                   aria-label="فیلتر وضعیت درخواست‌ها"
                   value={filter}
                   onChange={(event) => setFilter(event.target.value as LeadStatus | 'all')}
-                  className="h-9"
+                  className="h-9 max-md:min-h-11"
                   options={[{ value: 'all', label: 'همه وضعیت‌ها' }, ...LEAD_STATUSES.map((status) => ({ value: status, label: LEAD_STATUS_FA[status] }))]}
                 />
               </div>
@@ -262,7 +303,7 @@ export function LeadBoard({ initial, variant = 'general', pageSize = 8 }: { init
             </div>
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm">
               <a href={`tel:${detail.phone}`} dir="ltr" className="font-medium text-brand">
-                {detail.phone}
+                {fa(detail.phone)}
               </a>
               <span className="text-muted-foreground">{faDate(detail.createdAt)}</span>
             </div>

@@ -82,7 +82,8 @@ function CheckBox({ checked, onToggle, label }: { checked: boolean; onToggle: ()
       aria-label={label}
       onClick={onToggle}
       className={cn(
-        'flex size-4 shrink-0 cursor-pointer items-center justify-center rounded border transition-colors',
+        // ناحیهٔ لمسی نامرئی تا ~۳۲px (تا لبهٔ gap، بدون هم‌پوشانی با دکمهٔ مجاور)؛ خود باکس ۱۶px می‌ماند.
+        'relative flex size-4 shrink-0 cursor-pointer items-center justify-center rounded border transition-colors after:absolute after:-inset-2 after:content-[""]',
         checked ? 'border-brand bg-brand text-brand-foreground' : 'border-input bg-background/60 hover:border-foreground/40'
       )}
     >
@@ -204,8 +205,8 @@ export default function Stage1Identity({
 
   return (
     <div className="space-y-6" id="tour-stage-1">
-      {/* Intro info banner */}
-      <div className="flex items-center justify-between rounded-sm border border-brand/20 bg-brand/5 p-4">
+      {/* Intro info banner — در موبایل می‌شکند تا بنر و سلکت ظرفیت روی هم نیفتند */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-brand/20 bg-brand/5 p-4">
         <div className="flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-sm bg-brand text-brand-foreground">
             <Compass className="size-5" />
@@ -236,7 +237,7 @@ export default function Stage1Identity({
                 onChange({ status: val, statusLabel: opt?.label || val });
               }}
               options={CAPACITY_OPTIONS}
-              className="h-8 w-auto text-xs"
+              className="h-10 w-auto text-xs max-md:min-h-11"
             />
           </label>
         </div>
@@ -336,7 +337,7 @@ export default function Stage1Identity({
 
       {/* Destinations Hierarchy Tree Selector */}
       <div className="rounded-sm border border-border bg-card p-4 space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <label className="text-xs font-bold text-foreground flex items-center gap-2">
             <MapPin className="size-4 text-brand" />
             <span>انتخاب مقاصد و شهرهای سفر *</span>
@@ -615,7 +616,7 @@ export default function Stage1Identity({
 
       {/* Row 5: Price & Currency Transparency */}
       <div className="rounded-sm border border-border/70 bg-card p-4 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <label className="text-xs font-bold text-foreground">
             قیمت‌گذاری پایه و شفافیت ارزی / تومانی *
           </label>

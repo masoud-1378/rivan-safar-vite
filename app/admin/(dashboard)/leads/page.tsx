@@ -18,7 +18,7 @@ export default async function AdminLeadsPage() {
     : 20;
   return (
     <div className="admin-enter space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">درخواست‌های تماس</h1>
           <p className="text-sm text-muted-foreground mt-1">

@@ -139,9 +139,9 @@ export default function LandingForm({
   };
 
   return (
-    <div className="space-y-4 rounded-sm border border-border bg-card p-5">
+    <div className="space-y-5 rounded-sm border border-border bg-card p-5">
       <h2 className="text-lg font-semibold text-foreground">{editing ? 'ویرایش لندینگ' : 'لندینگ جدید'}</h2>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="کد یکتای صفحه" htmlFor="qo" hint="خودکار از نوع صفحه و عنوان ساخته می‌شود؛ مثلاً country:tehran" error={errors.queryOwner}>
           <Input id="qo" dir="ltr" value={queryOwner} onChange={(e) => { setQueryOwner(e.target.value); setQueryOwnerTouched(true); setErrors((prev) => ({ ...prev, queryOwner: undefined })); }} placeholder="country:tehran" />
         </Field>

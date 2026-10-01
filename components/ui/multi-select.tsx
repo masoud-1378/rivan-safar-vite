@@ -124,7 +124,7 @@ export function MultiSelect({
               tabIndex={-1}
               disabled={disabled}
               onClick={(e) => { e.stopPropagation(); toggle(o.value); }}
-              className="flex size-4 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+              className="-m-1 flex size-6 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
             >
               <X className="size-3" />
             </button>

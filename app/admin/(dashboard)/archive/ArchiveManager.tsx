@@ -86,18 +86,19 @@ export default function ArchiveManager({ groups, isOwner }: Props) {
               </h2>
               <Card className="divide-y">
                 {g.rows.map((r) => (
-                  <div key={r.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                    <div className="min-w-0">
+                  <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                    <div className="min-w-0 flex-1 basis-48">
                       <p className="truncate font-medium">{r.title}</p>
                       {r.subtitle && <p className="truncate text-xs text-muted-foreground">{r.subtitle}</p>}
                       <p className="text-xs text-muted-foreground">
                         بایگانی‌شده در {formatJalali(new Date(r.archivedAt))}
                       </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2 max-md:w-full">
                       <Button
                         variant="outline"
                         size="sm"
+                        className="max-md:min-h-11 max-md:flex-1"
                         disabled={busy}
                         onClick={() => onRestore(g.key, r.id)}
                       >
@@ -108,6 +109,7 @@ export default function ArchiveManager({ groups, isOwner }: Props) {
                         <Button
                           variant="destructive"
                           size="sm"
+                          className="max-md:min-h-11 max-md:flex-1"
                           disabled={busy}
                           onClick={() => setPendingDelete({ entity: g.key, id: r.id, title: r.title })}
                         >

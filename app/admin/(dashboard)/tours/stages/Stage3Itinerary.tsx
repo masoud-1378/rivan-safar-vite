@@ -135,13 +135,13 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
 
   return (
     <div className="space-y-6">
-      {/* Header (T16: الگوی تک‌رنگ با لهجهٔ برند) */}
-      <div className="flex items-center justify-between rounded-sm border border-brand/20 bg-brand/5 p-4">
+      {/* Header (T16: الگوی تک‌رنگ با لهجهٔ برند) — در موبایل ستونی و دکمه تمام‌عرض */}
+      <div className="flex flex-col gap-3 rounded-sm border border-brand/20 bg-brand/5 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-sm bg-brand text-brand-foreground">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-sm bg-brand text-brand-foreground">
             <Map className="size-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h3 className="text-sm font-bold text-foreground">مرحله سوم: برنامه سفر روزبه‌روز و خدمات</h3>
             <p className="text-xs text-muted-foreground">
               تدوین شفاف زمان‌بندی روزانه (روز ۱ تا N)، گشت‌های گروهی، گشت‌های اختیاری و وعده‌های غذایی گنجانده‌شده
@@ -152,7 +152,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
           type="button"
           variant="brand"
           onClick={handleAddDay}
-          className="gap-2 text-xs h-9"
+          className="w-full gap-2 text-xs sm:w-auto"
         >
           <Plus className="size-4" />
           افزودن روز برنامه
@@ -184,19 +184,19 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
               key={idx}
               className="rounded-sm border border-border bg-card p-4 space-y-3 transition-all"
             >
-              <div className="flex items-center justify-between pb-2 border-b border-border/60">
-                <div className="flex items-center gap-2">
-                  <span className="flex size-7 items-center justify-center rounded-sm bg-emerald-500/10 text-emerald-600 text-xs font-bold">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-sm bg-emerald-500/10 text-xs font-bold text-emerald-600">
                     روز {fa(dayItem.day)}
                   </span>
-                  <span className="text-xs font-bold text-foreground">
+                  <span className="truncate text-xs font-bold text-foreground">
                     {dayItem.title || `فعالیت روز ${fa(dayItem.day)}`}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleRemoveDay(idx)}
-                  className="inline-flex items-center gap-1.5 text-xs text-destructive/80 hover:text-destructive p-1"
+                  className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 px-2 text-xs text-destructive/80 hover:text-destructive"
                 >
                   <Trash2 className="size-3.5" />
                   حذف این روز
@@ -241,14 +241,14 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
                           type="button"
                           onClick={() => handleUpdateDay(idx, { activityType: act.id })}
                           className={cn(
-                            "flex items-center gap-2 rounded-sm border p-2 text-start transition-colors text-xs",
+                            "flex min-h-11 min-w-0 items-center gap-2 rounded-sm border p-2 text-start text-xs transition-colors",
                             active
                               ? "border-emerald-500 bg-emerald-500/10 font-bold text-foreground"
                               : "border-border/60 bg-secondary/30 text-muted-foreground hover:bg-secondary/60"
                           )}
                         >
                           <Icon className={cn("size-3.5", act.color)} />
-                          <span className="truncate text-[11px]">{act.label}</span>
+                          <span className="min-w-0 truncate text-[11px]">{act.label}</span>
                         </button>
                       );
                     })}
@@ -319,7 +319,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
               placeholder="مثال: ترانسفر رفت و برگشت فرودگاهی"
               className="text-xs grow"
             />
-            <Button type="button" size="sm" onClick={addIncluded} className="text-xs">
+            <Button type="button" size="sm" onClick={addIncluded} className="shrink-0 text-xs">
               افزودن
             </Button>
           </div>
@@ -334,7 +334,8 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
                 <button
                   type="button"
                   onClick={() => removeIncluded(i)}
-                  className="text-muted-foreground hover:text-destructive"
+                  aria-label={`حذف «${item}»`}
+                  className="-m-1 inline-flex size-6 min-h-11 min-w-11 items-center justify-center text-lg leading-none text-muted-foreground hover:text-destructive"
                 >
                   ×
                 </button>
@@ -358,7 +359,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
               placeholder="مثال: ورودی موزه‌ها، گشت شبانه بالون"
               className="text-xs grow"
             />
-            <Button type="button" size="sm" variant="secondary" onClick={addExcluded} className="text-xs">
+            <Button type="button" size="sm" variant="secondary" onClick={addExcluded} className="shrink-0 text-xs">
               افزودن
             </Button>
           </div>
@@ -373,7 +374,8 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
                 <button
                   type="button"
                   onClick={() => removeExcluded(i)}
-                  className="text-muted-foreground hover:text-destructive"
+                  aria-label={`حذف «${item}»`}
+                  className="-m-1 inline-flex size-6 min-h-11 min-w-11 items-center justify-center text-lg leading-none text-muted-foreground hover:text-destructive"
                 >
                   ×
                 </button>

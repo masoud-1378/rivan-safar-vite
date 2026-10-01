@@ -146,14 +146,14 @@ export function AdminPaletteProvider({ ownerOnly, children }: { ownerOnly: boole
   );
 }
 
-/** دکمهٔ تمام‌عرض جست‌وجو — سایدبار دسکتاپ. */
+/** دکمهٔ تمام‌عرض جست‌وجو — سایدبار دسکتاپ و کشوی موبایل (در موبایل ۴۴px). */
 export default function AdminCommand() {
   const { openPalette } = useAdminPalette();
   return (
     <button
       type="button"
       onClick={openPalette}
-      className="flex w-full h-10 cursor-pointer items-center gap-2 rounded-sm border border-input bg-background/60 px-3 text-sm text-muted-foreground transition-colors hover:border-ring/50 hover:text-foreground"
+      className="flex h-11 w-full cursor-pointer items-center gap-2 rounded-sm border border-input bg-background/60 px-3 text-sm text-muted-foreground transition-colors hover:border-ring/50 hover:text-foreground lg:h-10"
     >
       <Search className="size-4" />
       <span className="flex-1 text-start">جست‌وجو در پنل…</span>

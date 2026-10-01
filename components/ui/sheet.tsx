@@ -107,7 +107,7 @@ export function Sheet({
             type="button"
             aria-label="بستن"
             onClick={() => onOpenChange(false)}
-            className="ms-auto flex size-8 cursor-pointer items-center justify-center rounded-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="ms-auto flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <X className="size-4" />
           </button>

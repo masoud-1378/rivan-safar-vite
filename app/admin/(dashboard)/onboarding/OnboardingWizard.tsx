@@ -49,11 +49,12 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
         : 'وارد کردن دادهٔ نمونه فقط با نقش مالک ممکن است.',
       done: hasBaseData,
       action: isOwner ? (
-        <div>
+        <div className="w-full sm:w-auto">
           <Button
             size="sm"
             variant={hasBaseData ? 'ghost' : 'outline'}
             disabled={pending}
+            className="w-full sm:w-auto"
             onClick={() =>
               startTransition(async () => {
                 try {
@@ -84,7 +85,7 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
       done: counts.destinations > 0,
       // یافتهٔ ۱۰: به‌جای Buttonِ asChild (‏a داخل button نامعتبر است)، ‏a استایل‌دار.
       action: (
-        <a href="/admin/catalog?tab=destinations" className={buttonClasses('outline', 'sm')}>
+        <a href="/admin/catalog?tab=destinations" className={cn(buttonClasses('outline', 'sm'), 'w-full sm:w-auto')}>
           مدیریت مقصدها
         </a>
       ),
@@ -95,7 +96,7 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
       description: `تا اینجا ${fa(counts.origins)} مبدأ ثبت شده است.`,
       done: counts.origins > 0,
       action: (
-        <a href="/admin/catalog?tab=origins" className={buttonClasses('outline', 'sm')}>
+        <a href="/admin/catalog?tab=origins" className={cn(buttonClasses('outline', 'sm'), 'w-full sm:w-auto')}>
           مدیریت مبدأها
         </a>
       ),
@@ -111,7 +112,7 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
         <a
           href="/admin/tours/new"
           aria-disabled={!hasBaseData}
-          className={cn(buttonClasses('outline', 'sm'), !hasBaseData && 'pointer-events-none opacity-50')}
+          className={cn(buttonClasses('outline', 'sm'), 'w-full sm:w-auto', !hasBaseData && 'pointer-events-none opacity-50')}
         >
           ساخت تور
         </a>
@@ -126,6 +127,7 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
         <Button
           size="sm"
           disabled={pending}
+          className="w-full sm:w-auto"
           onClick={() =>
             startTransition(async () => {
               try {
@@ -168,11 +170,11 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
           {steps.map((step, i) => (
             <li
               key={step.title}
-              className={`flex items-start justify-between gap-3 rounded-sm border p-3 ${
+              className={`flex flex-col gap-3 rounded-sm border p-3 sm:flex-row sm:items-start sm:justify-between ${
                 step.done ? 'border-success/30 bg-success/5' : 'border-border bg-card'
               }`}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex min-w-0 items-start gap-3">
                 <span
                   className={`grid size-8 shrink-0 place-items-center rounded-full text-sm font-bold ${
                     step.done ? 'bg-success text-success-foreground' : 'bg-muted text-muted-foreground'
@@ -185,7 +187,7 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
                   <p className="mt-0.5 text-xs text-muted-foreground">{step.description}</p>
                 </div>
               </div>
-              <div className="shrink-0">{step.action}</div>
+              <div className="w-full sm:w-auto sm:shrink-0">{step.action}</div>
             </li>
           ))}
         </ol>
