@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { ArchiveRestore, Trash2, Inbox } from 'lucide-react';
+import { ArchiveRestore, Trash2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { fa } from '@/lib/utils';
 import { formatJalali } from '@/lib/jalali';
@@ -65,19 +66,16 @@ export default function ArchiveManager({ groups, isOwner }: Props) {
       )}
 
       {total === 0 ? (
-        <Card className="flex flex-col items-center gap-3 p-10 text-center">
-          <Inbox className="size-10 text-muted-foreground" />
-          <p className="font-medium">بایگانی خالی است</p>
-          <p className="text-sm text-muted-foreground">
-            هنوز چیزی بایگانی نشده؛ حذف‌های پنل از این به بعد این‌جا می‌آیند.
-          </p>
-        </Card>
+        <EmptyState
+          title="بایگانی خالی است"
+          description="هنوز چیزی بایگانی نشده؛ حذف‌های پنل از این به بعد این‌جا می‌آیند."
+        />
       ) : (
         groups
           .filter((g) => g.rows.length > 0)
           .map((g) => (
             <section key={g.key} aria-label={g.label}>
-              <h2 className="mb-3 text-lg font-semibold">
+              <h2 className="mb-3 text-base font-semibold">
                 {g.label} <span className="text-sm font-normal text-muted-foreground">({fa(g.rows.length)})</span>
               </h2>
               <Card className="divide-y">
@@ -94,7 +92,6 @@ export default function ArchiveManager({ groups, isOwner }: Props) {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="min-h-11"
                         disabled={busy}
                         onClick={() => onRestore(g.key, r.id)}
                       >
@@ -105,7 +102,6 @@ export default function ArchiveManager({ groups, isOwner }: Props) {
                         <Button
                           variant="destructive"
                           size="sm"
-                          className="min-h-11"
                           disabled={busy}
                           onClick={() => setPendingDelete({ entity: g.key, id: r.id, title: r.title })}
                         >

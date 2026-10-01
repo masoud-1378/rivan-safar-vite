@@ -183,7 +183,6 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
                 className="shrink-0 gap-1.5"
                 onClick={() => setShowAddCountry((v) => !v)}
               >
@@ -195,7 +194,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
           {showAddCountry && (
             <div className="rounded-sm border border-border bg-muted/30 p-4 space-y-3 sm:col-span-2">
               <div className="text-sm font-semibold">افزودن کشور تازه</div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="نام فارسی کشور *">
                   <Input
                     value={newCountryName}

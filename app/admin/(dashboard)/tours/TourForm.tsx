@@ -342,7 +342,7 @@ export default function TourForm({
                       ? "bg-emerald-500/20 text-emerald-600" 
                       : "bg-muted text-muted-foreground"
                   )}>
-                    {isPassed ? <Check className="size-4" /> : stage.id}
+                    {isPassed ? <Check className="size-4" /> : fa(stage.id)}
                   </div>
                   <Icon className={cn("size-4", isActive ? "text-brand" : "text-muted-foreground")} />
                 </div>

@@ -113,7 +113,7 @@ export function AdminNavFooter({ email, role }: { email: string; role: 'owner' |
 export default function AdminSidebar({ role, email }: { role: 'owner' | 'editor'; email: string }) {
   return (
     <Sidebar
-      className="admin-sidebar sticky top-4 hidden h-[calc(100dvh-2rem)] w-64 shrink-0 border-border bg-card md:flex"
+      className="admin-sidebar sticky top-4 hidden h-[calc(100dvh-2rem)] w-64 shrink-0 border-border bg-card sm:top-6 sm:h-[calc(100dvh-3rem)] md:flex"
       header={<AdminNavHeader />}
       footer={<AdminNavFooter email={email} role={role} />}
     >

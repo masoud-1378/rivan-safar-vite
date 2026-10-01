@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field, Input } from '@/components/ui/input';
@@ -113,9 +114,7 @@ export default function GuideForm({
         </div>
 
       {error && (
-          <div className="rounded-sm border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-          {error}
-        </div>
+        <Alert variant="destructive">{error}</Alert>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

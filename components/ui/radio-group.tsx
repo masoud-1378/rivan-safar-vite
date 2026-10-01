@@ -66,7 +66,7 @@ export function RadioGroup({ options, value, defaultValue, onChange, variant = "
               variant === "cards" && (on ? "border-foreground/50 bg-accent/60" : "border-border hover:bg-accent/40"),
             )}
           >
-            <span className={cn("mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border", on ? "border-primary" : "border-input")}>
+            <span className={cn("mt-[3px] flex size-4 shrink-0 items-center justify-center rounded-full border", on ? "border-primary" : "border-input")}>
               {on && <span className="size-2 rounded-full bg-primary" />}
             </span>
             <span>

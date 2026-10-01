@@ -1,18 +1,25 @@
+import { extendTailwindMerge, type ClassNameValue } from "tailwind-merge";
+
 export type ClassValue = string | number | bigint | null | undefined | false | ClassValue[];
 
-/** Minimal class joiner (swap for clsx + tailwind-merge when the library grows). */
+/**
+ * Class joiner with tailwind-merge: later conflicting utilities (e.g. `h-9`
+ * after `h-10`) win instead of both landing in the DOM.
+ *
+ * تم paper: `border-line` یوتیلیتی سفارشیِ پهنای خط است (‎@utility در
+ * src/index.css)، نه رنگ خط؛ پس در گروه border-w ثبتش می‌کنیم تا با
+ * `border-border`/`border-input` (رنگ خط) تداخل نکند و حذف نشود.
+ */
+const twMergePaper = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "border-w": ["border-line"],
+    },
+  },
+});
+
 export function cn(...inputs: ClassValue[]): string {
-  const out: string[] = [];
-  for (const i of inputs) {
-    if (!i) continue;
-    if (Array.isArray(i)) {
-      const nested = cn(...i);
-      if (nested) out.push(nested);
-    } else {
-      out.push(String(i));
-    }
-  }
-  return out.join(" ");
+  return twMergePaper(...(inputs as ClassNameValue[]));
 }
 
 const FA_DIGITS = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];

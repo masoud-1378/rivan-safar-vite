@@ -83,7 +83,7 @@ export function DataTable<T extends Record<string, unknown>>({ rows, columns, ro
             </div>
           )}
           {toolbar}
-          <span className="ms-auto text-xs text-muted-foreground">{fa(sorted.length)} مورد</span>
+          <span className="text-xs text-muted-foreground">{fa(sorted.length)} مورد</span>
         </div>
       )}
 

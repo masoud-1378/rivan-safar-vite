@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Pagination } from '@/components/ui/pagination';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -96,7 +97,7 @@ export default function AuditLog({ logs, page, totalPages, total }: { logs: Audi
       <Card>
         <CardContent className="p-5">
           {logs.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">رویدادی ثبت نشده است.</p>
+            <EmptyState title="رویدادی ثبت نشده است" />
           ) : view === 'table' ? (
             <Table>
               <TableHeader>

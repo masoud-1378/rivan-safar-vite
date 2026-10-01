@@ -43,7 +43,7 @@ export default function ExhibitionsManager({ initial }: { initial: ExhibitionRow
   return (
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-foreground">نمایشگاه‌ها</h1><p className="mt-1 text-sm text-muted-foreground">مجموع نمایشگاه‌های ثبت‌شده: {fa(initial.length)} مورد</p></div><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />نمایشگاه جدید</Button></div>
-      {(showForm || editing) && <Card><CardContent className="p-5"><ExhibitionForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onSaved={reload} onCancel={() => { setShowForm(false); setEditing(null); }} /></CardContent></Card>}
+      {(showForm || editing) && <ExhibitionForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onSaved={reload} onCancel={() => { setShowForm(false); setEditing(null); }} />}
       <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">لیست نمایشگاه‌ها ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(exhibition) => exhibition.id} searchKeys={['titleFa', 'slug', 'country', 'city']} searchPlaceholder="جست‌وجوی عنوان، نامک، کشور یا شهر…" emptyTitle="نمایشگاهی یافت نشد" emptyDescription="برای شروع، نمایشگاه جدیدی اضافه کنید." /></CardContent></Card>
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی نمایشگاه" description={deleting ? `نمایشگاه «${deleting.titleFa}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.` : ''} confirmText="بایگانی نمایشگاه" destructive onConfirm={onDelete} />
     </div>

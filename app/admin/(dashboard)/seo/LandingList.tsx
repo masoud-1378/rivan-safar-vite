@@ -113,7 +113,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
             value={l.workflow ?? 'draft'}
             disabled={pending}
             onChange={(event) => handleWorkflow(l.id, event.target.value as Workflow)}
-            className="h-8 min-w-32 text-xs"
+            className="h-8 min-w-36 text-xs"
             options={WORKFLOW_OPTIONS}
           />
           <Button variant="ghost" size="sm" onClick={() => setEditing(l)} disabled={pending}>

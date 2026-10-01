@@ -13,7 +13,7 @@ export default async function AdminLeadsPage() {
   const [{ rows }, settings] = await Promise.all([getLeadStats(), getSettingsMap()]);
   return (
     <div className="admin-enter space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold text-foreground">درخواست‌های تماس</h1>
           <p className="text-sm text-muted-foreground mt-1">

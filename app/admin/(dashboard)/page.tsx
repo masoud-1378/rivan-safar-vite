@@ -4,6 +4,7 @@ import { and, count, eq, isNull, lte } from 'drizzle-orm';
 import { ArrowLeft, BookOpen, BriefcaseBusiness, Globe2, Inbox, MapPinned } from 'lucide-react';
 import { DashboardStats } from '@/components/blocks/dashboard-stats';
 import { Badge } from '@/components/ui/badge';
+import { buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { BarChart } from '@/components/ui/chart';
 import { formatJalali } from '@/lib/jalali';
@@ -172,10 +173,10 @@ export default async function AdminDashboard() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="mb-1 text-sm font-medium text-brand">مرکز کنترل ریوان سفر</p>
-          <h1 className="text-2xl font-bold sm:text-3xl">داشبورد مدیریت</h1>
+          <h1 className="text-2xl font-bold">داشبورد مدیریت</h1>
           <p className="mt-1 text-sm text-muted-foreground">محتوا، تورها و درخواست‌های مشتری را از یکجا مدیریت کنید.</p>
         </div>
-        <Link href="/admin/leads" className="inline-flex items-center gap-2 rounded-sm border border-border px-3 py-2 text-sm font-medium transition hover:bg-accent">
+        <Link href="/admin/leads" className={buttonClasses('outline', 'md')}>
           <Inbox className="size-4" /> مشاهده درخواست‌ها <ArrowLeft className="size-4" />
         </Link>
       </header>

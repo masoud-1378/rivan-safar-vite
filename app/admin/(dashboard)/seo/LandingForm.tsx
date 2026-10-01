@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -124,7 +125,7 @@ export default function LandingForm({
 
   return (
     <div className="space-y-4 rounded-sm border border-border bg-card p-5">
-      <h2 className="font-semibold text-foreground">{editing ? 'ویرایش لندینگ' : 'لندینگ جدید'}</h2>
+      <h2 className="text-lg font-semibold text-foreground">{editing ? 'ویرایش لندینگ' : 'لندینگ جدید'}</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Query Owner" htmlFor="qo" hint="کد یکتای صفحه، مثلاً home:ریوان سفر" error={errors.queryOwner}>
           <Input id="qo" dir="ltr" value={queryOwner} onChange={(e) => { setQueryOwner(e.target.value); setErrors((prev) => ({ ...prev, queryOwner: undefined })); }} placeholder="home:ریوان سفر" />
@@ -160,9 +161,9 @@ export default function LandingForm({
         </Field>
       </div>
       <div className="flex gap-2">
-        <button type="button" onClick={submit} disabled={pending} className="inline-flex h-10 items-center justify-center rounded-sm bg-brand px-4 text-sm font-semibold text-brand-foreground transition-colors hover:bg-brand/90 disabled:pointer-events-none disabled:opacity-50">
+        <Button type="button" variant="brand" onClick={submit} disabled={pending}>
           {pending ? 'در حال ثبت...' : editing ? 'ذخیره تغییرات' : 'ایجاد لندینگ'}
-        </button>
+        </Button>
       </div>
     </div>
   );

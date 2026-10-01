@@ -81,7 +81,7 @@ export function TagsInput({
           <span
             key={t}
             dir="auto"
-            className="inline-flex h-6 items-center gap-1 rounded-full bg-secondary ps-2 pe-1 text-xs font-medium text-secondary-foreground"
+            className="inline-flex h-6 items-center gap-1 rounded-sm bg-secondary ps-2 pe-1 text-xs font-medium text-secondary-foreground"
           >
             {t}
             <button

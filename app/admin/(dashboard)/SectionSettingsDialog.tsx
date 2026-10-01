@@ -64,7 +64,7 @@ export default function SectionSettingsDialog({
         }
         className="max-w-lg"
       >
-        <div className="max-h-[60vh] space-y-4 overflow-y-auto">
+        <div className="max-h-[60vh] space-y-5 overflow-y-auto">
           {error ? (
             <p role="alert" className="rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
@@ -74,11 +74,11 @@ export default function SectionSettingsDialog({
             <p className="text-sm text-muted-foreground">تنظیمی برای این بخش تعریف نشده است.</p>
           ) : (
             defs.map((d) => (
-              <div key={d.key} className="flex items-start gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold">{d.label}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{d.hint}</p>
-                  <div className="mt-2">
+              <div key={d.key}>
+                <p className="text-sm font-semibold">{d.label}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{d.hint}</p>
+                <div className="mt-2 flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
                     {d.kind === 'boolean' ? (
                       <div className="flex items-center gap-2.5 text-sm">
                         <Switch
@@ -117,10 +117,10 @@ export default function SectionSettingsDialog({
                       </Field>
                     )}
                   </div>
+                  <Button type="button" variant="secondary" disabled={pending} onClick={() => save(d.key)}>
+                    ذخیره
+                  </Button>
                 </div>
-                <Button type="button" variant="secondary" disabled={pending} onClick={() => save(d.key)}>
-                  ذخیره
-                </Button>
               </div>
             ))
           )}

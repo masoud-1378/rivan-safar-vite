@@ -165,7 +165,7 @@ export function MultiSelect({
                   onClick={() => { if (!off) toggle(o.value); }}
                   onMouseEnter={() => setIndex(i)}
                   className={cn(
-                    "flex cursor-pointer items-center gap-2.5 rounded-sm px-2.5 py-1.5",
+                    "flex cursor-pointer items-center gap-2.5 rounded-sm px-2.5 py-2",
                     i === index && "bg-accent",
                     off && "cursor-not-allowed opacity-40",
                   )}

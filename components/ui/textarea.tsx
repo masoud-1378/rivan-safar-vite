@@ -25,7 +25,7 @@ export function Textarea({ className, autoResize, showCount, maxLength, onChange
   React.useEffect(resize, [resize, value]);
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <textarea
         ref={ref}
         value={value}

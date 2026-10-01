@@ -34,7 +34,7 @@ export default function AdminHeader({ role, email }: { role: 'owner' | 'editor';
             <Menu className="size-5" />
           </button>
           <span className="flex items-center gap-2 font-bold">
-            <span className="grid size-9 place-items-center rounded-sm bg-brand text-brand-foreground">ر</span>
+            <span className="grid size-11 place-items-center rounded-sm bg-brand text-brand-foreground">ر</span>
             ریوان سفر
           </span>
         </div>

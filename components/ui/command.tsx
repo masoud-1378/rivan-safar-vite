@@ -92,7 +92,7 @@ export function Command({
           aria-expanded
           aria-controls={listId}
           aria-autocomplete="list"
-          className="h-11 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/70"
+          className="h-10 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/70"
         />
         <kbd className="rounded border border-border px-1.5   text-[10px] text-muted-foreground">
           Esc

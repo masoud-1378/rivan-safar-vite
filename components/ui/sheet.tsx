@@ -99,7 +99,7 @@ export function Sheet({
       >
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           {title && (
-            <h2 id={titleId} className="text-sm font-semibold">
+            <h2 id={titleId} className="text-base font-semibold">
               {title}
             </h2>
           )}
@@ -112,7 +112,7 @@ export function Sheet({
             <X className="size-4" />
           </button>
         </div>
-        <div className="flex flex-1 flex-col overflow-auto p-4">{children}</div>
+        <div className="flex flex-1 flex-col overflow-auto p-5">{children}</div>
       </div>
     </div>
   );
