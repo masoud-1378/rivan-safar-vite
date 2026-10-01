@@ -109,7 +109,9 @@ function restToPlace(r: Row): Place {
     nameEn: str(r.name_en),
     type: r.type as Place['type'],
     parentCountrySlug: (r.parent_country_slug as string) ?? undefined,
-    parentCountryName: (r.parent_country_name as string) ?? undefined,
+    // ردیف ۳-۴: ستون parent_country_name از DB حذف شد؛ نام کشور از روی
+    // parentCountrySlug در getDestinations resolve می‌شود (پایین‌تر).
+    parentCountryName: undefined,
     category: r.category as Place['category'],
     image: str(r.image),
     heroTagline: str(r.hero_tagline),
@@ -143,6 +145,20 @@ export async function getDestinations(): Promise<Place[]> {
     if (error) throw error;
     if (!data || data.length === 0) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
     const places = (data as Row[]).map(restToPlace);
+    // ردیف ۳-۴: نام کشورِ شهرها از روی parentCountrySlug و از همین فهرست
+    // resolve می‌شود (ستون parent_country_name از DB حذف شد).
+    try {
+      const countryNames = new Map(
+        places.filter((p) => p.type === 'country').map((c) => [c.slug, c.name] as const),
+      );
+      for (const p of places) {
+        if (!p.parentCountryName && p.parentCountrySlug) {
+          p.parentCountryName = countryNames.get(p.parentCountrySlug);
+        }
+      }
+    } catch {
+      // خطا در resolve نام کشور → فیلد خالی می‌ماند؛ کامپوننت‌ها fallback دارند.
+    }
     // ردیف ۳-۳ («محاسبه هنگام خواندن»): شمارش خودکار «تور فعال» —
     // تعداد تورهای منتشرشده‌ای که destinationSlugsشان شامل نامک مقصد است.
     // فقط وقتی اعمال می‌شود که فهرست تورها واقعاً از DB آمده باشد؛
