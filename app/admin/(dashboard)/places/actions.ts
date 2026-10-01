@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
 import { siteDestinations } from '@/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, ne } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 
 export interface FaqItem {
@@ -99,6 +99,14 @@ export async function saveDestination(id: string | undefined | null, data: Desti
   if (!slug) throw new Error('نامک (slug) لازم است.');
   if (name.length < 2) throw new Error('نام مقصد لازم است.');
 
+  // کلید تکراری مقصد: نامک.
+  const dup = await db
+    .select({ id: siteDestinations.id })
+    .from(siteDestinations)
+    .where(id ? and(eq(siteDestinations.slug, slug), ne(siteDestinations.id, id)) : eq(siteDestinations.slug, slug))
+    .limit(1);
+  if (dup.length > 0) throw new Error('این نام قبلاً ثبت شده');
+
   const values = {
     slug,
     name,
@@ -130,7 +138,15 @@ export async function saveDestination(id: string | undefined | null, data: Desti
   if (id) {
     await db.update(siteDestinations).set(values).where(eq(siteDestinations.id, id));
   } else {
-    await db.insert(siteDestinations).values(values);
+    try {
+      await db.insert(siteDestinations).values(values);
+    } catch (e) {
+      // مسابقهٔ هم‌زمان: خطای یکتایی نامک هم همان پیام فارسی را می‌گیرد.
+      if (e instanceof Error && 'code' in e && (e as { code?: string }).code === '23505') {
+        throw new Error('این نام قبلاً ثبت شده');
+      }
+      throw e;
+    }
   }
   revalidatePath('/admin/places');
   return { ok: true };

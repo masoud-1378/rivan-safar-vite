@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
 import { accommodations } from '@/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNull, ne } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 
 export interface HotelRow extends Record<string, unknown> {
@@ -42,25 +42,35 @@ export async function saveHotel(data: HotelInput) {
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   const nameFa = (data.nameFa || '').trim();
   if (nameFa.length < 2) throw new Error('نام هتل لازم است.');
+  const stars = Number(data.stars);
+  if (!Number.isInteger(stars) || stars < 0 || stars > 7) {
+    throw new Error('ستارهٔ هتل باید بین ۰ تا ۷ باشد.');
+  }
+  const placeSlug = data.placeSlug || null;
   const slug =
     (data.slug || '').trim() ||
     nameFa.replace(/\s+/g, '-').slice(0, 120) ||
     `hotel-${Date.now()}`;
+  // کلید تکراری هتل: نام + شهر (هم‌نام در شهر دیگر مجاز است).
+  const dupWhere = placeSlug
+    ? and(eq(accommodations.nameFa, nameFa), eq(accommodations.placeSlug, placeSlug))
+    : and(eq(accommodations.nameFa, nameFa), isNull(accommodations.placeSlug));
+  const dup = await db
+    .select({ id: accommodations.id })
+    .from(accommodations)
+    .where(data.id ? and(dupWhere, ne(accommodations.id, data.id)) : dupWhere)
+    .limit(1);
+  if (dup.length > 0) throw new Error('این نام قبلاً ثبت شده');
   const values = {
     slug,
     nameFa,
-    stars: Math.max(0, Math.min(7, Number(data.stars) || 0)),
-    placeSlug: data.placeSlug || null,
+    stars,
+    placeSlug,
   };
   if (data.id) {
     await db.update(accommodations).set(values).where(eq(accommodations.id, data.id));
   } else {
-    const existing = await db.select().from(accommodations).where(eq(accommodations.slug, slug)).limit(1);
-    if (existing.length > 0) {
-      await db.update(accommodations).set(values).where(eq(accommodations.slug, slug));
-    } else {
-      await db.insert(accommodations).values(values);
-    }
+    await db.insert(accommodations).values(values);
   }
   revalidatePath('/admin/hotels');
   revalidatePath('/admin/tours');
