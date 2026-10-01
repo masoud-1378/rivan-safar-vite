@@ -7,6 +7,9 @@ import {
 import { type ExhibitionSeries } from '../data/exhibitionsData';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
+import { createLead } from '../../app/actions/lead';
+import { trackLeadSubmit } from '../lib/analytics';
+import { isValidMobile, normalizeMobile } from './tour-live';
 import SmartImage from './SmartImage';
 
 interface ExhibitionDetailPageProps {
@@ -31,6 +34,8 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState({ name: '', phone: '' });
+  const [submitError, setSubmitError] = useState('');
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   if (!ex) {
@@ -44,15 +49,40 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
     );
   }
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const validateForm = () => {
+    const errs = { name: '', phone: '' };
+    if (formData.name.trim().length < 3) errs.name = 'نام و نام خانوادگی را کامل وارد کنید.';
+    if (!isValidMobile(formData.phone)) errs.phone = 'شماره موبایل باید ۱۱ رقم باشد و با ۰۹ شروع شود.';
+    setFormErrors(errs);
+    return !errs.name && !errs.phone;
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone) return;
+    setSubmitError('');
+    if (!validateForm()) return;
 
     setFormLoading(true);
-    setTimeout(() => {
-      setFormLoading(false);
+    const result = await createLead({
+      fullName: formData.name.trim(),
+      phone: normalizeMobile(formData.phone),
+      sourcePath: `/exhibition/${eventSeriesSlug}`,
+      passengers: formData.passengers,
+      notes: [
+        formData.company.trim() ? `شرکت: ${formData.company.trim()}` : '',
+        formData.selectedPhase ? `فاز: ${formData.selectedPhase}` : '',
+        formData.notes.trim() ? `توضیحات: ${formData.notes.trim()}` : '',
+      ]
+        .filter(Boolean)
+        .join(' — '),
+    });
+    setFormLoading(false);
+    if (result.ok) {
       setFormSubmitted(true);
-    }, 600);
+      trackLeadSubmit(`/exhibition/${eventSeriesSlug}`, result.stored);
+    } else {
+      setSubmitError(result.message);
+    }
   };
 
   // اعتبارسنجی دوره (۴-۷): اگر دوره درخواستی با دوره پیش‌رو نخواند، اطلاع‌رسانی می‌کنیم
@@ -396,6 +426,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     placeholder="مثال: مهندس راد"
                     className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
                   />
+                  {formErrors.name && <p className="text-red-500 text-caption mt-1">{formErrors.name}</p>}
                 </div>
               </div>
 
@@ -411,6 +442,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     placeholder="۰۹۱۲۳۴۵۶۷۸۹"
                     className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-right focus:border-brand-orange focus:outline-none"
                   />
+                  {formErrors.phone && <p className="text-red-500 text-caption mt-1">{formErrors.phone}</p>}
                 </div>
 
                 <div>
@@ -440,6 +472,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
               </div>
 
               <div className="pt-2">
+                {submitError && <p className="text-red-500 text-caption mb-2">{submitError}</p>}
                 <button
                   type="submit"
                   disabled={formLoading}
