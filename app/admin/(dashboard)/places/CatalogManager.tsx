@@ -17,12 +17,14 @@ export default function CatalogManager({ initial, sectionSettings }: { initial: 
   const [editing, setEditing] = useState<DestinationRow | null>(null);
   const [deleting, setDeleting] = useState<DestinationRow | null>(null);
   const [usage, setUsage] = useState<number | null>(null);
+  const [usageFailed, setUsageFailed] = useState(false);
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
   const openDelete = (destination: DestinationRow) => {
     setDeleting(destination);
     setUsage(null);
-    countDestinationTours(destination.slug).then(setUsage).catch(() => setUsage(null));
+    setUsageFailed(false);
+    countDestinationTours(destination.slug).then(setUsage).catch(() => { setUsage(null); setUsageFailed(true); });
   };
   const reload = () => { setShowForm(false); setEditing(null); window.location.reload(); };
   const onDelete = async () => {
@@ -48,7 +50,7 @@ export default function CatalogManager({ initial, sectionSettings }: { initial: 
       <div className="flex flex-wrap items-center justify-between gap-2"><div><h1 className="text-2xl font-bold text-foreground">مکان‌ها و مقصدها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول مقصدها</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="places" title="تنظیمات مقصدها" tabs={['general']} values={sectionSettings} /><Button onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن مقصد جدید</Button></div></div>
       {showForm || editing ? <Card><CardContent className="p-5"><DestinationForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onDone={reload} /></CardContent></Card> : null}
       <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">مقصدها ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(destination) => destination.id} searchKeys={['name', 'nameEn', 'type', 'category']} searchPlaceholder="جست‌وجوی نام، نوع یا دسته‌بندی…" emptyTitle="مقصدی ثبت نشده است" emptyDescription="برای شروع، مقصد جدیدی اضافه کنید." /></CardContent></Card>
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => { if (!open) { setDeleting(null); setUsage(null); } }} title="بایگانی مقصد" description={deleting ? (<span className="block space-y-2"><span className="block">مقصد «{deleting.name}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.</span>{usage !== null && usage > 0 ? <span className="block font-medium text-amber-600 dark:text-amber-400">این مقصد در {fa(usage)} تور استفاده شده است؛ آن تورها سر جایشان می‌مانند و فقط این مقصد از دسترس خارج می‌شود.</span> : null}</span>) : ''} confirmText="بایگانی مقصد" destructive onConfirm={onDelete} />
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => { if (!open) { setDeleting(null); setUsage(null); setUsageFailed(false); } }} title="بایگانی مقصد" description={deleting ? (<span className="block space-y-2"><span className="block">مقصد «{deleting.name}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.</span>{usageFailed ? <span className="block font-medium text-destructive">شمارش ارجاع‌ها ناموفق بود؛ با احتیاط بایگانی کنید.</span> : null}{usage !== null && usage > 0 ? <span className="block font-medium text-amber-600 dark:text-amber-400">این مقصد در {fa(usage)} تور استفاده شده است؛ آن تورها سر جایشان می‌مانند و فقط این مقصد از دسترس خارج می‌شود.</span> : null}</span>) : ''} confirmText="بایگانی مقصد" destructive onConfirm={onDelete} />
     </div>
   );
 }

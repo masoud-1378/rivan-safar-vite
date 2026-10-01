@@ -20,10 +20,12 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
   const [editing, setEditing] = useState<OriginRow | null>(null);
   const [deleting, setDeleting] = useState<OriginRow | null>(null);
   const [usage, setUsage] = useState<number | null>(null);
+  const [usageFailed, setUsageFailed] = useState(false);
   const openDelete = (origin: OriginRow) => {
     setDeleting(origin);
     setUsage(null);
-    countOriginTours(origin.slug, origin.nameFa).then(setUsage).catch(() => setUsage(null));
+    setUsageFailed(false);
+    countOriginTours(origin.slug, origin.nameFa).then(setUsage).catch(() => { setUsage(null); setUsageFailed(true); });
   };
   const [name, setName] = useState('');
   const [type, setType] = useState('city');
@@ -78,6 +80,8 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
   };
 
   const parentName = (slug: string) => initial.find((o) => o.slug === slug)?.nameFa ?? '—';
+  // شهرهای زیرمجموعه‌ای که با بایگانی این والد یتیم می‌شوند
+  const childCount = deleting ? initial.filter((o) => o.parentSlug === deleting.slug).length : 0;
   const columns: Column<OriginRow>[] = [
     { key: 'nameFa', header: 'نام', sortable: true, cell: (o) => <span className="font-semibold">{o.nameFa}</span> },
     { key: 'type', header: 'نوع', sortable: true, cell: (o) => TYPE_LABEL[o.type] ?? o.type },
@@ -166,7 +170,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
           </Field>
         </div>
       </Dialog>
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => { if (!open) { setDeleting(null); setUsage(null); } }} title="بایگانی مبدأ" description={deleting ? (<span className="block space-y-2"><span className="block">مبدأ «{deleting.nameFa}» بایگانی می‌شود و از فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.</span>{usage !== null && usage > 0 ? <span className="block font-medium text-amber-600 dark:text-amber-400">این مبدأ در {fa(usage)} تور استفاده شده است؛ آن تورها سر جایشان می‌مانند و فقط این مبدأ از دسترس خارج می‌شود.</span> : null}</span>) : ''} confirmText="بایگانی مبدأ" destructive onConfirm={onDelete} />
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => { if (!open) { setDeleting(null); setUsage(null); setUsageFailed(false); } }} title="بایگانی مبدأ" description={deleting ? (<span className="block space-y-2"><span className="block">مبدأ «{deleting.nameFa}» بایگانی می‌شود و از فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.</span>{childCount > 0 ? <span className="block font-medium text-amber-600 dark:text-amber-400">{fa(childCount)} شهر زیرمجموعه یتیم می‌شوند.</span> : null}{usageFailed ? <span className="block font-medium text-destructive">شمارش ارجاع‌ها ناموفق بود؛ با احتیاط بایگانی کنید.</span> : null}{usage !== null && usage > 0 ? <span className="block font-medium text-amber-600 dark:text-amber-400">این مبدأ در {fa(usage)} تور استفاده شده است؛ آن تورها سر جایشان می‌مانند و فقط این مبدأ از دسترس خارج می‌شود.</span> : null}</span>) : ''} confirmText="بایگانی مبدأ" destructive onConfirm={onDelete} />
     </div>
   );
 }

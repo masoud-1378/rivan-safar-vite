@@ -14,7 +14,7 @@ import {
   siteDestinations,
   siteTours,
 } from '@/db/schema';
-import { and, desc, eq, isNotNull, isNull } from 'drizzle-orm';
+import { desc, eq, isNotNull } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { hardDeleteOne, restoreOne, type ArchivableTable } from '@/src/lib/archive';
@@ -25,6 +25,10 @@ interface EntityMeta {
   label: string;
   table: ArchivableTable;
   titleCol: AnyPgColumn;
+  /** برای جدول‌های فرزند (بلوک/لینک): عنوان لندینگِ والد را هم از جوین می‌گیریم. */
+  parentTable?: ArchivableTable;
+  parentIdCol?: AnyPgColumn;
+  parentTitleCol?: AnyPgColumn;
 }
 
 const ENTITIES: EntityMeta[] = [
@@ -35,12 +39,16 @@ const ENTITIES: EntityMeta[] = [
   { key: 'seo_landings', label: 'لندینگ‌های سئو', table: seoLandings, titleCol: seoLandings.titleFa },
   { key: 'guides', label: 'مقالات و راهنماها', table: guides, titleCol: guides.titleFa },
   { key: 'exhibitions', label: 'نمایشگاه‌ها', table: exhibitions, titleCol: exhibitions.titleFa },
+  { key: 'content_blocks', label: 'بلوک‌های محتوایی', table: contentBlocks, titleCol: contentBlocks.blockKind, parentTable: seoLandings, parentIdCol: contentBlocks.landingId, parentTitleCol: seoLandings.titleFa },
+  { key: 'seo_internal_links', label: 'لینک‌های داخلی', table: seoInternalLinks, titleCol: seoInternalLinks.anchorFa, parentTable: seoLandings, parentIdCol: seoInternalLinks.fromLandingId, parentTitleCol: seoLandings.titleFa },
   { key: 'admin_users', label: 'کاربران', table: adminUsers, titleCol: adminUsers.email },
 ];
 
 export interface ArchivedRow {
   id: string;
   title: string;
+  /** برچسب والد برای فرزندها، مثل «لندینگ: …» */
+  subtitle?: string;
   archivedAt: string;
 }
 
@@ -57,18 +65,28 @@ export async function listArchived(): Promise<ArchivedGroup[]> {
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   const groups: ArchivedGroup[] = [];
   for (const e of ENTITIES) {
-    const rows = await db
-      .select({ id: e.table.id, title: e.titleCol, deletedAt: e.table.deletedAt })
-      .from(e.table)
-      .where(isNotNull(e.table.deletedAt))
-      .orderBy(desc(e.table.deletedAt))
-      .limit(200);
+    const rows: Array<{ id: unknown; title: unknown; deletedAt: unknown; parentTitle?: unknown }> =
+      e.parentTable && e.parentIdCol && e.parentTitleCol
+        ? await db
+            .select({ id: e.table.id, title: e.titleCol, deletedAt: e.table.deletedAt, parentTitle: e.parentTitleCol })
+            .from(e.table)
+            .leftJoin(e.parentTable, eq(e.parentIdCol, e.parentTable.id))
+            .where(isNotNull(e.table.deletedAt))
+            .orderBy(desc(e.table.deletedAt))
+            .limit(200)
+        : await db
+            .select({ id: e.table.id, title: e.titleCol, deletedAt: e.table.deletedAt })
+            .from(e.table)
+            .where(isNotNull(e.table.deletedAt))
+            .orderBy(desc(e.table.deletedAt))
+            .limit(200);
     groups.push({
       key: e.key,
       label: e.label,
       rows: rows.map((r) => ({
         id: String(r.id),
         title: String(r.title ?? '—'),
+        subtitle: e.parentTable ? (r.parentTitle ? `لندینگ: ${String(r.parentTitle)}` : 'بدون لندینگ') : undefined,
         archivedAt: r.deletedAt instanceof Date ? r.deletedAt.toISOString() : String(r.deletedAt ?? ''),
       })),
     });
@@ -83,29 +101,23 @@ export async function restoreArchived(entity: string, id: string) {
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   const meta = ENTITIES.find((e) => e.key === entity);
   if (!meta) throw new Error('موجودیت نامعتبر است.');
+  if (entity === 'admin_users' && session.role !== 'owner') {
+    throw new Error('بازیابی کاربر فقط برای مالک مجاز است.');
+  }
   const rows = await db
     .select({ title: meta.titleCol })
     .from(meta.table)
     .where(eq(meta.table.id, id))
     .limit(1);
   const title = String(rows[0]?.title ?? id);
+  // فقط خودِ رکورد برمی‌گردد؛ به فرزندها دست نمی‌زنیم. فرزندهایی که موقع بایگانی
+  // والد hard-delete شده‌اند دیگر نیستند و آن‌هایی که ویراستار عمداً تکی بایگانی
+  // کرده بود، سر جای خودشان در بایگانی می‌مانند.
   await restoreOne(db, meta.table, id, {
     actor: session.email,
     entity,
     reasonFa: `بازیابی «${title}» از بایگانی`,
   });
-  // بلوک‌ها و لینک‌هایی که تکی بایگانی شده بودند هم با لندینگ برمی‌گردند؛
-  // آن‌هایی که موقع بایگانی لندینگ پاک شدند، دیگر نیستند.
-  if (entity === 'seo_landings') {
-    await db
-      .update(contentBlocks)
-      .set({ deletedAt: null })
-      .where(and(eq(contentBlocks.landingId, id), isNotNull(contentBlocks.deletedAt)));
-    await db
-      .update(seoInternalLinks)
-      .set({ deletedAt: null })
-      .where(and(eq(seoInternalLinks.fromLandingId, id), isNotNull(seoInternalLinks.deletedAt)));
-  }
   revalidatePath('/admin/archive');
   revalidatePath('/admin/seo');
   revalidatePath('/admin/guides');

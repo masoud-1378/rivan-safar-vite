@@ -6,6 +6,7 @@ import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -34,6 +35,9 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<'owner' | 'editor'>('editor');
   const [removing, setRemoving] = useState<UserRow | null>(null);
+  // دعوتِ دوبارهٔ ایمیلِ عضو: هشدار درون‌خطی با نقش فعلی + تأیید صریح تغییر نقش
+  const [existingMember, setExistingMember] = useState<UserRow | null>(null);
+  const [confirmRoleChange, setConfirmRoleChange] = useState(false);
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
 
@@ -66,10 +70,28 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
       toast({ variant: 'error', title: 'ایمیل را وارد کنید.' });
       return;
     }
+    const member = users.find((u) => u.email.toLowerCase() === value.toLowerCase()) ?? null;
+    if (member && member.role !== role) {
+      // ایمیل از قبل عضو است و نقشِ درخواستی فرق می‌کند: بدون تأیید صریح جلو نرو.
+      setExistingMember(member);
+      setConfirmRoleChange(false);
+      return;
+    }
+    doInvite(value, role, false);
+  };
+
+  const doInvite = (value: string, r: 'owner' | 'editor', confirmed: boolean) => {
     run(async () => {
-      await inviteAdmin(value, role);
+      await inviteAdmin(value, r, confirmed);
       setEmail('');
+      setExistingMember(null);
+      setConfirmRoleChange(false);
     }, 'دعوت‌نامه ارسال شد.');
+  };
+
+  const cancelExistingWarning = () => {
+    setExistingMember(null);
+    setConfirmRoleChange(false);
   };
 
   const onRemove = () => {
@@ -144,17 +166,55 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
                 dir="ltr"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (existingMember) cancelExistingWarning();
+                }}
                 placeholder="admin@example.com"
               />
             </Field>
             <Field label="نقش" htmlFor="invite-role">
-              <Select id="invite-role" value={role} onChange={(e) => setRole(e.target.value as 'owner' | 'editor')} options={ROLE_OPTIONS} />
+              <Select
+                id="invite-role"
+                value={role}
+                onChange={(e) => {
+                  const r = e.target.value as 'owner' | 'editor';
+                  setRole(r);
+                  // اگر نقشِ درخواستی با نقش فعلی عضو یکی شد، دیگر تغییری در کار نیست.
+                  if (existingMember && existingMember.role === r) cancelExistingWarning();
+                }}
+                options={ROLE_OPTIONS}
+              />
             </Field>
             <Button type="submit" disabled={pending} className="h-10">
               {pending ? 'در حال انجام...' : 'ارسال دعوت‌نامه'}
             </Button>
           </form>
+          {existingMember && (
+            <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
+              <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                این ایمیل هم‌اکنون با نقش «{existingMember.role === 'owner' ? 'مالک' : 'ویراستار'}» عضو است؛
+                دعوتِ دوباره بدون تأیید شما نقشش را عوض نمی‌کند.
+              </p>
+              <Checkbox
+                className="mt-2"
+                checked={confirmRoleChange}
+                onCheckedChange={setConfirmRoleChange}
+                label={`تغییر نقش به «${role === 'owner' ? 'مالک' : 'ویراستار'}»`}
+              />
+              <div className="mt-3 flex gap-2">
+                <Button
+                  disabled={pending || !confirmRoleChange}
+                  onClick={() => doInvite(email.trim(), role, true)}
+                >
+                  {pending ? 'در حال انجام...' : 'تأیید و ارسال دعوت‌نامه'}
+                </Button>
+                <Button variant="ghost" onClick={cancelExistingWarning}>
+                  انصراف
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

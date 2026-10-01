@@ -28,7 +28,7 @@ async function auditUser(db: AppDb, actor: string, action: string, entityId: str
   await db.insert(auditLogs).values({ actor, action, entity: 'admin_users', entityId, reasonFa });
 }
 
-export async function inviteAdmin(email: string, role: 'owner' | 'editor') {
+export async function inviteAdmin(email: string, role: 'owner' | 'editor', confirmRoleChange = false) {
   const session = await requireAdmin(['owner']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
@@ -43,7 +43,14 @@ export async function inviteAdmin(email: string, role: 'owner' | 'editor') {
     .where(eq(adminUsers.email, normalized))
     .limit(1);
   if (existing.length > 0) {
-    await assertUserChangeAllowed(db, existing[0].id, session.email, {
+    const target = existing[0];
+    // تغییر نقشِ عضوِ فعلی فقط با تأیید صریح؛ بدون فلگ، بی‌سروصدا بازنویسی نمی‌کنیم.
+    if (target.role !== role && !confirmRoleChange) {
+      throw new Error(
+        `این ایمیل هم‌اکنون با نقش «${target.role === 'owner' ? 'مالک' : 'ویراستار'}» عضو است؛ تغییر نقش به «${role === 'owner' ? 'مالک' : 'ویراستار'}» نیاز به تأیید صریح دارد.`,
+      );
+    }
+    await assertUserChangeAllowed(db, target.id, session.email, {
       wouldBeOwner: role === 'owner',
       wouldBeActive: true,
       verb: 'دعوت مجدد',

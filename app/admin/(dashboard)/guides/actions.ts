@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
-import { guideLinks, guides } from '@/db/schema';
+import { guideLinks, guides, auditLogs } from '@/db/schema';
 import { desc, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
@@ -139,12 +139,21 @@ export async function deleteGuide(id: string) {
     .from(guides)
     .where(eq(guides.id, id))
     .limit(1);
-  // لینک‌های مقاله بیرون از مقاله معنایی ندارند؛ با بایگانی والد برای همیشه پاک می‌شوند.
+  // لینک‌های مقاله بیرون از مقاله معنایی ندارند؛ با بایگانی والد برای همیشه پاک می‌شوند
+  // (حتی آن‌هایی که قبلاً تکی بایگانی شده‌اند) و با «بازیابی» برنمی‌گردند.
   const links = await db.delete(guideLinks).where(eq(guideLinks.guideId, id)).returning({ id: guideLinks.id });
+  const title = rows[0]?.titleFa ?? id;
+  await db.insert(auditLogs).values({
+    actor: session.email,
+    action: 'hard_delete',
+    entity: 'guides',
+    entityId: id,
+    reasonFa: `حذف دائمی فرزندهای مقالهٔ «${title}»: ${fa(links.length)} لینک.`,
+  });
   await archiveOne(db, guides, id, {
     actor: session.email,
     entity: 'guides',
-    reasonFa: `بایگانی مقالهٔ «${rows[0]?.titleFa ?? id}»؛ ${fa(links.length)} لینک متصلش برای همیشه حذف شد و با بازیابی برنمی‌گردد.`,
+    reasonFa: `بایگانی مقالهٔ «${title}»؛ لینک‌های متصلش برای همیشه حذف شدند و با بازیابی برنمی‌گردند.`,
   });
   revalidatePath('/admin/guides');
   return { ok: true };

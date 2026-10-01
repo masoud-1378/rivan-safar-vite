@@ -41,7 +41,7 @@ export default function AdminHeader({ role, email }: { role: 'owner' | 'editor';
         <AdminCommandIconButton />
       </div>
       <Sheet open={navOpen} onOpenChange={setNavOpen} side="start" title="منوی ناوبری">
-        <div className="flex h-full flex-col gap-3">
+        <div className="admin-mobile-nav flex h-full flex-col gap-3">
           <AdminNavHeader />
           <nav aria-label="ناوبری اصلی" className="min-h-0 flex-1 overflow-y-auto">
             <AdminNavGroups role={role} onNavigate={() => setNavOpen(false)} />

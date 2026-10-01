@@ -31,12 +31,15 @@ export const getAdminSession = cache(async (): Promise<AdminSession> => {
 
   const { data: adminUser, error: adminError } = await createAdminDb()
     .from('admin_users')
-    .select('user_id, email, role, active')
+    .select('user_id, email, role, active, deleted_at')
     .eq('user_id', user.id)
-    .is('deleted_at', null)
     .maybeSingle();
-  if (adminError || !adminUser || !adminUser.active) {
-    throw new Error(adminError ? 'ADMIN_LOOKUP_FAILED' : 'FORBIDDEN');
+  if (adminError) throw new Error('ADMIN_LOOKUP_FAILED');
+  if (!adminUser) throw new Error('FORBIDDEN');
+  if (adminUser.deleted_at || !adminUser.active) {
+    // کاربر بایگانی یا غیرفعال شده: نشستش عملاً قفل است؛ مثل لاگین‌نکرده رفتار می‌کنیم
+    // تا تمیز به صفحهٔ ورود ریدایرکت شود، نه صفحهٔ FORBIDDEN.
+    throw new Error('UNAUTHORIZED');
   }
   return { userId: user.id, email: user.email, role: adminUser.role as AdminRole };
 });

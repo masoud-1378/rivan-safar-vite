@@ -44,12 +44,27 @@ export async function archiveOne(db: AppDb, table: ArchivableTable, id: string, 
   return { ok: true };
 }
 
+/** خطای یکتای Postgres (23505) است؟ — بعد از جزئی‌شدن ایندکس‌ها، فقط وقتی رخ می‌دهد
+ *  که رکورد دیگری با همان نامک/مسیر هم‌اکنون فعال باشد. */
+function isUniqueViolation(e: unknown): boolean {
+  if ((e as { code?: unknown } | null)?.code === '23505') return true;
+  const msg = e instanceof Error ? e.message : '';
+  return /duplicate key/i.test(msg);
+}
+
 /** بازیابی رکورد بایگانی‌شده. */
 export async function restoreOne(db: AppDb, table: ArchivableTable, id: string, meta: ArchiveMeta) {
-  await db
-    .update(table)
-    .set({ deletedAt: null } as never)
-    .where(eq(table.id, id));
+  try {
+    await db
+      .update(table)
+      .set({ deletedAt: null } as never)
+      .where(eq(table.id, id));
+  } catch (e) {
+    if (isUniqueViolation(e)) {
+      throw new Error('نامک/مسیر دیگری هم‌اکنون فعال است.');
+    }
+    throw e;
+  }
   await writeAudit(db, 'restore', meta, id);
   return { ok: true };
 }

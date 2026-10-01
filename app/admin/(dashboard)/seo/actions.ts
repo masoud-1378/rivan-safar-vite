@@ -116,17 +116,31 @@ export async function deleteLanding(id: string) {
     .from(seoLandings)
     .where(eq(seoLandings.id, id))
     .limit(1);
+  const title = rows[0]?.titleFa ?? id;
   // بلوک‌ها، لینک‌ها و محصولاتِ لندینگ بیرون از آن معنایی ندارند؛
-  // با بایگانی والد برای همیشه پاک می‌شوند و با «بازیابی» برنمی‌گردند.
-  const [blocks, links, products] = await Promise.all([
-    db.delete(contentBlocks).where(eq(contentBlocks.landingId, id)).returning({ id: contentBlocks.id }),
-    db.delete(seoInternalLinks).where(eq(seoInternalLinks.fromLandingId, id)).returning({ id: seoInternalLinks.id }),
-    db.delete(seoLandingProducts).where(eq(seoLandingProducts.landingId, id)).returning({ id: seoLandingProducts.id }),
-  ]);
-  await archiveOne(db, seoLandings, id, {
-    actor: session.email,
-    entity: 'seo_landings',
-    reasonFa: `بایگانی لندینگ «${rows[0]?.titleFa ?? id}»؛ ${fa(blocks.length)} بلوک، ${fa(links.length)} لینک داخلی و ${fa(products.length)} محصول متصلش برای همیشه حذف شد و با بازیابی برنمی‌گردد.`,
+  // با بایگانی والد برای همیشه پاک می‌شوند (حتی آن‌هایی که قبلاً تکی بایگانی شده‌اند)
+  // و با «بازیابی» برنمی‌گردند. همه‌چیز در یک تراکنش تا حذف نصفه نماند.
+  await db.transaction(async (tx) => {
+    const [blocks, links, products] = await Promise.all([
+      tx.delete(contentBlocks).where(eq(contentBlocks.landingId, id)).returning({ id: contentBlocks.id }),
+      tx.delete(seoInternalLinks).where(eq(seoInternalLinks.fromLandingId, id)).returning({ id: seoInternalLinks.id }),
+      tx.delete(seoLandingProducts).where(eq(seoLandingProducts.landingId, id)).returning({ id: seoLandingProducts.id }),
+    ]);
+    await tx.update(seoLandings).set({ deletedAt: new Date() }).where(eq(seoLandings.id, id));
+    await tx.insert(auditLogs).values({
+      actor: session.email,
+      action: 'hard_delete',
+      entity: 'seo_landings',
+      entityId: id,
+      reasonFa: `حذف دائمی فرزندهای لندینگ «${title}»: ${fa(blocks.length)} بلوک، ${fa(links.length)} لینک داخلی و ${fa(products.length)} محصول.`,
+    });
+    await tx.insert(auditLogs).values({
+      actor: session.email,
+      action: 'archive',
+      entity: 'seo_landings',
+      entityId: id,
+      reasonFa: `بایگانی لندینگ «${title}»؛ فرزندهایش برای همیشه حذف شدند و با بازیابی برنمی‌گردند.`,
+    });
   });
   revalidatePath('/admin/seo');
   return { ok: true };

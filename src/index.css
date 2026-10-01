@@ -1680,6 +1680,11 @@ body:has(.admin-vibefarsi) {
     transform: translateY(-3px);
     box-shadow: var(--shadow-lift);
   }
+
+  /* کشوی ناوبری موبایل: هدف لمسیِ دست‌کم ۴۴ پیکسل (قلم ۳ بازسازی) */
+  .admin-mobile-nav nav a {
+    min-height: 44px;
+  }
 }
 
 @keyframes admin-rise {
