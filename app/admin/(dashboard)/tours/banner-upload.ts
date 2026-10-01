@@ -16,6 +16,15 @@ const BUCKET = 'hotel-photos';
 const MAX_BYTES = 5 * 1024 * 1024;
 // F4: allowlist پسوند — فقط فرمت‌های عکسیِ امن (بستن ریسک SVG).
 const ALLOWED_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+// SEC-06: contentType هرگز از file.type (قابل جعل) خوانده نمی‌شود؛ از پسوند
+// تأییدشدهٔ بالا مشتق می‌شود.
+const EXT_MIME: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+};
 
 function serviceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -58,7 +67,7 @@ export async function uploadTourBanner(
   }
   const path = `tours/${cleanSlug}/${crypto.randomUUID()}.${ext}`;
   const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, file, {
-    contentType: file.type,
+    contentType: EXT_MIME[ext],
     upsert: false,
   });
   if (uploadError) throw new Error('بنر آپلود نشد.');

@@ -11,6 +11,7 @@ import { fa, faSlug } from '@/lib/utils';
 import { saveGuide, type GuideInput, type GuideRow, type GuideStatus } from './actions';
 import { DatePicker } from '@/components/ui/date-picker';
 import BlockEditor, { cleanBlocks, validateBlocks } from '@/components/ui/block-editor';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 export interface GuidePickerOption {
   value: string;
@@ -153,7 +154,7 @@ export default function GuideForm({
         await saveGuide(editingId ?? null, payload);
         if (onSaved) onSaved();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'خطای نامشخص در ذخیره‌سازی.');
+        setError(safeErrorMessage(err, 'خطای نامشخص در ذخیره‌سازی.'));
       }
     });
   };

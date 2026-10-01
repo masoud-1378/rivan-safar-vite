@@ -1,8 +1,9 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { isDbConfigured, getDb } from '@/db/client';
 import { leadRequests, siteSettings } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, count, eq, gte } from 'drizzle-orm';
 
 export interface LeadInput {
   fullName: string;
@@ -25,12 +26,31 @@ export interface LeadResult {
  * - داده شخصی فقط در DB ذخیره می‌شود؛ به Analytics ارسال نمی‌شود.
  * - بدون DATABASE_URL، درخواست رد نمی‌شود ولی پیام «ثبت شد» صادقانه نیست؛
  *   stored=false برمی‌گرداند تا UI پیام تماس تلفنی نشان دهد.
- * - Rate limit ساده: حداکثر یک درخواست از هر شماره در هر ۶۰ ثانیه.
+ * - SEC-04: محدودیت نرخ دیتابیسی — حداکثر یک لید در ۶۰ ثانیه برای هر شماره،
+ *   و حداکثر ۳ لید در ۶۰ ثانیه برای هر IP (تحمل NAT اشتراکی). نسخهٔ قبلی با
+ *   Map درون‌حافظه‌ای بود که در سرورلس Vercel با هر نمونه/cold-start پاک می‌شد.
  */
-const recentByPhone = new Map<string, number>();
 
 /** الگوی موبایل ایرانی — هم‌تراز با اعتبارسنجی سمت کلاینت (مهارت iran-validation). */
 const IRANIAN_MOBILE_RE = /^(?:\+98|0098|0)?9\d{9}$/;
+
+const RATE_WINDOW_MS = 60_000;
+const MAX_PER_PHONE = 1;
+const MAX_PER_IP = 3;
+
+/** سقف طول فیلدهای آزاد — SEC-04 (جلوگیری از پر کردن دیتابیس با متن‌های غول‌پیکر). */
+const cap = (v: string | undefined, n: number) => (v || '').trim().slice(0, n);
+
+async function clientIp(): Promise<string> {
+  try {
+    const h = await headers();
+    const fwd = h.get('x-forwarded-for');
+    if (fwd) return fwd.split(',')[0].trim().slice(0, 64) || 'unknown';
+    return (h.get('x-real-ip') || 'unknown').slice(0, 64);
+  } catch {
+    return 'unknown';
+  }
+}
 
 /** شماره تماس پشتیبانی از تنظیمات؛ اگر خوانده نشد، همان شمارهٔ پیش‌فرض. */
 async function supportPhoneDisplay(
@@ -49,7 +69,7 @@ async function supportPhoneDisplay(
 }
 
 export async function createLead(input: LeadInput): Promise<LeadResult> {
-  const fullName = (input.fullName || '').trim();
+  const fullName = cap(input.fullName, 160);
   // ارقام فارسی/عربی را به انگلیسی برمی‌گردانیم تا در sanitize حذف نشوند
   const phone = (input.phone || '')
     .replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
@@ -64,17 +84,12 @@ export async function createLead(input: LeadInput): Promise<LeadResult> {
     };
   }
 
-  const now = Date.now();
-  const last = recentByPhone.get(phone) || 0;
-  if (now - last < 60_000) {
-    return {
-      ok: false,
-      stored: false,
-      message: 'درخواست شما قبلاً ثبت شده است؛ لطفاً کمی صبر کنید.',
-    };
-  }
-  recentByPhone.set(phone, now);
-  if (recentByPhone.size > 5000) recentByPhone.clear();
+  const sourcePath = cap(input.sourcePath, 300) || '/';
+  const tourContext = cap(input.tourContext, 220) || null;
+  const destinationHint = cap(input.destinationHint, 120) || null;
+  const passengers = cap(input.passengers, 20) || null;
+  const notes = cap(input.notes, 2000) || null;
+  const ip = await clientIp();
 
   if (!isDbConfigured()) {
     return {
@@ -85,10 +100,49 @@ export async function createLead(input: LeadInput): Promise<LeadResult> {
     };
   }
 
+  const db = getDb();
+  if (!db) {
+    return {
+      ok: true,
+      stored: false,
+      message:
+        'برای پیگیری سریع‌تر با شماره ۰۲۶ — ۳۳۳۵۰۱۳۹ تماس بگیرید؛ درخواست آنلاین شما ذخیره نشد.',
+    };
+  }
+
+  // محدودیت نرخ از روی دیتابیس (مشترک بین همهٔ نمونه‌های سرورلس)، پیش از insert.
+  try {
+    const since = new Date(Date.now() - RATE_WINDOW_MS);
+    const [byPhone] = await db
+      .select({ n: count() })
+      .from(leadRequests)
+      .where(and(eq(leadRequests.phone, phone), gte(leadRequests.createdAt, since)));
+    if ((byPhone?.n ?? 0) >= MAX_PER_PHONE) {
+      return {
+        ok: false,
+        stored: false,
+        message: 'درخواست شما قبلاً ثبت شده است؛ لطفاً کمی صبر کنید.',
+      };
+    }
+    if (ip !== 'unknown') {
+      const [byIp] = await db
+        .select({ n: count() })
+        .from(leadRequests)
+        .where(and(eq(leadRequests.ip, ip), gte(leadRequests.createdAt, since)));
+      if ((byIp?.n ?? 0) >= MAX_PER_IP) {
+        return {
+          ok: false,
+          stored: false,
+          message: 'درخواست‌های زیادی از این نشانی ثبت شده؛ لطفاً کمی بعد تلاش کنید.',
+        };
+      }
+    }
+  } catch {
+    // اگر شمارش به هر دلیلی شکست خورد، فرم را نمی‌شکنیم؛ insert را ادامه می‌دهیم.
+  }
+
   let supportPhone = '۰۲۶ — ۳۳۳۵۰۱۳۹';
   try {
-    const db = getDb();
-    if (!db) throw new Error('no-db');
     supportPhone = await supportPhoneDisplay(db);
     const autoAssign = await db
       .select()
@@ -103,11 +157,12 @@ export async function createLead(input: LeadInput): Promise<LeadResult> {
     await db.insert(leadRequests).values({
       fullName,
       phone,
-      sourcePath: input.sourcePath || '/',
-      tourContext: input.tourContext || null,
-      destinationHint: input.destinationHint || null,
-      passengers: input.passengers || null,
-      notes: input.notes || null,
+      ip,
+      sourcePath,
+      tourContext,
+      destinationHint,
+      passengers,
+      notes,
       assignee: autoAssign[0]?.settingValue || null,
     });
     return {

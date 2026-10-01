@@ -9,6 +9,7 @@ import { faSlug } from '@/lib/utils';
 import { checkSlugUnique, saveTour, type TourRow } from './actions';
 import { useToast } from '@/components/ui/toast';
 import { DepartureDateField } from './DepartureDateField';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 interface DuplicateTourDialogProps {
   tour: TourRow;
@@ -151,7 +152,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
     } catch (e) {
       toast({
         title: 'تکثیر ناموفق بود',
-        description: e instanceof Error ? e.message : 'دوباره تلاش کنید.',
+        description: safeErrorMessage(e, 'دوباره تلاش کنید.'),
         variant: 'error',
       });
       setBusy(false);

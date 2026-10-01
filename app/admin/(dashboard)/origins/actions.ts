@@ -30,6 +30,7 @@ export async function listOriginsAdmin(): Promise<OriginRow[]> {
 }
 
 export async function countOrigins(): Promise<number> {
+  await requireAdmin(['owner', 'editor']); // SEC-09: اکشن exportشده — بدون احراز هویت قابل صدا زدن از هر کلاینت بود
   const db = getDb();
   if (!db) return 0;
   const [r] = await db.select({ n: count() }).from(originCities).where(isNull(originCities.deletedAt));

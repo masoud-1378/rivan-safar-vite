@@ -38,6 +38,7 @@ import { validateDraft, getStageCompletion } from './tour-helpers';
 import Stage1Identity from './stages/Stage1Identity';
 import Stage2Hotels from './stages/Stage2Hotels';
 import Stage3Itinerary from './stages/Stage3Itinerary';
+import { safeErrorMessage } from '@/src/lib/error-message';
 import Stage4TrustTerms from './stages/Stage4TrustTerms';
 import Stage5Consultant from './stages/Stage5Consultant';
 
@@ -296,7 +297,7 @@ export default function TourForm({
       } catch (err: any) {
         toast({
           title: 'خطا در ثبت تور',
-          description: err.message || 'ذخیره انجام نشد؛ اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.',
+          description: safeErrorMessage(err, 'ذخیره انجام نشد؛ اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.'),
           variant: 'error',
         });
       }

@@ -34,6 +34,7 @@ import { DepartureDateField } from '../DepartureDateField';
 import { uploadTourBanner } from '../banner-upload';
 import type { DestinationTree, OriginRow, TourInput } from '../actions';
 import type { TourDraftErrors } from '../tour-helpers';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 interface Stage1IdentityProps {
   data: TourInput;
@@ -174,7 +175,7 @@ export default function Stage1Identity({
       toast({
         variant: 'error',
         title: 'بنر آپلود نشد',
-        description: e instanceof Error ? e.message : 'دوباره تلاش کنید.',
+        description: safeErrorMessage(e, 'دوباره تلاش کنید.'),
       });
     } finally {
       uploadingRef.current = false;

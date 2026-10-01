@@ -72,6 +72,17 @@ export function validateSetting(key: string, value: string): string | null {
   const def = byKey.get(key);
   if (!def) return 'کلید تنظیمات ناشناخته است.';
   const v = value.trim();
+  // SEC-03: seo.ga_id مستقیم داخل اسکریپت inline در app/layout.tsx درون‌ریزی
+  // می‌شود؛ فقط قالب‌های رسمی گوگل آنالیتیکس (یا خالی = غیرفعال) قبول است تا
+  // ویراستار نتواند رشتهٔ JS تزریق کند. این مجموعه‌کاراکتر (' و < را ندارد)
+  // سینک درون‌ریزی رشته‌ای را هم امن می‌کند.
+  if (key === 'seo.ga_id') {
+    if (!v) return null;
+    if (!/^G-[A-Z0-9-]+$/.test(v) && !/^UA-[0-9]+-[0-9]+$/.test(v)) {
+      return 'شناسه گوگل آنالیتیکس معتبر نیست؛ مثل G-XXXXXXXXXX وارد کنید.';
+    }
+    return null;
+  }
   switch (def.kind) {
     case 'url':
       if (!/^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(v)) return 'آدرس اینترنتی معتبر وارد کنید (با https شروع شود).';

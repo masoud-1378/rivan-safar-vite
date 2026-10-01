@@ -60,11 +60,14 @@ export interface ArchivedGroup {
 
 /** فهرست همهٔ رکوردهای بایگانی‌شده، به تفکیک موجودیت. */
 export async function listArchived(): Promise<ArchivedGroup[]> {
-  await requireAdmin(['owner', 'editor']);
+  const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
+  // SEC-11: گروه «کاربران» (ایمیل ادمین‌ها) فقط برای مالک؛ ویراستار نباید
+  // ایمیل کاربران بایگانی‌شده را ببیند.
+  const entities = session.role === 'owner' ? ENTITIES : ENTITIES.filter((e) => e.key !== 'admin_users');
   const groups: ArchivedGroup[] = [];
-  for (const e of ENTITIES) {
+  for (const e of entities) {
     const rows: Array<{ id: unknown; title: unknown; deletedAt: unknown; parentTitle?: unknown }> =
       e.parentTable && e.parentIdCol && e.parentTitleCol
         ? await db

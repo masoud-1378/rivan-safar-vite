@@ -12,6 +12,7 @@ import { DataTable, type Column } from '@/components/ui/data-table';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 const STATUS_MAP: Record<GuideStatus, { label: string; variant: 'success' | 'warning' | 'secondary' | 'brand' | 'destructive' }> = {
   published: { label: 'منتشرشده', variant: 'success' }, review: { label: 'در حال بازبینی', variant: 'warning' }, draft: { label: 'پیش‌نویس', variant: 'secondary' }, paused: { label: 'متوقف', variant: 'brand' }, archived: { label: 'بایگانی', variant: 'destructive' },
@@ -27,9 +28,9 @@ export default function GuidesManager({ initial, destinationOptions = [], tourOp
   const reload = () => { setShowForm(false); setEditing(null); window.location.reload(); };
   const onDelete = async () => {
     if (!deleting) return;
-    try { await new Promise<void>((resolve, reject) => startTransition(async () => { try { await deleteGuide(deleting.id); resolve(); } catch (error) { reject(error); } })); window.location.reload(); } catch (error) { toast({ variant: 'error', title: error instanceof Error ? error.message : 'خطا در حذف.' }); }
+    try { await new Promise<void>((resolve, reject) => startTransition(async () => { try { await deleteGuide(deleting.id); resolve(); } catch (error) { reject(error); } })); window.location.reload(); } catch (error) { toast({ variant: 'error', title: safeErrorMessage(error, 'خطا در حذف.') }); }
   };
-  const onStatusChange = (id: string, status: GuideStatus) => startTransition(async () => { try { await setGuideStatus(id, status); window.location.reload(); } catch (error) { toast({ variant: 'error', title: error instanceof Error ? error.message : 'خطا در تغییر وضعیت.' }); } });
+  const onStatusChange = (id: string, status: GuideStatus) => startTransition(async () => { try { await setGuideStatus(id, status); window.location.reload(); } catch (error) { toast({ variant: 'error', title: safeErrorMessage(error, 'خطا در تغییر وضعیت.') }); } });
   const edit = (guide: GuideRow) => { setEditing(guide); setShowForm(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const columns: Column<GuideRow>[] = [
     { key: 'titleFa', header: 'عنوان راهنما', sortable: true, cell: (guide) => <span className="font-medium">{guide.titleFa}</span> },

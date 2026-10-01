@@ -13,6 +13,7 @@ import { formatJalali } from '@/lib/jalali';
 import { faSlug } from '@/lib/utils';
 import { saveExhibition, type ExhibitionInput, type ExhibitionRow, type ExhibitionStatus } from './actions';
 import BlockEditor, { cleanBlocks, validateBlocks } from '@/components/ui/block-editor';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 const STATUSES: Array<{ value: ExhibitionStatus; label: string }> = [
   { value: 'draft', label: 'پیش‌نویس' },
@@ -177,7 +178,7 @@ export default function ExhibitionForm({
         await saveExhibition(editingId ?? null, payload);
         if (onSaved) onSaved();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'خطای نامشخص در ذخیره‌سازی.');
+        setError(safeErrorMessage(err, 'خطای نامشخص در ذخیره‌سازی.'));
       }
     });
   };

@@ -18,6 +18,7 @@ import { useToast } from '@/components/ui/toast';
 import { cn, fa } from '@/lib/utils';
 import { PriceCell } from './PriceCell';
 import { DuplicateTourDialog } from './DuplicateTourDialog';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 interface ToursManagerProps {
   initial: TourRow[];
@@ -137,7 +138,7 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
       setSelected(new Set());
       setBulkAction(null);
     } catch (error) {
-      toast({ variant: 'error', title: error instanceof Error ? error.message : 'عملیات گروهی انجام نشد؛ دوباره تلاش کنید.' });
+      toast({ variant: 'error', title: safeErrorMessage(error, 'عملیات گروهی انجام نشد؛ دوباره تلاش کنید.') });
     } finally {
       setBulkBusy(false);
     }
@@ -159,7 +160,7 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
         try { await deleteTour(deleting.id); resolve(); } catch (error) { reject(error); }
       }));
       window.location.reload();
-    } catch (error) { toast({ variant: 'error', title: error instanceof Error ? error.message : 'حذف انجام نشد؛ دوباره تلاش کنید.' }); }
+    } catch (error) { toast({ variant: 'error', title: safeErrorMessage(error, 'حذف انجام نشد؛ دوباره تلاش کنید.') }); }
   };
 
   // میز ۲: دکمه‌های عملیات ردیف — یک تعریف برای جدول دسکتاپ و کارت موبایل؛

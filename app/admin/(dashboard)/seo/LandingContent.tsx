@@ -17,6 +17,7 @@ import {
   replaceBlocks,
   type LinkInput,
 } from './actions';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 interface LandingContentProps {
   landingId: string;
@@ -87,7 +88,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
       );
       setGate(await checkQualityGate(landingId));
     } catch (e) {
-      toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در بارگذاری.' });
+      toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در بارگذاری.') });
     } finally {
       setLoading(false);
     }
@@ -129,7 +130,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
         }
         await load();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ذخیره بلوک‌ها.' });
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در ذخیره بلوک‌ها.') });
       }
     });
   };
@@ -165,7 +166,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
         toast({ variant: 'success', title: 'لینک داخلی ثبت شد.' });
         await load();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ثبت لینک.' });
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در ثبت لینک.') });
       }
     });
   };
@@ -181,7 +182,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
         }
         await load();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در حذف لینک.' });
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در حذف لینک.') });
       }
     });
   };

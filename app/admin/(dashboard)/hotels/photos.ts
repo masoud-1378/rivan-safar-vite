@@ -19,6 +19,21 @@ import { and, desc, eq, isNull } from 'drizzle-orm';
 const BUCKET = 'hotel-photos';
 const MAX_BYTES = 5 * 1024 * 1024;
 
+// SEC-06: allowlist صریح پسوند — بدون svg (بردار XSS ذخیره‌شده). contentType
+// هرگز از file.type (قابل جعل توسط کاربر) خوانده نمی‌شود؛ از پسوند تأییدشده
+// مشتق می‌شود. SEC-12: slug هم sanitize می‌شود تا traversal مسیر ممکن نباشد.
+const ALLOWED_EXTS = ['jpg', 'jpeg', 'png', 'webp'] as const;
+const EXT_MIME: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+};
+// SEC-12: sanitize مسیر استوریج — هر چیزی جز حرف (هر خطی، از جمله فارسی)،
+// عدد و خط‌تیره حذف می‌شود؛ پس `/` و `.` (مادهٔ traversal با `../../`) هرگز
+// به مسیر راه پیدا نمی‌کنند.
+const cleanSlug = (s: string) => (s || 'hotel').replace(/[^\p{L}\p{N}-]/gu, '') || 'hotel';
+
 export interface HotelPhoto {
   id: string;
   url: string;
@@ -59,7 +74,7 @@ export async function listHotelPhotos(slug: string): Promise<HotelPhoto[]> {
 }
 
 export async function uploadHotelPhoto(
-  slug: string,
+  rawSlug: string,
   nameFa: string,
   formData: FormData,
 ): Promise<HotelPhoto> {
@@ -74,10 +89,14 @@ export async function uploadHotelPhoto(
   const sb = serviceClient();
   await ensureBucket(sb);
 
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().slice(0, 8);
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (!(ALLOWED_EXTS as readonly string[]).includes(ext)) {
+    throw new Error('فرمت عکس مجاز نیست؛ فقط jpg، png یا webp.');
+  }
+  const slug = cleanSlug(rawSlug);
   const path = `${slug}/${crypto.randomUUID()}.${ext}`;
   const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, file, {
-    contentType: file.type,
+    contentType: EXT_MIME[ext],
     upsert: false,
   });
   if (uploadError) throw new Error('آپلود عکس ناموفق بود.');

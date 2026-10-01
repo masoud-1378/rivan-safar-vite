@@ -12,6 +12,7 @@ import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 const TYPE_LABEL: Record<string, string> = { region: 'قاره/ناحیه', country: 'کشور', city: 'شهر' };
 
@@ -65,7 +66,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
         setOpen(false);
         reload();
       } catch (e) {
-        const message = e instanceof Error ? e.message : 'ذخیره انجام نشد؛ دوباره تلاش کنید.';
+        const message = safeErrorMessage(e, 'ذخیره انجام نشد؛ دوباره تلاش کنید.');
         if (message === 'این نام قبلاً ثبت شده') {
           setNameError(message);
         } else {
@@ -82,7 +83,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
         await deleteOrigin(deleting.id);
         reload();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'حذف انجام نشد؛ دوباره تلاش کنید.' });
+        toast({ variant: 'error', title: safeErrorMessage(e, 'حذف انجام نشد؛ دوباره تلاش کنید.') });
       }
     });
   };
@@ -94,7 +95,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
         toast({ variant: 'success', title: `تکثیر شد: ${res.nameFa}` });
         reload();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در کپی.' });
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در کپی.') });
       }
     });
   };

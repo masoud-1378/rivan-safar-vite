@@ -47,6 +47,17 @@ function optional(v: string): string | null {
   return t === '' ? null : t;
 }
 
+// SEC-07: «وب‌سایت رسمی» در صفحهٔ عمومی داخل <a href> رندر می‌شود؛ فقط
+// http(s) قبول است تا `javascript:` تزریق نشود.
+function optionalHttpUrl(v: string): string | null {
+  const t = optional(v);
+  if (!t) return null;
+  if (!/^https?:\/\//i.test(t)) {
+    throw new Error('وب‌سایت رسمی باید با http یا https شروع شود.');
+  }
+  return t;
+}
+
 export async function listExhibitions() {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
@@ -107,7 +118,7 @@ export async function saveExhibition(id: string | null | undefined, data: Exhibi
     city: optional(data.city),
     citySlug: optional(data.citySlug),
     venue: optional(data.venue),
-    officialWebsite: optional(data.officialWebsite),
+    officialWebsite: optionalHttpUrl(data.officialWebsite),
     industry: optional(data.industry),
     industrySlug: optional(data.industrySlug),
     heroTagline: optional(data.heroTagline),

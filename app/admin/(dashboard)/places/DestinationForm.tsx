@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { fa, faSlug } from '@/lib/utils';
 import { saveDestination, checkDestinationSlugUnique, type DestinationInput, type DestinationRow, type FaqItem } from './actions';
 import { DESTINATION_CATEGORIES, isValidDestinationCategory } from './categories';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 const EMPTY: DestinationInput = { slug: '', name: '', nameEn: '', type: 'city', parentCountrySlug: '', category: '', image: '', heroTagline: '', description: '', bestSeason: '', visaRequired: false, visaType: '', flightDuration: '', currency: '', startingPrice: '', startingPriceNote: '', lastVerifiedAt: '', activeToursCount: 0, popularDistricts: [], keyHighlights: [], travelTips: [], faqs: [], relatedGuides: [] };
 const nlToArray = (v: string) => v.split('\n').map((s) => s.trim()).filter(Boolean);
@@ -116,7 +117,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
         await saveDestination(editingId ?? null, payload);
         onDone();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'ذخیره انجام نشد؛ دوباره تلاش کنید.' });
+        toast({ variant: 'error', title: safeErrorMessage(e, 'ذخیره انجام نشد؛ دوباره تلاش کنید.') });
       }
     });
   };
@@ -150,7 +151,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
         setShowAddCountry(false);
         toast({ title: `کشور «${name}» ثبت و انتخاب شد.` });
       } catch (e) {
-        setNewCountryError(e instanceof Error ? e.message : 'خطا در ثبت کشور.');
+        setNewCountryError(safeErrorMessage(e, 'خطا در ثبت کشور.'));
       }
     });
   };

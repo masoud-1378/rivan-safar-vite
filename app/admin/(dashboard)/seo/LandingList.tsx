@@ -16,6 +16,7 @@ import { listLandings, checkQualityGate, setLandingWorkflow, deleteLanding } fro
 import LandingForm, { type LandingFormInitial } from './LandingForm';
 import LandingContent from './LandingContent';
 import SectionSettingsDialog from '../SectionSettingsDialog';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 type LandingRow = Awaited<ReturnType<typeof listLandings>>[number];
 type Workflow = 'draft' | 'review' | 'published' | 'paused' | 'archived';
@@ -59,7 +60,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
     try {
       setData(await listLandings());
     } catch (e) {
-      toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در بارگذاری لندینگ‌ها.' });
+      toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در بارگذاری لندینگ‌ها.') });
     }
   });
 
@@ -72,7 +73,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
         setDeleting(null);
         refresh();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'حذف انجام نشد؛ دوباره تلاش کنید.' });
+        toast({ variant: 'error', title: safeErrorMessage(e, 'حذف انجام نشد؛ دوباره تلاش کنید.') });
       }
     });
   };
@@ -91,7 +92,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
         toast({ variant: 'success', title: `وضعیت به «${WORKFLOW_MAP[workflow].label}» تغییر کرد.` });
         refresh();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در تغییر وضعیت.' });
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در تغییر وضعیت.') });
       }
     });
   };

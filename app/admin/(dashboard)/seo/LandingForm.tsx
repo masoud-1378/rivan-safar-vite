@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/toast';
 import { Textarea } from '@/components/ui/textarea';
 import { faSlug } from '@/lib/utils';
 import { createLanding, updateLanding, type LandingInput } from './actions';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 const PAGE_TYPES = [
   { value: 'home', label: 'خانه' },
@@ -133,7 +134,7 @@ export default function LandingForm({
         if (onSaved) onSaved();
         window.location.reload();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ذخیره لندینگ.' });
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در ذخیره لندینگ.') });
       }
     });
   };
