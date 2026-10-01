@@ -29,14 +29,14 @@ const TABS = [
     label: 'لیست تورها',
     href: '/admin/tours',
     icon: BriefcaseBusiness,
-    desc: 'پکیج‌ها، نرخ‌گذاری و وضعیت انتشار',
+    desc: 'تورها، نرخ‌گذاری و وضعیت انتشار',
   },
   {
     id: 'leads',
     label: 'درخواست‌های رزرو تور',
     href: '/admin/tours/leads',
     icon: Inbox,
-    desc: 'متقاضیان و لیدهای اختصاصی تورها',
+    desc: 'متقاضیان و درخواست‌های اختصاصی تورها',
   },
   {
     id: 'places',
@@ -86,7 +86,7 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
           </div>
           <div>
             <h2 className="text-base font-bold text-foreground">مرکز عملیات و مدیریت جامع تورها</h2>
-            <p className="text-xs text-muted-foreground">مدیریت متمرکز پکیج‌ها، رزروها، مقاصد، مبدأهای حرکت (هوایی، زمینی) و هتل‌های طرف قرارداد</p>
+            <p className="text-xs text-muted-foreground">مدیریت متمرکز تورها، رزروها، مقاصد، مبدأهای حرکت (هوایی، زمینی) و هتل‌های طرف قرارداد</p>
           </div>
         </div>
       </div>

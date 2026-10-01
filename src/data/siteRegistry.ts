@@ -59,7 +59,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'tours_all',
       params: {},
       canonicalPath: '/tours',
-      title: 'همه تورهای مسافرتی داخلی، خارجی و نمایشگاهی | ریوان سفر',
+      title: 'همه تورهای مسافرتی داخلی، خارجی و نمایشگاهی · ریوان سفر',
       description:
         'فهرست تورهای فعال داخلی، خارجی و نمایشگاهی با فیلتر مقصد، تاریخ و قیمت پایه.',
       robots: 'index,follow',
@@ -76,9 +76,9 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'tours_foreign',
       params: {},
       canonicalPath: '/tours/foreign',
-      title: 'تورهای خارجی؛ مقاصد آسیایی، اروپایی و همسایه | ریوان سفر',
+      title: 'تورهای خارجی؛ مقاصد آسیایی، اروپایی و همسایه · ریوان سفر',
       description:
-        'پکیج‌های تور خارجی فعال را با تفکیک مقصد، ویزا، ایرلاین و هتل بررسی کنید.',
+        'تورهای خارجی فعال را با تفکیک مقصد، ویزا، ایرلاین و هتل بررسی کنید.',
       robots: 'index,follow',
       breadcrumbs: [
         { name: 'خانه', url: '/' },
@@ -94,7 +94,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'tours_domestic',
       params: {},
       canonicalPath: '/tours/domestic',
-      title: 'تورهای داخلی کیش، مشهد، قشم و شهرهای تاریخی | ریوان سفر',
+      title: 'تورهای داخلی کیش، مشهد، قشم و شهرهای تاریخی · ریوان سفر',
       description:
         'تورهای داخلی فعال کیش و مشهد با هتل منتخب و قیمت پایه شفاف.',
       robots: 'index,follow',
@@ -112,7 +112,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'destinations_catalog',
       params: {},
       canonicalPath: '/destinations',
-      title: 'فهرست مقصدهای تور داخلی و خارجی | ریوان سفر',
+      title: 'فهرست مقصدهای تور داخلی و خارجی · ریوان سفر',
       description:
         'فهرست کامل مقصدهای دارای تور فعال داخلی و خارجی ریوان سفر.',
       robots: 'index,follow',
@@ -129,9 +129,9 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'exhibitions_hub',
       params: {},
       canonicalPath: '/exhibitions',
-      title: 'تورهای نمایشگاهی بین‌المللی چین، دبی و اروپا | ریوان سفر',
+      title: 'تورهای نمایشگاهی بین‌المللی چین، دبی و اروپا · ریوان سفر',
       description:
-        'پکیج‌های سفر نمایشگاهی و تجاری با تاریخ رسمی رویداد، ویزا و خدمات تور.',
+        'تورهای سفر نمایشگاهی و تجاری با تاریخ رسمی رویداد، ویزا و خدمات تور.',
       robots: 'index,follow',
       breadcrumbs: [
         { name: 'خانه', url: '/' },
@@ -146,7 +146,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'guides_hub',
       params: {},
       canonicalPath: '/guides',
-      title: 'راهنمای جامع سفر، ویزا، هزینه‌ها و انتخاب هتل | ریوان سفر',
+      title: 'راهنمای جامع سفر، ویزا، هزینه‌ها و انتخاب هتل · ریوان سفر',
       description:
         'راهنماهای تصمیم‌ساز سفر: انتخاب هتل، ویزا، هزینه‌ها و سفر نمایشگاهی.',
       robots: 'index,follow',
@@ -165,7 +165,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'tour_detail',
       params: { tourSlug: slug },
       canonicalPath: `/tour/${slug}`,
-      title: `جزئیات تور | ریوان سفر`,
+      title: `جزئیات تور · ریوان سفر`,
       description:
         'جزئیات تور شامل تاریخ حرکت، مسیر، هتل، خدمات شامل و غیرشامل و درخواست تماس با کارشناس.',
       robots: 'index,follow',
@@ -186,7 +186,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'destination_city',
       params: { countrySlug, placeSlug },
       canonicalPath: `/destination/${countrySlug}/${placeSlug}`,
-      title: `تور و اطلاعات سفر | ریوان سفر`,
+      title: `تور و اطلاعات سفر · ریوان سفر`,
       description:
         'تورهای فعال این مقصد با تاریخ، هتل، قیمت پایه و پاسخ پرسش‌های پرتکرار مسافران.',
       robots: 'index,follow',
@@ -207,7 +207,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'country',
       params: { countrySlug },
       canonicalPath: `/destination/${countrySlug}`,
-      title: `تورها و راهنمای سفر به کشور | ریوان سفر`,
+      title: `تورها و راهنمای سفر به کشور · ریوان سفر`,
       description:
         'تورهای فعال این کشور با شهرها، تاریخ حرکت، قیمت پایه و راهنمای انتخاب.',
       robots: 'index,follow',
@@ -228,7 +228,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'exhibition_detail',
       params: { eventSeriesSlug, editionSlug },
       canonicalPath: editionSlug ? `/exhibition/${eventSeriesSlug}/${editionSlug}` : `/exhibition/${eventSeriesSlug}`,
-      title: `تور نمایشگاهی تخصصی | ریوان سفر`,
+      title: `تور نمایشگاهی تخصصی · ریوان سفر`,
       description:
         'تور نمایشگاهی با تاریخ رسمی رویداد، خدمات ویزا، اقامت و ترانسفر نمایشگاه.',
       robots: 'index,follow',
@@ -248,7 +248,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'guide_detail',
       params: { guideSlug },
       canonicalPath: `/guide/${guideSlug}`,
-      title: `راهنمای تخصصی سفر | ریوان سفر`,
+      title: `راهنمای تخصصی سفر · ریوان سفر`,
       description:
         'راهنمای کاربردی سفر با پاسخ کوتاه، جدول مقایسه و قدم بعدی روشن.',
       robots: 'index,follow',
@@ -268,7 +268,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'visa_country',
       params: { countrySlug },
       canonicalPath: `/visa/${countrySlug}`,
-      title: `شرایط و مدارک ویزا | ریوان سفر`,
+      title: `شرایط و مدارک ویزا · ریوان سفر`,
       description:
         'شرایط و مدارک ویزا با منبع رسمی و تاریخ بازبینی؛ نتیجه صدور با مرجع صادرکننده است.',
       robots: 'index,follow',
@@ -286,7 +286,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'about',
       params: {},
       canonicalPath: '/about',
-      title: 'درباره آژانس مسافرتی ریوان سفر البرز | هویت و تعهدات ما',
+      title: 'درباره ما · ریوان سفر',
       description:
         'آشنایی با ریوان سفر کرج: خدمات تور، نشانی دفتر، تلفن تماس و تعهدات ما.',
       robots: 'index,follow',
@@ -302,7 +302,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'contact',
       params: {},
       canonicalPath: '/contact',
-      title: 'تماس با ریوان سفر | نشانی دفتر مهرشهر و شماره‌های تماس',
+      title: 'تماس با ما · ریوان سفر',
       description:
         'نشانی دفتر مهرشهر کرج، تلفن تماس و ساعات پاسخ‌گویی ریوان سفر.',
       robots: 'index,follow',
@@ -318,7 +318,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'licenses',
       params: {},
       canonicalPath: '/licenses',
-      title: 'مجوزها و اطلاعات ثبتی رسمی | ریوان سفر',
+      title: 'مجوزها و اطلاعات ثبتی رسمی · ریوان سفر',
       description:
         'مجوزها و اطلاعات ثبتی قابل انتشار ریوان سفر؛ موارد تکمیلی پس از دریافت رسمی منتشر می‌شود.',
       robots: 'index,follow',
@@ -334,7 +334,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'terms',
       params: {},
       canonicalPath: '/terms',
-      title: 'قوانین و شرایط رزرو و کنسلی تورها | ریوان سفر',
+      title: 'قوانین و شرایط رزرو و کنسلی تورها · ریوان سفر',
       description:
         'قوانین درخواست تماس، تغییر و کنسلی تورها در ریوان سفر.',
       robots: 'index,follow',
@@ -350,7 +350,7 @@ export function resolveRoute(path: string): RouteMatch {
       type: 'privacy',
       params: {},
       canonicalPath: '/privacy',
-      title: 'سیاست حریم خصوصی و امنیت داده‌ها | ریوان سفر',
+      title: 'سیاست حریم خصوصی و امنیت داده‌ها · ریوان سفر',
       description:
         'نحوه استفاده و نگهداری اطلاعات تماس شما در ریوان سفر.',
       robots: 'index,follow',
@@ -366,7 +366,7 @@ export function resolveRoute(path: string): RouteMatch {
     type: 'not_found',
     params: {},
     canonicalPath: cleanPath,
-    title: 'صفحه مورد نظر پیدا نشد | ریوان سفر',
+    title: 'صفحه مورد نظر پیدا نشد · ریوان سفر',
     description:
       'صفحه مورد نظر پیدا نشد. به صفحه اصلی یا فهرست تورها بازگردید.',
     robots: 'noindex,nofollow',

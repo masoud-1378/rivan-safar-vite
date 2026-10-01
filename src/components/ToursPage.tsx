@@ -227,7 +227,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
           </h1>
 
           <p className="text-body text-text-secondary max-w-subtitle mx-auto leading-relaxed mb-6">
-            تورهای داخلی، خارجی و نمایشگاهی را بررسی کنید، تاریخ‌ها و قیمت‌ها را مقایسه کنید و برای گزینه مناسب، درخواست تماس ثبت نمایید.
+            تورهای داخلی، خارجی و نمایشگاهی را بررسی کنید، تاریخ‌ها و قیمت‌ها را مقایسه کنید و برای گزینه مناسب، درخواست تماس ثبت کنید.
           </p>
 
 
@@ -528,9 +528,9 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               /* ---------------- 14 & 15. Limited / Zero Results State ---------------- */
               <div className="bg-surface-primary rounded-card border border-border-default p-8 text-center max-w-xl mx-auto">
                 <AlertCircle className="w-12 h-12 text-brand-orange mx-auto mb-3 opacity-80" />
-                <h3 className="text-h3 text-text-heading mb-2">برای این ترکیب، تور فعالی پیدا نکردیم</h3>
+                <h3 className="text-h3 text-text-heading mb-2">برای این ترکیب، تور فعالی پیدا نشد</h3>
                 <p className="text-body-sm text-text-secondary leading-relaxed mb-6">
-                  تاریخ یا بودجه را تغییر بده یا اجازه بده کارشناس ریوان سفر گزینه‌های نزدیک را بررسی کند.
+                  تاریخ یا بودجه را تغییر دهید، یا از کارشناس ریوان سفر بخواهید گزینه‌های نزدیک را بررسی کند.
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -714,10 +714,10 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { step: '۱', title: '۱. تور را انتخاب کنید', desc: 'مقصد، تاریخ و پکیج مناسب را بررسی نمایید.' },
-            { step: '۲', title: '۲. درخواست تماس ثبت کنید', desc: 'اطلاعات تماس و تعداد مسافران را وارد نمایید.' },
+            { step: '۱', title: '۱. تور را انتخاب کنید', desc: 'مقصد، تاریخ و تور مناسب را بررسی کنید.' },
+            { step: '۲', title: '۲. درخواست تماس ثبت کنید', desc: 'اطلاعات تماس و تعداد مسافران را وارد کنید.' },
             { step: '۳', title: '۳. قیمت و ظرفیت تأیید می‌شود', desc: 'کارشناس وضعیت پرواز، هتل و ظرفیت را بررسی می‌کند.' },
-            { step: '۴', title: '۴. قرارداد و هماهنگی نهایی انجام می‌شود', desc: 'پس از تأیید شرایط، قرارداد و مدارک سفر را دریافت می‌نمایید.' }
+            { step: '۴', title: '۴. قرارداد و هماهنگی نهایی انجام می‌شود', desc: 'پس از تأیید شرایط، قرارداد و مدارک سفر را دریافت می‌کنید.' }
           ].map((item) => (
             <div key={item.step} className="bg-surface-primary p-5 rounded-card border border-border-default/60 shadow-subtle text-right relative">
               <span className="w-8 h-8 rounded-full bg-brand-orange text-on-brand font-black text-body-sm flex items-center justify-center mb-3">
@@ -735,8 +735,8 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
         <h2 className="text-h2 text-text-heading mb-6 md:mb-8 text-right">برای انتخاب تور به چه چیزهایی توجه کنیم؟</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-right text-body-sm text-text-primary leading-relaxed">
           <div className="bg-surface-primary p-4 rounded-control border border-border-default">
-            <h4 className="text-h4 text-text-heading mb-1">تفاوت پکیج آماده و پرواز + هتل</h4>
-            <p className="text-text-secondary">پکیج آماده شامل لیدر، گشت و ترانسفر است در حالی که ترکیب پرواز و هتل انعطاف برنامه‌ریزی شخصی بیشتری به شما می‌دهد.</p>
+            <h4 className="text-h4 text-text-heading mb-1">تفاوت تور آماده و پرواز + هتل</h4>
+            <p className="text-text-secondary">تور آماده شامل لیدر، گشت و ترانسفر است در حالی که ترکیب پرواز و هتل انعطاف برنامه‌ریزی شخصی بیشتری به شما می‌دهد.</p>
           </div>
           <div className="bg-surface-primary p-4 rounded-control border border-border-default">
             <h4 className="text-h4 text-text-heading mb-1">تأثیر تاریخ و هتل بر قیمت</h4>
@@ -786,7 +786,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
             بررسی و مقایسه تور مسافرتی پیش از سفر، به برنامه‌ریزی بدون دغدغه کمک می‌کند. آژانس مسافرتی ریوان سفر با ارائه تنوع وسیعی از تورهای داخلی (کیش، مشهد، قشم)، تورهای خارجی (ترکیه، دبی، تایلند، روسیه، اروپا) و تورهای تخصصی نمایشگاهی، شرایطی را فراهم کرده تا مسافران عزیز بتوانند مناسب‌ترین گزینه را بر اساس بودجه و سلیقه خود انتخاب کنند.
           </p>
           <p className="text-body-sm text-text-secondary">
-            تمامی پکیج‌های ارائه‌شده شامل شفافیت کامل در خصوص نوع پرواز، درجه کیفی هتل‌ها، خدمات جانبی (ترانسفر، بیمه، گشت و ویزا) بوده و پشتیبانی کامل کارشناسان از زمان مشاوره تا پایان سفر همراه شماست.
+            همهٔ تورهای ارائه‌شده شامل شفافیت کامل در خصوص نوع پرواز، درجه کیفی هتل‌ها، خدمات جانبی (ترانسفر، بیمه، گشت و ویزا) بوده و پشتیبانی کامل کارشناسان از زمان مشاوره تا پایان سفر همراه شماست.
           </p>
         </div>
       </section>
@@ -853,7 +853,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
 
               {/* Hotel options */}
               <div className="mb-6">
-                <h4 className="text-h4 text-text-heading mb-6 md:mb-8">هتل‌های قابل انتخاب در این پکیج:</h4>
+                <h4 className="text-h4 text-text-heading mb-6 md:mb-8">هتل‌های قابل انتخاب در این تور:</h4>
                 <div className="space-y-2">
                   {selectedDetailTour.hotelOptions.map((h, i) => (
                     <div key={i} className="flex items-center justify-between p-3 rounded-control border border-border-default bg-page-background text-body-sm">
@@ -932,7 +932,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                   disabled={bookingSubmitted}
                   className="btn btn-primary btn-large text-btn w-full"
                 >
-                  {bookingSubmitted ? 'در حال ارسال...' : 'ثبت درخواست تماس برای این تور'}
+                  {bookingSubmitted ? 'در حال ارسال…' : 'ثبت درخواست تماس برای این تور'}
                 </button>
               </form>
 

@@ -114,10 +114,10 @@ export default function Footer({ onNavigate }: FooterProps) {
                 <Plane className="w-5 h-5 -rotate-45" />
               </div>
               <div className="flex flex-col">
-                <span className="text-[22px] font-extrabold text-white tracking-tight leading-none">
+                <span className="text-[22px] font-extrabold text-white leading-none">
                   ریوان سفر
                 </span>
-                <span className="text-caption text-brand-orange font-medium tracking-wide mt-1">
+                <span className="text-caption text-brand-orange font-medium mt-1">
                   آژانس مسافرتی و گردشگری
                 </span>
               </div>
@@ -153,7 +153,7 @@ export default function Footer({ onNavigate }: FooterProps) {
               </a>
               <a
                 href="#linkedin"
-                aria-label="لینكدین ریوان سفر"
+                aria-label="لینکدین ریوان سفر"
                 className="w-9 h-9 rounded-small bg-white/5 hover:bg-brand-orange hover:text-on-brand text-text-on-dark-secondary flex items-center justify-center transition-colors"
               >
                 <Linkedin className="w-4 h-4" />
@@ -294,7 +294,7 @@ export default function Footer({ onNavigate }: FooterProps) {
         {/* Bottom Copyright Bar */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-caption text-text-muted">
           <div>
-            تمامی حقوق این وب‌سایت متعلق به <span className="text-white font-medium">ریوان سفر</span> است. © ۱۴۰۳
+            همهٔ حقوق این وب‌سایت متعلق به <span className="text-white font-medium">ریوان سفر</span> است. © ۱۴۰۵
           </div>
 
           <div className="flex items-center gap-4">

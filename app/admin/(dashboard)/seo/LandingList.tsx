@@ -72,7 +72,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
         setDeleting(null);
         refresh();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در حذف.' });
+        toast({ variant: 'error', title: e instanceof Error ? e.message : 'حذف انجام نشد؛ دوباره تلاش کنید.' });
       }
     });
   };
@@ -195,7 +195,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
         open={Boolean(contentFor)}
         onOpenChange={(openState) => !openState && setContentFor(null)}
         title={contentFor ? `محتوای لندینگ «${contentFor.titleFa}»` : ''}
-        description="بلوک‌های محتوا و لینک‌های داخلی — همان‌هایی که گیت انتشار می‌خواهد."
+        description="بلوک‌های محتوا و لینک‌های داخلی — همان‌هایی که شرایط انتشار می‌خواهد."
         className="max-w-3xl"
       >
         {contentFor ? (

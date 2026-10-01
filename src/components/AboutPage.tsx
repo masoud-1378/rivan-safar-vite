@@ -13,7 +13,7 @@ export default function AboutPage({ onNavigate }: AboutPageProps) {
     <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
       {/* ---------------- Hero Section ---------------- */}
       <section className="bg-surface-primary border-b border-border-default section-compact">
-        <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl text-right">
+        <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl text-start">
           <span className="badge badge-standard mb-3">
             <Building2 className="w-3.5 h-3.5" />
             <span>درباره ریوان سفر البرز</span>
@@ -45,7 +45,7 @@ export default function AboutPage({ onNavigate }: AboutPageProps) {
       </section>
 
       {/* ---------------- Core Values & Commitments ---------------- */}
-      <section className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl section-standard space-y-8 text-right">
+      <section className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl section-standard space-y-8 text-start">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-surface-primary border border-border-default rounded-card p-6">
             <div className="w-10 h-10 rounded-control bg-brand-orange/10 text-brand-orange flex items-center justify-center mb-4">
@@ -53,7 +53,7 @@ export default function AboutPage({ onNavigate }: AboutPageProps) {
             </div>
             <h3 className="text-h4 font-bold text-text-heading mb-2">شفافیت کامل در قیمت‌گذاری</h3>
             <p className="text-body-sm text-text-secondary leading-relaxed">
-              تمام مبالغ، جزئیات اتاق‌ها، نوع خط هوایی و خدمات شامل و غیرشامل به صورت رسمی و کتبی در قرارداد گردشگری منعکس می‌گردد.
+              تمام مبالغ، جزئیات اتاق‌ها، نوع خط هوایی و خدمات شامل و غیرشامل به‌صورت رسمی و کتبی در قرارداد گردشگری منعکس می‌شود.
             </p>
           </div>
 
@@ -73,7 +73,7 @@ export default function AboutPage({ onNavigate }: AboutPageProps) {
             </div>
             <h3 className="text-h4 font-bold text-text-heading mb-2">تخصص در سفرهای تجاری</h3>
             <p className="text-body-sm text-text-secondary leading-relaxed">
-              ریوان سفر تورهای نمایشگاهی بین‌المللی نظیر Canton Fair چین و Gulfood دبی را برای هیئت‌های بازرگانی اجرا می‌کند.
+              ریوان سفر تورهای نمایشگاهی بین‌المللی مانند کانتون فیر چین و Gulfood دبی را برای هیئت‌های بازرگانی اجرا می‌کند.
             </p>
           </div>
         </div>

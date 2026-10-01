@@ -91,7 +91,7 @@ export default function TourForm({
       slug: initial?.slug || '',
       title: initial?.title || '',
       type: initial?.type || 'foreign',
-      typeLabel: initial?.typeLabel || 'پکیج آماده',
+      typeLabel: initial?.typeLabel || 'تور آماده',
       destinationSlugs: Array.isArray(initial?.destinationSlugs) 
         ? (initial.destinationSlugs as string[]) 
         : [],
@@ -104,10 +104,10 @@ export default function TourForm({
       closestDeparture: initial?.closestDeparture || '',
       price: Number(initial?.price) || 0,
       formattedPrice: initial?.formattedPrice || '',
-      priceNote: initial?.priceNote || 'برای هر بزرگسال در اتاق دو تخته',
+      priceNote: initial?.priceNote || 'برای هر بزرگسال در اتاق دوتخته',
       status: initial?.status || 'pending',
       statusLabel: initial?.statusLabel || 'در انتظار تأیید ظرفیت',
-      // گیت انتشار (مایگریشن 0011): پیش‌فرض همیشه پیش‌نویس؛ «انتشار» فقط با دکمهٔ خودش.
+      // شرایط انتشار (مایگریشن 0011): پیش‌فرض همیشه پیش‌نویس؛ «انتشار» فقط با دکمهٔ خودش.
       publishStatus: initial?.publishStatus === 'published' ? 'published' : 'draft',
       image: initial?.image || '',
       badge: initial?.badge || '',
@@ -258,7 +258,7 @@ export default function TourForm({
           });
         } else {
           toast({
-            title: editingId ? 'تور با موفقیت بروزرسانی شد' : 'تور جدید با موفقیت ایجاد شد',
+            title: editingId ? 'تور به‌روزرسانی شد.' : 'تور تازه ساخته شد.',
             description: `تور «${tourTitle}» ذخیره شد.`,
           });
         }
@@ -266,7 +266,7 @@ export default function TourForm({
       } catch (err: any) {
         toast({
           title: 'خطا در ثبت تور',
-          description: err.message || 'مشکلی رخ داد، لطفاً دوباره تلاش کنید.',
+          description: err.message || 'ذخیره انجام نشد؛ اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.',
           variant: 'error',
         });
       }
@@ -275,7 +275,7 @@ export default function TourForm({
 
   return (
     <div className="space-y-6">
-      {/* نوار وضعیت انتشار + پیش‌نمایش در سایت (گیت انتشار، مایگریشن 0011) */}
+      {/* نوار وضعیت انتشار + پیش‌نمایش در سایت (شرایط انتشار، مایگریشن 0011) */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-border bg-card px-4 py-3">
         <div className="flex items-center gap-2">
           <Badge variant={formData.publishStatus === 'published' ? 'success' : 'warning'}>
@@ -306,7 +306,7 @@ export default function TourForm({
           )
         ) : (
           <span className="text-[11px] text-muted-foreground">
-            برای پیش‌نمایش، اول نامک (مرحلهٔ ۱) را وارد کن.
+            برای پیش‌نمایش، اول نامک (مرحلهٔ ۱) را وارد کنید.
           </span>
         )}
       </div>
@@ -325,7 +325,7 @@ export default function TourForm({
                 type="button"
                 onClick={() => setActiveStage(stage.id)}
                 className={cn(
-                  "relative flex flex-col items-start gap-1 rounded-sm p-3 text-right transition-all border cursor-pointer",
+                  "relative flex flex-col items-start gap-1 rounded-sm p-3 text-start transition-all border cursor-pointer",
                   isActive
                     ? "border-brand bg-brand/10"
                     : isPassed
@@ -451,7 +451,7 @@ export default function TourForm({
               </Button>
             </div>
 
-            {/* Save / Cancel buttons — گیت انتشار (مایگریشن 0011) */}
+            {/* Save / Cancel buttons — شرایط انتشار (مایگریشن 0011) */}
             <div className="flex items-center gap-2">
               <Button
                 type="button"
@@ -561,9 +561,9 @@ export default function TourForm({
 
                   <div className="border-t border-border/50 pt-2 flex items-baseline justify-between">
                     <span className="text-[11px] text-muted-foreground">شروع قیمت از:</span>
-                    <div className="text-left font-bold text-foreground">
+                    <div className="text-start font-bold text-foreground">
                       <span className="text-sm font-black">{faNumber(Number(formData.price) || 0)}</span>
-                      <span className="text-[10px] text-muted-foreground mr-1">تومان</span>
+                      <span className="text-[10px] text-muted-foreground me-1">تومان</span>
                     </div>
                   </div>
                 </div>

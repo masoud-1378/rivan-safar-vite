@@ -25,7 +25,7 @@ interface Stage4TrustTermsProps {
 
 const COMMON_DOCS = [
   'پاسپورت با حداقل ۶ ماه اعتبار از تاریخ سفر',
-  'کارت ملی و شناسنامه کلیه مسافران',
+  'کارت ملی و شناسنامه همهٔ مسافران',
   'دو قطعه عکس ۴*۳ زمینه سفید جدید',
   'پرینت حساب بانکی و تمکن مالی ۶ ماهه',
   'ضمانت‌نامه بانکی بازگشت از سفر',
@@ -106,7 +106,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
               />
               <div>
                 <span className="text-xs font-bold text-foreground block">نیاز به دریافت ویزا</span>
-                <span className="text-[11px] text-muted-foreground">آیا مسافر برای این سفر نیازمند اخذ ویزا است؟</span>
+                <span className="text-[11px] text-muted-foreground">مسافر برای این سفر ویزا می‌خواهد؟</span>
               </div>
             </label>
           </div>
@@ -137,7 +137,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
               <Input
                 value={trust.cityTax || ''}
                 onChange={(e) => updateTrust({ cityTax: e.target.value })}
-                placeholder="مثلاً: شبی ۲ الی ۵ یورو"
+                placeholder="مثلاً: شبی ۲ تا ۵ یورو"
               />
             </Field>
           </div>
@@ -160,8 +160,8 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
                   min="0"
                   value={trust.luggageKg || ''}
                   onChange={(e) => updateTrust({ luggageKg: Number(e.target.value) || 0 })}
-                  placeholder="مثلاً: 30"
-                  className="pl-14"
+                  placeholder="مثلاً: ۳۰"
+                  className="ps-14"
                 />
                 <span className="absolute left-3 top-2.5 text-xs text-muted-foreground">کیلوگرم</span>
               </div>
@@ -186,7 +186,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
                 type="button"
                 onClick={() => updateTrust({ activityLevel: lvl.id })}
                 className={cn(
-                  "p-3 rounded-sm border text-right transition-all",
+                  "p-3 rounded-sm border text-start transition-all",
                   isSelected
                     ? "border-emerald-500 bg-emerald-500/10"
                     : "border-border/60 bg-secondary/20 hover:bg-secondary/50"
@@ -215,7 +215,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
 
         {/* Quick presets */}
         <div>
-          <span className="text-[11px] text-muted-foreground block mb-1.5">پیشنهادات سریع برای افزودن:</span>
+          <span className="text-[11px] text-muted-foreground block mb-1.5">پیشنهادهای سریع برای افزودن:</span>
           <div className="flex flex-wrap gap-1.5">
             {COMMON_DOCS.map((doc, i) => {
               const exists = currentDocs.includes(doc);
@@ -226,7 +226,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
                   disabled={exists}
                   onClick={() => addDoc(doc)}
                   className={cn(
-                    "text-[11px] rounded-sm border px-2 py-1 transition-colors text-right",
+                    "text-[11px] rounded-sm border px-2 py-1 transition-colors text-start",
                     exists
                       ? "border-transparent bg-muted/60 text-muted-foreground/60 cursor-not-allowed"
                       : "border-border/80 bg-secondary/40 text-foreground hover:bg-brand/10 hover:border-brand/40"

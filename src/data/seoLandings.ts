@@ -57,7 +57,7 @@ export const SEO_LANDINGS: SeoLanding[] = [
     pageType: 'tours_foreign',
     titleFa: 'تورهای خارجی؛ ترکیه، تایلند و مقاصد فعال | ریوان سفر',
     metaDescriptionFa:
-      'پکیج‌های تور خارجی فعال را با تفکیک مقصد، ویزا، ایرلاین و هتل بررسی کنید.',
+      'تورهای خارجی فعال را با تفکیک مقصد، ویزا، ایرلاین و هتل بررسی کنید.',
     h1Fa: 'تورهای خارجی',
     workflow: 'published',
     indexStatus: 'index',
@@ -189,7 +189,7 @@ export const SEO_LANDINGS: SeoLanding[] = [
     canonicalPath: '/destination/china',
     pageType: 'country',
     titleFa: 'تور چین و نمایشگاه کانتون فیر | ریوان سفر',
-    metaDescriptionFa: 'پکیج نمایشگاهی کانتون فیر گوانگجو با ویزا و ترانسفر.',
+    metaDescriptionFa: 'تور نمایشگاهی کانتون فیر گوانگجو با ویزا و ترانسفر.',
     h1Fa: 'تور چین',
     workflow: 'review',
     indexStatus: 'noindex',
@@ -242,7 +242,7 @@ export interface QualityGateInput {
   contentReady: boolean;
 }
 
-/** گیت انتشار سند 01: فروش واقعی → تقاضا → موجودی → محتوا/QA */
+/** شرایط انتشار سند 01: فروش واقعی → تقاضا → موجودی → محتوا/QA */
 export function qualityGateAllowsIndex(input: QualityGateInput): boolean {
   return (
     input.sellsReally && input.hasDemand && input.hasInventory && input.contentReady

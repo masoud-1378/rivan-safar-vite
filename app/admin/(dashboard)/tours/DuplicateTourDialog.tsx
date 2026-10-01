@@ -114,7 +114,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         title: cleanTitle,
         slug: cleanSlug,
         closestDeparture: departure.trim(),
-        // گیت انتشار (فاز ۲، مایگریشن 0011): کپی همیشه پیش‌نویس است، حتی اگر تور اصلی منتشرشده باشد.
+        // شرایط انتشار (فاز ۲، مایگریشن 0011): کپی همیشه پیش‌نویس است، حتی اگر تور اصلی منتشرشده باشد.
         publishStatus: 'draft',
         // ظرفیت کپی نامشخص است — نه «تأییدشده».
         status: 'pending',
@@ -142,7 +142,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         if (!open) onClose();
       }}
       title="تکثیر تور"
-      description={`از «${tour.title}» یک کپی می‌سازید. مبدأ و ویزا از تور اصلی حفظ می‌شوند و کپی به‌صورت پیش‌نویس ساخته می‌شود.`}
+      description={`از «${tour.title}» یک نسخهٔ تازه می‌سازید. مبدأ و ویزا از تور اصلی حفظ می‌شوند و نسخهٔ تازه به‌صورت پیش‌نویس ساخته می‌شود.`}
       footer={
         <>
           <Button size="lg" disabled={busy} onClick={() => void submit()} className="gap-2">

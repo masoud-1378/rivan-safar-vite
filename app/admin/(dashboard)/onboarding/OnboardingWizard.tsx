@@ -62,7 +62,7 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
                   setState(next);
                   toast({ variant: 'success', title: 'دادهٔ نمونه وارد شد.' });
                 } catch (e) {
-                  toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ورود دادهٔ نمونه.' });
+                  toast({ variant: 'error', title: e instanceof Error ? e.message : 'ورود دادهٔ نمونه انجام نشد؛ دوباره تلاش کنید.' });
                 }
               })
             }

@@ -8,7 +8,7 @@ export default function TourNotFound() {
       <p className="text-6xl font-bold text-muted-foreground">۴۰۴</p>
       <h1 className="text-lg font-bold text-foreground">این تور پیدا نشد</h1>
       <p className="max-w-sm text-sm text-muted-foreground">
-        شاید بایگانی شده یا آدرسش اشتباه است. از فهرست تورها دوباره پیداش کن.
+        شاید بایگانی شده یا آدرسش اشتباه است. از فهرست تورها دوباره پیدایش کن.
       </p>
       <Link href="/admin/tours">
         <Button>بازگشت به فهرست تورها</Button>

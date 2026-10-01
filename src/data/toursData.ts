@@ -2,7 +2,7 @@ export interface TourItem {
   id: string;
   title: string;
   type: 'foreign' | 'domestic' | 'exhibition';
-  typeLabel: string; // e.g. "پکیج آماده", "تور گروهی", "پرواز + هتل"
+  typeLabel: string; // e.g. "تور آماده", "تور گروهی", "پرواز + هتل"
   destination: string;
   origin: string;
   route: string;
@@ -14,7 +14,7 @@ export interface TourItem {
   priceNote: string;
   status: 'confirmed' | 'pending' | 'updating' | 'full';
   statusLabel: string;
-  /** گیت انتشار (مایگریشن 0011)؛ نامشخص = ردیف قدیمی‌تر از ستون = منتشرشده */
+  /** شرایط انتشار (مایگریشن 0011)؛ نامشخص = ردیف قدیمی‌تر از ستون = منتشرشده */
   publishStatus?: 'draft' | 'review' | 'published' | 'paused' | 'archived';
   updatedAt: string;
   image: string;
@@ -34,7 +34,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     id: 'istanbul-sep',
     title: 'تور استانبول ویژه شهریور',
     type: 'foreign',
-    typeLabel: 'پکیج آماده',
+    typeLabel: 'تور آماده',
     destination: 'استانبول',
     origin: 'تهران',
     route: 'تهران به استانبول',
@@ -43,7 +43,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     closestDeparture: '۱۸ شهریور',
     price: 35800000,
     formattedPrice: '۳۵٬۸۰۰٬۰۰۰',
-    priceNote: 'برای هر بزرگسال در اتاق دو تخته',
+    priceNote: 'برای هر بزرگسال در اتاق دوتخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
     updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۴:۳۰',
@@ -66,7 +66,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     id: 'antalya-summer',
     title: 'تور لوکس آنتالیا (خدمات All Inclusive)',
     type: 'foreign',
-    typeLabel: 'پکیج لوکس',
+    typeLabel: 'تور لوکس',
     destination: 'آنتالیا',
     origin: 'تهران',
     route: 'تهران به آنتالیا',
@@ -75,7 +75,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     closestDeparture: '۲۲ شهریور',
     price: 58900000,
     formattedPrice: '۵۸٬۹۰۰٬۰۰۰',
-    priceNote: 'برای هر بزرگسال در اتاق دو تخته',
+    priceNote: 'برای هر بزرگسال در اتاق دوتخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
     updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۵:۱۰',
@@ -106,7 +106,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     closestDeparture: '۱۵ شهریور',
     price: 32500000,
     formattedPrice: '۳۲٬۵۰۰٬۰۰۰',
-    priceNote: 'برای هر بزرگسال در اتاق دو تخته',
+    priceNote: 'برای هر بزرگسال در اتاق دوتخته',
     status: 'pending',
     statusLabel: 'نیازمند تأیید ظرفیت',
     updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۲:۰۰',
@@ -128,7 +128,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     id: 'kish-island',
     title: 'تور کیش هتل‌های ۵ ستاره ساحلی',
     type: 'domestic',
-    typeLabel: 'پکیج داخلی',
+    typeLabel: 'تور داخلی',
     destination: 'کیش',
     origin: 'تهران',
     route: 'تهران به کیش',
@@ -137,7 +137,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     closestDeparture: '۲۰ شهریور',
     price: 14800000,
     formattedPrice: '۱۴٬۸۰۰٬۰۰۰',
-    priceNote: 'برای هر بزرگسال در اتاق دو تخته',
+    priceNote: 'برای هر بزرگسال در اتاق دوتخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
     updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۳:۴۵',
@@ -160,7 +160,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     id: 'mashhad-pilgrim',
     title: 'تور مشهد مقدس (پرواز + هتل نزدیک حرم)',
     type: 'domestic',
-    typeLabel: 'پکیج زیارتی',
+    typeLabel: 'تور زیارتی',
     destination: 'مشهد',
     origin: 'تهران',
     route: 'تهران به مشهد',
@@ -169,7 +169,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     closestDeparture: '۱۶ شهریور',
     price: 9500000,
     formattedPrice: '۹٬۵۰۰٬۰۰۰',
-    priceNote: 'برای هر بزرگسال در اتاق دو تخته',
+    priceNote: 'برای هر بزرگسال در اتاق دوتخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
     updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۱:۲۰',
@@ -189,7 +189,7 @@ export const SAMPLE_TOURS: TourItem[] = [
   },
   {
     id: 'canton-exhibition',
-    title: 'تور نمایشگاهی کنتون فیر چین (گوانگجو)',
+    title: 'تور نمایشگاهی کانتون فیر چین (گوانگجو)',
     type: 'exhibition',
     typeLabel: 'تور تخصصی تجاری',
     destination: 'گوانگجو (چین)',
@@ -200,13 +200,13 @@ export const SAMPLE_TOURS: TourItem[] = [
     closestDeparture: '۲۵ مهر',
     price: 115000000,
     formattedPrice: '۱۱۵٬۰۰۰٬۰۰۰',
-    priceNote: 'برای هر بزرگسال در اتاق دو تخته',
+    priceNote: 'برای هر بزرگسال در اتاق دوتخته',
     status: 'pending',
     statusLabel: 'نیازمند تأیید ظرفیت',
     updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۰:۰۰',
     image: 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?q=80&w=600&auto=format&fit=crop',
     badge: 'نمایشگاهی ویژه',
-    features: ['کارت ورود به نمایشگاه Canton Fair', 'مترجم تخصصی تجاری و ویزا'],
+    features: ['کارت ورود به نمایشگاه کانتون فیر', 'مترجم تخصصی تجاری و ویزا'],
     visaRequired: true,
     hotelStars: 5,
     airline: 'ماهان / قطر ایرویز',
@@ -216,13 +216,13 @@ export const SAMPLE_TOURS: TourItem[] = [
       { name: 'هتل ۵ ستاره وستین گوانگجو', stars: 5, board: 'صبحانه بوفه', pricePerPerson: '۱۳۵٬۰۰۰٬۰۰۰ تومان' },
       { name: 'هتل ۵ ستاره کرون پلاتزا گوانگجو', stars: 5, board: 'صبحانه بوفه', pricePerPerson: '۱۱۵٬۰۰۰٬۰۰۰ تومان' },
     ],
-    description: 'پکیج کامل حضور در بزرگ‌ترین نمایشگاه تجاری جهان Canton Fair گوانگجو. خدمات ویزا، ترانسفر اختصاصی نمایشگاهی و مترجم همراه.'
+    description: 'تور کامل حضور در بزرگ‌ترین نمایشگاه تجاری جهان، کانتون فیر گوانگجو. خدمات ویزا، ترانسفر اختصاصی نمایشگاهی و مترجم همراه.'
   },
   {
     id: 'thailand-phuket',
     title: 'تور تایلند ترکیب بانکوک و پوکت',
     type: 'foreign',
-    typeLabel: 'پکیج ترکیبی',
+    typeLabel: 'تور ترکیبی',
     destination: 'پوکت',
     origin: 'تهران',
     route: 'تهران به بانکوک و پوکت',
@@ -231,7 +231,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     closestDeparture: '۰۵ مهر',
     price: 64500000,
     formattedPrice: '۶۴٬۵۰۰٬۰۰۰',
-    priceNote: 'برای هر بزرگسال در اتاق دو تخته',
+    priceNote: 'برای هر بزرگسال در اتاق دوتخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
     updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۰۹:۱۵',
@@ -262,7 +262,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     closestDeparture: '۱۲ مهر',
     price: 72000000,
     formattedPrice: '۷۲٬۰۰۰٬۰۰۰',
-    priceNote: 'برای هر بزرگسال در اتاق دو تخته',
+    priceNote: 'برای هر بزرگسال در اتاق دوتخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
     updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۶:۰۰',
@@ -292,7 +292,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     closestDeparture: '۲۸ شهریور',
     price: 98000000,
     formattedPrice: '۹۸٬۰۰۰٬۰۰۰',
-    priceNote: 'برای هر بزرگسال در اتاق دو تخته',
+    priceNote: 'برای هر بزرگسال در اتاق دوتخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
     updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۵:۳۰',
@@ -313,7 +313,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     id: 'georgia-tbilisi',
     title: 'تور گرجستان تفلیس و باتومی',
     type: 'foreign',
-    typeLabel: 'پکیج آماده',
+    typeLabel: 'تور آماده',
     destination: 'تفلیس',
     origin: 'تهران',
     route: 'تهران به تفلیس و باتومی',
@@ -322,7 +322,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     closestDeparture: '۲۱ شهریور',
     price: 21500000,
     formattedPrice: '۲۱٬۵۰۰٬۰۰۰',
-    priceNote: 'برای هر بزرگسال در اتاق دو تخته',
+    priceNote: 'برای هر بزرگسال در اتاق دوتخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
     updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۶:۲۰',
@@ -343,7 +343,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     id: 'armenia-yerevan',
     title: 'تور ارمنستان ایروان',
     type: 'foreign',
-    typeLabel: 'پکیج اقتصادی',
+    typeLabel: 'تور اقتصادی',
     destination: 'ایروان',
     origin: 'تهران',
     route: 'تهران به ایروان',
@@ -352,7 +352,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     closestDeparture: '۲۴ شهریور',
     price: 16900000,
     formattedPrice: '۱۶٬۹۰۰٬۰۰۰',
-    priceNote: 'برای هر بزرگسال در اتاق دو تخته',
+    priceNote: 'برای هر بزرگسال در اتاق دوتخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
     updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۰۸:۴۵',
@@ -373,7 +373,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     id: 'malaysia-kl',
     title: 'تور مالزی کوالالامپور و لنکاوی',
     type: 'foreign',
-    typeLabel: 'پکیج ترکیبی',
+    typeLabel: 'تور ترکیبی',
     destination: 'کوالالامپور',
     origin: 'تهران',
     route: 'تهران به کوالالامپور و لنکاوی',
@@ -382,7 +382,7 @@ export const SAMPLE_TOURS: TourItem[] = [
     closestDeparture: '۳۰ شهریور',
     price: 52000000,
     formattedPrice: '۵۲٬۰۰۰٬۰۰۰',
-    priceNote: 'برای هر بزرگسال در اتاق دو تخته',
+    priceNote: 'برای هر بزرگسال در اتاق دوتخته',
     status: 'confirmed',
     statusLabel: 'قیمت و ظرفیت تأییدشده',
     updatedAt: 'نمونه — نیازمند به‌روزرسانی واقعی، ساعت ۱۷:۰۰',
@@ -404,19 +404,19 @@ export const SAMPLE_TOURS: TourItem[] = [
 export const TOUR_FAQ_ITEMS = [
   {
     q: 'قیمت نمایش داده شده تور برای یک نفر است؟',
-    a: 'بله، تمامی قیمت‌های درج شده بر اساس محاسبه «یک نفر بزرگسال در اتاق دو تخته» است. در صورتی که به صورت تکی (اتاق یک تخته) یا همراه کودک سفر می‌کنید، نرخ اتاق و تخت اضافه به صورت دقیق محاسبه خواهد شد.'
+    a: 'بله، همهٔ قیمت‌های درج‌شده بر اساس محاسبه «یک نفر بزرگسال در اتاق دوتخته» است. در صورتی که به‌صورت تکی (اتاق یک‌تخته) یا همراه کودک سفر می‌کنید، نرخ اتاق و تخت اضافه به‌صورت دقیق محاسبه خواهد شد.'
   },
   {
     q: 'قیمت تور چه زمانی قطعی می‌شود؟',
-    a: 'قیمت تور پس از ثبت درخواست اولیه و استعلام لحظه‌ای پرواز و ظرفیت خالی هتل توسط کارشناسان ریوان سفر قطعی شده و پیش‌فاکتور رسمی صادر می‌گردد.'
+    a: 'قیمت تور پس از ثبت درخواست اولیه و استعلام لحظه‌ای پرواز و ظرفیت خالی هتل را کارشناسان ریوان سفر قطعی می‌کنند و پیش‌فاکتور رسمی صادر می‌شود.'
   },
   {
     q: 'آیا امکان هماهنگی تلفنی تور وجود دارد؟',
-    a: 'بله، شما می‌توانید علاوه بر ثبت درخواست آنلاین در سایت، از طریق تماس تلفنی با شماره ۰۲۶-۳۳۳۵۰۱۳۹ مستقیماً با کارشناسان تور مشورت کنید و درخواست خود را تلفنی ثبت نمایید.'
+    a: 'بله، شما می‌توانید علاوه بر ثبت درخواست آنلاین در سایت، از طریق تماس تلفنی با شماره ۰۲۶-۳۳۳۵۰۱۳۹ مستقیماً با کارشناسان تور مشورت کنید و درخواست خود را تلفنی ثبت کنید.'
   },
   {
     q: 'پس از ثبت درخواست چه اتفاقی می‌افتد؟',
-    a: 'کارشناس مربوطه حداکثر ظرف ۱۵ الی ۳۰ دقیقه با شما تماس گرفته، شرایط پرواز، مدارک لازم و قیمت نهایی را هماهنگ کرده و لینک پرداخت و مدارک پیش‌قرارداد را برای شما ارسال می‌نماید.'
+    a: 'کارشناس مربوطه حداکثر ظرف ۱۵ تا ۳۰ دقیقه با شما تماس گرفته، شرایط پرواز، مدارک لازم و قیمت نهایی را هماهنگ کرده و لینک پرداخت و مدارک پیش‌قرارداد را برای شما ارسال می‌کند.'
   },
   {
     q: 'برای تور خارجی چه مدارکی لازم است؟',
@@ -428,15 +428,15 @@ export const TOUR_FAQ_ITEMS = [
   },
   {
     q: 'هزینه ویزا داخل قیمت تور است؟',
-    a: 'در پکیج‌هایی که نیاز به ویزا دارند (مانند دبی، تایلند و چین)، هزینه صدور ویزا در متن پکیج شفاف ذکر شده و معمولاً همراه با پرواز و هتل محاسبه شده است.'
+    a: 'در تورهایی که نیاز به ویزا دارند (مانند دبی، تایلند و چین)، هزینه صدور ویزا در جزئیات تور شفاف ذکر شده و معمولاً همراه با پرواز و هتل محاسبه شده است.'
   },
   {
     q: 'برای کودک و نوزاد چگونه قیمت محاسبه می‌شود؟',
-    a: 'نرخ نوزاد (زیر ۲ سال) بسیار ناچیز و مربوط به بیمه و بلیط نوزاد است. نرخ کودک ۲ تا ۱۲ سال بر اساس داشتن تخت اضافه یا بدون تخت در هتل محاسبه می‌گردد.'
+    a: 'نرخ نوزاد (زیر ۲ سال) بسیار ناچیز و مربوط به بیمه و بلیت نوزاد است. نرخ کودک ۲ تا ۱۲ سال بر اساس داشتن تخت اضافه یا بدون تخت در هتل محاسبه می‌شود.'
   },
   {
     q: 'آیا امکان پرداخت اندازه‌ای یا اقساطی وجود دارد؟',
-    a: 'برای برخی پکیج‌های پیش‌خرید یا سفر با فاصله زمانی زیاد، امکان پیش‌پرداخت درصد مشخصی در زمان عقد قرارداد و تسویه مابقی تا قبل از پرواز فراهم است.'
+    a: 'برای برخی تورهای پیش‌خرید یا سفر با فاصله زمانی زیاد، امکان پیش‌پرداخت درصد مشخصی در زمان عقد قرارداد و تسویه مابقی تا قبل از پرواز فراهم است.'
   },
   {
     q: 'اگر ظرفیت هتل یا پرواز تأیید نشود چه می‌شود؟',

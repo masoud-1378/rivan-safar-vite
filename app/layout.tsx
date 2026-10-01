@@ -11,7 +11,7 @@ import { vazirmatn } from "./fonts";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'ریوان سفر | تورهای داخلی، خارجی و نمایشگاهی با مسیر شفاف',
+    default: 'تورهای داخلی، خارجی و نمایشگاهی با مسیر شفاف · ریوان سفر',
     template: '%s',
   },
   description:

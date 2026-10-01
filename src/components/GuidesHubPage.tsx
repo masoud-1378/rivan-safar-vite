@@ -22,7 +22,7 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
     { id: 'all', label: 'همه راهنماها' },
     { id: 'visa', label: 'مدارک و ویزا' },
     { id: 'budget', label: 'مدیریت بودجه و خرید هوشمند' },
-    { id: 'comparison', label: 'مقایسه پکیج و هتل' },
+    { id: 'comparison', label: 'مقایسه تور و هتل' },
   ];
 
   const allGuides = Object.values(guides);
@@ -47,7 +47,7 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
               راهنماهای تخصصی انتخاب تور، مدارک و برنامه‌ریزی سفر
             </h1>
             <p className="text-body text-text-secondary leading-relaxed mb-6">
-              مجموعه مقالات کاربردی ریوان سفر برای پاسخ به سؤالات مسافران؛ از بررسی مدارک و مراحل اخذ ویزا تا راهکارهای صرفه‌جویی در هزینه تور و مقایسه پرواز و پکیج.
+              مجموعه مقالات کاربردی ریوان سفر برای پاسخ به سؤالات مسافران؛ از بررسی مدارک و مراحل اخذ ویزا تا راهکارهای صرفه‌جویی در هزینه تور و مقایسه پرواز و تور.
             </p>
 
             {/* Search */}
@@ -57,7 +57,7 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="جستجو در موضوعات راهنمای سفر..."
+                placeholder="جست‌وجو در موضوعات راهنمای سفر…"
                 className="w-full bg-surface-secondary border border-border-default rounded-control pr-11 pl-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
               />
             </div>
@@ -83,7 +83,7 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
         {filteredGuides.length === 0 ? (
           <div className="bg-surface-primary border border-border-default rounded-card p-10 text-center max-w-lg mx-auto">
             <p className="text-h4 font-bold text-text-heading mb-2">راهنمایی با این عبارت یافت نشد</p>
-            <p className="text-body-sm text-text-secondary mb-4">لطفاً عبارت دیگری را جستجو نمایید.</p>
+            <p className="text-body-sm text-text-secondary mb-4">لطفاً عبارت دیگری را جست‌وجو کنید.</p>
             <button
               onClick={() => {
                 setSearchTerm('');
@@ -119,7 +119,7 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
                     <div className="flex items-center gap-3 text-caption text-text-muted mb-2 font-medium">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
-                        <span>زمان مطالعه: {guide.readTime}</span>
+                        <span>زمان مطالعه: {guide.readTime.replace(' مطالعه', '')}</span>
                       </span>
                       <span>•</span>
                       <span>{guide.lastReviewedAt}</span>

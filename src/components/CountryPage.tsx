@@ -122,7 +122,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
             {/* Right Column: Key Details & Actions */}
-            <div className="lg:col-span-7 text-right">
+            <div className="lg:col-span-7 text-start">
               
               {/* Simple Clean Headline */}
               <h1 className="text-h1 text-text-heading font-extrabold mb-3 leading-tight">
@@ -135,11 +135,11 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
               </p>
 
               {/* Focused Starting Price Box */}
-              <div className="p-4 bg-surface-secondary rounded-card border border-border-default/80 mb-6 text-right max-w-md">
-                <span className="text-caption text-text-muted block mb-0.5">شروع قیمت پکیج‌ها:</span>
+              <div className="p-4 bg-surface-secondary rounded-card border border-border-default/80 mb-6 text-start max-w-md">
+                <span className="text-caption text-text-muted block mb-0.5">شروع قیمت تورها:</span>
                 <div className="flex items-baseline gap-2">
                   <span className="text-h3 font-extrabold text-brand-orange leading-tight">{country.startingPrice}</span>
-                  <span className="text-caption text-text-muted">/ {country.startingPriceNote || 'هر نفر در اتاق ۲ تخته'}</span>
+                  <span className="text-caption text-text-muted">/ {country.startingPriceNote || 'هر نفر در اتاق دوتخته'}</span>
                 </div>
               </div>
 
@@ -158,7 +158,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                   className="btn btn-medium btn-secondary text-btn inline-flex items-center gap-2 font-semibold"
                 >
                   <Compass className="w-4 h-4 text-brand-orange" />
-                  <span>مشاهده پکیج‌های فعال</span>
+                  <span>مشاهده تورهای فعال</span>
                 </a>
               </div>
             </div>
@@ -181,7 +181,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                 <div className="absolute top-3.5 right-3.5">
                   <div className="backdrop-blur-md bg-brand-navy/85 text-white border border-white/20 px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-brand-orange" />
-                    <span className="text-caption font-bold tracking-wide">{country.activeToursCount} پکیج فعال</span>
+                    <span className="text-caption font-bold ">{country.activeToursCount} تور فعال</span>
                   </div>
                 </div>
               </div>
@@ -194,7 +194,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
       {/* ---------------- 3. Cities & Destinations Catalog in this Country ---------------- */}
       {countryCities.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 text-right">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 text-start">
             <div>
               <h2 className="text-h2 text-text-heading font-bold mb-1">
                 شهرهای توریستی {country.name}
@@ -261,7 +261,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
       <section id="active-tours" className="bg-surface-primary border-y border-border-default py-12 scroll-mt-24">
         <div className="container-main px-4 sm:px-6 lg:px-8">
           
-          <div className="flex items-center gap-2 mb-6 text-right">
+          <div className="flex items-center gap-2 mb-6 text-start">
             <Compass className="w-5 h-5 text-brand-orange" />
             <h2 className="text-h2 text-text-heading font-bold">
               لیست تورهای {country.name}
@@ -293,7 +293,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
             <div className="bg-surface-secondary border border-border-default rounded-card p-8 text-center max-w-xl mx-auto">
               <Info className="w-10 h-10 text-brand-orange mx-auto mb-3" />
               <p className="text-body font-bold text-text-heading mb-1.5">
-                در حال حاضر پکیج فعالی در سیستم ثبت نشده است
+                در حال حاضر تور فعالی در سیستم ثبت نشده است
               </p>
               <p className="text-body-sm text-text-secondary mb-5">
                 برای استعلام ظرفیت، پروازهای اختصاصی یا تاریخ‌های دلخواه با کارشناسان ما هماهنگ کنید.
@@ -330,7 +330,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
               </p>
             </div>
 
-            <div className="space-y-3 text-right">
+            <div className="space-y-3 text-start">
               {country.faqs.map((faq, idx) => {
                 const isOpen = openFaqIndices.includes(idx);
                 return (
@@ -340,7 +340,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                   >
                     <button
                       onClick={() => toggleFaq(idx)}
-                      className="w-full p-4 md:p-5 flex items-center justify-between text-right gap-4 hover:bg-surface-secondary transition-colors"
+                      className="w-full p-4 md:p-5 flex items-center justify-between text-start gap-4 hover:bg-surface-secondary transition-colors"
                     >
                       <span className="text-body font-bold text-text-heading flex items-center gap-2.5">
                         <span className="w-6 h-6 rounded-full bg-brand-navy/10 text-brand-navy flex items-center justify-center text-caption font-bold shrink-0">
@@ -372,7 +372,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
       {/* ---------------- 6. Quick Inquiry / Booking Form Section ---------------- */}
       <section id="inquiry-form" className="bg-surface-secondary border-t border-border-default py-12 scroll-mt-24">
         <div className="container-main px-4 sm:px-6 lg:px-8 max-w-2xl">
-          <div className="bg-surface-primary border border-border-default rounded-card p-6 md:p-8 shadow-card text-right">
+          <div className="bg-surface-primary border border-border-default rounded-card p-6 md:p-8 shadow-card text-start">
             
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-control bg-brand-orange text-white flex items-center justify-center shrink-0">
@@ -416,7 +416,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                       value={inquiryPhone}
                       onChange={(e) => setInquiryPhone(e.target.value)}
                       dir="ltr"
-                      className="w-full px-3.5 py-2.5 rounded-control border border-border-default bg-surface-secondary text-body-sm text-text-primary focus:outline-none focus:border-brand-orange focus:bg-surface-primary transition-colors text-right"
+                      className="w-full px-3.5 py-2.5 rounded-control border border-border-default bg-surface-secondary text-body-sm text-text-primary focus:outline-none focus:border-brand-orange focus:bg-surface-primary transition-colors text-start"
                       required
                     />
                   </div>
@@ -429,7 +429,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                     className="btn btn-medium btn-primary text-btn w-full font-bold shadow-card flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
-                      <span>در حال ارسال...</span>
+                      <span>در حال ارسال…</span>
                     ) : (
                       <>
                         <span>ثبت درخواست</span>

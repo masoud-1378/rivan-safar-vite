@@ -10,10 +10,10 @@ export type Validator<V = unknown> = (value: V, values: Record<string, unknown>)
 
 export const rules = {
   required: (msg = "این فیلد الزامی است"): Validator => (v) => (v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0) ? msg : undefined),
-  minLength: (n: number, msg?: string): Validator => (v) => (typeof v === "string" && v.length < n ? msg ?? `حداقل ${n} کاراکتر` : undefined),
+  minLength: (n: number, msg?: string): Validator => (v) => (typeof v === "string" && v.length < n ? msg ?? `حداقل ${n} نویسه` : undefined),
   pattern: (re: RegExp, msg = "فرمت واردشده درست نیست"): Validator => (v) => (typeof v === "string" && v && !re.test(v) ? msg : undefined),
-  mobile: (msg = "شماره‌ی موبایل معتبر نیست"): Validator => (v) => (typeof v === "string" && v && !isIranMobile(v) ? msg : undefined),
-  iban: (msg = "شماره‌ی شبا معتبر نیست"): Validator => (v) => (typeof v === "string" && v && !isIban(v) ? msg : undefined),
+  mobile: (msg = "شمارهٔ موبایل معتبر نیست"): Validator => (v) => (typeof v === "string" && v && !isIranMobile(v) ? msg : undefined),
+  iban: (msg = "شمارهٔ شبا معتبر نیست"): Validator => (v) => (typeof v === "string" && v && !isIban(v) ? msg : undefined),
   nationalId: (msg = "کد ملی معتبر نیست"): Validator => (v) => (typeof v === "string" && v && !isNationalId(v) ? msg : undefined),
   email: (msg = "ایمیل معتبر نیست"): Validator => (v) => (typeof v === "string" && v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? msg : undefined),
   equals: (other: string, msg = "مقدارها یکسان نیستند"): Validator => (v, all) => (v !== all[other] ? msg : undefined),

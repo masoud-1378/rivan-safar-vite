@@ -30,7 +30,7 @@ export default async function TourLeadsPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">درخواست‌های رزرو و استعلام تور</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            درخواست‌های ثبت‌شده توسط مسافران برای پکیج‌های اختصاصی و تورها.
+            درخواست‌های ثبت‌شده توسط مسافران برای تورهای اختصاصی.
           </p>
         </div>
         <SectionSettingsDialog

@@ -66,7 +66,7 @@ export default function DestinationsCatalogPage({ onNavigate }: DestinationsCata
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="جستجوی نام شهر، کشور یا مقصد..."
+                  placeholder="جست‌وجوی نام شهر، کشور یا مقصد…"
                   className="w-full bg-surface-secondary border border-border-default rounded-control pr-11 pl-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none transition-colors"
                 />
               </div>
@@ -96,7 +96,7 @@ export default function DestinationsCatalogPage({ onNavigate }: DestinationsCata
           <div className="bg-surface-primary border border-border-default rounded-card p-10 text-center max-w-lg mx-auto">
             <p className="text-h4 font-bold text-text-heading mb-2">مقصدی با این مشخصات یافت نشد</p>
             <p className="text-body-sm text-text-secondary mb-4">
-              لطفاً املای عبارت جستجو را بررسی کرده یا دسته‌بندی دیگری را انتخاب کنید.
+              لطفاً املای عبارت جست‌وجو را بررسی کرده یا دسته‌بندی دیگری را انتخاب کنید.
             </p>
             <button
               onClick={() => {

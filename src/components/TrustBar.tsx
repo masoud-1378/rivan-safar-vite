@@ -7,7 +7,7 @@ export default function TrustBar() {
       id: 'license',
       icon: ShieldCheck,
       title: 'مجوز رسمی',
-      desc: 'استعلام آسان از وزارتخانه',
+      desc: 'استعلام آسان از سازمان میراث فرهنگی',
       href: '#licenses'
     },
     {

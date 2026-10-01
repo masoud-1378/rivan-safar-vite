@@ -19,7 +19,7 @@ export interface ContactInfo {
 const FALLBACK: ContactInfo = {
   phone: '02633350139',
   phoneHref: 'tel:02633350139',
-  phoneDisplay: '۰۲۶ — ۳۳۳۵۰۱۳۹',
+  phoneDisplay: '۰۲۶-۳۳۳۵۰۱۳۹',
   phoneSecondary: '',
   email: 'info@rivansafar.com',
   address: 'کرج، مهرشهر، بلوار شهرداری، نبش ۲۰۸، ساختمان آماتیس، واحد ۷',

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn, fa } from '@/lib/utils';
 import type { TourItineraryDayItem, TourInput } from '../actions';
 
 interface Stage3ItineraryProps {
@@ -142,7 +142,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
               <div className="flex items-center justify-between pb-2 border-b border-border/60">
                 <div className="flex items-center gap-2">
                   <span className="flex size-7 items-center justify-center rounded-sm bg-emerald-500/10 text-emerald-600 text-xs font-bold">
-                    روز {dayItem.day}
+                    روز {fa(dayItem.day)}
                   </span>
                   <span className="text-xs font-bold text-foreground">
                     {dayItem.title || `فعالیت روز ${dayItem.day}`}
@@ -196,7 +196,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
                           type="button"
                           onClick={() => handleUpdateDay(idx, { activityType: act.id })}
                           className={cn(
-                            "flex items-center gap-2 rounded-sm border p-2 text-right transition-colors text-xs",
+                            "flex items-center gap-2 rounded-sm border p-2 text-start transition-colors text-xs",
                             active
                               ? "border-emerald-500 bg-emerald-500/10 font-bold text-foreground"
                               : "border-border/60 bg-secondary/30 text-muted-foreground hover:bg-secondary/60"
@@ -243,7 +243,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
         <div className="rounded-sm border border-border bg-card p-4 space-y-3">
           <div className="flex items-center gap-2 text-xs font-bold text-foreground">
             <CheckCircle2 className="size-4 text-emerald-500" />
-            <span>خدمات رایگان و همراه تور (Included)</span>
+            <span>خدمات همراه تور</span>
           </div>
 
           <div className="flex gap-2">
@@ -282,7 +282,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
         <div className="rounded-sm border border-border bg-card p-4 space-y-3">
           <div className="flex items-center gap-2 text-xs font-bold text-foreground">
             <XCircle className="size-4 text-destructive" />
-            <span>خدمات غیررایگان یا گشت‌های اختیاری (Excluded)</span>
+            <span>خدمات خارج از تور</span>
           </div>
 
           <div className="flex gap-2">

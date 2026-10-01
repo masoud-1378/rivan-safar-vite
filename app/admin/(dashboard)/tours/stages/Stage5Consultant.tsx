@@ -23,7 +23,7 @@ interface Stage5ConsultantProps {
 
 /**
  * وضعیت ظرفیت تور (ستون status) — ربطی به انتشار ندارد؛ انتشار از دکمه‌های
- * «ثبت پیش‌نویس» / «انتشار» پایین فرم انجام می‌شود (گیت انتشار، مایگریشن 0011).
+ * «ثبت پیش‌نویس» / «انتشار» پایین فرم انجام می‌شود (شرایط انتشار، مایگریشن 0011).
  */
 const CAPACITY_OPTIONS = [
   { value: 'pending', label: 'در انتظار تأیید ظرفیت' },
@@ -55,7 +55,7 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
           <div>
             <h3 className="text-sm font-bold text-foreground">مرحله پنجم: کارشناس تخصصی، پادکست صوتی و وضعیت انتشار</h3>
             <p className="text-xs text-muted-foreground">
-              افزودن لمس انسانی (Human Touch)، کارت مشاور مستقیم مسیر با شماره داخلی، ویس راهنما و وضعیت نهایی تور
+              افزودن حس انسانی، کارت مشاور مستقیم مسیر با شماره داخلی، ویس راهنما و وضعیت نهایی تور
             </p>
           </div>
         </div>
@@ -93,7 +93,7 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
           </div>
 
           <div>
-            <Field label="شماره تلفن مستقیم یا شماره داخلی" hint="مثال: 021-91000000 داخلی 204">
+            <Field label="شماره تلفن مستقیم یا شماره داخلی" hint="مثال: ۰۲۱-۹۱۰۰۰۰۰۰ داخلی ۲۰۴">
               <Input
                 dir="ltr"
                 value={consultant.phone || ''}
@@ -124,7 +124,7 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
                   value={consultant.audioUrl || ''}
                   onChange={(e) => updateConsultant({ audioUrl: e.target.value })}
                   placeholder="https://rivansafar.com/audio/..."
-                  className="pl-9"
+                  className="ps-9"
                 />
                 <Mic className="size-4 text-purple-500 absolute left-3 top-2.5" />
               </div>
@@ -143,7 +143,7 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
           rows={4}
           value={data.description}
           onChange={(e) => onChange({ description: e.target.value })}
-          placeholder="روایت جذاب و صادقانه از حال و هوای سفر، تجربیات خاص این مسیر و چرایی انتخاب این پکیج توسط مسافر…"
+          placeholder="روایت جذاب و صادقانه از حال و هوای سفر، تجربیات خاص این مسیر و چرایی انتخاب این تور توسط مسافر…"
           className="w-full rounded-sm border border-input bg-background p-3 text-xs leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>

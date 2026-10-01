@@ -242,7 +242,7 @@ export default function ExhibitionForm({
       />
 
       <div className="flex items-center gap-3 pt-2">
-          <Button type="submit" disabled={pending}>{pending ? 'در حال ذخیره...' : 'ذخیره'}</Button>
+          <Button type="submit" disabled={pending}>{pending ? 'در حال ذخیره…' : 'ذخیره'}</Button>
         {onCancel && (
           <Button type="button" onClick={onCancel} variant="outline">انصراف</Button>
         )}

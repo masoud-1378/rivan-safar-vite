@@ -126,7 +126,7 @@ export default function ArchiveManager({ groups, isOwner }: Props) {
         onOpenChange={(o) => !o && setPendingDelete(null)}
         title={pendingDelete ? `حذف دائمی «${pendingDelete.title}»؟` : ''}
         description="این رکورد برای همیشه از پایگاه داده پاک می‌شود و هیچ راهی برای برگرداندنش نیست. اگر هنوز ممکن است به آن نیاز داشته باشید، به‌جای حذف دائمی آن را بازیابی کنید."
-        confirmText="بله، برای همیشه حذف شود"
+        confirmText="حذف دائمی"
         destructive
         onConfirm={onHardDelete}
       />

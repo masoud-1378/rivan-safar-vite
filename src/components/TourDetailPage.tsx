@@ -218,7 +218,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   <span>شفافیت خدمات ریوان سفر</span>
                 </div>
                 <p className="leading-relaxed">
-                  تمامی موارد هتل، پرواز، ترانسفر و بیمه در قرارداد رسمی گردشگری به صورت مکتوب قید می‌گردند.
+                  همهٔ موارد هتل، پرواز، ترانسفر و بیمه در قرارداد رسمی گردشگری به‌صورت مکتوب قید می‌شود.
                 </p>
               </div>
             </div>
@@ -288,7 +288,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
             <div className="bg-surface-secondary/60 border border-border-default rounded-card p-6 text-right">
               <div className="flex items-center gap-2 text-h3 text-text-heading font-bold mb-4">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                <h3>خدمات شامل پکیج</h3>
+                <h3>خدمات شامل تور</h3>
               </div>
               <ul className="space-y-3 text-body-sm text-text-primary font-medium">
                 {tour.includedServices.map((srv, idx) => (
@@ -330,7 +330,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
               {isDomestic
                 ? 'برای این تور داخلی، همراه داشتن کارت ملی هوشمند و شناسنامه معتبر برای پذیرش پرواز و تحویل اتاق در هتل الزامی است.'
                 : tour.visaRequired 
-                  ? 'این تور نیازمند ویزا است. مدارک لازم شامل گذرنامه با ۷ ماه اعتبار و مدارک شغلی/تمکن توسط کارشناس اخذ می‌شود.'
+                  ? 'این تور نیازمند ویزا است. مدارک لازم شامل گذرنامه با ۷ ماه اعتبار و مدارک شغلی/تمکن را کارشناس اخذ می‌کند.'
                   : 'این مقصد نیازی به اخذ ویزا ندارد. داشتن گذرنامه با حداقل ۶ ماه اعتبار الزامی است.'}
             </p>
           </div>
@@ -338,7 +338,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
           <div className="bg-surface-primary border border-border-default rounded-card p-6">
             <h3 className="text-h4 font-bold text-text-heading mb-2">قوانین کودک و تخت اضافه</h3>
             <p className="text-caption text-text-secondary leading-relaxed">
-              کودکان زیر ۲ سال (نوزاد) هزینه ناچیز بیمه و پرواز دارند. کودکان ۲ تا ۱۲ سال با تخت یا بدون تخت با تخفیف محاسبه می‌گردند.
+              کودکان زیر ۲ سال (نوزاد) هزینه ناچیز بیمه و پرواز دارند. کودکان ۲ تا ۱۲ سال با تخت یا بدون تخت با تخفیف محاسبه می‌شود.
             </p>
           </div>
 
@@ -359,7 +359,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
             <span className="badge badge-standard mb-2">پیگیری با کارشناس</span>
             <h3 className="text-h2 text-text-heading font-bold mb-2">ثبت درخواست تماس برای {tour.title}</h3>
             <p className="text-body-sm text-text-secondary">
-              نام و شماره تماس خود را وارد کنید. کارشناس تخصصی ریوان سفر جهت بررسی نهایی ظرفیت، پرواز و هتل با شما تماس خواهد گرفت. ثبت این فرم تعهد پرداخت ایجاد نمی‌کند.
+              نام و شماره تماس خود را وارد کنید. کارشناس تخصصی ریوان سفر برای بررسی نهایی ظرفیت، پرواز و هتل با شما تماس خواهد گرفت. ثبت این فرم تعهد پرداخت ایجاد نمی‌کند.
             </p>
           </div>
 
@@ -391,7 +391,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
               </div>
 
               <div>
-                <label className="block text-caption font-bold text-text-heading mb-1">شماره تلفن همراه <span className="text-red-500">*</span></label>
+                <label className="block text-caption font-bold text-text-heading mb-1">شماره موبایل <span className="text-red-500">*</span></label>
                 <input
                   type="tel"
                   required
@@ -436,7 +436,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   rows={2}
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="مثال: تاریخ ترجیحی حرکت، سن همراهان کودک، درخواست گشت شهری اضافه..."
+                  placeholder="مثال: تاریخ ترجیحی حرکت، سن همراهان کودک، درخواست گشت شهری اضافه…"
                   className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
                 ></textarea>
               </div>
@@ -448,7 +448,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   className="btn btn-medium btn-primary w-full text-btn font-bold inline-flex items-center justify-center gap-2 shadow-subtle"
                 >
                   <Send className="w-4 h-4" />
-                  <span>{formLoading ? 'در حال ارسال درخواست...' : 'ثبت درخواست استعلام قیمت و ظرفیت'}</span>
+                  <span>{formLoading ? 'در حال ارسال درخواست…' : 'ثبت درخواست استعلام قیمت و ظرفیت'}</span>
                 </button>
               </div>
 

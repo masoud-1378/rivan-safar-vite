@@ -28,7 +28,7 @@ export default async function AdminTourNewPage({ searchParams }: Props) {
   if (source) {
     const { id: _id, slug: _slug, ...rest } = source;
     // تکثیر همیشه پیش‌نویسِ در انتظار تأیید ظرفیت است — وضعیت منبع به ارث نمی‌رسد.
-    initial = { ...rest, id: '', slug: '', title: `${source.title} (کپی)`, publishStatus: 'draft', status: 'pending', statusLabel: 'در انتظار تأیید ظرفیت' };
+    initial = { ...rest, id: '', slug: '', title: `${source.title} (تکثیر)`, publishStatus: 'draft', status: 'pending', statusLabel: 'در انتظار تأیید ظرفیت' };
     duplicateTitle = source.title;
   }
 

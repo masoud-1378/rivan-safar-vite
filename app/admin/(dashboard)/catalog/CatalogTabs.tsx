@@ -25,7 +25,7 @@ export default function CatalogTabs({
     <div className="admin-enter space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">کاتالوگ</h1>
-        <p className="mt-1 text-sm text-muted-foreground">مقصدها، مبدأها و هتل‌ها — همه در یک صفحه</p>
+        <p className="mt-1 text-sm text-muted-foreground">مقصدها، مبدأها و هتل‌ها؛ همه در یک صفحه</p>
       </div>
       <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="بخش‌های کاتالوگ">
         {TABS.map((t) => {

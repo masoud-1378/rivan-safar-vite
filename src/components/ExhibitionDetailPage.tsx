@@ -111,7 +111,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
               <div className="p-4 bg-surface-secondary rounded-card border border-border-default mb-6 text-caption space-y-2.5">
                 <div className="flex items-center gap-2 font-medium text-text-heading">
                   <Calendar className="w-4 h-4 text-brand-orange shrink-0" />
-                  <span>تاریخ دوره پیش‌رو: <strong>{ex.upcomingEdition.solarDate}</strong> ({ex.upcomingEdition.gregorianDate})</span>
+                  <span>تاریخ دوره پیش‌رو: <strong>{ex.upcomingEdition.solarDate}</strong> </span>
                 </div>
                 <div className="flex items-center gap-2 text-text-secondary">
                   <Building2 className="w-4 h-4 text-brand-navy shrink-0" />
@@ -127,7 +127,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
               <div className="p-5 bg-surface-secondary/80 rounded-card border border-border-default mb-6">
                 <div className="flex flex-wrap items-baseline justify-between gap-3 mb-2">
                   <div>
-                    <span className="text-caption text-text-secondary block mb-1">شروع قیمت پکیج تجاری:</span>
+                    <span className="text-caption text-text-secondary block mb-1">شروع قیمت تور تجاری:</span>
                     <span className="text-h2 font-extrabold text-brand-orange">{ex.upcomingEdition.startingPrice}</span>
                   </div>
                   <a
@@ -135,7 +135,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2 font-bold shadow-subtle"
                   >
                     <Phone className="w-4 h-4" />
-                    <span>مشاوره پکیج نمایشگاهی</span>
+                    <span>مشاوره تور نمایشگاهی</span>
                   </a>
                 </div>
                 <p className="text-caption text-text-secondary border-t border-border-default/40 pt-2">
@@ -178,7 +178,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
               فازها و دسته‌بندی کالایی نمایشگاه
             </h2>
             <p className="text-body-sm text-text-secondary">
-              کالای تخصصی خود را پیدا کنید و فاز مناسب را برای حضور انتخاب نمایید.
+              کالای تخصصی خود را پیدا کنید و فاز مناسب را برای حضور انتخاب کنید.
             </p>
           </div>
 
@@ -204,7 +204,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   href="#trade-form"
                   className="btn btn-secondary btn-small w-full text-caption font-bold text-center"
                 >
-                  استعلام پکیج این فاز
+                  استعلام تور این فاز
                 </a>
               </div>
             ))}
@@ -217,10 +217,10 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
         <div className="container-main px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl text-right mb-6">
             <h2 className="text-h2 text-text-heading font-bold mb-2">
-              خدمات پکیج سفر تجاری ریوان سفر
+              خدمات سفر تجاری ریوان سفر
             </h2>
             <p className="text-body-sm text-text-secondary">
-              تمامی خدمات زیر در پکیج ثبت‌نام شما گنجانده شده و به صورت مکتوب در قرارداد قید می‌گردد.
+              همهٔ خدمات زیر در تور شما گنجانده شده و به‌صورت مکتوب در قرارداد قید می‌شود.
             </p>
           </div>
 
@@ -259,7 +259,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
             <span className="badge badge-warning mb-2">مشاوره تخصصی بازرگانی</span>
             <h3 className="text-h2 text-text-heading font-bold mb-2">درخواست مشاوره سفر به {ex.title}</h3>
             <p className="text-body-sm text-text-secondary">
-              جهت هماهنگی ویزا، دریافت برنامه دقیق پرواز و اقامت در هتل‌های نزدیک نمایشگاه فرم زیر را تکمیل نمایید.
+              برای هماهنگی ویزا، دریافت برنامهٔ دقیق پرواز و اقامت در هتل‌های نزدیک نمایشگاه، فرم زیر را تکمیل کنید.
             </p>
           </div>
 
@@ -268,9 +268,9 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
               <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
                 <Check className="w-6 h-6" />
               </div>
-              <h4 className="text-h4 font-bold mb-2">درخواست شما ثبت گردید</h4>
+              <h4 className="text-h4 font-bold mb-2">درخواست شما ثبت شد</h4>
               <p className="text-body-sm text-emerald-800 mb-4">
-                کارشناس دپارتمان نمایشگاهی ریوان سفر جهت ارائه شرایط و مدارک ویزا به زودی با شما تماس خواهد گرفت.
+                کارشناس دپارتمان نمایشگاهی ریوان سفر برای ارائهٔ شرایط و مدارک ویزا به‌زودی با شما تماس خواهد گرفت.
               </p>
               <div className="text-caption text-emerald-700">
                 تماس مستقیم با بخش نمایشگاهی: <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a>
@@ -338,7 +338,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   rows={2}
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="حوزه کاری، فاز مد نظر، درخواست مترجم..."
+                  placeholder="حوزه کاری، فاز مد نظر، درخواست مترجم…"
                   className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
                 ></textarea>
               </div>
@@ -350,7 +350,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   className="btn btn-medium btn-primary w-full text-btn font-bold inline-flex items-center justify-center gap-2 shadow-subtle"
                 >
                   <Send className="w-4 h-4" />
-                  <span>{formLoading ? 'در حال ارسال درخواست...' : `درخواست استعلام پکیج ${ex.title}`}</span>
+                  <span>{formLoading ? 'در حال ارسال درخواست…' : `ثبت درخواست استعلام تور ${ex.title}`}</span>
                 </button>
               </div>
             </form>

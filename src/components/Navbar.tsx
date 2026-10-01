@@ -83,7 +83,7 @@ const domesticToursData = [
 const exhibitionToursData = {
   title: 'نمایشگاه‌های بین‌المللی',
   links: [
-    { name: 'تور نمایشگاه کنتون فیر چین', path: '/exhibition/canton-fair' },
+    { name: 'تور نمایشگاه کانتون فیر چین', path: '/exhibition/canton-fair' },
     { name: 'تور نمایشگاه گلفود دبی', path: '/exhibition/gulfood' },
     { name: 'تور نمایشگاه جیتکس دبی', path: '/exhibition/gitex-global' }
   ]
@@ -157,7 +157,7 @@ const mobileNavData = [
       {
         title: 'نمایشگاه‌های نزدیک',
         links: [
-          { name: 'تور نمایشگاه کنتون فیر چین', path: '/exhibition/canton-fair' },
+          { name: 'تور نمایشگاه کانتون فیر چین', path: '/exhibition/canton-fair' },
           { name: 'تور نمایشگاه گلفود دبی', path: '/exhibition/gulfood' },
           { name: 'تور نمایشگاه جیتکس دبی', path: '/exhibition/gitex-global' }
         ],
@@ -288,7 +288,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                 <Plane className="w-4 h-4 md:w-5 md:h-5 absolute -top-1 -right-3 md:-right-5 transform rotate-45 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               </div>
               <div className="flex flex-col border-r-2 border-border-default pr-2 md:pr-3">
-                <span className="text-base md:text-price-lg text-text-heading tracking-tight leading-tight">ریوان سفر</span>
+                <span className="text-base md:text-price-lg text-text-heading leading-tight">ریوان سفر</span>
               </div>
             </div>
           </a>
@@ -679,7 +679,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
               {/* Drawer Footer CTA */}
               <div className="p-5 border-t border-border-default bg-surface-primary shadow-subtle">
                 <div className="bg-page-background rounded-card p-4 border border-border-default text-center">
-                  <p className="text-body-sm text-text-heading font-bold mb-3">برای انتخاب تور نیاز به راهنمایی داری؟</p>
+                  <p className="text-body-sm text-text-heading font-bold mb-3">برای انتخاب تور نیاز به راهنمایی دارید؟</p>
                   <a
                     href={contact.phoneHref}
                     className="btn btn-primary btn-medium text-btn w-full shadow-subtle mb-2.5"

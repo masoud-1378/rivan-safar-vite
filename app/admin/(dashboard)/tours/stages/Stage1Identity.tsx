@@ -20,7 +20,7 @@ import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { AmountInput } from '@/components/ui/amount-input';
 import { Badge } from '@/components/ui/badge';
-import { cn, formatToman } from '@/lib/utils';
+import { cn, fa, formatToman } from '@/lib/utils';
 import { normalizeFaSearch } from '@/lib/persian';
 import { faToSlugFa } from '../tour-helpers';
 import type { DestinationTree, OriginRow, TourInput } from '../actions';
@@ -35,7 +35,7 @@ interface Stage1IdentityProps {
 }
 
 const TYPE_OPTIONS = [
-  { value: 'foreign', label: 'تور خارجی (پکیج آماده)' },
+  { value: 'foreign', label: 'تور خارجی (آماده)' },
   { value: 'domestic', label: 'تور داخلی (گروهی یا انفرادی)' },
   { value: 'exhibition', label: 'تور نمایشگاهی و تجاری' },
 ];
@@ -171,7 +171,7 @@ export default function Stage1Identity({
           </div>
         </div>
         <Badge variant={data.status === 'published' ? 'success' : 'secondary'}>
-          {data.statusLabel || (data.status === 'published' ? 'منتشر شده' : 'پیش‌نویس')}
+          {data.statusLabel || (data.status === 'published' ? 'منتشرشده' : 'پیش‌نویس')}
         </Badge>
       </div>
 
@@ -267,7 +267,7 @@ export default function Stage1Identity({
             <span>انتخاب مقاصد و شهرهای سفر *</span>
           </label>
           <span className="text-xs text-muted-foreground">
-            {selectedSlugs.length > 0 ? `${selectedSlugs.length} مقصد انتخاب شده` : 'حداقل یک مقصد انتخاب کنید'}
+            {selectedSlugs.length > 0 ? `${fa(selectedSlugs.length)} مقصد انتخاب‌شده` : 'حداقل یک مقصد انتخاب کنید'}
           </span>
         </div>
         {/* گشت (ایراد ۴): خطای «مقصد» هیچ‌جا قرمز نشان داده نمی‌شد؛ زیر همان بلوک. */}
@@ -377,7 +377,7 @@ export default function Stage1Identity({
                             >
                               <span>{country.name}</span>
                               <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                                {country.cities.length > 0 ? `${country.cities.length} شهر` : ''}
+                                {country.cities.length > 0 ? `${fa(country.cities.length)} شهر` : ''}
                                 <ChevronDown className={cn('size-3 transition-transform', cOpen && 'rotate-180')} />
                               </span>
                             </button>
@@ -420,7 +420,7 @@ export default function Stage1Identity({
                 key={opt.id}
                 onClick={() => onChange({ transportKind: opt.id })}
                 className={cn(
-                  "flex items-center gap-3 rounded-sm border p-3.5 text-right transition-all",
+                  "flex items-center gap-3 rounded-sm border p-3.5 text-start transition-all",
                   isSelected
                     ? "border-brand bg-brand/10 text-foreground font-bold"
                     : "border-border/60 bg-secondary/30 text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
@@ -524,7 +524,7 @@ export default function Stage1Identity({
           <label className="text-xs font-bold text-foreground">
             قیمت‌گذاری پایه و شفافیت ارزی / تومانی *
           </label>
-          <span className="text-[11px] text-muted-foreground">برای هر بزرگسال در اتاق دو تخته پایه</span>
+          <span className="text-[11px] text-muted-foreground">برای هر بزرگسال در اتاق دوتخته پایه</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -539,7 +539,7 @@ export default function Stage1Identity({
           </div>
 
           <div>
-            <Field label="بخش ارزی تور (اختیاری - ویژه تورهای خارجی)" hint="مثال: ۱,۸۹۰ دلار برای هتل و خدمات خارج">
+            <Field label="بخش ارزی تور (اختیاری؛ ویژهٔ تورهای خارجی)" hint="مثال: ۱٬۸۹۰ دلار برای هتل و خدمات خارج">
               <div className="flex gap-2">
                 <Input
                   value={data.splitPriceAmount || ''}

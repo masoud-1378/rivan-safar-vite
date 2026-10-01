@@ -65,7 +65,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
         setOpen(false);
         reload();
       } catch (e) {
-        const message = e instanceof Error ? e.message : 'خطا در ذخیره.';
+        const message = e instanceof Error ? e.message : 'ذخیره انجام نشد؛ دوباره تلاش کنید.';
         if (message === 'این نام قبلاً ثبت شده') {
           setNameError(message);
         } else {
@@ -82,7 +82,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
         await deleteOrigin(deleting.id);
         reload();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در حذف.' });
+        toast({ variant: 'error', title: e instanceof Error ? e.message : 'حذف انجام نشد؛ دوباره تلاش کنید.' });
       }
     });
   };
@@ -91,7 +91,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
     startTransition(async () => {
       try {
         const res = await copyOrigin(origin.id);
-        toast({ variant: 'success', title: `کپی ساخته شد: ${res.nameFa}` });
+        toast({ variant: 'success', title: `تکثیر شد: ${res.nameFa}` });
         reload();
       } catch (e) {
         toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در کپی.' });

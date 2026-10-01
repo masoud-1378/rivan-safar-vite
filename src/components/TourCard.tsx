@@ -148,7 +148,7 @@ export default function TourCard({
           {/* Main Orange Tour Title */}
           <h3 
             title={title}
-            className="text-[16.5px] sm:text-[17.5px] font-bold text-brand-orange tracking-normal mb-1.5 group-hover:opacity-90 transition-opacity [text-wrap:balance]"
+            className="text-[16.5px] sm:text-[17.5px] font-bold text-brand-orange mb-1.5 group-hover:opacity-90 transition-opacity [text-wrap:balance]"
           >
             {title}
           </h3>

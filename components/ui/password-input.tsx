@@ -48,7 +48,7 @@ export function PasswordInput({ strength, className, onChange, value, defaultVal
               <span key={i} className={cn("h-1 flex-1 rounded-full transition-colors", i <= level ? (level <= 1 ? "bg-destructive" : level === 2 ? "bg-warning" : "bg-success") : "bg-input")} />
             ))}
           </div>
-          <p className="text-[11px] text-muted-foreground">{level ? `قدرت رمز: ${LEVELS[level]}` : "حداقل ۸ کاراکتر، با حرف بزرگ، عدد و نماد"}</p>
+          <p className="text-[11px] text-muted-foreground">{level ? `قدرت رمز: ${LEVELS[level]}` : "حداقل ۸ نویسه، شامل حروف بزرگ و کوچک انگلیسی، عدد و نماد"}</p>
         </div>
       )}
     </div>

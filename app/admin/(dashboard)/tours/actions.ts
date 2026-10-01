@@ -72,7 +72,7 @@ export interface TourInput {
   priceNote: string;
   status: string;
   statusLabel: string;
-  /** گیت انتشار (مایگریشن 0011): 'draft' پیش‌نویس، 'published' منتشرشده */
+  /** شرایط انتشار (مایگریشن 0011): 'draft' پیش‌نویس، 'published' منتشرشده */
   publishStatus: 'draft' | 'published';
   image: string;
   badge: string;
@@ -429,7 +429,7 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
     priceNote: 'برای هر بزرگسال در اتاق دو تخته',
     status: data.status || 'pending',
     statusLabel: data.statusLabel || '',
-    // گیت انتشار (مایگریشن 0011): تور تازه همیشه پیش‌نویس است، مگر این‌که صراحتاً «انتشار» زده شود.
+    // شرایط انتشار (مایگریشن 0011): تور تازه همیشه پیش‌نویس است، مگر این‌که صراحتاً «انتشار» زده شود.
     publishStatus: (data.publishStatus === 'published' ? 'published' : 'draft') as 'draft' | 'published',
     image: data.image || '',
     badge,
@@ -459,7 +459,7 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
 }
 
 /**
- * تغییر وضعیت انتشار یک تور (گیت انتشار، مایگریشن 0011).
+ * تغییر وضعیت انتشار یک تور (شرایط انتشار، مایگریشن 0011).
  * 'published' یعنی تور واقعاً روی سایت دیده می‌شود؛ 'draft' یعنی پنهان است.
  */
 export async function setTourPublishStatus(id: string, next: 'draft' | 'published') {

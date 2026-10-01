@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn, fa } from '@/lib/utils';
 import { normalizeFaSearch } from '@/lib/persian';
 import type { HotelBookingType, TourHotelOptionItem, TourInput } from '../actions';
 import type { HotelPickerItem } from '../../hotels/actions';
@@ -142,7 +142,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
           <div>
             <h3 className="text-sm font-bold text-foreground">مرحله دوم: ماتریس هتل‌ها و ظرفیت اتاق‌ها</h3>
             <p className="text-xs text-muted-foreground">
-              تعریف پکیج‌های اقامتی، ستاره هتل، نوع پذیرایی (صبحانه بوفه، همه‌چیز شامل و…) و تفکیک شفاف قیمت اتاق ۲تخته، ۱تخته و کودکان
+              تعریف بسته‌های اقامتی، ستاره هتل، نوع پذیرایی (صبحانه بوفه، همه‌چیز شامل و…) و تفکیک شفاف قیمت اتاق ۲تخته، ۱تخته و کودکان
             </p>
           </div>
         </div>
@@ -247,7 +247,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                     {idx + 1}
                   </span>
                   <span className="text-xs font-bold text-foreground">
-                    {hotel.name ? `هتل ${hotel.name}` : `پکیج اقامتی شماره ${idx + 1}`}
+                    {hotel.name ? `هتل ${hotel.name}` : `بستهٔ اقامتی شماره ${fa(idx + 1)}`}
                   </span>
                   {hotel.hotelId && (
                     <span className="inline-flex items-center gap-1 rounded-sm bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
@@ -305,7 +305,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                               ? "bg-amber-500/10 border-amber-500/30 text-amber-500"
                               : "bg-secondary/30 border-border/60 text-muted-foreground"
                           )}
-                          title={`${star} ستاره`}
+                          title={`${fa(star)} ستاره`}
                         >
                           <Star className={cn("size-4", (hotel.stars ?? 0) >= star ? "fill-amber-500" : "")} />
                         </button>
@@ -365,7 +365,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                     <Input
                       value={hotel.pricePerPerson || ''}
                       onChange={(e) => handleUpdateHotel(idx, { pricePerPerson: e.target.value })}
-                      placeholder="مثلاً: 38,500,000"
+                      placeholder="مثلاً: ۳۸٬۵۰۰٬۰۰۰"
                       className="text-xs h-8"
                       inputMode="numeric"
                     />
@@ -376,7 +376,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                     <Input
                       value={hotel.pricePerPerson || ''}
                       onChange={(e) => handleUpdateHotel(idx, { pricePerPerson: e.target.value })}
-                      placeholder="مثلاً: 38,500,000"
+                      placeholder="مثلاً: ۳۸٬۵۰۰٬۰۰۰"
                       className="text-xs h-8"
                       inputMode="numeric"
                     />
@@ -401,7 +401,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                     <Input
                       value={hotel.pricePerPerson || ''}
                       onChange={(e) => handleUpdateHotel(idx, { pricePerPerson: e.target.value })}
-                      placeholder="مثلاً: 38,500,000"
+                      placeholder="مثلاً: ۳۸٬۵۰۰٬۰۰۰"
                       className="text-xs h-8"
                       inputMode="numeric"
                     />
@@ -414,12 +414,12 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                     <div className="rounded-sm bg-card p-3 border border-border/60">
                       <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground mb-1.5">
                         <Users className="size-3.5 text-blue-500" />
-                        <span>اتاق ۲تخته *</span>
+                        <span>اتاق دوتخته *</span>
                       </div>
                       <Input
                         value={hotel.priceDouble || ''}
                         onChange={(e) => handleUpdateHotel(idx, { priceDouble: e.target.value })}
-                        placeholder="مثلاً: 38,500,000 تومان"
+                        placeholder="مثلاً: ۳۸٬۵۰۰٬۰۰۰ تومان"
                         className="text-xs h-8"
                       />
                     </div>
@@ -427,7 +427,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                     <div className="rounded-sm bg-card p-3 border border-border/60">
                       <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground mb-1.5">
                         <User className="size-3.5 text-purple-500" />
-                        <span>اتاق ۱تخته</span>
+                        <span>اتاق یک‌تخته</span>
                       </div>
                       <Input
                         value={hotel.priceSingle || ''}

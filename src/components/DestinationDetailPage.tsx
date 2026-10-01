@@ -177,10 +177,10 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
       <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
         <div className="text-right mb-6">
           <h2 className="text-h2 text-text-heading font-bold mb-1.5">
-            پکیج‌ها و تورهای فعال {city.name}
+            تورهای فعال {city.name}
           </h2>
           <p className="text-body-sm text-text-secondary">
-            انتخاب هتل و پرواز را بررسی کنید و برای تایید نهایی قیمت و ظرفیت با کارشناس تماس بگیرید.
+            انتخاب هتل و پرواز را بررسی کنید و برای تأیید نهایی قیمت و ظرفیت با کارشناس تماس بگیرید.
           </p>
         </div>
 
@@ -206,7 +206,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
           </div>
         ) : (
           <div className="bg-surface-primary border border-border-default rounded-card p-8 text-center max-w-xl mx-auto">
-            <p className="text-body font-bold text-text-heading mb-2">در حال حاضر پکیج گروهی فعالی در این تاریخ ثبت نشده است</p>
+            <p className="text-body font-bold text-text-heading mb-2">در حال حاضر تور گروهی فعالی در این تاریخ ثبت نشده است</p>
             <p className="text-body-sm text-text-secondary mb-4">
               امکان برنامه‌ریزی سفر انفرادی و استعلام پرواز و هتل دلخواه شما در {city.name} فراهم است.
             </p>
@@ -302,7 +302,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
             <span className="badge badge-standard mb-2">ارتباط با کارشناس</span>
             <h3 className="text-h2 text-text-heading font-bold mb-2">ثبت درخواست تماس برای تور {city.name}</h3>
             <p className="text-body-sm text-text-secondary">
-              نام و شماره تماس‌تان را وارد کنید. کارشناس تخصصی تور {city.name} در ساعات کاری با شما تماس می‌گیرد. ثبت این فرم به منزله رزرو قطعی یا پرداخت نیست.
+              نام و شماره تماس‌تان را وارد کنید. کارشناس تخصصی تور {city.name} در ساعات کاری با شما تماس می‌گیرد. ثبت این فرم به معنای رزرو قطعی یا پرداخت نیست.
             </p>
           </div>
 
@@ -313,7 +313,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
               </div>
               <h4 className="text-h4 font-bold mb-2">درخواست تماس شما با موفقیت ثبت شد</h4>
               <p className="text-body-sm text-emerald-800 mb-4">
-                کارشناس ریوان سفر به زودی جهت هماهنگی قیمت و ظرفیت تور {city.name} با شما تماس خواهد گرفت.
+                کارشناس ریوان سفر به‌زودی برای هماهنگی قیمت و ظرفیت تور {city.name} با شما تماس خواهد گرفت.
               </p>
               <div className="text-caption text-emerald-700">
                 در صورت نیاز فوری، مستقیماً با تلفن <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a> تماس بگیرید.
@@ -334,7 +334,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
               </div>
 
               <div>
-                <label className="block text-caption font-bold text-text-heading mb-1">شماره تماس همراه <span className="text-red-500">*</span></label>
+                <label className="block text-caption font-bold text-text-heading mb-1">شماره موبایل <span className="text-red-500">*</span></label>
                 <input
                   type="tel"
                   required
@@ -355,7 +355,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                     className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
                   >
                     <option value="1">۱ نفر</option>
-                    <option value="2">۲ نفر (اتاق دو تخته)</option>
+                    <option value="2">۲ نفر (اتاق دوتخته)</option>
                     <option value="3">۳ نفر</option>
                     <option value="4+">۴ نفر به بالا (خانوادگی / گروهی)</option>
                   </select>
@@ -396,7 +396,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
               </div>
 
               <p className="text-[11px] text-text-secondary text-center">
-                اطلاعات شما صرفاً جهت پیگیری همین سفر استفاده می‌شود و نزد ریوان سفر محفوظ است.
+                اطلاعات شما فقط برای پیگیری همین سفر استفاده می‌شود و نزد ریوان سفر محفوظ است.
               </p>
             </form>
           )}

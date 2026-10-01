@@ -31,8 +31,8 @@ export const metadata: Metadata = {
 
 const LEAD_STATUS_LABELS: Record<string, string> = {
   new: 'جدید',
-  contacted: 'تماس گرفته شد',
-  qualified: 'مخاطب واجد شرایط',
+  contacted: 'تماس گرفته‌شده',
+  qualified: 'واجد شرایط',
   won: 'تبدیل به مشتری',
   lost: 'از دست رفته',
   invalid: 'نامعتبر',
@@ -144,7 +144,7 @@ export default async function AdminDashboard() {
 
   const stats = [
     { label: 'کل درخواست‌های تماس', value: fa(leads), trend: last7(trend.leads) },
-    { label: 'تورهای قابل مدیریت', value: fa(tours), trend: last7(trend.tours) },
+    { label: 'همهٔ تورها', value: fa(tours), trend: last7(trend.tours) },
     { label: 'مقصدها و شهرها', value: fa(destinations), trend: last7(trend.destinations) },
     { label: 'مقاله و راهنما', value: fa(guidesCount), trend: last7(trend.guides) },
   ];
@@ -224,7 +224,7 @@ export default async function AdminDashboard() {
       </Card>
 
       <Card className="overflow-hidden">
-        <div className="flex items-center justify-between border-b border-border p-5"><div><h2 className="font-semibold">آخرین درخواست‌های تماس</h2><p className="text-sm text-muted-foreground">پیگیری سریع سرنخ‌های جدید</p></div><Link href="/admin/leads" className="text-sm font-medium text-brand hover:underline">مشاهده همه</Link></div>
+        <div className="flex items-center justify-between border-b border-border p-5"><div><h2 className="font-semibold">آخرین درخواست‌های تماس</h2><p className="text-sm text-muted-foreground">پیگیری سریع درخواست‌های تازه</p></div><Link href="/admin/leads" className="text-sm font-medium text-brand hover:underline">مشاهده همه</Link></div>
         <div className="divide-y divide-border">
           {recentLeads.length === 0 ? <p className="p-5 text-sm text-muted-foreground">هنوز درخواستی ثبت نشده است.</p> : recentLeads.map((lead) => <Link key={lead.id} href="/admin/leads" className="flex flex-wrap items-center justify-between gap-3 p-4 transition hover:bg-accent/40"><div><p className="font-medium">{lead.fullName}</p><p className="text-xs text-muted-foreground" dir="ltr">{fa(lead.phone)}</p></div><div className="text-end"><p className="text-sm">{lead.tourContext || lead.destinationHint || 'درخواست عمومی'}</p><p className="text-xs text-muted-foreground">{LEAD_STATUS_LABELS[lead.status] ?? lead.status}</p></div></Link>)}
         </div>

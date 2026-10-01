@@ -14,9 +14,9 @@ export default function AnnouncementBar({ onClose }: AnnouncementBarProps) {
       <div className="container-main px-4 sm:px-6 lg:px-8 w-full flex items-center justify-between relative">
         
         {/* Mobile Layout (sm and below) */}
-        <div className="flex md:hidden items-center justify-center flex-1 text-center pr-2 pl-2">
+        <div className="flex md:hidden items-center justify-center flex-1 text-center pe-2 ps-2">
           <span className="text-white/90 flex items-center justify-center gap-1.5 flex-wrap">
-            تورهای نوروزی 1406
+            تورهای نوروزی ۱۴۰۶
             <a 
               href="#destinations" 
               className="inline-flex items-center gap-1 text-brand-orange font-bold border-b border-brand-orange/40 hover:border-brand-orange hover:text-brand-orange-soft transition-all pb-[1px]"
@@ -46,7 +46,7 @@ export default function AnnouncementBar({ onClose }: AnnouncementBarProps) {
         </div>
 
         {/* Left Side: Working Hours */}
-        <div className="hidden md:flex items-center justify-end text-white/85 text-caption md:text-body-sm w-48 shrink-0 pl-10">
+        <div className="hidden md:flex items-center justify-end text-white/85 text-caption md:text-body-sm w-48 shrink-0 ps-10">
           <span>پاسخگویی امروز: ۹ تا ۲۱</span>
         </div>
 

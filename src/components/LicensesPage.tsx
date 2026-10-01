@@ -17,10 +17,10 @@ export default function LicensesPage({ onNavigate }: LicensesPageProps) {
             <span>مجوزها و اصالت فعالیت</span>
           </span>
           <h1 className="text-h1 text-text-heading font-extrabold mb-3">
-            مجوزهای رسمی و تاییدیه‌های قانونی ریوان سفر
+            مجوزهای رسمی و تأییدیه‌های قانونی ریوان سفر
           </h1>
           <p className="text-body text-text-secondary leading-relaxed">
-            تمامی خدمات گردشگری، فروش بلیط و برگزاری تورهای آژانس ریوان سفر تحت نظارت مراجع ذی‌صلاح کشوری و بر اساس قرارداد رسمی ارائه می‌شود.
+            همهٔ خدمات گردشگری، فروش بلیت و برگزاری تورهای آژانس ریوان سفر تحت نظارت مراجع ذی‌صلاح کشوری و بر اساس قرارداد رسمی ارائه می‌شود.
           </p>
         </div>
       </section>
@@ -34,7 +34,7 @@ export default function LicensesPage({ onNavigate }: LicensesPageProps) {
             <h3 className="text-h3 font-bold text-text-heading mb-2">مجوز بند الف</h3>
             <p className="text-caption font-bold text-text-muted mb-3">سازمان هواپیمایی کشوری</p>
             <p className="text-body-sm text-text-secondary leading-relaxed mb-4">
-              پروانه رسمی صدور و فروش بلیط کلیه خطوط هوایی داخلی و خارجی و رزرواسیون مستقیم پروازهای برنامه‌ای و چارتری.
+              پروانه رسمی صدور و فروش بلیت همهٔ خطوط هوایی داخلی و خارجی و رزرواسیون مستقیم پروازهای برنامه‌ای و چارتری.
             </p>
             <div className="p-3 bg-surface-secondary rounded-control text-caption text-text-heading font-medium">
               ✓ وضعیت: معتبر و دارای پروانه فعالیت رسمی
@@ -51,7 +51,7 @@ export default function LicensesPage({ onNavigate }: LicensesPageProps) {
               مجوز برنامه‌ریزی، اجرا و فروش تورهای گردشگری سیاحتی، زیارتی، طبیعت‌گردی و تورهای نمایشگاهی بین‌المللی.
             </p>
             <div className="p-3 bg-surface-secondary rounded-control text-caption text-text-heading font-medium">
-              ✓ وضعیت: دارای پروانه رسمی اجرای پکیج‌های تور
+              ✓ وضعیت: دارای پروانه رسمی اجرای تورها
             </div>
           </div>
         </div>
@@ -59,7 +59,7 @@ export default function LicensesPage({ onNavigate }: LicensesPageProps) {
         <div className="bg-surface-primary border border-border-default rounded-card p-6 md:p-8">
           <h3 className="text-h3 font-bold text-text-heading mb-3">قرارداد معتبر و بیمه مسافرتی</h3>
           <p className="text-body-sm text-text-secondary leading-relaxed mb-4">
-            کلیه مسافران ریوان سفر تحت پوشش قرارداد رسمی تیپ سازمان میراث فرهنگی و بیمه‌نامه معتبر بین‌المللی (شامل حوادث، فوریت‌های پزشکی و بار سفر) قرار می‌گیرند.
+            همهٔ مسافران ریوان سفر تحت پوشش قرارداد رسمی تیپ سازمان میراث فرهنگی و بیمه‌نامه معتبر بین‌المللی (شامل حوادث، فوریت‌های پزشکی و بار سفر) قرار می‌گیرند.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <a href={contact.phoneHref} className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2">

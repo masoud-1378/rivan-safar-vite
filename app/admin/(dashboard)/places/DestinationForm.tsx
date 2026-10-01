@@ -105,7 +105,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
         await saveDestination(editingId ?? null, payload);
         onDone();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ذخیره.' });
+        toast({ variant: 'error', title: e instanceof Error ? e.message : 'ذخیره انجام نشد؛ دوباره تلاش کنید.' });
       }
     });
   };
@@ -298,8 +298,8 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
                     <span className="text-sm font-semibold">پرسش {fa(idx + 1)}</span>
                     <Button type="button" variant="ghost" size="sm" onClick={() => removeFaq(idx)}>حذف پرسش</Button>
                   </div>
-                  <Input placeholder="پرسش..." value={faq.question} onChange={(e) => updateFaq(idx, { question: e.target.value })} />
-                  <Textarea placeholder="پاسخ..." value={faq.answer} onChange={(e) => updateFaq(idx, { answer: e.target.value })} />
+                  <Input placeholder="پرسش…" value={faq.question} onChange={(e) => updateFaq(idx, { question: e.target.value })} />
+                  <Textarea placeholder="پاسخ…" value={faq.answer} onChange={(e) => updateFaq(idx, { answer: e.target.value })} />
                 </div>
               ))}
             </div>
@@ -333,7 +333,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
 
         <div className="sticky bottom-0 z-10 -mx-5 -mb-5 border-t border-border bg-card/95 px-5 py-3 backdrop-blur">
           <div className="flex gap-2">
-            <Button onClick={submit} disabled={pending}>{pending ? 'در حال ذخیره...' : editingId ? 'ذخیره تغییرات' : 'ثبت مقصد'}</Button>
+            <Button onClick={submit} disabled={pending}>{pending ? 'در حال ذخیره…' : editingId ? 'ذخیره تغییرات' : 'ثبت مقصد'}</Button>
             <Button type="button" variant="outline" onClick={onDone}>انصراف</Button>
           </div>
         </div>

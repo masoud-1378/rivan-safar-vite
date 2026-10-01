@@ -60,10 +60,10 @@ export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePage
           </div>
 
           <h1 className="text-h1 text-text-heading font-extrabold mb-3">
-            راهنمای کامل اخذ ویزای {defaultCountry.name} برای اتباع ایرانی
+            راهنمای کامل اخذ ویزای {defaultCountry.name} برای ایرانیان
           </h1>
           <p className="text-body text-text-secondary leading-relaxed mb-6">
-            مراحل، مدارک مورد نیاز، زمان بررسی و هزینه‌های صدور ویزای توریستی و تجاری {defaultCountry.name}. تیم ویزای ریوان سفر کلیه مراحل بارگذاری، تکمیل فرم‌ها و پیگیری سفارت را برای شما انجام می‌دهد.
+            مراحل، مدارک مورد نیاز، زمان بررسی و هزینه‌های صدور ویزای توریستی و تجاری {defaultCountry.name}. تیم ویزای ریوان سفر همهٔ مراحل بارگذاری، تکمیل فرم‌ها و پیگیری سفارت را برای شما انجام می‌دهد.
           </p>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -139,7 +139,7 @@ export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePage
               <div>
                 <h3 className="text-body font-bold text-text-heading mb-1">تحویل یا ارسال آنلاین مدارک</h3>
                 <p className="text-body-sm text-text-secondary leading-relaxed">
-                  مدارک شما توسط کارشناس ویزا بررسی شده و هرگونه نقص یا عدم همخوانی پیش از ارسال اصلاح می‌گردد.
+                  کارشناس ویزا مدارک شما را بررسی می‌کند و هر نقصی را پیش از ارسال اصلاح می‌کند.
                 </p>
               </div>
             </div>
@@ -163,7 +163,7 @@ export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePage
               <div>
                 <h3 className="text-body font-bold text-text-heading mb-1">دریافت ویزا و تحویل واچر سفر</h3>
                 <p className="text-body-sm text-text-secondary leading-relaxed">
-                  پس از صدور ویزا توسط مراجع قانونی کشور مقصد، نسخه الکترونیکی یا الصاقی به مسافر تحویل می‌گردد.
+                  پس از آن‌که مرجع قانونی کشور مقصد ویزا را صادر کرد، نسخهٔ الکترونیکی یا الصاقی به مسافر تحویل داده می‌شود.
                 </p>
               </div>
             </div>
@@ -174,7 +174,7 @@ export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePage
         <div className="p-6 bg-amber-50 border border-amber-200 rounded-card text-right">
           <div className="flex items-center gap-2 text-amber-900 font-bold mb-2">
             <AlertCircle className="w-5 h-5 text-amber-700" />
-            <h3>چگونه از ریجکت شدن ویزا جلوگیری کنیم؟</h3>
+            <h3>چگونه از رد شدن ویزا جلوگیری کنیم؟</h3>
           </div>
           <p className="text-body-sm text-amber-950 leading-relaxed">
             رایج‌ترین دلایل رد ویزا، نقص در اسناد، ناهماهنگی تاریخ پرواز با برنامه اقامت یا عدم شفافیت هدف سفر است. کارشناسان ریوان سفر پیش از ارسال پرونده، مدارک را با چک‌لیست بازبینی می‌کنند؛ اما نتیجه صدور در اختیار مرجع صادرکننده است.

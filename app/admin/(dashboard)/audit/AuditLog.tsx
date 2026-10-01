@@ -80,7 +80,7 @@ export default function AuditLog({ logs, page, totalPages, total }: { logs: Audi
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">گزارش تغییرات</h1>
-          <p className="mt-1 text-sm text-muted-foreground">تمام عملیات حساس مدیریتی ثبت شده‌اند. مجموع {fa(total)} رویداد.</p>
+          <p className="mt-1 text-sm text-muted-foreground">تمام عملیات حساس مدیریتی ثبت‌شده‌اند. مجموع {fa(total)} رویداد.</p>
         </div>
         <SegmentedControl
           value={view}
@@ -102,7 +102,7 @@ export default function AuditLog({ logs, page, totalPages, total }: { logs: Audi
               <TableHeader>
                 <TableRow>
                   <TableHead>زمان</TableHead>
-                  <TableHead>مجرا</TableHead>
+                  <TableHead>انجام‌دهنده</TableHead>
                   <TableHead>عملیات</TableHead>
                   <TableHead>موجودیت</TableHead>
                   <TableHead>شناسه</TableHead>

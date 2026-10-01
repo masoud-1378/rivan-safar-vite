@@ -45,7 +45,7 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
               تورهای نمایشگاهی بین‌المللی؛ چین، دبی و اروپا
             </h1>
             <p className="text-body text-text-secondary leading-relaxed mb-6">
-              پکیج‌های سفر تخصصی به معتبرترین رویدادهای بازرگانی، صنعتی و فناوری جهان. ریوان سفر با خدمات اخذ ویزای تجاری، اقامت در هتل‌های دارای شاتل نمایشگاهی، ثبت‌نام کارت ورود خریدار و مترجم فارسی/محلی در کنار شماست.
+              تورهای سفر تخصصی به معتبرترین رویدادهای بازرگانی، صنعتی و فناوری جهان. ریوان سفر با خدمات اخذ ویزای تجاری، اقامت در هتل‌های دارای شاتل نمایشگاهی، ثبت‌نام کارت ورود خریدار و مترجم فارسی/محلی در کنار شماست.
             </p>
 
             {/* Filter chips */}
@@ -71,7 +71,7 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
             رویدادهای تجاری و نمایشگاه‌های پیش‌رو
           </h2>
           <p className="text-body-sm text-text-secondary">
-            برای بررسی فازها، زمان‌بندی اخذ ویزا و ثبت درخواست سفر روی هر رویداد کلیک کنید.
+            برای بررسی فازها، زمان‌بندی اخذ ویزا و ثبت درخواست سفر جزئیات هر رویداد را ببینید.
           </p>
         </div>
 
@@ -125,7 +125,7 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
 
                 <div className="pt-4 border-t border-border-default/60 flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <span className="text-caption text-text-secondary block">شروع قیمت پکیج تجاری:</span>
+                    <span className="text-caption text-text-secondary block">شروع قیمت تور تجاری:</span>
                     <span className="text-h4 font-extrabold text-brand-orange">{ex.upcomingEdition.startingPrice}</span>
                   </div>
 
@@ -167,7 +167,7 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
               </div>
               <h3 className="text-h4 font-bold text-text-heading mb-2">هتل‌های متصل با شاتل اختصاصی</h3>
               <p className="text-body-sm text-text-secondary leading-relaxed">
-                اقامت در هتل‌های باکیفیت دارای شاتل مستقیم به مجتمع‌های نمایشگاهی جهت جلوگیری از اتلاف وقت در ترافیک شهری.
+                اقامت در هتل‌های باکیفیت دارای شاتل مستقیم به مجتمع‌های نمایشگاهی برای جلوگیری از اتلاف وقت در ترافیک شهری.
               </p>
             </div>
 
@@ -189,7 +189,7 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
         <div className="container-main px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
           <h3 className="text-h3 text-white mb-2 font-bold">برای حضور در نمایشگاه‌های بین‌المللی زمان را از دست ندهید</h3>
           <p className="text-body text-white/80 mb-5 max-w-lg">
-            مهلت تشکیل پرونده ویزای چین و کشورهای اروپایی محدود است. جهت دریافت تقویم و زمان‌بندی دقیق با کارشناس تماس بگیرید.
+            مهلت تشکیل پرونده ویزای چین و کشورهای اروپایی محدود است. برای دریافت تقویم و زمان‌بندی دقیق با کارشناس تماس بگیرید.
           </p>
           <a
             href={contact.phoneHref}

@@ -136,8 +136,8 @@ export function AdminPaletteProvider({ ownerOnly, children }: { ownerOnly: boole
         }}
         items={items}
         onQueryChange={setTerm}
-        placeholder="برو به… یا نام تور، لید و مقصد را بنویس"
-        emptyText={searching && term.trim().length >= 2 ? 'در حال جست‌وجو در پایگاه داده…' : 'چیزی پیدا نشد'}
+        placeholder="برو به… یا نام تور، درخواست و مقصد را بنویسید"
+        emptyText={searching && term.trim().length >= 2 ? 'در حال جست‌وجو در پایگاه داده…' : 'نتیجه‌ای پیدا نشد؛ عبارت دیگری را امتحان کنید.'}
       />
     </PaletteContext.Provider>
   );

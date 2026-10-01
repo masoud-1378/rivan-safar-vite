@@ -31,7 +31,7 @@ export function resolveSeo(path: string): ResolvedSeo {
   if (route.type === 'tour_detail') {
     const tour = SAMPLE_TOURS.find((t) => t.id === route.params.tourSlug);
     if (tour) {
-      title = `${tour.title}؛ تاریخ، قیمت و شرایط | ریوان سفر`;
+      title = `${tour.title}؛ تاریخ، قیمت و شرایط · ریوان سفر`;
       description = `${tour.title} با حرکت از ${tour.origin}، مدت ${tour.duration} و ایرلاین ${tour.airline}. قیمت پایه و ظرفیت هر حرکت پیش از اقدام تأیید می‌شود.`;
       breadcrumbs[breadcrumbs.length - 1] = { name: tour.title };
     } else {
@@ -40,7 +40,7 @@ export function resolveSeo(path: string): ResolvedSeo {
   } else if (route.type === 'country') {
     const country = COUNTRIES[route.params.countrySlug];
     if (country) {
-      title = `تور ${country.name}؛ تاریخ‌ها، قیمت و شرایط سفر | ریوان سفر`;
+      title = `تور ${country.name}؛ تاریخ‌ها، قیمت و شرایط سفر · ریوان سفر`;
       description = `${country.description.slice(0, 140)}…`;
       breadcrumbs[breadcrumbs.length - 1] = { name: `تور ${country.name}` };
     } else {
@@ -49,7 +49,7 @@ export function resolveSeo(path: string): ResolvedSeo {
   } else if (route.type === 'destination_city') {
     const city = CITIES[route.params.placeSlug];
     if (city) {
-      title = `تور ${city.name}؛ تاریخ‌ها، قیمت و شرایط سفر | ریوان سفر`;
+      title = `تور ${city.name}؛ تاریخ‌ها، قیمت و شرایط سفر · ریوان سفر`;
       description = `${city.description.slice(0, 140)}…`;
       breadcrumbs[breadcrumbs.length - 1] = { name: `تور ${city.name}` };
       const country =
@@ -67,7 +67,7 @@ export function resolveSeo(path: string): ResolvedSeo {
   } else if (route.type === 'guide_detail') {
     const guide = GUIDES[route.params.guideSlug];
     if (guide) {
-      title = `${guide.title} | ریوان سفر`;
+      title = `${guide.title} · ریوان سفر`;
       description = guide.summary;
       breadcrumbs[breadcrumbs.length - 1] = { name: guide.title };
     } else {
@@ -76,7 +76,7 @@ export function resolveSeo(path: string): ResolvedSeo {
   } else if (route.type === 'exhibition_detail') {
     const series = EXHIBITION_SERIES[route.params.eventSeriesSlug];
     if (series) {
-      title = `${series.title} | ریوان سفر`;
+      title = `${series.title} · ریوان سفر`;
       description = `${series.heroTagline}. تاریخ: ${series.upcomingEdition.solarDate}.`;
       breadcrumbs[breadcrumbs.length - 1] = { name: series.title };
     } else {
@@ -85,7 +85,7 @@ export function resolveSeo(path: string): ResolvedSeo {
   } else if (route.type === 'visa_country') {
     const country = COUNTRIES[route.params.countrySlug];
     if (country) {
-      title = `ویزای ${country.name}؛ مدارک و مراحل برای ایرانیان | ریوان سفر`;
+      title = `ویزای ${country.name}؛ مدارک و مراحل برای ایرانیان · ریوان سفر`;
       description = `مدارک و مراحل ویزای ${country.name} برای ایرانیان با منبع رسمی و تاریخ بازبینی.`;
       breadcrumbs[breadcrumbs.length - 1] = { name: `ویزای ${country.name}` };
     }
@@ -112,6 +112,11 @@ export function toMetadata(seo: ResolvedSeo): Metadata {
       locale: 'fa_IR',
       type: 'website',
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: seo.title,
+      description: seo.description,
+    },
   };
 }
 
@@ -119,6 +124,7 @@ export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
   if (!items || items.length === 0) return null;
   return {
     '@context': 'https://schema.org',
+    inLanguage: 'fa-IR',
     '@type': 'BreadcrumbList',
     itemListElement: items.map((item, i) => ({
       '@type': 'ListItem',
@@ -134,6 +140,7 @@ export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
 export function organizationJsonLd() {
   return {
     '@context': 'https://schema.org',
+    inLanguage: 'fa-IR',
     '@type': 'TravelAgency',
     name: 'ریوان سفر',
     url: SITE_URL,
@@ -157,6 +164,7 @@ export function tourJsonLd(tourId: string) {
   if (!tour) return null;
   return {
     '@context': 'https://schema.org',
+    inLanguage: 'fa-IR',
     '@type': 'Product',
     name: tour.title,
     description: tour.description,
@@ -186,6 +194,7 @@ export function itemListJsonLd(
   if (!items || items.length === 0) return null;
   return {
     '@context': 'https://schema.org',
+    inLanguage: 'fa-IR',
     '@type': 'ItemList',
     url: `${SITE_URL}${path}`,
     itemListElement: items.map((item, i) => ({

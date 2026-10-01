@@ -15,7 +15,7 @@ const summerTours = [
     country: 'ترکیه',
     hotelStars: 4,
     image: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?q=80&w=800&auto=format&fit=crop',
-    price: '۲۵,۵۰۰,۰۰۰',
+    price: '۲۵٬۵۰۰٬۰۰۰',
     visaFree: true,
   },
   {
@@ -25,7 +25,7 @@ const summerTours = [
     country: 'فرانسه',
     hotelStars: 4,
     image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=800&auto=format&fit=crop',
-    price: '۹۵,۰۰۰,۰۰۰',
+    price: '۹۵٬۰۰۰٬۰۰۰',
     visaFree: false,
     visaRequired: true,
   },
@@ -36,7 +36,7 @@ const summerTours = [
     country: 'ایران',
     hotelStars: 5,
     image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop',
-    price: '۸,۹۰۰,۰۰۰',
+    price: '۸٬۹۰۰٬۰۰۰',
     visaFree: true,
   },
   {
@@ -46,7 +46,7 @@ const summerTours = [
     country: 'امارات',
     hotelStars: 4,
     image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=800&auto=format&fit=crop',
-    price: '۳۲,۰۰۰,۰۰۰',
+    price: '۳۲٬۰۰۰٬۰۰۰',
     visaFree: false,
     visaRequired: true,
   }
@@ -111,7 +111,7 @@ export default function SummerTours({ onNavigate }: SummerToursProps) {
             href="#summer-tours"
             className="text-link text-btn"
           >
-            <span>مشاهده تمامی تورهای تابستان</span>
+            <span>مشاهده همهٔ تورهای تابستان</span>
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1 transition-transform" />
           </a>
         </div>

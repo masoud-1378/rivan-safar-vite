@@ -78,7 +78,7 @@ export default function TravelGuide() {
                   <div className="flex items-center gap-4">
                     <span className="inline-flex items-center gap-1.5 font-medium">
                       <Clock className="w-4 h-4 text-text-secondary opacity-70" />
-                      {MAIN_ARTICLE.readTime} مطالعه
+                      {MAIN_ARTICLE.readTime}
                     </span>
                     <span className="hidden sm:inline-flex items-center gap-1.5 opacity-70">
                       <Calendar className="w-4 h-4" />

@@ -140,10 +140,10 @@ export default function LandingForm({
         <Field label="نوع صفحه" htmlFor="pt">
           <Select id="pt" value={pageType} onChange={(e) => setPageType(e.target.value)} options={PAGE_TYPES} />
         </Field>
-        <Field label="عنوان سئو (Title)" htmlFor="tf" hint="حدود ۶۰ نویسه" error={errors.titleFa}>
+        <Field label="Title (عنوان سئو)" htmlFor="tf" hint="حدود ۶۰ نویسه" error={errors.titleFa}>
           <Input id="tf" value={titleFa} onChange={(e) => { setTitleFa(e.target.value); setErrors((prev) => ({ ...prev, titleFa: undefined })); }} placeholder="تور استانبول با اقامت در مرکز شهر" />
         </Field>
-        <Field label="توضیحات متا (Meta Description)" htmlFor="md" hint="حدود ۱۵۵ نویسه">
+        <Field label="Meta Description (توضیحات متا)" htmlFor="md" hint="حدود ۱۵۵ نویسه">
           <Textarea id="md" autoResize showCount maxLength={200} value={metaDescriptionFa} onChange={(e) => setMetaDescriptionFa(e.target.value)} placeholder="توضیح کوتاهی که در نتایج جست‌وجو نمایش داده می‌شود." />
         </Field>
         <Field label="تیتر صفحه (H1)" htmlFor="h1" error={errors.h1Fa}>

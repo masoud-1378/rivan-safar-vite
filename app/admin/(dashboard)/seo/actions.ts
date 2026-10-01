@@ -115,7 +115,7 @@ export async function updateLanding(id: string, input: Partial<LandingInput>) {
     // لندینگ از قبل published است (حذف گیت‌شکنِ بلوک/لینک خودش به draft برمی‌گرداند).
     if (input.workflow === 'published' && !wasPublished) {
       const gate = await checkQualityGate(id);
-      if (!gate.canPublish) throw new Error('گیت انتشار پاس نشد: ' + gate.reasons.join(' '));
+      if (!gate.canPublish) throw new Error('شرایط انتشار کامل نیست: ' + gate.reasons.join(' '));
     }
     data.workflow = input.workflow;
   }
@@ -180,7 +180,7 @@ export async function deleteLanding(id: string) {
       action: 'archive',
       entity: 'seo_landings',
       entityId: id,
-      reasonFa: `بایگانی لندینگ «${title}»؛ فرزندهایش برای همیشه حذف شدند و با بازیابی برنمی‌گردند.`,
+      reasonFa: `بایگانی لندینگ «${title}»؛ بخش‌ها و محصولاتش برای همیشه حذف شدند و با بازیابی برنمی‌گردند.`,
     });
   });
   revalidatePath('/admin/seo');
@@ -223,7 +223,7 @@ export async function updateBlock(id: string, bodyFa: string) {
 }
 
 /**
- * یافتهٔ ۱: اگر لندینگ published بود و بعد از یک تغییر، گیت انتشار دیگر
+ * یافتهٔ ۱: اگر لندینگ published بود و بعد از یک تغییر، شرایط انتشار دیگر
  * رد نشد، workflow به draft برمی‌گردد. خروجی: آیا تنزل رخ داد؟
  */
 async function demoteIfGateBroken(landingId: string): Promise<boolean> {

@@ -144,7 +144,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
           >
             <h1 className="text-display text-text-heading mb-5 sm:mb-6">
               <span className="block text-brand-orange mb-2">ریوان سفر</span>
-              برای اهـل سـفـر
+              برای اهل سفر
             </h1>
             
             <p className="text-body-lg md:text-xl text-text-secondary max-w-hero mb-8 leading-relaxed">
@@ -161,7 +161,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                     value={searchQuery}
                     onChange={handleSearchInputChange}
                     onFocus={() => setIsFocused(true)}
-                    placeholder={isDesktop ? "مقصد یا تور (مثلاً استانبول)" : "نام مقصد..."} 
+                    placeholder={isDesktop ? "مقصد یا تور (مثلاً استانبول)" : "نام مقصد…"} 
                     className="w-full bg-transparent border-none outline-none text-text-heading placeholder:text-text-secondary/60 text-body-sm font-medium"
                   />
                 </div>
@@ -173,12 +173,12 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                   {isSearching ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>در حال جستجو...</span>
+                      <span>در حال جست‌وجو…</span>
                     </>
                   ) : (
                     <>
                       <Search className="w-4 h-4" />
-                      <span>جستجوی تور</span>
+                      <span>جست‌وجوی تور</span>
                     </>
                   )}
                 </button>

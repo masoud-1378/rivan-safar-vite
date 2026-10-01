@@ -236,7 +236,7 @@ export default function GuideForm({
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
             className="min-h-20"
-          placeholder="چکیده کوتاه مقاله..."
+          placeholder="چکیده کوتاه مقاله…"
         />
       </Field>
 
@@ -246,7 +246,7 @@ export default function GuideForm({
           value={directAnswer}
           onChange={(e) => setDirectAnswer(e.target.value)}
             className="min-h-20"
-          placeholder="پاسخ سریع به پرسش اصلی کاربر..."
+          placeholder="پاسخ سریع به پرسش اصلی کاربر…"
         />
       </Field>
 
@@ -273,7 +273,7 @@ export default function GuideForm({
       />
 
       <div className="flex items-center gap-3 pt-2">
-          <Button type="submit" disabled={pending}>{pending ? 'در حال ذخیره...' : 'ذخیره'}</Button>
+          <Button type="submit" disabled={pending}>{pending ? 'در حال ذخیره…' : 'ذخیره'}</Button>
         {onCancel && (
           <Button type="button" onClick={onCancel} variant="outline">انصراف</Button>
         )}

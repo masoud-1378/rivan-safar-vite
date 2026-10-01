@@ -35,7 +35,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
     <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
       {/* ---------------- Hero Section ---------------- */}
       <section className="bg-surface-primary border-b border-border-default section-compact">
-        <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl text-right">
+        <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl text-start">
           <span className="badge badge-standard mb-3">
             <Phone className="w-3.5 h-3.5" />
             <span>ارتباط با ریوان سفر</span>
@@ -51,7 +51,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
 
       {/* ---------------- Contact Info & Form Grid ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 max-w-5xl section-standard">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-right">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-start">
           
           {/* Left Column: Contact Cards (5 cols) */}
           <div className="lg:col-span-5 space-y-4">
@@ -84,7 +84,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                 </div>
                 <div>
                   <h3 className="text-body font-bold text-text-heading">آدرس دفتر مرکزی</h3>
-                  <span className="text-caption text-text-muted">جهت عقد قرارداد حضوری</span>
+                  <span className="text-caption text-text-muted">برای عقد قرارداد حضوری</span>
                 </div>
               </div>
               <p className="text-body-sm text-text-secondary leading-relaxed">
@@ -151,7 +151,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                     </div>
 
                     <div>
-                      <label className="block text-caption font-bold text-text-heading mb-1">شماره تماس همراه <span className="text-red-500">*</span></label>
+                      <label className="block text-caption font-bold text-text-heading mb-1">شماره موبایل <span className="text-red-500">*</span></label>
                       <input
                         type="tel"
                         required
@@ -159,7 +159,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         placeholder="09123456789"
-                        className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-right focus:border-brand-orange focus:outline-none"
+                        className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-start focus:border-brand-orange focus:outline-none"
                       />
                     </div>
                   </div>
@@ -184,7 +184,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                       rows={4}
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      placeholder="مقصد، تاریخ مد نظر، تعداد نفرات یا سوال مورد نظر..."
+                      placeholder="مقصد، تاریخ مد نظر، تعداد نفرات یا سوال مورد نظر…"
                       className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
                     ></textarea>
                   </div>
@@ -195,7 +195,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                     className="btn btn-medium btn-primary w-full text-btn font-bold inline-flex items-center justify-center gap-2"
                   >
                     <Send className="w-4 h-4" />
-                    <span>{loading ? 'در حال ارسال...' : 'ارسال پیام به کارشناس ریوان سفر'}</span>
+                    <span>{loading ? 'در حال ارسال…' : 'ارسال پیام به کارشناس ریوان سفر'}</span>
                   </button>
                 </form>
               )}
