@@ -12,8 +12,8 @@ import { useToast } from '@/components/ui/toast';
 interface DuplicateTourDialogProps {
   tour: TourRow;
   onClose: () => void;
-  /** بعد از تکثیر موفق: رفرش فهرست. */
-  onDone: () => void;
+  /** بعد از تکثیر موفق: شناسهٔ تور تازه (پیش‌نویس) برمی‌گردد تا فهرست به صفحهٔ ویرایشش برود. */
+  onDone: (newId: string | null) => void;
 }
 
 const COPY_SUFFIX = ' (کپی)';
@@ -34,6 +34,7 @@ async function firstFreeSlug(base: string): Promise<string> {
  * - مبدأ و ویزا از تور اصلی حفظ می‌شوند (فقط نمایش داده می‌شوند، نه ویرایش)
  * - فیلد «تاریخ حرکت بعدی» همین‌جا گرفته می‌شود
  * - کپی همیشه به‌صورت پیش‌نویس ساخته می‌شود تا تور زنده‌ای اتفاقی منتشر نشود
+ *   (publishStatus='draft' صریح؛ وضعیت ظرفیت کپی هم «در انتظار تأیید ظرفیت» است).
  *
  * قرارداد اکشن‌ها (قلم ۳): تکثیر غیرمخرب است؛ این دیالوگ، دیالوگِ «تنظیمات»
  * است نه «تأیید ترسناک». دکمه‌اش هم از دکمهٔ بایگانی (مخرب) جداست.
@@ -91,19 +92,22 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         setBusy(false);
         return;
       }
-      await saveTour(null, {
+      const result = await saveTour(null, {
         ...tour,
         title: cleanTitle,
         slug: cleanSlug,
         closestDeparture: departure.trim(),
+        // گیت انتشار (فاز ۲، مایگریشن 0011): کپی همیشه پیش‌نویس است، حتی اگر تور اصلی منتشرشده باشد.
+        publishStatus: 'draft',
+        // ظرفیت کپی نامشخص است — نه «تأییدشده».
         status: 'pending',
-        statusLabel: 'پیش‌نویس',
+        statusLabel: 'در انتظار تأیید ظرفیت',
       });
       toast({
         title: 'تور تکثیر شد',
         description: `«${cleanTitle}» به‌صورت پیش‌نویس ساخته شد؛ مبدأ و ویزا از تور اصلی حفظ شدند.`,
       });
-      onDone();
+      onDone(result?.id ?? null);
     } catch (e) {
       toast({
         title: 'تکثیر ناموفق بود',

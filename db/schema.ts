@@ -84,8 +84,10 @@ export const siteTours = pgTable(
     price: numeric('price', { precision: 15, scale: 0 }).notNull(),
     formattedPrice: varchar('formatted_price', { length: 60 }).notNull(),
     priceNote: varchar('price_note', { length: 260 }).notNull(),
-    status: varchar('status', { length: 60 }).notNull(), // 'confirmed' | 'pending' | 'updating' | 'full'
+    status: varchar('status', { length: 60 }).notNull(), // 'confirmed' | 'pending' | 'updating' | 'full' — وضعیت ظرفیت، نه انتشار
     statusLabel: varchar('status_label', { length: 120 }).notNull(),
+    // گیت انتشار تور (مایگریشن 0011): 'draft' = پیش‌نویس (پنهان از سایت)، 'published' = منتشرشده (زنده روی سایت)
+    publishStatus: publishStatusEnum('publish_status').notNull().default('draft'),
     image: text('image').notNull(),
     badge: varchar('badge', { length: 120 }),
     features: jsonb('features').default('[]').notNull(), // string[]

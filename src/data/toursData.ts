@@ -14,6 +14,8 @@ export interface TourItem {
   priceNote: string;
   status: 'confirmed' | 'pending' | 'updating' | 'full';
   statusLabel: string;
+  /** گیت انتشار (مایگریشن 0011)؛ نامشخص = ردیف قدیمی‌تر از ستون = منتشرشده */
+  publishStatus?: 'draft' | 'review' | 'published' | 'paused' | 'archived';
   updatedAt: string;
   image: string;
   badge?: string;

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { listDestinationTree, listOrigins, listTours } from './actions';
+import { redirect } from 'next/navigation';
+import { listOrigins, listTours } from './actions';
 import { listHotels } from '../hotels/actions';
 import { getSettingsMap } from '../settings/actions';
 import ToursManager from './ToursManager';
@@ -10,18 +11,25 @@ export const metadata: Metadata = {
   robots: 'noindex,nofollow',
 };
 
-export default async function AdminToursPage() {
-  const [tours, settings, tree, origins, hotels] = await Promise.all([
+interface Props {
+  searchParams: Promise<{ new?: string }>;
+}
+
+export default async function AdminToursPage({ searchParams }: Props) {
+  // سازگاری با لینک‌های قدیمی (مثل ⌘K): ?new=1 به مسیر تازهٔ ساخت تور می‌رود.
+  const { new: newParam } = await searchParams;
+  if (newParam === '1') redirect('/admin/tours/new');
+
+  const [tours, settings, origins, hotels] = await Promise.all([
     listTours().catch(() => []),
     getSettingsMap().catch(() => ({})),
-    listDestinationTree().catch(() => ({ regions: [], all: [] })),
     listOrigins().catch(() => []),
     listHotels().catch(() => []),
   ]);
   return (
     <div className="space-y-6">
       <TourHubNav counts={{ tours: tours.length, hotels: hotels.length, origins: origins.length }} />
-      <ToursManager initial={tours} sectionSettings={settings} tree={tree} origins={origins} hotels={hotels} />
+      <ToursManager initial={tours} sectionSettings={settings} />
     </div>
   );
 }
