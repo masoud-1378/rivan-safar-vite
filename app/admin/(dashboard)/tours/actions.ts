@@ -354,11 +354,15 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
 
   const carrier = (data.carrierName || data.airline || '').trim();
   const badge = data.badge || (data.guaranteedDeparture ? 'حرکت تضمین‌شده' : null);
-  const normalizedHotels = hotelOptions.map((h) => ({
-    hotelId: h.hotelId ?? null,
-    name: h.name ?? '',
-    stars: Number(h.stars) || 3,
-    board: h.board ?? 'BB',
+  const normalizedHotels = hotelOptions.map((h) => {
+    // ستارهٔ خالی یا نامعتبر هرگز حدس زده نمی‌شود؛ نبودن کلید یعنی «بدون درجه» و سایت «—» نشان می‌دهد.
+    const starNum = Number(h.stars);
+    const validStars = Number.isFinite(starNum) && starNum >= 0 && starNum <= 7 ? Math.round(starNum) : undefined;
+    return {
+      hotelId: h.hotelId ?? null,
+      name: h.name ?? '',
+      ...(validStars !== undefined ? { stars: validStars } : {}),
+      board: h.board ?? 'BB',
     bookingType: h.bookingType === 'guarantee' || h.bookingType === 'semi_charter' || h.bookingType === 'on_request' ? h.bookingType : undefined,
     pricePerPerson: h.pricePerPerson || h.priceDouble || '',
     priceDouble: h.priceDouble || h.pricePerPerson || '',
@@ -366,7 +370,8 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
     priceChildWithBed: h.priceChildWithBed || '',
     priceChildNoBed: h.priceChildNoBed || '',
     locationNote: h.locationNote || '',
-  }));
+    };
+  });
 
   // مرحله‌های ۳ تا ۵ ویزارد: برنامه روزبه‌روز، سپر اعتماد و مشخصات کارشناس.
   // هر سه ستون jsonb روی site_tours آماده‌اند؛ این‌جا واقعاً نوشته می‌شوند.
