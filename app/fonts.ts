@@ -11,7 +11,9 @@ export const pinar = localFont({
     { path: "../public/fonts/pinar/Pinar-FD-SemiBold.woff2", weight: "600", style: "normal" },
     { path: "../public/fonts/pinar/Pinar-FD-Bold.woff2", weight: "700", style: "normal" },
     { path: "../public/fonts/pinar/Pinar-FD-ExtraBold.woff2", weight: "800", style: "normal" },
-    { path: "../public/fonts/pinar/Pinar-FD-Black.woff2", weight: "900", style: "normal" },
+    // وزن ۹۰۰ (Black) عمداً ثبت نشده: هیچ عنصری با فونت پینار وزن ۹۰۰
+    // نمی‌گیرد (font-blackها همه روی فونت بدنه/وزیرمتن‌اند) و مرورگر
+    // هیچ‌وقت این فایل ۳۷KB را دانلود نمی‌کرد (میز P-A فاز ۲).
   ],
   variable: "--font-pinar",
   display: "swap",

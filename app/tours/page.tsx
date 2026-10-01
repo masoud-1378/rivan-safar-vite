@@ -7,7 +7,7 @@ import {
   breadcrumbJsonLd,
   itemListJsonLd,
 } from '../seo-helpers';
-import { getLiveContent } from '@/src/lib/db-content';
+import { getToursPageContent } from '@/src/lib/db-content';
 import { getContactInfo } from '@/src/lib/site-contact';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ToursPage() {
   const seo = resolveSeo('/tours');
-  const [content, contact] = await Promise.all([getLiveContent(), getContactInfo()]);
+  const [content, contact] = await Promise.all([getToursPageContent(), getContactInfo()]);
   const tours = content.tours.map((t) => ({
     name: t.title,
     url: `/tour/${t.id}`,

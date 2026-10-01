@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
+    // میز P-A فاز ۲: پهن‌ترین تصویر رندرشدهٔ سایت ~۹۰۰px است (هیروی ۲۱/۹
+    // راهنما)؛ کاندیداهای ۲۰۴۸/۳۸۴۰ فقط srcset را باد می‌کردند (~۲۷KB در
+    // HTML خانه). سقف ۱۹۲۰ برای DPR بالای همان هیرو کافی است.
+    deviceSizes: [640, 750, 1080, 1920],
+    imageSizes: [256, 384, 640],
   },
   async headers() {
     return [

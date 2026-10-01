@@ -70,7 +70,25 @@ function restToTour(r: Row): TourItem {
   };
 }
 
-export async function getTours(): Promise<TourItem[]> {
+/**
+ * میز P-A فاز ۲: کش پرومیس تورها (همان الگوی PB-05 میز P-B برای مقصدها).
+ * getDestinations برای شمارش «تور فعال» دوباره getTours را صدا می‌زند و
+ * getLiveContent هم چند فراخوان موازی دارد؛ بدون این کش، هر ریکوئست دو بار
+ * کل جدول site_tours را می‌خواند. TTL پنج‌دقیقه‌ای روی نمونهٔ گرم سرورلس
+ * کهنه‌ماندن ابدی را می‌گیرد؛ تصمیم امنیتی/انتشاری نمی‌گیرد (فقط خواندن).
+ */
+const TOURS_TTL_MS = 5 * 60 * 1000;
+let toursCache: { promise: Promise<TourItem[]>; at: number } | null = null;
+
+export function getTours(): Promise<TourItem[]> {
+  const now = Date.now();
+  if (!toursCache || now - toursCache.at > TOURS_TTL_MS) {
+    toursCache = { promise: fetchTours(), at: now };
+  }
+  return toursCache.promise;
+}
+
+async function fetchTours(): Promise<TourItem[]> {
   try {
     const rest = getRest();
     if (!rest) return SAMPLE_TOURS;
@@ -348,9 +366,14 @@ export async function getLiveContent(): Promise<{
   guides: Record<string, GuideItem>;
   exhibitions: Record<string, ExhibitionSeries>;
 }> {
-  // ترتیبی و سبک: هر خواندن یک درخواست HTTPS بدون حالت است.
-  const tours = await getTours();
-  const allPlaces = await getDestinationsOnce();
+  // میز P-A فاز ۲: خواندن‌های مستقل موازی شدند (قبلاً چهار راندتریپ ترتیبی).
+  // getTours کش پرومیس دارد، پس فراخوان تودرتوی getDestinations کوئری تازه نمی‌زند.
+  const [tours, allPlaces, guides, exhibitions] = await Promise.all([
+    getTours(),
+    getDestinationsOnce(),
+    getGuides(),
+    getExhibitions(),
+  ]);
   const countries =
     allPlaces.filter((p) => p.type === 'country').length > 0
       ? Object.fromEntries(allPlaces.filter((p) => p.type === 'country').map((c) => [c.slug, c]))
@@ -363,7 +386,132 @@ export async function getLiveContent(): Promise<{
             .map((c) => [c.slug, c]),
         )
       : CITIES;
-  const guides = await getGuides();
-  const exhibitions = await getExhibitions();
   return { tours, countries, cities, guides, exhibitions };
+}
+
+/* ------------------------------------------------------------------ */
+/* پروجکشن‌های سبک مسیرها (میز P-A فاز ۲)                               */
+/* ------------------------------------------------------------------ */
+/**
+ * چرا این‌ها هستند: هر صفحه کل آبجکت محتوا را از طریق ContentProvider به
+ * کلاینت می‌دهد و همان در فلایت RSC (بدنهٔ HTML) سریالایز می‌شود. ولی هر
+ * مسیر فقط زیرمجموعه‌ای از فیلدها را واقعاً می‌خواند. این پروجکشن‌ها
+ * فیلدهای سنگینِ خوانده‌نشده را صفر می‌کنند تا وزن HTML کم شود.
+ *
+ * قرارداد هر تابع = دقیقاً فیلدهایی که کامپوننت‌های همان مسیر می‌خوانند
+ * (با grep راستی‌آزمایی شده)؛ خروجی همان تایپ کامل است تا هیچ کامپوننتی
+ * از نظر تایپ نشکند، و رندر/سئو هیچ تغییری نمی‌کند. اگر سکشنی به مسیری
+ * اضافه شد که فیلد تازه‌ای می‌خواند، پروجکشن همان مسیر را به‌روز کن.
+ */
+
+/**
+ * خانه (`/`): فقط OriginCities از تورها استفاده می‌کند و آن هم فقط
+ * `t.origin` را می‌خواند (uniqueOrigins در tour-live.ts). بقیهٔ سکشن‌های
+ * خانه یا استاتیک‌اند یا فقط راهنماها را می‌خوانند.
+ */
+export function slimTourForOriginList(t: TourItem): TourItem {
+  return {
+    id: t.id,
+    title: '',
+    type: t.type,
+    typeLabel: '',
+    destination: '',
+    origin: t.origin,
+    route: '',
+    duration: '',
+    nights: 0,
+    closestDeparture: '',
+    price: 0,
+    formattedPrice: '',
+    priceNote: '',
+    status: t.status,
+    statusLabel: '',
+    publishStatus: undefined,
+    updatedAt: '',
+    image: '',
+    badge: undefined,
+    features: [],
+    visaRequired: false,
+    hotelStars: 0,
+    airline: '',
+    includedServices: [],
+    excludedServices: [],
+    hotelOptions: [],
+    description: '',
+    destinationSlugs: [],
+    transportKind: undefined,
+    itineraryDays: [],
+    trustSpecs: undefined,
+    consultantSpec: undefined,
+  };
+}
+
+/**
+ * فهرست تورها (`/tours`): کارت‌ها + فیلترها + مودال جزئیات.
+ * مودال description و included/excludedServices و hotelOptions را می‌خواند،
+ * ولی itineraryDays و trustSpecs/consultantSpec و features و
+ * destinationSlugs را هیچ‌جا نمی‌خواند.
+ */
+export function slimTourForCardList(t: TourItem): TourItem {
+  return {
+    ...t,
+    itineraryDays: [],
+    trustSpecs: undefined,
+    consultantSpec: undefined,
+    features: [],
+    destinationSlugs: [],
+  };
+}
+
+/**
+ * کارت راهنما (خانه و `/tours`): فقط id/slug/title/summary/heroImage/
+ * categoryLabel/readTime/lastReviewedAt خوانده می‌شود؛ sections و faqs و
+ * directAnswer فقط در صفحهٔ جزئیات راهنما لازم‌اند.
+ */
+export function slimGuideForCard(g: GuideItem): GuideItem {
+  return { ...g, directAnswer: '', sections: [], faqs: [] };
+}
+
+function slimGuideRecord(
+  guides: Record<string, GuideItem>,
+): Record<string, GuideItem> {
+  return Object.fromEntries(
+    Object.entries(guides).map(([k, g]) => [k, slimGuideForCard(g)] as const),
+  );
+}
+
+/** محتوای خانه: مبدأهای تور + کارت‌های راهنما (بدون مقصد/نمایشگاه). */
+export async function getHomeContent(): Promise<{
+  tours: TourItem[];
+  guides: Record<string, GuideItem>;
+}> {
+  const [tours, guides] = await Promise.all([getTours(), getGuides()]);
+  return {
+    tours: tours.map(slimTourForOriginList),
+    guides: slimGuideRecord(guides),
+  };
+}
+
+/** محتوای `/tours`: تورهای سبک‌شده + کارت‌های راهنما (بدون مقصد/نمایشگاه). */
+export async function getToursPageContent(): Promise<{
+  tours: TourItem[];
+  guides: Record<string, GuideItem>;
+}> {
+  const [tours, guides] = await Promise.all([getTours(), getGuides()]);
+  return {
+    tours: tours.map(slimTourForCardList),
+    guides: slimGuideRecord(guides),
+  };
+}
+
+/**
+ * محتوای `/tour/[slug]`: فقط تورها (کامل — صفحهٔ جزئیات و تورهای مرتبط و
+ * اسکیمای tourJsonLd همهٔ فیلدها را می‌خواهند). مقصد/راهنما/نمایشگاه را
+ * TourDetailPage اصلاً نمی‌خواند؛ در provider به فالبک استاتیک می‌روند که
+ * همان دیتای باندل‌شدهٔ کلاینت است و در HTML تکرار نمی‌شود.
+ */
+export async function getTourDetailContent(): Promise<{
+  tours: TourItem[];
+}> {
+  return { tours: await getTours() };
 }

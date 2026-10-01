@@ -8,7 +8,7 @@ import {
   breadcrumbJsonLd,
   tourJsonLd,
 } from '../../seo-helpers';
-import { getLiveContent, getTours } from '@/src/lib/db-content';
+import { getTourDetailContent, getTours } from '@/src/lib/db-content';
 import { getContactInfo } from '@/src/lib/site-contact';
 
 export const dynamic = 'force-dynamic';
@@ -32,7 +32,7 @@ export default async function TourPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [content, contact] = await Promise.all([getLiveContent(), getContactInfo()]);
+  const [content, contact] = await Promise.all([getTourDetailContent(), getContactInfo()]);
   if (!content.tours.some((t) => t.id === slug)) notFound();
   const seo = resolveSeo(`/tour/${slug}`);
   // ردیف ۲-۴: اسکیمای سئو از آبجکت تور زنده ساخته می‌شود، نه دیتای نمونه.
