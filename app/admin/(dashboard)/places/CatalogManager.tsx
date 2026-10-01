@@ -6,6 +6,7 @@ import { Pencil, Plus, Archive, Building2 } from 'lucide-react';
 import { buttonClasses } from '@/components/ui/button';
 import DestinationForm from './DestinationForm';
 import { deleteDestination, countDestinationTours, type DestinationRow } from './actions';
+import { DESTINATION_CATEGORIES } from './categories';
 import SectionSettingsDialog from '../SectionSettingsDialog';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
@@ -43,10 +44,13 @@ export default function CatalogManager({ initial, sectionSettings }: { initial: 
     } catch (error) { toast({ variant: 'error', title: error instanceof Error ? error.message : 'خطا در حذف.' }); }
   };
   const edit = (destination: DestinationRow) => { setEditing(destination); setShowForm(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  // برچسب‌های فارسی نوع و دسته‌بندی — همان مقادیر کانونی فرم (یافتهٔ گشت: مقادیر خام انگلیسی نمایش داده می‌شد).
+  const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(DESTINATION_CATEGORIES.map((c) => [c.value, c.label]));
+  const TYPE_LABELS: Record<string, string> = { city: 'شهر', country: 'کشور', region: 'منطقه' };
   const columns: Column<DestinationRow>[] = [
     { key: 'name', header: 'نام', sortable: true, cell: (destination) => <span className="font-semibold">{destination.name}</span> },
-    { key: 'type', header: 'نوع', sortable: true },
-    { key: 'category', header: 'دسته‌بندی', sortable: true, cell: (destination) => destination.category || '—' },
+    { key: 'type', header: 'نوع', sortable: true, cell: (destination) => TYPE_LABELS[destination.type] ?? destination.type ?? '—' },
+    { key: 'category', header: 'دسته‌بندی', sortable: true, cell: (destination) => (destination.category ? (CATEGORY_LABELS[destination.category] ?? destination.category) : '—') },
     { key: 'startingPrice', header: 'قیمت شروع', cell: (destination) => destination.startingPrice || '—' },
     { key: 'id', header: 'عملیات', className: 'w-44', cell: (destination) => <div className="flex flex-wrap gap-1"><Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => edit(destination)}><Pencil />ویرایش</Button><Link href={`/admin/catalog?tab=hotels&city=${encodeURIComponent(destination.slug)}`} title={`افزودن هتل در ${destination.name}`} className={buttonClasses('ghost', 'sm', 'max-md:min-h-11')}><Building2 />هتل</Link><Button variant="ghost" size="sm" className="text-destructive max-md:min-h-11" onClick={() => openDelete(destination)} disabled={pending}><Archive />بایگانی</Button></div> },
   ];

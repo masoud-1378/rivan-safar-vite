@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Copy, Pencil, Plus, Archive, Plane, Train, Bus, Ship, Route, ShieldCheck } from 'lucide-react';
+import { Copy, Pencil, Plus, Archive, Plane, Train, Bus, Ship, Route, ShieldCheck, Eye } from 'lucide-react';
 import { deleteTour, setToursPublishStatusBulk, archiveToursBulk, type TourRow } from './actions';
 import { CAPACITY_OPTIONS } from './tour-helpers';
 import SectionSettingsDialog from '../SectionSettingsDialog';
@@ -166,6 +166,9 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
   // در موبایل تارگت لمسی ۴۴px (max-md:min-h-11) و در کارت تمام‌عرض.
   const tourActions = (tour: TourRow, card = false) => (
     <div className={cn(card ? "flex gap-1.5" : "flex items-center gap-1")} onClick={(e) => e.stopPropagation()}>
+      <Button variant="ghost" size="icon" title="نمایش در سایت" aria-label={`نمایش تور «${tour.title}» در سایت (تب تازه)`} onClick={() => window.open(`/tour/${tour.slug}`, '_blank', 'noopener,noreferrer')} className={cn(card && "flex-none")}>
+        <Eye />
+      </Button>
       <Button variant="ghost" size="sm" className={cn("max-md:min-h-11", card && "flex-1")} onClick={() => router.push(`/admin/tours/${tour.id}`)}>
         <Pencil />ویرایش
       </Button>

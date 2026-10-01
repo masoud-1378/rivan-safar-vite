@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Pencil, Plus, Archive } from 'lucide-react';
+import { Pencil, Plus, Archive, Eye } from 'lucide-react';
 import GuideForm, { type GuidePickerOption } from './GuideForm';
 import { deleteGuide, setGuideStatus, type GuideRow, type GuideStatus } from './actions';
 import { AlertDialog } from '@/components/ui/alert-dialog';
@@ -38,7 +38,7 @@ export default function GuidesManager({ initial, destinationOptions = [], tourOp
     { key: 'readTime', header: 'زمان مطالعه', cell: (guide) => guide.readTime || '—' },
     { key: 'status', header: 'وضعیت', cell: (guide) => <Badge variant={STATUS_MAP[guide.status].variant}>{STATUS_MAP[guide.status].label}</Badge> },
     { key: 'id', header: 'تغییر وضعیت', cell: (guide) => <Select aria-label={`تغییر وضعیت ${guide.titleFa}`} value={guide.status} disabled={pending} onChange={(event) => onStatusChange(guide.id, event.target.value as GuideStatus)} className="h-8 min-w-36 text-xs max-md:min-h-11" options={statusOptions} /> },
-    { key: 'updatedAt', header: 'عملیات', className: 'w-36', cell: (guide) => <div className="flex gap-1"><Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => edit(guide)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" className="text-destructive max-md:min-h-11" disabled={pending} onClick={() => setDeleting(guide)}><Archive />بایگانی</Button></div> },
+    { key: 'updatedAt', header: 'عملیات', className: 'w-56', cell: (guide) => <div className="flex items-center gap-1"><Button variant="ghost" size="icon" title="نمایش در سایت" aria-label={`نمایش راهنمای «${guide.titleFa}» در سایت (تب تازه)`} onClick={() => window.open(`/guide/${guide.slug}`, '_blank', 'noopener,noreferrer')}><Eye /></Button><Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => edit(guide)}><Pencil />ویرایش</Button><Button variant="ghost" size="sm" className="text-destructive max-md:min-h-11" disabled={pending} onClick={() => setDeleting(guide)}><Archive />بایگانی</Button></div> },
   ];
   return (
     <div className="admin-enter space-y-6">
