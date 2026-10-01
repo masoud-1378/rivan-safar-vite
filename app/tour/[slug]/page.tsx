@@ -35,10 +35,12 @@ export default async function TourPage({
   const [content, contact] = await Promise.all([getLiveContent(), getContactInfo()]);
   if (!content.tours.some((t) => t.id === slug)) notFound();
   const seo = resolveSeo(`/tour/${slug}`);
+  // ردیف ۲-۴: اسکیمای سئو از آبجکت تور زنده ساخته می‌شود، نه دیتای نمونه.
+  const tour = content.tours.find((t) => t.id === slug);
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
-      <JsonLd data={tourJsonLd(slug)} />
+      <JsonLd data={tourJsonLd(tour)} />
       <RouteView type="tour_detail" params={{ tourSlug: slug }} data={content} contact={contact} />
     </>
   );

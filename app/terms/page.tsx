@@ -3,7 +3,7 @@ import RouteView from '../RouteView';
 import JsonLd from '../JsonLd';
 import { metadataFor, resolveSeo, breadcrumbJsonLd } from '../seo-helpers';
 
-export function generateMetadata(): Metadata {
+export async function generateMetadata(): Promise<Metadata> {
   return metadataFor('/terms');
 }
 

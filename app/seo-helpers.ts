@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import { SITE_URL } from '@/src/lib/siteConfig';
 import { resolveRoute, type BreadcrumbItem } from '@/src/data/siteRegistry';
 import { findLandingByPath } from '@/src/data/seoLandings';
-import { SAMPLE_TOURS } from '@/src/data/toursData';
+import { SAMPLE_TOURS, type TourItem } from '@/src/data/toursData';
 import { COUNTRIES, CITIES } from '@/src/data/destinationsData';
 import { GUIDES } from '@/src/data/guidesData';
 import { EXHIBITION_SERIES } from '@/src/data/exhibitionsData';
+import { getTour, getGuide, getExhibition } from '@/src/lib/db-content';
 
 export interface ResolvedSeo {
   title: string;
@@ -94,6 +95,66 @@ export function resolveSeo(path: string): ResolvedSeo {
   return { title, description, canonicalPath: route.canonicalPath, robots, breadcrumbs };
 }
 
+/**
+ * نسخهٔ زندهٔ resolveSeo (ردیف ۱-۳): برای سه شاخهٔ تور/راهنما/نمایشگاه اول
+ * رکورد همان موجودیت را از DB می‌خواند (از همان getTours/getGuides/getExhibitions
+ * که صفحه‌ها استفاده می‌کنند) و تایتل/توضیحات را از فیلدهای رکورد می‌سازد؛
+ * اگر در DB نبود، به رجیستری استاتیک (همان resolveSeo) برمی‌گردد.
+ *
+ * قانون robots: «شناخته‌شده در DB یا استاتیک» — رکورد منتشرشده‌ای که در DB هست
+ * دیگر noindex,nofollow نمی‌گیرد، حتی اگر در دیتای استاتیک نباشد.
+ * (ریسک ۲ طرح: این رکوردهای تازه از محرومیت ایندکس خارج می‌شوند.)
+ */
+export async function resolveSeoLive(path: string): Promise<ResolvedSeo> {
+  const route = resolveRoute(path);
+  const fallback = resolveSeo(path);
+  const withCrumb = (name: string): BreadcrumbItem[] => {
+    const crumbs = [...fallback.breadcrumbs];
+    crumbs[crumbs.length - 1] = { name };
+    return crumbs;
+  };
+
+  try {
+    if (route.type === 'tour_detail') {
+      const tour = await getTour(route.params.tourSlug);
+      if (tour) {
+        return {
+          ...fallback,
+          title: `${tour.title}؛ تاریخ، قیمت و شرایط · ریوان سفر`,
+          description: `${tour.title} با حرکت از ${tour.origin}، مدت ${tour.duration} و ایرلاین ${tour.airline}. قیمت پایه و ظرفیت هر حرکت پیش از اقدام تأیید می‌شود.`,
+          robots: 'index,follow',
+          breadcrumbs: withCrumb(tour.title),
+        };
+      }
+    } else if (route.type === 'guide_detail') {
+      const guide = await getGuide(route.params.guideSlug);
+      if (guide) {
+        return {
+          ...fallback,
+          title: `${guide.title} · ریوان سفر`,
+          description: guide.summary,
+          robots: 'index,follow',
+          breadcrumbs: withCrumb(guide.title),
+        };
+      }
+    } else if (route.type === 'exhibition_detail') {
+      const series = await getExhibition(route.params.eventSeriesSlug);
+      if (series) {
+        return {
+          ...fallback,
+          title: `${series.title} · ریوان سفر`,
+          description: `${series.heroTagline}. تاریخ: ${series.upcomingEdition.solarDate}.`,
+          robots: 'index,follow',
+          breadcrumbs: withCrumb(series.title),
+        };
+      }
+    }
+  } catch {
+    // خطا در خواندن DB → همان fallback استاتیک برمی‌گردد.
+  }
+  return fallback;
+}
+
 export function toMetadata(seo: ResolvedSeo): Metadata {
   const canonical =
     seo.canonicalPath === '/'
@@ -158,9 +219,11 @@ export function organizationJsonLd() {
 /**
  * Schema صفحه تور — فقط از داده نمایش‌داده‌شده به کاربر ساخته می‌شود (سند ۱۰ §۱۲.۸).
  * قیمت به‌صورت PriceSpecification بدون ادعای قطعی؛ PriceType حذف چون استعلام‌محوریم.
+ *
+ * ردیف ۲-۴: آبجکت تور زنده را به‌عنوان آرگومان می‌گیرد (از همان دیتایی که صفحه
+ * جزئیات از getTours گرفته) — دیگر lookup از SAMPLE_TOURS نمی‌کند.
  */
-export function tourJsonLd(tourId: string) {
-  const tour = SAMPLE_TOURS.find((t) => t.id === tourId);
+export function tourJsonLd(tour: TourItem | null | undefined) {
   if (!tour) return null;
   return {
     '@context': 'https://schema.org',
@@ -206,6 +269,6 @@ export function itemListJsonLd(
   };
 }
 
-export function metadataFor(path: string): Metadata {
-  return toMetadata(resolveSeo(path));
+export async function metadataFor(path: string): Promise<Metadata> {
+  return toMetadata(await resolveSeoLive(path));
 }

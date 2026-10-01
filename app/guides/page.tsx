@@ -12,7 +12,7 @@ import { getContactInfo } from '@/src/lib/site-contact';
 
 export const dynamic = 'force-dynamic';
 
-export function generateMetadata(): Metadata {
+export async function generateMetadata(): Promise<Metadata> {
   return metadataFor('/guides');
 }
 

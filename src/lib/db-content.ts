@@ -5,7 +5,7 @@
  * - همه توابع فقط سمت سرور قابل استفاده‌اند.
  */
 import { getRest } from './supabase-rest';
-import { SAMPLE_TOURS, type TourItem } from '@/src/data/toursData';
+import { SAMPLE_TOURS, type TourItem, type TourItineraryDay } from '@/src/data/toursData';
 import { COUNTRIES, CITIES, type Place } from '@/src/data/destinationsData';
 import { GUIDES, type GuideItem } from '@/src/data/guidesData';
 import { EXHIBITION_SERIES, type ExhibitionSeries } from '@/src/data/exhibitionsData';
@@ -59,6 +59,14 @@ function restToTour(r: Row): TourItem {
     excludedServices: arr<string>(r.excluded_services),
     hotelOptions: arr<TourItem['hotelOptions'][number]>(r.hotel_options),
     description: str(r.description),
+    // پنج ستون جاافتاده (ردیف ۲-۱)؛ jsonbها خام عبور می‌کنند، نرمالایز با کامپوننت.
+    destinationSlugs: arr<string>(r.destination_slugs),
+    // transport_kind از مایگریشن 0014 می‌آید که ممکن است هنوز روی دیتابیس واقعی
+    // اجرا نشده باشد؛ نبود کلید در ردیف فقط undefined می‌دهد و هیچ‌چیز نمی‌شکند.
+    transportKind: (r.transport_kind as TourItem['transportKind']) ?? undefined,
+    itineraryDays: arr<TourItineraryDay>(r.itinerary_days),
+    trustSpecs: (r.trust_specs as TourItem['trustSpecs']) ?? undefined,
+    consultantSpec: (r.consultant_spec as TourItem['consultantSpec']) ?? undefined,
   };
 }
 
@@ -134,7 +142,23 @@ export async function getDestinations(): Promise<Place[]> {
       .order('created_at', { ascending: true });
     if (error) throw error;
     if (!data || data.length === 0) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
-    return (data as Row[]).map(restToPlace);
+    const places = (data as Row[]).map(restToPlace);
+    // ردیف ۳-۳ («محاسبه هنگام خواندن»): شمارش خودکار «تور فعال» —
+    // تعداد تورهای منتشرشده‌ای که destinationSlugsشان شامل نامک مقصد است.
+    // فقط وقتی اعمال می‌شود که فهرست تورها واقعاً از DB آمده باشد؛
+    // در حالت fallback استاتیک (getTours همان SAMPLE_TOURS را برگرداند) عدد دستی
+    // ذخیره‌شدهٔ رکورد سر جایش می‌ماند تا صفحه با صفر کاذب نمایش داده نشود.
+    try {
+      const tours = await getTours();
+      if (tours !== SAMPLE_TOURS) {
+        for (const p of places) {
+          p.activeToursCount = tours.filter((t) => t.destinationSlugs?.includes(p.slug)).length;
+        }
+      }
+    } catch {
+      // خطا در خواندن تورها → عدد دستی رکورد حفظ می‌شود.
+    }
+    return places;
   } catch (error) {
     console.error('[db-content] destinations read failed:', (error as Error).message);
     return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
@@ -202,7 +226,16 @@ export async function getGuides(): Promise<Record<string, GuideItem>> {
       .order('updated_at', { ascending: false });
     if (error) throw error;
     if (!data || data.length === 0) return GUIDES;
-    return Object.fromEntries((data as Row[]).map((r) => [str(r.slug), restToGuide(r)]));
+    // گیت انتشار (ردیف ۱-۱): فقط «منتشرشده»ها روی سایت دیده می‌شوند.
+    // مقادیر ستون status از ExhibitionForm/GuideForm:
+    // draft | review | published | paused | archived (پیش‌فرض دیتابیس: draft).
+    // ردیف بدون status (قدیمی‌تر از ستون) منتشرشده حساب می‌شود تا رفتار قدیمی حفظ شود.
+    // شرط deleted_at همچنان سر جایش است (حذف منطقی پنهان می‌ماند).
+    const published = (data as Row[]).filter((r) => {
+      const s = str(r.status);
+      return s === '' || s === 'published';
+    });
+    return Object.fromEntries(published.map((r) => [str(r.slug), restToGuide(r)]));
   } catch (error) {
     console.error('[db-content] guides read failed:', (error as Error).message);
     return GUIDES;
@@ -262,7 +295,16 @@ export async function getExhibitions(): Promise<Record<string, ExhibitionSeries>
       .order('updated_at', { ascending: false });
     if (error) throw error;
     if (!data || data.length === 0) return EXHIBITION_SERIES;
-    return Object.fromEntries((data as Row[]).map((r) => [str(r.slug), restToExhibition(r)]));
+    // گیت انتشار (ردیف ۱-۱): فقط «منتشرشده»ها روی سایت دیده می‌شوند.
+    // مقادیر ستون status از ExhibitionForm/GuideForm:
+    // draft | review | published | paused | archived (پیش‌فرض دیتابیس: draft).
+    // ردیف بدون status (قدیمی‌تر از ستون) منتشرشده حساب می‌شود تا رفتار قدیمی حفظ شود.
+    // شرط deleted_at همچنان سر جایش است (حذف منطقی پنهان می‌ماند).
+    const published = (data as Row[]).filter((r) => {
+      const s = str(r.status);
+      return s === '' || s === 'published';
+    });
+    return Object.fromEntries(published.map((r) => [str(r.slug), restToExhibition(r)]));
   } catch (error) {
     console.error('[db-content] exhibitions read failed:', (error as Error).message);
     return EXHIBITION_SERIES;

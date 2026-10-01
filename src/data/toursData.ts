@@ -1,3 +1,32 @@
+/** یک روز از برنامهٔ سفر (آینهٔ ساختاری TourItineraryDayItem در پنل) */
+export interface TourItineraryDay {
+  day: number;
+  title: string;
+  city: string;
+  description: string;
+  activityType: 'guided' | 'free' | 'transit' | 'departure' | string;
+  meals?: string;
+}
+
+/** سپر اعتماد / مدارک و هزینه‌ها (آینهٔ ساختاری TourTrustSpecsItem در پنل) */
+export interface TourTrustSpecs {
+  returnGuarantee?: string;
+  cityTax?: string;
+  tipsNote?: string;
+  luggageKg?: number;
+  activityLevel?: 'easy' | 'moderate' | 'demanding' | string;
+  requiredDocs?: string[];
+}
+
+/** مشخصات کارشناس تور (آینهٔ ساختاری TourConsultantSpecItem در پنل) */
+export interface TourConsultantSpec {
+  name?: string;
+  title?: string;
+  phone?: string;
+  audioUrl?: string;
+  emergencyPhone?: string;
+}
+
 export interface TourItem {
   id: string;
   title: string;
@@ -16,6 +45,20 @@ export interface TourItem {
   statusLabel: string;
   /** شرایط انتشار (مایگریشن 0011)؛ نامشخص = ردیف قدیمی‌تر از ستون = منتشرشده */
   publishStatus?: 'draft' | 'review' | 'published' | 'paused' | 'archived';
+  /** نامک‌های مقصدها (مایگریشن 0006)؛ مبنای تطبیق تور↔مقصد */
+  destinationSlugs?: string[];
+  /**
+   * شیوهٔ سفر (مایگریشن 0014).
+   * ستون ممکن است هنوز روی دیتابیس واقعی نباشد؛ در این صورت undefined می‌ماند
+   * و هیچ‌چیز نمی‌شکند (دسترسی دفاعی در restToTour).
+   */
+  transportKind?: 'air' | 'land' | 'rail' | 'sea' | 'mixed';
+  /** برنامهٔ روزبه‌روز (مایگریشن 0007)؛ خام از jsonb، نرمالایز با کامپوننت */
+  itineraryDays?: TourItineraryDay[];
+  /** سپر اعتماد / مدارک و هزینه‌ها (مایگریشن 0007)؛ خام از jsonb */
+  trustSpecs?: TourTrustSpecs | null;
+  /** مشخصات کارشناس تور (مایگریشن 0007)؛ خام از jsonb */
+  consultantSpec?: TourConsultantSpec | null;
   updatedAt: string;
   image: string;
   badge?: string;
