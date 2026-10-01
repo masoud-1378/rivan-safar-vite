@@ -186,10 +186,10 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                 </div>
 
                 {/* Floating Modern Badge (Only Tour Count) */}
-                <div className="absolute top-3.5 right-3.5">
+                <div className="absolute top-3.5 start-3.5">
                   <div className="backdrop-blur-md bg-brand-navy/85 text-white border border-white/20 px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-brand-orange" />
-                    <span className="text-caption font-bold ">{country.activeToursCount} تور فعال</span>
+                    <span className="text-caption font-bold ">{fa(country.activeToursCount)} تور فعال</span>
                   </div>
                 </div>
               </div>
@@ -363,7 +363,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
 
                     {isOpen && (
                       <div className="p-4 md:p-5 pt-0 text-body-sm text-text-secondary leading-relaxed border-t border-border-default/40 bg-surface-primary">
-                        <div className="pr-8 pt-2">
+                        <div className="ps-8 pt-2">
                           {faq.answer}
                         </div>
                       </div>

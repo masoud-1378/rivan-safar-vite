@@ -21,7 +21,7 @@ export default function TravelGuide() {
       <div className="container-main px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 text-right gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 text-start gap-4">
           <motion.div 
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}

@@ -108,7 +108,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
       <section className="bg-surface-primary border-b border-border-default section-compact">
         <div className="container-main px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-7 text-right">
+            <div className="lg:col-span-7 text-start">
               <div className="flex items-center gap-2 mb-3">
                 <span className="badge badge-standard">
                   <MapPin className="w-3.5 h-3.5" />
@@ -129,7 +129,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
               </p>
 
               {/* Price & Basis Card */}
-              <div className="p-4 bg-surface-secondary rounded-card border border-border-default/80 mb-6 text-right">
+              <div className="p-4 bg-surface-secondary rounded-card border border-border-default/80 mb-6 text-start">
                 <div className="flex flex-wrap items-baseline justify-between gap-2 mb-2">
                   <div>
                     <span className="text-caption text-text-secondary block">شروع قیمت پایه:</span>
@@ -137,7 +137,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                       <span className="text-h3 font-extrabold text-brand-orange">{city.startingPrice}</span>
                     </div>
                   </div>
-                  <div className="text-left text-caption text-text-secondary">
+                  <div className="text-end text-caption text-text-secondary">
                     <span>آخرین بررسی:</span>
                     <div className="font-bold text-text-heading">{city.lastVerifiedAt}</div>
                   </div>
@@ -181,7 +181,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
 
       {/* ---------------- Active Tours List ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-        <div className="text-right mb-6">
+        <div className="text-start mb-6">
           <h2 className="text-h2 text-text-heading font-bold mb-1.5">
             تورهای فعال {city.name}
           </h2>
@@ -228,7 +228,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
       {city.popularDistricts && city.popularDistricts.length > 0 && (
         <section className="bg-surface-primary border-y border-border-default section-standard">
           <div className="container-main px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl text-right mb-6">
+            <div className="max-w-3xl text-start mb-6">
               <h2 className="text-h2 text-text-heading font-bold mb-2">
                 کدام منطقه {city.name} برای اقامت شما مناسب‌تر است؟
               </h2>
@@ -239,7 +239,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {city.popularDistricts.map((district, idx) => (
-                <div key={idx} className="bg-surface-secondary border border-border-default/60 rounded-control p-4 text-right">
+                <div key={idx} className="bg-surface-secondary border border-border-default/60 rounded-control p-4 text-start">
                   <div className="w-7 h-7 rounded-small bg-brand-orange/10 text-brand-orange font-bold flex items-center justify-center mb-2 text-caption">
                     {idx + 1}
                   </div>
@@ -254,7 +254,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
       {/* ---------------- Destination Highlights & Practical Tips ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-surface-primary border border-border-default rounded-card p-6 text-right">
+          <div className="bg-surface-primary border border-border-default rounded-card p-6 text-start">
             <h3 className="text-h3 font-bold text-text-heading mb-3">ویژگی‌های شاخص تور {city.name}</h3>
             <div className="space-y-2.5">
               {city.keyHighlights.map((hl, idx) => (
@@ -266,7 +266,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
             </div>
           </div>
 
-          <div className="bg-surface-primary border border-border-default rounded-card p-6 text-right">
+          <div className="bg-surface-primary border border-border-default rounded-card p-6 text-start">
             <h3 className="text-h3 font-bold text-text-heading mb-3">نکات مهم پیش از سفر به {city.name}</h3>
             <div className="space-y-2.5">
               {city.travelTips.map((tip, idx) => (
@@ -282,17 +282,17 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
       {/* ---------------- FAQs Section ---------------- */}
       {city.faqs && city.faqs.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-compact">
-          <div className="text-right mb-6">
+          <div className="text-start mb-6">
             <h3 className="text-h3 text-text-heading font-bold">سؤالات متداول مسافران تور {city.name}</h3>
           </div>
           <div className="space-y-3">
             {city.faqs.map((faq, idx) => (
-              <div key={idx} className="bg-surface-primary border border-border-default rounded-card p-5 text-right">
+              <div key={idx} className="bg-surface-primary border border-border-default rounded-card p-5 text-start">
                 <h4 className="text-body font-bold text-text-heading mb-2 flex items-center gap-2">
                   <HelpCircle className="w-4 h-4 text-brand-orange" />
                   <span>{faq.question}</span>
                 </h4>
-                <p className="text-body-sm text-text-secondary leading-relaxed mr-6">
+                <p className="text-body-sm text-text-secondary leading-relaxed ms-6">
                   {faq.answer}
                 </p>
               </div>
@@ -326,7 +326,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
               </div>
             </div>
           ) : (
-            <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-right space-y-4">
+            <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-start space-y-4">
               <div>
                 <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی <span className="text-red-500">*</span></label>
                 <input
@@ -348,7 +348,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-right focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-start focus:border-brand-orange focus:outline-none"
                 />
               </div>
 
@@ -412,7 +412,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
       {/* ---------------- Alternative Destinations ---------------- */}
       {alternativeCities.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-          <h3 className="text-h3 text-text-heading font-bold mb-6 text-right">
+          <h3 className="text-h3 text-text-heading font-bold mb-6 text-start">
             مقصدهای پیشنهادی دیگر
           </h3>
 
@@ -422,7 +422,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                 key={alt.id}
                 href={`/destination/${alt.parentCountrySlug || alt.slug}/${alt.slug}`}
                 onClick={(e) => { e.preventDefault(); onNavigate(`/destination/${alt.parentCountrySlug || alt.slug}/${alt.slug}`); }}
-                className="bg-surface-primary border border-border-default rounded-card p-4 hover:shadow-card hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-4 text-right"
+                className="bg-surface-primary border border-border-default rounded-card p-4 hover:shadow-card hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-4 text-start"
               >
                 <div className="w-16 h-16 rounded-control overflow-hidden shrink-0 relative">
                   <SmartImage src={alt.image} alt={alt.name} className="object-cover" sizes="64px" />

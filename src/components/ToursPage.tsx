@@ -299,7 +299,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               className="lg:hidden flex items-center gap-2 bg-surface-primary border border-border-default px-3.5 py-2 rounded-control text-body-sm font-bold text-text-heading shadow-subtle"
             >
               <SlidersHorizontal className="w-4 h-4 text-brand-orange" />
-              <span>فیلترها ({activeFiltersCount})</span>
+              <span>فیلترها ({fa(activeFiltersCount)})</span>
             </button>
 
             {/* Sorting */}
@@ -326,36 +326,36 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
             {selectedType !== 'all' && (
               <span className="chip chip-small chip-selected">
                 {selectedType === 'foreign' ? 'خارجی' : selectedType === 'domestic' ? 'داخلی' : 'نمایشگاهی'}
-                <button onClick={() => setSelectedType('all')} className="mr-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setSelectedType('all')} className="ms-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {searchDestination && (
               <span className="chip chip-small chip-selected">
                 {searchDestination}
-                <button onClick={() => setSearchDestination('')} className="mr-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setSearchDestination('')} className="ms-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {originFilter !== 'all' && (
               <span className="chip chip-small chip-selected">
                 مبدأ: {originOptions.find((o) => o.slug === originFilter)?.label || originFilter}
-                <button onClick={() => setOriginFilter('all')} className="mr-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setOriginFilter('all')} className="ms-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {visaFreeOnly && (
               <span className="chip chip-small chip-selected">
                 بدون ویزا
-                <button onClick={() => setVisaFreeOnly(false)} className="mr-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setVisaFreeOnly(false)} className="ms-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {priceRange !== 'all' && (
               <span className="chip chip-small chip-selected">
                 {priceRange === 'under-30m' ? 'تا ۳۰ میلیون' : priceRange === '30m-60m' ? '۳۰ تا ۶۰ میلیون' : 'بالای ۶۰ میلیون'}
-                <button onClick={() => setPriceRange('all')} className="mr-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setPriceRange('all')} className="ms-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             <button
               onClick={clearAllFilters}
-              className="text-link text-caption mr-auto mr-4 shrink-0"
+              className="text-link text-caption ms-auto shrink-0"
             >
               پاک کردن همه
             </button>
@@ -382,7 +382,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               )}
             </div>
 
-            <div className="space-y-5 text-right">
+            <div className="space-y-5 text-start">
               {/* Filter 1: Travel Type */}
               <div>
                 <label className="text-body-sm font-bold text-text-heading mb-2 block">نوع سفر</label>
@@ -583,14 +583,14 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                 </div>
 
                   {/* Alternative destination options */}
-                  <div className="mt-8 pt-6 border-t border-border-default text-right">
+                  <div className="mt-8 pt-6 border-t border-border-default text-start">
                     <span className="text-caption font-bold text-text-heading block mb-3">مقصدهای جایگزین پیشنهادی:</span>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {tours.slice(0, 3).map(alt => (
                       <button
                         key={alt.id}
                         onClick={() => setSelectedDetailTour(alt)}
-                        className="bg-page-background p-3 rounded-control border border-border-default/60 hover:border-border-brand transition-colors text-right"
+                        className="bg-page-background p-3 rounded-control border border-border-default/60 hover:border-border-brand transition-colors text-start"
                       >
                         <span className="font-bold text-body-sm text-text-heading block">{alt.title}</span>
                         <span className="text-caption text-brand-orange font-semibold">{alt.formattedPrice} تومان</span>
@@ -650,7 +650,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-surface-primary rounded-card max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-right shadow-2xl"
+              className="bg-surface-primary rounded-card max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-start shadow-2xl"
             >
               <div className="flex items-center justify-between mb-6 pb-3 border-b border-border-default">
                 <h3 className="text-h3 text-text-heading">جدول مقایسه تورهای انتخابی</h3>
@@ -660,7 +660,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-right text-body-sm border-collapse">
+                <table className="w-full text-start text-body-sm border-collapse">
                   <thead>
                     <tr className="border-b border-border-default bg-page-background">
                       <th className="p-3 font-bold text-text-heading">معیار مقایسه</th>
@@ -753,7 +753,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
             { step: '۳', title: '۳. قیمت و ظرفیت تأیید می‌شود', desc: 'کارشناس وضعیت پرواز، هتل و ظرفیت را بررسی می‌کند.' },
             { step: '۴', title: '۴. قرارداد و هماهنگی نهایی انجام می‌شود', desc: 'پس از تأیید شرایط، قرارداد و مدارک سفر را دریافت می‌کنید.' }
           ].map((item) => (
-            <div key={item.step} className="bg-surface-primary p-5 rounded-card border border-border-default/60 shadow-subtle text-right relative">
+            <div key={item.step} className="bg-surface-primary p-5 rounded-card border border-border-default/60 shadow-subtle text-start relative">
               <span className="w-8 h-8 rounded-full bg-brand-orange text-on-brand font-black text-body-sm flex items-center justify-center mb-3">
                 {item.step}
               </span>
@@ -766,8 +766,8 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
 
       {/* ---------------- 19. Tour Selection Guide ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-compact">
-        <h2 className="text-h2 text-text-heading mb-6 md:mb-8 text-right">برای انتخاب تور به چه چیزهایی توجه کنیم؟</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-right text-body-sm text-text-primary leading-relaxed">
+        <h2 className="text-h2 text-text-heading mb-6 md:mb-8 text-start">برای انتخاب تور به چه چیزهایی توجه کنیم؟</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-start text-body-sm text-text-primary leading-relaxed">
           <div className="bg-surface-primary p-4 rounded-control border border-border-default">
             <h4 className="text-h4 text-text-heading mb-1">تفاوت تور آماده و پرواز + هتل</h4>
             <p className="text-text-secondary">تور آماده شامل لیدر، گشت و ترانسفر است در حالی که ترکیب پرواز و هتل انعطاف برنامه‌ریزی شخصی بیشتری به شما می‌دهد.</p>
@@ -791,7 +791,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Object.values(guides).map(guide => (
-            <article key={guide.id} className="bg-surface-primary rounded-card border border-border-default overflow-hidden text-right shadow-subtle flex flex-col justify-between">
+            <article key={guide.id} className="bg-surface-primary rounded-card border border-border-default overflow-hidden text-start shadow-subtle flex flex-col justify-between">
               <div>
                 <div className="relative w-full h-40">
                   <SmartImage src={guide.heroImage} alt={guide.title} className="object-cover" />
@@ -814,7 +814,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
 
       {/* ---------------- 21. SEO Content ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-compact">
-        <div className="bg-surface-primary rounded-card border border-border-default p-6 md:p-8 text-right leading-relaxed">
+        <div className="bg-surface-primary rounded-card border border-border-default p-6 md:p-8 text-start leading-relaxed">
           <h2 className="text-h2 text-text-heading mb-6 md:mb-8">بررسی و انتخاب تور مسافرتی با ریوان سفر</h2>
           <p className="text-body-sm text-text-secondary mb-4">
             بررسی و مقایسه تور مسافرتی پیش از سفر، به برنامه‌ریزی بدون دغدغه کمک می‌کند. آژانس مسافرتی ریوان سفر با ارائه تنوع وسیعی از تورهای داخلی (کیش، مشهد، قشم)، تورهای خارجی (ترکیه، دبی، تایلند، روسیه، اروپا) و تورهای تخصصی نمایشگاهی، شرایطی را فراهم کرده تا مسافران عزیز بتوانند مناسب‌ترین گزینه را بر اساس بودجه و سلیقه خود انتخاب کنند.
@@ -832,12 +832,12 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
           <p className="text-body-sm text-text-secondary">پاسخ شفاف به متداول‌ترین ابهامات مسافران پیش از ثبت درخواست تماس</p>
         </div>
 
-        <div className="max-w-3xl mx-auto space-y-3 dir-rtl text-right">
+        <div className="max-w-3xl mx-auto space-y-3 dir-rtl text-start">
           {TOUR_FAQ_ITEMS.map((faq, idx) => (
             <div key={idx} className="bg-surface-primary rounded-control border border-border-default overflow-hidden">
               <button
                 onClick={() => setOpenFaqIndex(openFaqIndex === idx ? null : idx)}
-                className="w-full p-4 font-bold text-[14px] text-text-heading flex items-center justify-between text-right hover:text-brand-orange transition-colors"
+                className="w-full p-4 font-bold text-[14px] text-text-heading flex items-center justify-between text-start hover:text-brand-orange transition-colors"
               >
                 <span>{faq.q}</span>
                 {openFaqIndex === idx ? <ChevronUp className="w-4 h-4 text-brand-orange" /> : <ChevronDown className="w-4 h-4 text-text-secondary" />}
@@ -860,11 +860,11 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-surface-primary rounded-card max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-right shadow-2xl"
+              className="bg-surface-primary rounded-card max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-start shadow-2xl"
             >
               <button 
                 onClick={closeDetailModal}
-                className="absolute top-4 left-4 icon-btn icon-btn-medium bg-page-background text-text-secondary hover:text-text-heading rounded-full"
+                className="absolute top-4 end-4 icon-btn icon-btn-medium bg-page-background text-text-secondary hover:text-text-heading rounded-full"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -893,7 +893,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                     <div key={i} className="flex items-center justify-between p-3 rounded-control border border-border-default bg-page-background text-body-sm">
                       <div>
                         <span className="font-bold text-text-heading">{h.name}</span>
-                        <span className="text-amber-500 font-bold ml-2">({'★'.repeat(h.stars)})</span>
+                        <span className="text-amber-500 font-bold me-2">({'★'.repeat(h.stars)})</span>
                         <span className="text-caption text-text-secondary block">{h.board}</span>
                       </div>
                       <span className="font-bold text-brand-orange">{h.pricePerPerson}</span>
@@ -945,7 +945,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleBookingSubmit} className="bg-surface-dark text-white p-5 rounded-card text-right">
+                <form onSubmit={handleBookingSubmit} className="bg-surface-dark text-white p-5 rounded-card text-start">
                   <h3 className="text-h4 mb-3">ثبت درخواست تماس برای این تور</h3>
                   <p className="text-caption text-white/80 mb-4">
                     با ثبت این فرم، کارشناسان ریوان سفر در ساعات کاری ظرفیت نهایی و قیمت را با شما هماهنگ می‌کنند.
@@ -1020,7 +1020,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              className="bg-surface-primary rounded-t-3xl w-full max-h-[85vh] overflow-y-auto p-6 text-right"
+              className="bg-surface-primary rounded-t-3xl w-full max-h-[85vh] overflow-y-auto p-6 text-start"
             >
               <div className="filter-panel-header">
                 <h3 className="text-h4 text-text-heading">فیلترهای انتخاب تور</h3>

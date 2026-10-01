@@ -214,7 +214,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                         placeholder="۰۹۱۲۳۴۵۶۷۸۹"
                         className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-start focus:border-brand-orange focus:outline-none"
                       />
-                      {errors.phone && <p className="text-caption text-red-600 mt-1 text-right">{errors.phone}</p>}
+                      {errors.phone && <p className="text-caption text-red-600 mt-1 text-start">{errors.phone}</p>}
                     </div>
                   </div>
 

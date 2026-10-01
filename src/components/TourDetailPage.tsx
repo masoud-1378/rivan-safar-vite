@@ -140,7 +140,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
             {/* Left/Main Column: Title, Quick Specs & Price (7 cols) */}
-            <div className="lg:col-span-7 text-right">
+            <div className="lg:col-span-7 text-start">
               {/* Badges */}
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 <span className="badge badge-standard">
@@ -190,7 +190,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 </div>
                 <div>
                   <span className="text-text-muted block mb-0.5">درجه هتل‌ها:</span>
-                  <span className="text-text-heading font-bold">{tour.hotelStars ? `${tour.hotelStars} ستاره و بالاتر` : '—'}</span>
+                  <span className="text-text-heading font-bold">{tour.hotelStars ? `${fa(tour.hotelStars)} ستاره و بالاتر` : '—'}</span>
                 </div>
               </div>
 
@@ -207,7 +207,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                     </div>
                   </div>
 
-                  <div className="text-left">
+                  <div className="text-end">
                     <span className={`inline-flex px-2.5 py-1 rounded-md text-caption font-bold ${
                       tour.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
                     }`}>
@@ -252,7 +252,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
               </div>
 
               {/* Key Guarantee Box */}
-              <div className="mt-4 p-4 bg-surface-primary rounded-card border border-border-default text-right space-y-2 text-caption text-text-secondary">
+              <div className="mt-4 p-4 bg-surface-primary rounded-card border border-border-default text-start space-y-2 text-caption text-text-secondary">
                 <div className="flex items-center gap-2 text-text-heading font-bold">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   <span>شفافیت خدمات ریوان سفر</span>
@@ -270,7 +270,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
       {/* ---------------- برنامه روزبه‌روز (از تورساز؛ فقط وقتی داده هست) ---------------- */}
       {itineraryDays.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-          <div className="text-right mb-6">
+          <div className="text-start mb-6">
             <h2 className="text-h2 text-text-heading font-bold mb-1.5">
               برنامه روزبه‌روز سفر
             </h2>
@@ -317,7 +317,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
       {/* ---------------- Hotel Options Table ---------------- */}
       {tour.hotelOptions && tour.hotelOptions.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-          <div className="text-right mb-6">
+          <div className="text-start mb-6">
             <h2 className="text-h2 text-text-heading font-bold mb-1.5">
               گزینه‌های هتل و قیمت برای هر نفر
             </h2>
@@ -328,13 +328,13 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
 
           <div className="bg-surface-primary border border-border-default rounded-card overflow-hidden shadow-subtle">
             <div className="overflow-x-auto">
-              <table className="w-full text-right border-collapse text-body-sm">
+              <table className="w-full text-start border-collapse text-body-sm">
                 <thead>
                   <tr className="bg-surface-secondary border-b border-border-default text-text-heading font-bold">
                     <th className="py-3.5 px-4 sm:px-6">نام هتل</th>
                     <th className="py-3.5 px-4 text-center">ستاره</th>
                     <th className="py-3.5 px-4 text-center">نوع پذیرایی</th>
-                    <th className="py-3.5 px-4 sm:px-6 text-left">قیمت برای هر نفر</th>
+                    <th className="py-3.5 px-4 sm:px-6 text-end">قیمت برای هر نفر</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-default/60">
@@ -354,7 +354,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                       <td className="py-4 px-4 text-center text-text-secondary">
                         {boardLabel(opt.board)}
                       </td>
-                      <td className="py-4 px-4 sm:px-6 text-left font-extrabold text-brand-orange">
+                      <td className="py-4 px-4 sm:px-6 text-end font-extrabold text-brand-orange">
                         {opt.pricePerPerson}
                       </td>
                     </tr>
@@ -372,7 +372,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             
             {/* Included Services */}
-            <div className="bg-surface-secondary/60 border border-border-default rounded-card p-6 text-right">
+            <div className="bg-surface-secondary/60 border border-border-default rounded-card p-6 text-start">
               <div className="flex items-center gap-2 text-h3 text-text-heading font-bold mb-4">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 <h3>خدمات شامل تور</h3>
@@ -388,7 +388,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
             </div>
 
             {/* Excluded Services */}
-            <div className="bg-surface-secondary/60 border border-border-default rounded-card p-6 text-right">
+            <div className="bg-surface-secondary/60 border border-border-default rounded-card p-6 text-start">
               <div className="flex items-center gap-2 text-h3 text-text-heading font-bold mb-4">
                 <XCircle className="w-5 h-5 text-text-muted" />
                 <h3>خدمات غیرشامل (به عهده مسافر)</h3>
@@ -409,7 +409,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
 
       {/* ---------------- Important Policies (Child, Visa, Cancellation) ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-right">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-start">
           
           {hasTrust && trust ? (
             <div className="bg-surface-primary border border-border-default rounded-card p-6">
@@ -535,7 +535,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
               </div>
             )
           ) : (
-            <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-right space-y-4">
+            <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-start space-y-4">
               {formError && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-control text-red-700 text-body-sm flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -656,7 +656,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 sm:mr-auto">
+              <div className="flex flex-wrap items-center gap-2 sm:ms-auto">
                 {consultant.phone && (
                   <a
                     href={`tel:${consultant.phone.replace(/[^\d+]/g, '')}`}
@@ -701,7 +701,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
       {/* ---------------- Related Tours ---------------- */}
       {relatedTours.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-          <h3 className="text-h3 text-text-heading font-bold mb-6 text-right">
+          <h3 className="text-h3 text-text-heading font-bold mb-6 text-start">
             تورهای مشابه پیشنهادی
           </h3>
 
@@ -711,7 +711,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 key={rel.id}
                 href={`/tour/${rel.id}`}
                 onClick={(e) => { e.preventDefault(); onNavigate(`/tour/${rel.id}`); }}
-                className="bg-surface-primary border border-border-default rounded-card p-4 hover:shadow-card hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-4 text-right"
+                className="bg-surface-primary border border-border-default rounded-card p-4 hover:shadow-card hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-4 text-start"
               >
                 <div className="flex items-center gap-4 w-full sm:w-auto">
                   <div className="w-16 h-16 rounded-control overflow-hidden shrink-0 relative">
@@ -724,7 +724,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 </div>
 
                 <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-border-default/40">
-                  <div className="text-left">
+                  <div className="text-end">
                     <span className="text-caption text-text-secondary block">شروع قیمت از:</span>
                     <span className="text-body font-extrabold text-brand-orange">{rel.formattedPrice} تومان</span>
                   </div>

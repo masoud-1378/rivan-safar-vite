@@ -145,7 +145,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
         <div className="container-main px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            <div className="lg:col-span-7 text-right">
+            <div className="lg:col-span-7 text-start">
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 <span className="badge badge-standard">{ex.industry}</span>
                 <span className="badge">
@@ -156,7 +156,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   href={ex.officialWebsite}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-caption text-brand-orange hover:underline inline-flex items-center gap-1 font-bold mr-2"
+                  className="text-caption text-brand-orange hover:underline inline-flex items-center gap-1 font-bold ms-2"
                 >
                   <span>سایت رسمی نمایشگاه</span>
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -234,7 +234,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                 />
               </div>
 
-              <div className="mt-4 p-4 bg-surface-primary rounded-card border border-border-default text-right text-caption text-text-secondary space-y-2">
+              <div className="mt-4 p-4 bg-surface-primary rounded-card border border-border-default text-start text-caption text-text-secondary space-y-2">
                 <div className="flex items-center gap-2 font-bold text-text-heading">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   <span>پشتیبانی کامل ویزا و اقامت</span>
@@ -252,7 +252,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
       {/* ---------------- Phases Breakdown ---------------- */}
       {ex.upcomingEdition.phases && ex.upcomingEdition.phases.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-          <div className="text-right mb-6">
+          <div className="text-start mb-6">
             <h2 className="text-h2 text-text-heading font-bold mb-1.5">
               فازها و دسته‌بندی کالایی نمایشگاه
             </h2>
@@ -263,7 +263,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {ex.upcomingEdition.phases.map((phase, idx) => (
-              <div key={idx} className="bg-surface-primary border border-border-default rounded-card p-6 text-right flex flex-col justify-between">
+              <div key={idx} className="bg-surface-primary border border-border-default rounded-card p-6 text-start flex flex-col justify-between">
                 <div>
                   <div className="inline-flex px-2.5 py-1 rounded-md bg-brand-orange/10 text-brand-orange font-bold text-caption mb-3">
                     {phase.name}
@@ -294,7 +294,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
       {/* ---------------- Included Travel Services ---------------- */}
       <section className="bg-surface-primary border-y border-border-default section-standard">
         <div className="container-main px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl text-right mb-6">
+          <div className="max-w-3xl text-start mb-6">
             <h2 className="text-h2 text-text-heading font-bold mb-2">
               خدمات سفر تجاری ریوان سفر
             </h2>
@@ -305,7 +305,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {ex.servicesIncluded.map((srv, idx) => (
-              <div key={idx} className="p-4 bg-surface-secondary rounded-card border border-border-default/60 flex items-center gap-3 text-right">
+              <div key={idx} className="p-4 bg-surface-secondary rounded-card border border-border-default/60 flex items-center gap-3 text-start">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                 <span className="text-body-sm font-medium text-text-primary">{srv}</span>
               </div>
@@ -317,7 +317,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
       {/* ---------------- Business Preparation Tips ---------------- */}
       {ex.businessTips && ex.businessTips.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-          <div className="bg-surface-primary border border-border-default rounded-card p-6 md:p-8 text-right">
+          <div className="bg-surface-primary border border-border-default rounded-card p-6 md:p-8 text-start">
             <h3 className="text-h3 font-bold text-text-heading mb-4">نکات مهم برای موفقیت در این سفر تجاری</h3>
             <div className="space-y-3">
               {ex.businessTips.map((tip, idx) => (
@@ -334,7 +334,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
       {/* ---------------- پرسش‌های پرتکرار (از داده زنده) ---------------- */}
       {faqs.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-          <div className="text-right mb-6">
+          <div className="text-start mb-6">
             <h2 className="text-h2 text-text-heading font-bold mb-1.5">
               سؤال‌های پرتکرار درباره {ex.title}
             </h2>
@@ -355,7 +355,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   <button
                     type="button"
                     onClick={() => setOpenFaqIndex(open ? null : idx)}
-                    className="w-full flex items-center justify-between gap-3 p-4 sm:p-5 text-right"
+                    className="w-full flex items-center justify-between gap-3 p-4 sm:p-5 text-start"
                     aria-expanded={open}
                   >
                     <span className="flex items-center gap-2.5 text-body font-bold text-text-heading">
@@ -403,7 +403,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
               </div>
             </div>
           ) : (
-            <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-right space-y-4">
+            <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-start space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-caption font-bold text-text-heading mb-1">نام شرکت / کسب‌وکار (اختیاری)</label>
@@ -440,7 +440,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-right focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-start focus:border-brand-orange focus:outline-none"
                   />
                   {formErrors.phone && <p className="text-red-500 text-caption mt-1">{formErrors.phone}</p>}
                 </div>
