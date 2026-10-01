@@ -19,6 +19,9 @@ export function EditTourClient({ tour, tree, origins, hotels }: Props) {
   const router = useRouter();
   return (
     <TourForm
+      // گشت (ایراد ۱): فرم حالت داخلی‌اش را فقط از initial اول می‌سازد؛ بعد از
+      // ذخیره و router.refresh() باید با مقادیر تازهٔ دیتابیس از نو ساخته شود.
+      key={`${tour.id}-${tour.updatedAt ?? ''}`}
       editingId={tour.id}
       initial={tour}
       tree={tree}

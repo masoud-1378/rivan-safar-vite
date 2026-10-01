@@ -208,6 +208,9 @@ function toTourRow(r: SiteTourRow) {
     itineraryDays: Array.isArray(r.itineraryDays) ? (r.itineraryDays as TourItineraryDayItem[]) : [],
     trustSpecs: (r.trustSpecs as TourTrustSpecsItem | null) ?? null,
     consultantSpec: (r.consultantSpec as TourConsultantSpecItem | null) ?? null,
+    // گشت: برای اینکه فرم ویرایش بعد از ذخیره حتماً مقادیر تازهٔ دیتابیس را نشان بدهد
+    // (کلید ریمونت در EditTourClient)، مهر زمانی به‌روزرسانی هم برمی‌گردد.
+    updatedAt: r.updatedAt ? r.updatedAt.toISOString() : null,
   };
 }
 
@@ -301,12 +304,21 @@ export async function listOrigins(): Promise<OriginRow[]> {
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   const rows = await db.select().from(originCities).where(isNull(originCities.deletedAt)).orderBy(asc(originCities.nameFa)).limit(500);
-  return rows.map((r) => ({
-    slug: r.slug,
-    nameFa: r.nameFa,
-    type: r.type,
-    parentSlug: r.parentSlug ?? '',
-  }));
+  // گشت (ایراد ۸): ردیف‌های هم‌نام (دادهٔ تکراری یا نوع متفاوت) در کمبوباکس مبدأ
+  // دو بار دیده می‌شدند؛ تور فقط «نام» را ذخیره می‌کند، پس هم‌نام‌ها یکی می‌شوند.
+  const seen = new Set<string>();
+  return rows
+    .map((r) => ({
+      slug: r.slug,
+      nameFa: r.nameFa,
+      type: r.type,
+      parentSlug: r.parentSlug ?? '',
+    }))
+    .filter((r) => {
+      if (seen.has(r.nameFa)) return false;
+      seen.add(r.nameFa);
+      return true;
+    });
 }
 
 export async function saveTour(id: string | undefined | null, data: TourInput) {

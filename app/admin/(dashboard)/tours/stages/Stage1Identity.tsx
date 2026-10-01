@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   Compass, 
   Plane, 
@@ -105,8 +105,9 @@ export default function Stage1Identity({
     return out;
   });
   const [openCountries, setOpenCountries] = useState<Record<string, boolean>>({});
-  // نامک خودکار: تا وقتی کاربر دستی به نامک دست نزده و نامکی هم از قبل ثبت نشده، از روی عنوان ساخته می‌شود
-  const [slugTouched, setSlugTouched] = useState(false);
+  // نامک خودکار: تا وقتی کاربر دستی به نامک دست نزده و نامکی هم از قبل ثبت نشده،
+  // با هر نویسهٔ عنوان از نو ساخته می‌شود (گشت، ایراد ۳: قبلاً فقط نویسهٔ اول می‌ماند و «t» می‌شد).
+  const [slugAuto, setSlugAuto] = useState(() => !data.slug);
   const [destQuery, setDestQuery] = useState('');
   const [capacity, setCapacity] = useState('');
 
@@ -125,12 +126,22 @@ export default function Stage1Identity({
     onChange({ destinationSlugs: next });
   };
 
-  // عنوان که عوض شود، اگر نامک هنوز دستی ویرایش نشده و از قبل خالی است، از روی عنوان ساخته می‌شود
+  // عنوان که عوض شود، اگر نامک هنوز خودکار است (دستی ویرایش نشده و از قبل هم خالی بوده)،
+  // با هر نویسه از روی عنوان بازسازی می‌شود؛ قانون «عنوان بعدی نامک موجود را عوض نکند» سر جایش است.
   const handleTitleChange = (v: string) => {
     const patch: Partial<TourInput> = { title: v };
-    if (!slugTouched && !data.slug) patch.slug = faToSlugFa(v);
+    if (slugAuto) patch.slug = faToSlugFa(v);
     onChange(patch);
   };
+
+  // گشت (ایراد ۲): سرور «نام فارسی» مبدأ را ذخیره می‌کند ولی آپشن‌های سلکت با اسلاگ کلید خورده بودند؛
+  // مقدار نمایشی از روی نام به اسلاگ نگاشت می‌شود و هنگام تغییر، «نام» ذخیره می‌شود (قرارداد نمایشی پایین‌دست).
+  // با ایراد ۸ (یک‌نام‌سازی در listOrigins) این نگاشت یک‌به‌یک است.
+  const originSlugByName = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const o of origins) if (!m.has(o.nameFa)) m.set(o.nameFa, o.slug);
+    return m;
+  }, [origins]);
 
   // جست‌وجوی تخت مقصدها: در حالت جست‌وجو به‌جای دریلِ درخت، لیست مستقیم نتایج با انتخاب تک‌کلیکی
   const destSearchQuery = normalizeFaSearch(destQuery);
@@ -145,7 +156,7 @@ export default function Stage1Identity({
   const priceNum = Number(data.price) || 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" id="tour-stage-1">
       {/* Intro info banner */}
       <div className="flex items-center justify-between rounded-xl border border-brand/20 bg-brand/5 p-4">
         <div className="flex items-center gap-3">
@@ -167,7 +178,7 @@ export default function Stage1Identity({
       {/* Row 1: Title & Slug */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
         <div className="md:col-span-8">
-          <Field label="عنوان کامل تور *" hint={errors.title || "مثال: تور ۸ روزه روسیه (مسکو + سن‌پترزبورگ) با قطار سریع‌السیر ساپسان"}>
+          <Field label="عنوان کامل تور *" hint="مثال: تور ۸ روزه روسیه (مسکو + سن‌پترزبورگ) با قطار سریع‌السیر ساپسان">
             <Input
               value={data.title}
               error={errors.title}
@@ -178,12 +189,12 @@ export default function Stage1Identity({
           </Field>
         </div>
         <div className="md:col-span-4">
-          <Field label="آدرس اینترنتی تور *" hint={errors.slug || "از روی عنوان خودکار ساخته می‌شود؛ اگر لازم بود خودتان تغییرش دهید"}>
+          <Field label="آدرس اینترنتی تور *" hint="از روی عنوان خودکار ساخته می‌شود؛ اگر لازم بود خودتان تغییرش دهید">
             <Input
               dir="ltr"
               value={data.slug}
               error={errors.slug}
-              onChange={(e) => { setSlugTouched(true); onChange({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }); }}
+              onChange={(e) => { setSlugAuto(false); onChange({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }); }}
               placeholder="e.g. russia-moscow-stpetersburg-8d"
             />
           </Field>
@@ -259,6 +270,10 @@ export default function Stage1Identity({
             {selectedSlugs.length > 0 ? `${selectedSlugs.length} مقصد انتخاب شده` : 'حداقل یک مقصد انتخاب کنید'}
           </span>
         </div>
+        {/* گشت (ایراد ۴): خطای «مقصد» هیچ‌جا قرمز نشان داده نمی‌شد؛ زیر همان بلوک. */}
+        {errors.destinations && (
+          <p className="text-xs text-destructive" role="alert">{errors.destinations}</p>
+        )}
 
         {/* جست‌وجوی نام فارسی مقصد: در حالت جست‌وجو، لیست تخت نتایج با انتخاب تک‌کلیکی */}
         <div className="relative">
@@ -461,10 +476,17 @@ export default function Stage1Identity({
               </a>
             </div>
           ) : (
-            <Field label="مبدأ حرکت مسافر *" hint={errors.origin || "شهر یا پایانه‌ای که تور از آن شروع می‌شود"}>
+            <Field
+              label="مبدأ حرکت مسافر *"
+              hint="شهر یا پایانه‌ای که تور از آن شروع می‌شود"
+              error={errors.origin}
+            >
               <Select
-                value={data.origin}
-                onChange={(e) => onChange({ origin: e.target.value })}
+                value={originSlugByName.get(data.origin) ?? ''}
+                onChange={(e) => {
+                  const found = origins.find((o) => o.slug === e.target.value);
+                  onChange({ origin: found ? found.nameFa : '' });
+                }}
                 options={origins.map((o) => ({ value: o.slug, label: o.nameFa }))}
                 placeholder="انتخاب شهر مبدأ…"
               />
@@ -507,7 +529,7 @@ export default function Stage1Identity({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Field label="قیمت پایه تومانی *" hint={errors.price || "رقم تمام‌شده تومانی (یا سهم پرواز/بخش ریالی)"}>
+            <Field label="قیمت پایه تومانی *" hint="رقم تمام‌شده تومانی (یا سهم پرواز/بخش ریالی)" error={errors.price}>
               <AmountInput
                 value={Number(data.price) || 0}
                 onChange={(val) => onChange({ price: val || 0 })}

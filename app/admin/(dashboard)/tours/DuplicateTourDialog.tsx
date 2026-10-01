@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Copy } from 'lucide-react';
 import { Dialog } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -48,6 +48,16 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
   const [titleError, setTitleError] = useState('');
   const [slugError, setSlugError] = useState('');
   const [busy, setBusy] = useState(false);
+  // گشت (ایراد ۷): نگهبان کهنگی درخواست نامک — پاسخ‌های دیررسِ نویسه‌های قبلی
+  // نباید نامکِ نویسهٔ آخر را بازنویسی کنند.
+  const slugReq = useRef(0);
+  const slugTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (slugTimer.current) clearTimeout(slugTimer.current);
+    };
+  }, []);
 
   // نامک اولیهٔ خودکار و یکتا، از عنوانِ بدون پسوند «(کپی)».
   useEffect(() => {
@@ -64,10 +74,17 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
   const onTitleChange = (v: string) => {
     setTitle(v);
     setTitleError('');
-    if (!slugTouched) {
+    if (slugTouched) return;
+    // گشت (ایراد ۷): دیبونس ۳۵۰ms + نگهبان کهنگی؛ با هر نویسه یک اکشن سرور نزن
+    // و پاسخ دیررس، نامکِ تازه‌تر را خراب نکند.
+    if (slugTimer.current) clearTimeout(slugTimer.current);
+    slugTimer.current = setTimeout(() => {
+      const my = ++slugReq.current;
       const base = v.endsWith(COPY_SUFFIX) ? v.slice(0, -COPY_SUFFIX.length) : v;
-      void firstFreeSlug(faSlug(base)).then(setSlug);
-    }
+      void firstFreeSlug(faSlug(base)).then((s) => {
+        if (slugReq.current === my) setSlug(s);
+      });
+    }, 350);
   };
 
   const submit = async () => {

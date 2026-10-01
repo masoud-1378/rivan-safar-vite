@@ -43,7 +43,9 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
   const [deletingPhoto, setDeletingPhoto] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const reload = () => window.location.reload();
+  // گشت (ایراد ۱۰): وقتی از ردیف مقصد «افزودن هتل» زده می‌شود، آدرس ?city= دارد؛ ریلود ساده
+  // همان پارام را نگه می‌داشت و دیالوگ بعد از ثبت موفق دوباره باز می‌شد. با آدرس تمیز برمی‌گردیم.
+  const backToHotelsTab = () => window.location.assign('/admin/catalog?tab=hotels');
 
   const startCreate = () => {
     setEditing(null);
@@ -106,12 +108,9 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
       setNameError('نام هتل لازم است.');
       return;
     }
-    // کتابچه §۳: ستاره اجباری است؛ خالی یعنی انتخاب‌نشده.
-    if (stars === null) {
-      setStarsError('ستارهٔ هتل را انتخاب کنید.');
-      return;
-    }
-    if (!Number.isInteger(stars) || stars < 0 || stars > 7) {
+    // گشت (ایراد ۶): ستاره اختیاری است — هتل بی‌ستاره مجاز است و سایت «—» نشان می‌دهد.
+    // فقط اگر مقداری وارد شده، باید بین ۰ تا ۷ باشد.
+    if (stars !== null && (!Number.isInteger(stars) || stars < 0 || stars > 7)) {
       setStarsError('ستارهٔ هتل باید بین ۰ تا ۷ باشد.');
       return;
     }
@@ -125,12 +124,12 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
           placeSlug,
         });
         setOpen(false);
-        reload();
+        backToHotelsTab();
       } catch (e) {
         const message = e instanceof Error ? e.message : 'خطا در ذخیره.';
         if (message === 'این نام قبلاً ثبت شده') {
           setNameError(message);
-        } else if (message === 'ستارهٔ هتل باید بین ۰ تا ۷ باشد.' || message === 'ستارهٔ هتل را انتخاب کنید.') {
+        } else if (message === 'ستارهٔ هتل باید بین ۰ تا ۷ باشد.') {
           setStarsError(message);
         } else {
           toast({ variant: 'error', title: message });
@@ -152,7 +151,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
           }
         }),
       );
-      reload();
+      backToHotelsTab();
     } catch (error) {
       toast({ variant: 'error', title: error instanceof Error ? error.message : 'خطا در حذف.' });
     }
@@ -227,7 +226,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
           <Field label="نام هتل" error={nameError}>
             <Input value={name} onChange={(e) => { setName(e.target.value); setNameError(undefined); }} placeholder="مثلاً Rixos Premium Dubai" data-autofocus />
           </Field>
-          <Field label="ستاره *" error={starsError}>
+          <Field label="ستاره" hint="اختیاری — خالی بماند در سایت «—» نمایش داده می‌شود." error={starsError}>
             <NumberField value={stars} onChange={(v) => { setStars(v); setStarsError(undefined); }} min={0} max={7} aria-label="ستاره هتل" />
           </Field>
           <Field label="شهر / مقصد">

@@ -81,6 +81,9 @@ export default function TourForm({
   const [isPending, startTransition] = useTransition();
   const [showLivePreview, setShowLivePreview] = useState(false);
   const [touched, setTouched] = useState(false);
+  // گشت (ایراد ۱): تداخل نامک (مثلاً «t»های به‌جامانده از ایراد ۳) ذخیره را بی‌صدا می‌بست؛
+  // حالا علاوه بر پیام، خود فیلد نامک هم قرمز می‌شود تا علت گم نشود.
+  const [slugConflict, setSlugConflict] = useState(false);
 
   // Initial State mapping
   const [formData, setFormData] = useState<TourInput>(() => {
@@ -149,6 +152,8 @@ export default function TourForm({
   });
 
   const updateFormData = (fields: Partial<TourInput>) => {
+    // نامک که عوض شد، پرچم تداخل قبلی بی‌اعتبار است.
+    if (fields.slug !== undefined) setSlugConflict(false);
     setFormData((prev) => ({ ...prev, ...fields }));
   };
 
@@ -206,6 +211,10 @@ export default function TourForm({
         variant: 'error',
       });
       setActiveStage(1);
+      // گشت (ایراد ۴): خطا نباید جایی گم شود که دیده نشود؛ اسکرول به مرحلهٔ اول.
+      requestAnimationFrame(() => {
+        document.getElementById('tour-stage-1')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
       return;
     }
 
@@ -213,12 +222,16 @@ export default function TourForm({
       try {
         const slugCheck = await checkSlugUnique(formData.slug, editingId);
         if (!slugCheck.unique) {
+          setSlugConflict(true);
           toast({
             title: 'نامک تکراری است',
             description: 'این نامک انگلیسی قبلاً برای تور دیگری استفاده شده است.',
             variant: 'error',
           });
           setActiveStage(1);
+          requestAnimationFrame(() => {
+            document.getElementById('tour-stage-1')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
           return;
         }
 
@@ -363,7 +376,7 @@ export default function TourForm({
             <Stage1Identity
               data={formData}
               onChange={updateFormData}
-              errors={errors}
+              errors={slugConflict ? { ...errors, slug: 'این نامک قبلاً برای تور دیگری استفاده شده است.' } : errors}
               tree={tree}
               origins={origins}
             />

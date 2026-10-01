@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { 
   Building2, 
   Plus, 
@@ -50,6 +50,20 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
   const hotels: TourHotelOptionItem[] = Array.isArray(data.hotelOptions) ? data.hotelOptions : [];
   const [showHotelPicker, setShowHotelPicker] = useState(false);
   const [hotelQuery, setHotelQuery] = useState('');
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  // گشت (ایراد ۵): باز شدن پنل باید غیرقابل‌چشم‌پوشی باشد — دکمه حالت فعال می‌گیرد،
+  // پنل به دید اسکرول می‌شود و جست‌وجو فوکوس می‌گیرد تا «هیچ اتفاقی نیفتاد» تکرار نشود.
+  const toggleHotelPicker = () => {
+    const next = !showHotelPicker;
+    setShowHotelPicker(next);
+    if (next) {
+      requestAnimationFrame(() => {
+        pickerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        pickerRef.current?.querySelector('input')?.focus({ preventScroll: true });
+      });
+    }
+  };
 
   const handleAddHotel = () => {
     const next: TourHotelOptionItem[] = [
@@ -136,11 +150,12 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
           <Button
             type="button"
             variant="outline"
-            onClick={() => setShowHotelPicker((v) => !v)}
-            className="gap-2 text-xs h-9"
+            onClick={toggleHotelPicker}
+            aria-expanded={showHotelPicker}
+            className={cn('gap-2 text-xs h-9', showHotelPicker && 'border-brand bg-brand/10 text-foreground')}
           >
             <Search className="size-4" />
-            انتخاب از هتل‌های ثبت‌شده
+            {showHotelPicker ? 'بستن فهرست هتل‌ها' : 'انتخاب از هتل‌های ثبت‌شده'}
           </Button>
           <Button
             type="button"
@@ -155,7 +170,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
 
       {/* انتخاب هتل از جدول ثبت‌شده‌ها: نام و ستاره از رکورد پر می‌شود؛ قیمت همان‌جا دستی (ویژهٔ این تور) */}
       {showHotelPicker && (
-        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+        <div ref={pickerRef} className="rounded-2xl border border-border bg-card p-4 space-y-3">
           <div className="relative">
             <Input
               value={hotelQuery}

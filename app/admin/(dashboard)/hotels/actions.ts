@@ -19,7 +19,7 @@ export interface HotelInput {
   id?: string;
   slug: string;
   nameFa: string;
-  // کتابچه §۳ (فاز ۲): ستاره اجباری است — null دیگر پذیرفته نیست.
+  // گشت (ایراد ۶): ستاره اختیاری است — null مجاز است و سایت «—» نشان می‌دهد.
   stars: number | null;
   placeSlug: string;
 }
@@ -46,13 +46,10 @@ export async function saveHotel(data: HotelInput) {
   // تا «هتل  اسپیناس» و «هتل اسپیناس» یک slug نگیرند.
   const nameFa = (data.nameFa || '').replace(/\s+/g, ' ').trim();
   if (nameFa.length < 2) throw new Error('نام هتل لازم است.');
-  // کتابچه §۳ (فاز ۲): ستاره اجباری است؛ پیش‌فرض خالی دیگر پذیرفته نیست.
-  // رکوردهای قدیمیِ NULL در «خواندن» همان «—» می‌مانند، ولی «ذخیرهٔ» تازه بی‌ستاره خطا می‌دهد.
+  // گشت (ایراد ۶): ستاره اختیاری است؛ null یعنی «بدون درجه» و سایت «—» نشان می‌دهد.
+  // فقط وقتی مقداری آمده، باید عدد صحیح بین ۰ تا ۷ باشد.
   const stars = data.stars == null ? null : Number(data.stars);
-  if (stars === null) {
-    throw new Error('ستارهٔ هتل را انتخاب کنید.');
-  }
-  if (!Number.isInteger(stars) || stars < 0 || stars > 7) {
+  if (stars !== null && (!Number.isInteger(stars) || stars < 0 || stars > 7)) {
     throw new Error('ستارهٔ هتل باید بین ۰ تا ۷ باشد.');
   }
   const placeSlug = data.placeSlug || null;
