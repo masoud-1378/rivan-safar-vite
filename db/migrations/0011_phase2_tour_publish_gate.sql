@@ -18,12 +18,24 @@ DO $$ BEGIN
   CREATE TYPE publish_status AS ENUM ('draft','review','published','paused','archived');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-ALTER TABLE site_tours
-  ADD COLUMN IF NOT EXISTS publish_status publish_status NOT NULL DEFAULT 'draft';
+-- بک‌فیل فقط در همان اجرایی که ستون ساخته می‌شود اعمال می‌شود تا اجرای
+-- دوبارهٔ مایگریشن، پیش‌نویس‌های واقعیِ بعدی را ناگهان منتشر نکند.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'site_tours'
+      AND column_name = 'publish_status'
+  ) THEN
+    ALTER TABLE site_tours
+      ADD COLUMN publish_status publish_status NOT NULL DEFAULT 'draft';
 
--- حفظ رفتار فعلی سایت: هر توری که امروز زنده است، منتشرشده می‌ماند تا با
--- اجرای مایگریشن ناگهان از سایت پنهان نشود. تورهای تازه از این پس پیش‌نویس‌اند.
-UPDATE site_tours SET publish_status = 'published' WHERE publish_status = 'draft';
+    -- حفظ رفتار فعلی سایت: هر توری که امروز زنده است، منتشرشده می‌ماند تا با
+    -- اجرای مایگریشن ناگهان از سایت پنهان نشود. تورهای تازه از این پس پیش‌نویس‌اند.
+    UPDATE site_tours SET publish_status = 'published' WHERE publish_status = 'draft';
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_site_tours_publish_status
   ON site_tours (publish_status) WHERE deleted_at IS NULL;
