@@ -247,7 +247,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
     <>
       {/* Top Announcement Bar */}
       {showAnnouncement && (
-        <div className="fixed top-0 left-0 right-0 z-[51]">
+        <div className="fixed top-0 left-0 right-0 z-[51] bg-surface-dark pt-safe">
           <AnnouncementBar onClose={() => setShowAnnouncement(false)} />
         </div>
       )}
@@ -255,7 +255,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
       {/* Desktop & Tablet Navbar */}
       <header
         className={`fixed left-0 right-0 z-50 transition-all duration-300 border-b border-border-default ${
-          showAnnouncement ? 'top-[38px] md:top-[34px]' : 'top-0'
+          showAnnouncement ? 'top-[calc(38px+env(safe-area-inset-top))] md:top-[calc(34px+env(safe-area-inset-top))]' : 'top-[env(safe-area-inset-top)]'
         } ${
           isScrolled
             ? 'bg-surface-primary/95 backdrop-blur-md shadow-subtle h-[70px]'
@@ -696,7 +696,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
       </AnimatePresence>
 
       {/* Mobile Bottom Navigation Bar (Persistent across all pages) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-primary shadow-card z-[45] rounded-t-2xl border-t border-border-default h-14 px-6 flex justify-between items-center pb-safe">
+      <div className="md:hidden fixed bottom-0 start-0 end-0 bg-surface-primary shadow-card z-[45] rounded-t-2xl border-t border-border-default min-h-14 px-6 flex justify-between items-center pb-safe">
 
           {/* Menu Button (Opens Drawer) */}
           <button
@@ -708,7 +708,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
           </button>
 
           {/* Main CTA: Call */}
-          <div className="absolute left-1/2 -translate-x-1/2 bottom-2 flex flex-col items-center gap-1.5 pointer-events-none">
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] flex flex-col items-center gap-1.5 pointer-events-none">
             <a
               href={contact.phoneHref}
               className="pointer-events-auto bg-brand-orange text-on-brand w-14 h-14 rounded-card flex items-center justify-center shadow-card border-[3px] border-white hover:scale-105 transition-transform"

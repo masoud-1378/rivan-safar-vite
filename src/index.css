@@ -196,6 +196,15 @@ html, body {
   font-weight: var(--font-weight-semibold);
 }
 
+/* ناحیهٔ امن گوشی‌های ناچ‌دار: env(...) باید «پدینگ داخل» نوار باشد،
+   نه فاصله زیر/بالای آن — تا نوار به لبهٔ فیزیکی صفحه بچسبد. */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
 @utility text-form-label {
   font-size: 14px;
   line-height: 1.6;
