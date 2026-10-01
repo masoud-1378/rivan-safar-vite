@@ -57,10 +57,14 @@
 
   /* Radius */
   --radius-small: 8px;
-  --radius-control: 12px;
+  --radius-control: var(--shape-control, 0.75rem);
   --radius-card: 24px;
   --radius-feature: 32px;
   --radius-pill: 999px;
+
+  /* Motion + press fallbacks (emitted to :root؛ اسکوپ انار بازنویسی می‌کند) */
+  --motion: 200ms;
+  --press: scale(0.98);
 
   /* Shadow */
   --shadow-none: none;
@@ -1611,61 +1615,98 @@ html, body {
   transform: translateX(-4px);
 }
 
-/* --- vibefarsi:theme-graphite --- */
-/* گرافیت، پیش‌فرض. این بلوک را در :root بگذارید. */
+/* --- vibefarsi:theme-pomegranate --- */
+/* انار، خمیری — فقط پنل مدیریت. متن و تیتر با Vazirmatn. */
 /* `body:has(.admin-vibefarsi)` توکن‌ها را به هر پورتالی که روی body سوار می‌شود
    (تقویم، پالت فرمان، پاپ‌آور) می‌رساند؛ بدون دست‌زدن به فایل کامپوننت‌ها. */
 .admin-vibefarsi,
-[data-theme='admin'],
+[data-theme='pomegranate'],
 body:has(.admin-vibefarsi) {
-  color-scheme: dark;
-  --background: oklch(0.115 0.002 285);
-  --foreground: oklch(0.975 0 0);
-  --card: oklch(0.14 0.002 285);
-  --card-foreground: oklch(0.975 0 0);
-  --popover: oklch(0.16 0.002 285);
-  --popover-foreground: oklch(0.975 0 0);
-  --primary: oklch(0.975 0 0);
-  --primary-foreground: oklch(0.13 0 0);
-  --secondary: oklch(0.2 0.002 285);
-  --secondary-foreground: oklch(0.975 0 0);
-  --muted: oklch(0.175 0.002 285);
-  --muted-foreground: oklch(0.63 0.004 285);
-  --accent: oklch(0.2 0.002 285);
-  --accent-foreground: oklch(0.975 0 0);
-  --destructive: oklch(0.65 0.2 25);
-  --success: oklch(0.75 0.16 160);
-  --warning: oklch(0.82 0.16 80);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 11%);
-  --ring: oklch(0.7 0 0);
-  --brand: oklch(0.8 0.165 65);
-  --brand-foreground: oklch(0.22 0.06 60);
-  --radius: 0.625rem;
-  --shadow-lift: 0 16px 40px oklch(0 0 0 / 40%);
+  color-scheme: light;
+
+  /* رنگ */
+  --background: oklch(0.94 0.025 15);
+  --foreground: oklch(0.27 0.05 15);
+  --card: oklch(0.975 0.012 15);
+  --card-foreground: oklch(0.27 0.05 15);
+  --popover: oklch(0.985 0.008 15);
+  --popover-foreground: oklch(0.27 0.05 15);
+  --primary: oklch(0.6 0.2 18);
+  --primary-foreground: oklch(0.99 0.005 15);
+  --secondary: oklch(0.9 0.035 15);
+  --secondary-foreground: oklch(0.27 0.05 15);
+  --muted: oklch(0.92 0.03 15);
+  --muted-foreground: oklch(0.5 0.05 15);
+  --accent: oklch(0.9 0.04 15);
+  --accent-foreground: oklch(0.27 0.05 15);
+  --destructive: oklch(0.55 0.2 28);
+  --success: oklch(0.58 0.14 160);
+  --warning: oklch(0.68 0.15 65);
+  --border: oklch(0.27 0.05 15 / 9%);
+  --input: oklch(0.27 0.05 15 / 12%);
+  --ring: oklch(0.6 0.2 18);
+  --brand: oklch(0.6 0.17 340);
+  --brand-foreground: oklch(0.99 0 0);
+
+  /* زبان طراحی: فونت، فرم، خط، عمق، حرکت و تراکم */
+  --radius: 1.25rem;
+  --type-body: "Vazirmatn", "IRANSans", "Vazirmatn", system-ui, sans-serif;
+  --type-display: "Vazirmatn", "IRANSans", "Vazirmatn", system-ui, sans-serif;
+  --type-display-weight: 800;
+  --shape-control: 999px;
+  --shape-field: 1rem;
+  --shape-surface: 1.75rem;
+  --shape-overlay: 1.5rem;
+  --line: 1px;
+  --line-field: 1px;
+  --line-style: solid;
+  --field: var(--card);
+  --depth-control: inset 0 -3px 0 0 oklch(0.2 0.08 15 / 16%), inset 0 2px 0 0 oklch(1 0 0 / 35%), 0 10px 20px -10px oklch(0.45 0.16 18 / 55%);
+  --depth-press: inset 0 2px 5px 0 oklch(0.2 0.08 15 / 22%);
+  --depth-field: inset 0 2px 5px 0 oklch(0.3 0.08 15 / 9%);
+  --depth-surface: inset 0 2px 0 0 oklch(1 0 0 / 80%), inset 0 -4px 10px 0 oklch(0.45 0.1 15 / 7%), 0 24px 44px -24px oklch(0.45 0.14 18 / 40%);
+  --depth-overlay: inset 0 2px 0 0 oklch(1 0 0 / 80%), 0 30px 60px -22px oklch(0.45 0.14 18 / 45%);
+  --surface-filter: none;
+  --press: scale(0.95);
+  --motion: 420ms;
+  --motion-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --backdrop: none;
+  --spacing: 0.275rem;
 }
-/* --- vibefarsi:theme-graphite-end --- */
+/* --- vibefarsi:theme-pomegranate-end --- */
+
+/* انار: تیترهای پنل با Vazirmatn وزن ۸۰۰ */
+.admin-vibefarsi h1,
+.admin-vibefarsi h2,
+.admin-vibefarsi h3,
+.admin-vibefarsi h4,
+.admin-vibefarsi h5,
+.admin-vibefarsi h6 {
+  font-family: var(--type-display);
+  font-weight: var(--type-display-weight);
+  letter-spacing: 0;
+}
 
 /* --- admin motion: انیمیشن‌های نرم پنل --- */
 @media (prefers-reduced-motion: no-preference) {
   .admin-vibefarsi *,
   .admin-vibefarsi *::before,
   .admin-vibefarsi *::after,
-  [data-theme='admin'] *,
-  [data-theme='admin'] *::before,
-  [data-theme='admin'] *::after {
+  [data-theme='pomegranate'] *,
+  [data-theme='pomegranate'] *::before,
+  [data-theme='pomegranate'] *::after {
     transition-property: color, background-color, border-color, box-shadow, transform, opacity;
-    transition-duration: 200ms;
-    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    transition-duration: var(--motion);
+    transition-timing-function: var(--motion-ease);
   }
 
   .admin-vibefarsi [data-slot='card'],
   .admin-vibefarsi .admin-enter {
-    animation: admin-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: admin-rise var(--motion) var(--motion-ease) both;
   }
 
   .admin-vibefarsi .admin-enter > * {
-    animation: admin-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: admin-rise var(--motion) var(--motion-ease) both;
   }
 
   .admin-vibefarsi .admin-enter > *:nth-child(1) { animation-delay: 40ms; }
@@ -1676,9 +1717,9 @@ body:has(.admin-vibefarsi) {
   .admin-vibefarsi .admin-enter > *:nth-child(6) { animation-delay: 290ms; }
 
   .admin-vibefarsi .admin-lift:hover,
-  [data-theme='admin'] .admin-lift:hover {
+  [data-theme='pomegranate'] .admin-lift:hover {
     transform: translateY(-3px);
-    box-shadow: var(--shadow-lift);
+    box-shadow: var(--depth-surface);
   }
 }
 
@@ -1740,6 +1781,28 @@ body:has(.admin-vibefarsi) {
   }
 }
 /* --- vibefarsi:tailwind-map-end --- */
+
+/* --- vibefarsi:pomegranate-map --- */
+/* نگاشت زبان طراحی انار به یوتیلیتی‌های tailwind؛ بیرون از اسکوپ پنل،
+   fallbackها ظاهر فعلی سایت عمومی را حفظ می‌کنند. */
+@theme inline {
+  --radius-field: var(--shape-field, 0.75rem);
+  --radius-surface: var(--shape-surface, 1.5rem);
+  --radius-overlay: var(--shape-overlay, 1.25rem);
+  --shadow-control: var(--depth-control, 0 2px 8px rgb(16 42 58 / 0.08));
+  --shadow-surface: var(--depth-surface, 0 8px 24px rgb(16 42 58 / 0.08));
+  --shadow-overlay: var(--depth-overlay, 0 24px 48px -12px rgb(16 42 58 / 0.25));
+  --shadow-field: var(--depth-field, inset 0 2px 4px rgb(16 42 58 / 0.06));
+  --shadow-press: var(--depth-press, inset 0 2px 4px rgb(0 0 0 / 0.12));
+  --ease-motion: var(--motion-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  --font-display: var(--type-display, var(--font-sans));
+}
+/* --- vibefarsi:pomegranate-map-end --- */
+
+/* پهنای خط تم به‌صورت یوتیلیتی: border-line */
+@utility border-line {
+  border-width: var(--line, 1px);
+}
 
 /* --- vibefarsi:font --- */
 @theme inline {

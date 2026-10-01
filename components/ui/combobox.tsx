@@ -42,7 +42,7 @@ export function Combobox({ options, value = "", onChange, placeholder = "جست�
 
   return (
     <div ref={root} className={cn("relative", className)}>
-      <div className="flex h-10 w-full items-center rounded-lg border border-input bg-background/60 pe-2 ps-3 transition-colors focus-within:border-transparent focus-within:ring-2 focus-within:ring-ring/60">
+      <div className="flex h-10 w-full items-center rounded-field border-line border-input bg-background/60 shadow-field pe-2 ps-3 transition-colors focus-within:border-transparent focus-within:ring-2 focus-within:ring-ring/60">
         <input
           role="combobox"
           aria-expanded={open}
@@ -68,7 +68,7 @@ export function Combobox({ options, value = "", onChange, placeholder = "جست�
         <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
       </div>
       <FloatPortal open={open} mounted={mounted} style={style} theme={theme} panelRef={panel} className="fixed z-50">
-        <ul id={listId} role="listbox" className="max-h-56 overflow-auto rounded-lg border border-border bg-popover p-1 text-sm leading-7 shadow-lg">
+        <ul id={listId} role="listbox" className="max-h-56 overflow-auto rounded-overlay border-line border-border bg-popover p-1 text-sm leading-7 shadow-overlay">
           {filtered.length === 0 && <li className="px-2.5 py-2 text-muted-foreground">{emptyText}</li>}
           {filtered.map((o, i) => (
             <li

@@ -62,8 +62,8 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
         aria-describedby={description ? descId : undefined}
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "w-full max-w-md rounded-2xl border border-border bg-popover p-5 text-popover-foreground shadow-[0_30px_80px_-20px_oklch(0_0_0/80%)]",
-          "animate-fade-up [animation-duration:250ms]",
+          "w-full max-w-md rounded-overlay border-line border-border bg-popover p-5 text-popover-foreground shadow-overlay",
+          "animate-fade-up [animation-duration:var(--motion)]",
           className,
         )}
       >
@@ -74,7 +74,7 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
               {description && <p id={descId} className="mt-1 text-sm text-muted-foreground">{description}</p>}
             </div>
             {role === "dialog" && (
-              <button type="button" aria-label="بستن" onClick={() => onOpenChange(false)} className="-me-1 -mt-1 flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+              <button type="button" aria-label="بستن" onClick={() => onOpenChange(false)} className="-me-1 -mt-1 flex size-8 cursor-pointer items-center justify-center rounded-control text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
                 <X className="size-4" />
               </button>
             )}

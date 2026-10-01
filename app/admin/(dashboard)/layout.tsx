@@ -20,7 +20,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <AdminPaletteProvider ownerOnly={role === 'owner'}>
-      <div className="admin-vibefarsi min-h-dvh bg-background text-foreground" data-theme="admin" dir="rtl">
+      <div className="admin-vibefarsi min-h-dvh bg-background text-foreground" data-theme="pomegranate" dir="rtl">
         <div className="mx-auto flex max-w-[1600px] gap-4 p-4 sm:gap-6 sm:p-6">
           <AdminSidebar role={role} email={email} />
           <main className="min-w-0 flex-1">
