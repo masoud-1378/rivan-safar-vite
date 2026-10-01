@@ -16,19 +16,20 @@ INSERT INTO origin_cities (slug, name_fa) VALUES
   ('kerman','کرمان'), ('ahvaz','اهواز'), ('rasht','رشت')
 ON CONFLICT DO NOTHING;
 
--- مکان‌های P0/P1 (فقط سبد واقعی؛ دبی عمداً نیست — قرنطینه تا اثبات موجودی)
-INSERT INTO places (slug, name_fa, name_en, type) VALUES
-  ('turkey','ترکیه','Turkey','country'),
-  ('thailand','تایلند','Thailand','country'),
-  ('iran','ایران','Iran','country'),
-  ('china','چین','China','country'),
-  ('uae','امارات متحده عربی','United Arab Emirates','country'),
-  ('istanbul','استانبول','Istanbul','city'),
-  ('antalya','آنتالیا','Antalya','city'),
-  ('phuket','پوکت','Phuket','city'),
-  ('dubai','دبی','Dubai','city'),
-  ('kish','کیش','Kish Island','island'),
-  ('mashhad','مشهد مقدس','Mashhad','city')
+-- مقصدهای P0/P1 (جدول زنده: site_destinations — جدول places مرده است و دیگر seed نمی‌گیرد)
+-- دادهٔ نمونه برای شروع سریع؛ قیمت‌ها واقعی نیستند.
+INSERT INTO site_destinations (slug, name, name_en, type, parent_country_slug, parent_country_name, category, image, hero_tagline, description, best_season, currency, starting_price, starting_price_note, last_verified_at) VALUES
+  ('turkey','ترکیه','Turkey','country',NULL,NULL,'ترکیبی','https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=1200&auto=format&fit=crop','ترکیه؛ استانبول و آنتالیا','ترکیه پرترددترین مقصد خارجی ماست: استانبول برای شهرگردی و خرید، آنتالیا برای استراحت ساحلی.','بهار و پاییز','لیر ترکیه','از ۲۸ میلیون تومان','برای هر نفر در اتاق دبل','۹ مهر ۱۴۰۵'),
+  ('thailand','تایلند','Thailand','country',NULL,NULL,'ساحلی','https://images.unsplash.com/photo-1528181304800-259b08848526?q=80&w=1200&auto=format&fit=crop','تایلند؛ بانکوک و پوکت','تایلند برای سفر ترکیبی شهر و ساحل مناسب است: بانکوک، پوکت و گشت جزایر.','پاییز و زمستان','بات تایلند','از ۴۵ میلیون تومان','برای هر نفر در اتاق دبل','۹ مهر ۱۴۰۵'),
+  ('iran','ایران','Iran','country',NULL,NULL,'ترکیبی','https://images.unsplash.com/photo-1565008447742-97f6f38c985c?q=80&w=1200&auto=format&fit=crop','ایران؛ کیش و مشهد','سفرهای داخلی با تمرکز بر کیش و مشهد؛ هتل‌های منتخب و پرواز یا قطار.','همهٔ فصل‌ها','تومان','از ۸ میلیون تومان','برای هر نفر در اتاق دبل','۹ مهر ۱۴۰۵'),
+  ('china','چین','China','country',NULL,NULL,'شهری','https://images.unsplash.com/photo-1508804185872-d7badad00f7d?q=80&w=1200&auto=format&fit=crop','چین؛ پکن و شانگهای','سفر کاری و نمایشگاهی به چین با تمرکز بر پکن و شانگهای.','بهار و پاییز','یوان چین','استعلامی','بسته به نمایشگاه و فصل','۹ مهر ۱۴۰۵'),
+  ('uae','امارات متحده عربی','United Arab Emirates','country',NULL,NULL,'شهری','https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1200&auto=format&fit=crop','امارات؛ دبی','دبی برای سفر کوتاه شهری و خرید؛ پروازهای متعدد روزانه.','پاییز و زمستان','درهم امارات','از ۲۲ میلیون تومان','برای هر نفر در اتاق دبل','۹ مهر ۱۴۰۵'),
+  ('istanbul','استانبول','Istanbul','city','turkey','ترکیه','شهری','https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=1200&auto=format&fit=crop','استانبول؛ پل دو قاره','استانبول با بافت تاریخی، بازارها و مراکز خرید؛ مناسب سفر ۴ تا ۷ روزه.','بهار و پاییز','لیر ترکیه','از ۲۸ میلیون تومان','برای هر نفر در اتاق دبل','۹ مهر ۱۴۰۵'),
+  ('antalya','آنتالیا','Antalya','city','turkey','ترکیه','ساحلی','https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop','آنتالیا؛ ریزورت ساحلی','آنتالیا با ریزورت‌های ساحلی و خدمات UALL؛ مناسب استراحت خانوادگی.','بهار تا پاییز','لیر ترکیه','از ۳۵ میلیون تومان','برای هر نفر در اتاق دبل','۹ مهر ۱۴۰۵'),
+  ('phuket','پوکت','Phuket','city','thailand','تایلند','ساحلی','https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop','پوکت؛ سواحل آندامان','پوکت با سواحل آندامان و گشت جزایر؛ قابل ترکیب با بانکوک.','پاییز و زمستان','بات تایلند','از ۴۸ میلیون تومان','برای هر نفر در اتاق دبل','۹ مهر ۱۴۰۵'),
+  ('dubai','دبی','Dubai','city','uae','امارات متحده عربی','شهری','https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1200&auto=format&fit=crop','دبی؛ شهر خرید و تفریح','دبی برای سفر کوتاه ۳ تا ۵ روزه با تمرکز بر خرید و تفریح.','پاییز و زمستان','درهم امارات','از ۲۴ میلیون تومان','برای هر نفر در اتاق دبل','۹ مهر ۱۴۰۵'),
+  ('kish','کیش','Kish Island','city','iran','ایران','ساحلی','https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop','کیش؛ جزیرهٔ آرام','کیش با هتل‌های ساحلی و تفریحات دریایی؛ مناسب سفر ۳ تا ۴ روزه.','پاییز تا بهار','تومان','از ۹ میلیون تومان','برای هر نفر در اتاق دبل','۹ مهر ۱۴۰۵'),
+  ('mashhad','مشهد','Mashhad','city','iran','ایران','زیارتی','https://images.unsplash.com/photo-1565008447742-97f6f38c985c?q=80&w=1200&auto=format&fit=crop','مشهد؛ سفر زیارتی','مشهد با هتل‌های نزدیک حرم؛ گزینهٔ هوایی و قطار ۵ ستاره.','همهٔ فصل‌ها','تومان','از ۸ میلیون تومان','برای هر نفر در اتاق دبل','۹ مهر ۱۴۰۵')
 ON CONFLICT DO NOTHING;
 
 -- لندینگ‌های Published اولیه (P0 + موجودی اثبات‌شده فعلی)
@@ -46,3 +47,45 @@ INSERT INTO seo_landings (query_owner, url_path, canonical_path, page_type, titl
   ('dest:تور کیش', '/destination/iran/kish', '/destination/iran/kish', 'destination_city', 'تور کیش؛ هتل ساحلی با قیمت | ریوان سفر', 'تورهای فعال کیش با هتل ساحلی، ترانسفر و قیمت پایه شفاف.', 'تور کیش', 'published', 'index'),
   ('dest:تور مشهد', '/destination/iran/mashhad', '/destination/iran/mashhad', 'destination_city', 'تور مشهد؛ هتل نزدیک حرم هوایی و ریلی | ریوان سفر', 'تور مشهد با هتل نزدیک حرم، گزینه هوایی و قطار ۵ ستاره.', 'تور مشهد', 'published', 'index')
 ON CONFLICT DO NOTHING;
+
+-- بلوک محتوای لندینگ‌های seed: هر لندینگ seed یک بلوک بخش می‌گیرد تا گیت انتشار
+-- (دست‌کم ۱ بلوک) را واقعاً رد کند؛ بدون این بلوک‌ها باید draft می‌ماندند.
+INSERT INTO content_blocks (landing_id, block_order, block_kind, body_fa)
+SELECT id, 1, 'section',
+  json_build_object(
+    'heading', h1_fa,
+    'content', meta_description_fa || ' برای مشاوره، استعلام ظرفیت و رزرو با کارشناسان ریوان سفر در تماس باشید.'
+  )::text
+FROM seo_landings
+WHERE workflow = 'published'
+  AND NOT EXISTS (SELECT 1 FROM content_blocks cb WHERE cb.landing_id = seo_landings.id);
+
+-- لینک خروجی هر لندینگ seed به صفحهٔ خانه
+INSERT INTO seo_internal_links (from_landing_id, to_path, anchor_fa)
+SELECT id, '/', 'ریوان سفر'
+FROM seo_landings
+WHERE url_path <> '/'
+  AND NOT EXISTS (
+    SELECT 1 FROM seo_internal_links l
+    WHERE l.from_landing_id = seo_landings.id AND l.to_path = '/'
+  );
+
+-- لینک ورودی: از خانه به هر لندینگ seed، و از «همه تورها» به خانه
+-- (تا شرط «دست‌کم ۱ لینک ورودی» گیت برای همه — از جمله خود خانه — برقرار شود)
+INSERT INTO seo_internal_links (from_landing_id, to_path, anchor_fa)
+SELECT (SELECT id FROM seo_landings WHERE url_path = '/' LIMIT 1), url_path, title_fa
+FROM seo_landings
+WHERE url_path <> '/'
+  AND NOT EXISTS (
+    SELECT 1 FROM seo_internal_links l
+    WHERE l.to_path = seo_landings.url_path
+      AND l.from_landing_id = (SELECT id FROM seo_landings WHERE url_path = '/' LIMIT 1)
+  );
+
+INSERT INTO seo_internal_links (from_landing_id, to_path, anchor_fa)
+SELECT (SELECT id FROM seo_landings WHERE url_path = '/tours' LIMIT 1), '/', 'ریوان سفر'
+WHERE NOT EXISTS (
+  SELECT 1 FROM seo_internal_links l
+  WHERE l.to_path = '/'
+    AND l.from_landing_id = (SELECT id FROM seo_landings WHERE url_path = '/tours' LIMIT 1)
+);
