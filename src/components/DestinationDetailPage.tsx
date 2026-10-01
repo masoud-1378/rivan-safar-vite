@@ -335,7 +335,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="مثال: علی محمدی"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                 />
               </div>
 
@@ -348,7 +348,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:shadow-focus focus:outline-none"
                 />
               </div>
 
@@ -358,7 +358,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                   <select
                     value={formData.passengers}
                     onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   >
                     <option value="1">۱ نفر</option>
                     <option value="2">۲ نفر (اتاق دوتخته)</option>
@@ -374,7 +374,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                     value={formData.datePreference}
                     onChange={(e) => setFormData({ ...formData, datePreference: e.target.value })}
                     placeholder="مثال: نیمه دوم شهریور"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   />
                 </div>
               </div>
@@ -386,7 +386,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="مثال: ترجیح هتل ۵ ستاره نزدیک مترو، اتاق رو به دریا..."
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                 ></textarea>
               </div>
 

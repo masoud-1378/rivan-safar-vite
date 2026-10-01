@@ -166,7 +166,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                     onChange={handleSearchInputChange}
                     onFocus={() => setIsFocused(true)}
                     placeholder={isDesktop ? "مقصد یا تور (مثلاً استانبول)" : "نام مقصد…"} 
-                    className="w-full bg-transparent border-none outline-none text-text-heading placeholder:text-text-secondary/60 text-body-sm font-medium"
+                    className="w-full bg-transparent border-none outline-none text-text-heading placeholder:text-text-secondary/60 text-form-input"
                   />
                 </div>
                 <button 
@@ -227,7 +227,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full end-0 start-0 z-50 mt-2 bg-surface-primary border border-border-default/80 rounded-2xl shadow-elevated overflow-hidden text-start"
+                    className="absolute top-full end-0 start-0 z-50 mt-2 bg-surface-primary border border-border-default/80 rounded-card shadow-floating overflow-hidden text-start"
                   >
                     <div className="py-1.5">
                       {filteredSuggestions.length > 0 ? (

@@ -173,7 +173,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
 
             {/* Left Column: Modern Hero Image with Clean Floating Badge */}
             <div className="lg:col-span-5">
-              <div className="relative rounded-2xl overflow-hidden border border-border-default/80 shadow-card bg-surface-secondary group">
+              <div className="relative rounded-card overflow-hidden border border-border-default/80 shadow-card bg-surface-secondary group">
                 <div className="aspect-[4/3] relative">
                   <SmartImage
                     src={country.image}
@@ -187,7 +187,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
 
                 {/* Floating Modern Badge (Only Tour Count) */}
                 <div className="absolute top-3.5 start-3.5">
-                  <div className="backdrop-blur-md bg-brand-navy/85 text-white border border-white/20 px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+                  <div className="backdrop-blur-md bg-brand-navy/85 text-white border border-border-on-dark px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-brand-orange" />
                     <span className="text-caption font-bold ">{fa(country.activeToursCount)} تور فعال</span>
                   </div>
@@ -243,7 +243,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                     {city.nameEn}
                   </div>
 
-                  <div className="pt-2 sm:pt-2.5 border-t border-white/20 flex items-center justify-between">
+                  <div className="pt-2 sm:pt-2.5 border-t border-border-on-dark flex items-center justify-between">
                     <div>
                       <div className="text-[10px] sm:text-caption text-white/70 leading-none mb-0.5">شروع از</div>
                       <div className="flex items-baseline gap-1 whitespace-nowrap">
@@ -409,7 +409,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                       placeholder="مثال: علی رضایی"
                       value={inquiryName}
                       onChange={(e) => setInquiryName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-control border border-border-default bg-surface-secondary text-form-input text-text-primary focus:outline-none focus:border-brand-orange focus:bg-surface-primary transition-colors"
+                      className="w-full px-3.5 py-2.5 rounded-control border border-border-default bg-surface-secondary text-form-input text-text-primary focus:outline-none focus:border-brand-orange focus:shadow-focus focus:bg-surface-primary transition-colors"
                       required
                     />
                   </div>
@@ -424,7 +424,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                       value={inquiryPhone}
                       onChange={(e) => setInquiryPhone(e.target.value)}
                       dir="ltr"
-                      className="w-full px-3.5 py-2.5 rounded-control border border-border-default bg-surface-secondary text-form-input text-text-primary focus:outline-none focus:border-brand-orange focus:bg-surface-primary transition-colors text-start"
+                      className="w-full px-3.5 py-2.5 rounded-control border border-border-default bg-surface-secondary text-form-input text-text-primary focus:outline-none focus:border-brand-orange focus:shadow-focus focus:bg-surface-primary transition-colors text-start"
                       required
                     />
                   </div>

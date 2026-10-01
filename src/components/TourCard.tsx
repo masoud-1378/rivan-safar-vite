@@ -140,7 +140,7 @@ export default function TourCard({
                 ? 'bg-surface-dark/90 text-white' 
                 : limited
                 ? 'bg-brand-warning/90 text-white'
-                : 'bg-surface-primary/95 text-brand-orange border border-white/20'
+                : 'bg-surface-primary/95 text-brand-orange border border-border-on-dark'
             }`}>
               <span>{effectiveBadge}</span>
             </div>
@@ -154,7 +154,7 @@ export default function TourCard({
           {/* Main Orange Tour Title */}
           <h3 
             title={title}
-            className="text-[16.5px] sm:text-[17.5px] font-bold text-brand-orange mb-1.5 group-hover:opacity-90 transition-opacity [text-wrap:balance]"
+            className="text-card-title text-brand-orange mb-1.5 group-hover:opacity-90 transition-opacity [text-wrap:balance]"
           >
             {title}
           </h3>
@@ -172,7 +172,7 @@ export default function TourCard({
           </div>
 
           {/* Features Capsule Pill (Exact design from user screenshot: Flight + Transfer + Hotel + Visa) */}
-          <div className="w-full bg-[#f8fafc] border border-border-default/70 rounded-2xl py-2.5 px-3 flex items-center justify-between text-text-heading shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] mb-4">
+          <div className="w-full bg-surface-secondary border border-border-default/70 rounded-card py-2.5 px-3 flex items-center justify-between text-text-heading shadow-inset mb-4">
             
             {/* 1. Transport (نوع واقعی حمل‌ونقل تور) */}
             <div className="flex flex-col items-center justify-center gap-1 flex-1">

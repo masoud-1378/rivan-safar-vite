@@ -10,7 +10,7 @@ function Block({ className = '' }: { className?: string }) {
   return (
     <div
       aria-hidden="true"
-      className={`animate-pulse rounded-lg bg-border-default/70 ${className}`}
+      className={`animate-pulse rounded-small bg-border-default/70 ${className}`}
     />
   );
 }
@@ -37,7 +37,7 @@ export function CardGridSkeleton({ count = 6 }: { count?: number }) {
         {Array.from({ length: count }).map((_, i) => (
           <div
             key={i}
-            className="overflow-hidden rounded-2xl border border-border-default bg-surface-primary"
+            className="overflow-hidden rounded-card border border-border-default bg-surface-primary"
           >
             <Block className="aspect-[16/10] rounded-none" />
             <div className="p-5 space-y-3">
@@ -45,7 +45,7 @@ export function CardGridSkeleton({ count = 6 }: { count?: number }) {
               <Block className="h-4 w-1/2" />
               <div className="flex items-center justify-between pt-2">
                 <Block className="h-4 w-24" />
-                <Block className="h-9 w-28 rounded-xl" />
+                <Block className="h-9 w-28 rounded-control" />
               </div>
             </div>
           </div>
@@ -80,7 +80,7 @@ export function DetailSkeleton() {
       <Block className="h-5 w-1/3 mb-8" />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <Block className="aspect-[16/9] rounded-2xl" />
+          <Block className="aspect-[16/9] rounded-card" />
           <div className="space-y-3">
             <Block className="h-4 w-full" />
             <Block className="h-4 w-full" />
@@ -89,18 +89,18 @@ export function DetailSkeleton() {
             <Block className="h-4 w-2/3" />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Block className="h-20 rounded-xl" />
-            <Block className="h-20 rounded-xl" />
-            <Block className="h-20 rounded-xl" />
-            <Block className="h-20 rounded-xl" />
+            <Block className="h-20 rounded-control" />
+            <Block className="h-20 rounded-control" />
+            <Block className="h-20 rounded-control" />
+            <Block className="h-20 rounded-control" />
           </div>
         </div>
         <div className="lg:col-span-1">
-          <div className="rounded-2xl border border-border-default bg-surface-primary p-6 space-y-4 lg:sticky lg:top-24">
+          <div className="rounded-card border border-border-default bg-surface-primary p-6 space-y-4 lg:sticky lg:top-24">
             <Block className="h-6 w-1/2" />
-            <Block className="h-11 w-full rounded-xl" />
-            <Block className="h-11 w-full rounded-xl" />
-            <Block className="h-12 w-full rounded-xl" />
+            <Block className="h-11 w-full rounded-control" />
+            <Block className="h-11 w-full rounded-control" />
+            <Block className="h-12 w-full rounded-control" />
           </div>
         </div>
       </div>
@@ -114,7 +114,7 @@ export function ArticleSkeleton() {
     <div className="container-main px-4 sm:px-6 lg:px-8 py-10 max-w-3xl mx-auto" aria-hidden="true">
       <Block className="h-9 w-4/5 mb-4" />
       <Block className="h-5 w-1/3 mb-8" />
-      <Block className="aspect-[16/8] rounded-2xl mb-8" />
+      <Block className="aspect-[16/8] rounded-card mb-8" />
       <div className="space-y-3">
         {Array.from({ length: 8 }).map((_, i) => (
           <Block key={i} className={`h-4 ${i % 3 === 2 ? 'w-5/6' : 'w-full'}`} />
@@ -151,17 +151,17 @@ export function ContactSkeleton() {
         <Block className="h-5 w-2/3 mx-auto" />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="rounded-2xl border border-border-default bg-surface-primary p-6 space-y-4">
+        <div className="rounded-card border border-border-default bg-surface-primary p-6 space-y-4">
           <Block className="h-6 w-1/3 mb-2" />
-          <Block className="h-11 w-full rounded-xl" />
-          <Block className="h-11 w-full rounded-xl" />
-          <Block className="h-28 w-full rounded-xl" />
-          <Block className="h-12 w-full rounded-xl" />
+          <Block className="h-11 w-full rounded-control" />
+          <Block className="h-11 w-full rounded-control" />
+          <Block className="h-28 w-full rounded-control" />
+          <Block className="h-12 w-full rounded-control" />
         </div>
         <div className="space-y-4">
-          <Block className="h-24 rounded-2xl" />
-          <Block className="h-24 rounded-2xl" />
-          <Block className="h-24 rounded-2xl" />
+          <Block className="h-24 rounded-card" />
+          <Block className="h-24 rounded-card" />
+          <Block className="h-24 rounded-card" />
         </div>
       </div>
     </div>

@@ -187,7 +187,7 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
                 />
                 
                 <div className="absolute top-4 start-4 z-20">
-                  <div className="badge bg-surface-dark/40 backdrop-blur border-white/10 text-white whitespace-nowrap">
+                  <div className="badge bg-surface-dark/40 backdrop-blur border-border-on-dark text-white whitespace-nowrap">
                     <Star className="w-3.5 h-3.5 text-brand-orange" />
                     <span>{dest.badge}</span>
                   </div>
@@ -203,7 +203,7 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
                     {dest.toursCount} تور فعال
                   </div>
                   
-                  <div className="card-destination-footer pt-3 border-t border-white/20 flex items-center justify-between">
+                  <div className="card-destination-footer pt-3 border-t border-border-on-dark flex items-center justify-between">
                     <div>
                       <div className="card-destination-price-label text-caption text-white/70">شروع از</div>
                       <div className="flex items-baseline gap-1 whitespace-nowrap">
@@ -279,7 +279,7 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
                 />
                 
                 <div className="absolute top-4 start-4 z-20">
-                  <div className="badge bg-surface-dark/40 backdrop-blur border-white/10 text-white whitespace-nowrap">
+                  <div className="badge bg-surface-dark/40 backdrop-blur border-border-on-dark text-white whitespace-nowrap">
                     <Star className="w-3.5 h-3.5 text-brand-orange" />
                     <span>{dest.badge}</span>
                   </div>
@@ -295,7 +295,7 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
                     {dest.toursCount} تور فعال
                   </div>
                   
-                  <div className="card-destination-footer pt-3 border-t border-white/20 flex items-center justify-between">
+                  <div className="card-destination-footer pt-3 border-t border-border-on-dark flex items-center justify-between">
                     <div>
                       <div className="card-destination-price-label text-caption text-white/70">شروع از</div>
                       <div className="flex items-baseline gap-1 whitespace-nowrap">

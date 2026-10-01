@@ -23,7 +23,7 @@ export default function ToursError({
   return (
     <div className="bg-page-background text-text-primary dir-rtl">
       <div className="container-main px-4 sm:px-6 lg:px-8 py-16 sm:py-24 max-w-2xl mx-auto text-center">
-        <div className="bg-surface-primary border border-border-default rounded-2xl p-8 sm:p-12">
+        <div className="bg-surface-primary border border-border-default rounded-card p-8 sm:p-12">
           <div
             aria-hidden="true"
             className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-brand-orange-soft text-2xl font-extrabold text-brand-orange"
@@ -42,19 +42,19 @@ export default function ToursError({
             <button
               type="button"
               onClick={() => retry()}
-              className="rounded-xl bg-brand-orange px-6 py-3 font-bold text-white transition-colors hover:bg-brand-orange-hover focus:outline-none"
+              className="btn btn-medium btn-primary px-6 font-bold"
             >
               تلاش دوباره
             </button>
             <a
               href="tel:02633350139"
-              className="rounded-xl border border-brand-orange px-6 py-3 font-bold text-brand-orange transition-colors hover:bg-brand-orange-soft"
+              className="btn btn-medium btn-outline px-6 font-bold"
             >
               تماس: ۰۲۶-۳۳۳۵۰۱۳۹
             </a>
             <a
               href="/"
-              className="rounded-xl border border-border-default px-6 py-3 font-bold text-text-heading transition-colors hover:bg-surface-secondary"
+              className="btn btn-medium btn-outline px-6 font-bold"
             >
               صفحه اصلی
             </a>

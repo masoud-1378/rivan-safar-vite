@@ -198,7 +198,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder="مثال: رضا احمدی"
-                        className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                        className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                       />
                       {errors.name && <p className="text-caption text-danger mt-1">{errors.name}</p>}
                     </div>
@@ -212,7 +212,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                        className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:outline-none"
+                        className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:shadow-focus focus:outline-none"
                       />
                       {errors.phone && <p className="text-caption text-danger mt-1 text-start">{errors.phone}</p>}
                     </div>
@@ -223,7 +223,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                     <select
                       value={formData.subject}
                       onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      className="w-full bg-surface-secondary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                      className="w-full bg-surface-secondary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                     >
                       <option value="مشاوره عمومی تور">مشاوره عمومی تور و استعلام قیمت</option>
                       <option value="تورهای نمایشگاهی و تجاری">تورهای نمایشگاهی و تجاری (چین، دبی، اروپا)</option>
@@ -239,7 +239,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                       placeholder="مقصد، تاریخ مد نظر، تعداد نفرات یا سوال مورد نظر…"
-                      className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                      className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                     ></textarea>
                   </div>
 

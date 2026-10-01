@@ -412,7 +412,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                     placeholder="مثال: بازرگانی البرز"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   />
                 </div>
 
@@ -424,7 +424,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="مثال: مهندس راد"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   />
                   {formErrors.name && <p className="text-danger text-caption mt-1">{formErrors.name}</p>}
                 </div>
@@ -440,7 +440,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   />
                   {formErrors.phone && <p className="text-danger text-caption mt-1">{formErrors.phone}</p>}
                 </div>
@@ -450,7 +450,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   <select
                     value={formData.passengers}
                     onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   >
                     <option value="1">۱ نفر</option>
                     <option value="2">۲ نفر</option>
@@ -467,7 +467,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="حوزه کاری، فاز مد نظر، درخواست مترجم…"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                 ></textarea>
               </div>
 

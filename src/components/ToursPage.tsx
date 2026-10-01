@@ -488,7 +488,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                       <select 
                         value={originFilter}
                         onChange={(e) => setOriginFilter(e.target.value)}
-                        className="form-input form-select text-body-sm"
+                        className="form-input form-select"
                       >
                         <option value="all">همه مبدأها</option>
                         {originOptions.map((o) => (
@@ -503,7 +503,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                       <select 
                         value={hotelStarFilter}
                         onChange={(e) => setHotelStarFilter(e.target.value)}
-                        className="form-input form-select text-body-sm"
+                        className="form-input form-select"
                       >
                         <option value="all">همه درجه‌ها</option>
                         <option value="5">هتل‌های ۵ ستاره</option>
@@ -518,7 +518,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                       <select 
                         value={airlineFilter}
                         onChange={(e) => setAirlineFilter(e.target.value)}
-                        className="form-input form-select text-body-sm"
+                        className="form-input form-select"
                       >
                         <option value="all">همه ایرلاین‌ها</option>
                         {airlineOptions.map((a) => (
@@ -623,7 +623,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
 
       {/* ---------------- 12. Comparison Floating Bar & Modal ---------------- */}
       {comparedTourIds.length > 0 && (
-        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-6 left-1/2 -translate-x-1/2 z-40 bg-surface-dark text-white px-5 py-3 rounded-card shadow-2xl border border-white/20 flex items-center justify-center flex-wrap gap-x-4 gap-y-2 max-w-[calc(100vw-2rem)] dir-rtl">
+        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-6 left-1/2 -translate-x-1/2 z-40 bg-surface-dark text-white px-5 py-3 rounded-card shadow-floating border border-border-on-dark flex items-center justify-center flex-wrap gap-x-4 gap-y-2 max-w-[calc(100vw-2rem)] dir-rtl">
           <span className="text-body-sm font-bold">
             {fa(comparedTourIds.length)} تور برای مقایسه انتخاب شده
           </span>
@@ -650,7 +650,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-surface-primary rounded-card max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-start shadow-2xl"
+              className="bg-surface-primary rounded-card max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-start shadow-floating"
             >
               <div className="flex items-center justify-between mb-6 pb-3 border-b border-border-default">
                 <h3 className="text-h3 text-text-heading">جدول مقایسه تورهای انتخابی</h3>
@@ -860,7 +860,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-surface-primary rounded-card max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-start shadow-2xl"
+              className="bg-surface-primary rounded-card max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-start shadow-floating"
             >
               <button 
                 onClick={closeDetailModal}
@@ -966,7 +966,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                       placeholder="مثلاً علی احمدی" 
                       value={bookingForm.name}
                       onChange={(e) => setBookingForm({...bookingForm, name: e.target.value})}
-                      className="form-input !bg-white/10 !border-white/20 !text-white placeholder:!text-white/50 focus:!border-brand-orange"
+                      className="form-input !bg-white/10 !border-border-on-dark !text-white placeholder:!text-white/50 focus:!border-brand-orange"
                     />
                   </div>
                   <div className="form-field">
@@ -978,7 +978,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                       placeholder="مثلاً ۰۹۱۲۳۴۵۶۷۸۹" 
                       value={bookingForm.mobile}
                       onChange={(e) => setBookingForm({...bookingForm, mobile: e.target.value})}
-                      className="form-input !bg-white/10 !border-white/20 !text-white placeholder:!text-white/50 focus:!border-brand-orange text-left"
+                      className="form-input !bg-white/10 !border-border-on-dark !text-white placeholder:!text-white/50 focus:!border-brand-orange text-left"
                     />
                   </div>
                   <div className="form-field">
@@ -986,7 +986,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                     <select
                       value={bookingForm.passengers}
                       onChange={(e) => setBookingForm({...bookingForm, passengers: e.target.value})}
-                      className="form-input !bg-white/10 !border-white/20 !text-white focus:!border-brand-orange [&>option]:text-black"
+                      className="form-input !bg-white/10 !border-border-on-dark !text-white focus:!border-brand-orange [&>option]:text-black"
                     >
                       <option value="1">۱ نفر</option>
                       <option value="2">۲ نفر</option>
@@ -1020,7 +1020,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              className="bg-surface-primary rounded-t-3xl w-full max-h-[85vh] overflow-y-auto p-6 text-start"
+              className="bg-surface-primary rounded-t-card w-full max-h-[85vh] overflow-y-auto p-6 text-start"
             >
               <div className="filter-panel-header">
                 <h3 className="text-h4 text-text-heading">فیلترهای انتخاب تور</h3>

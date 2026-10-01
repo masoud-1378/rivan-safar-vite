@@ -104,7 +104,7 @@ export default function Footer({ onNavigate }: FooterProps) {
       <div className="container-main px-4 sm:px-6 lg:px-8 pt-12 lg:pt-16 pb-8">
 
         {/* Top Info Section: Brand + Contact Info */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 pb-12 border-b border-white/10 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 pb-12 border-b border-border-on-dark items-start">
 
           {/* Brand Intro (7 cols on lg) */}
           <div className="lg:col-span-7 space-y-4">
@@ -123,7 +123,7 @@ export default function Footer({ onNavigate }: FooterProps) {
               </div>
             </div>
 
-            <p className="text-body leading-[1.9] text-text-on-dark-secondary max-w-[580px]">
+            <p className="text-body text-text-on-dark-secondary max-w-[580px]">
               ریوان سفر؛ همراه شما برای انتخاب، برنامه‌ریزی و بررسی تورهای خارجی، داخلی و نمایشگاهی.
             </p>
 
@@ -157,13 +157,13 @@ export default function Footer({ onNavigate }: FooterProps) {
           </div>
 
           {/* Contact Details Box (5 cols on lg) */}
-          <div className="lg:col-span-5 bg-white/5 rounded-control p-5 sm:p-6 border border-white/10 space-y-3.5">
+          <div className="lg:col-span-5 bg-white/5 rounded-control p-5 sm:p-6 border border-border-on-dark space-y-3.5">
             <h3 className="text-h4 text-white mb-2 flex items-center gap-2">
               <Phone className="w-4 h-4 text-brand-orange" />
               مشاوره تلفنی
             </h3>
 
-            <div className="flex items-center justify-between bg-white/5 px-4 py-2.5 rounded-control border border-white/5">
+            <div className="flex items-center justify-between bg-white/5 px-4 py-2.5 rounded-control border border-border-on-dark">
               <span className="text-body-sm text-text-on-dark-secondary">شماره تماس:</span>
               {contact.showFooterPhone && (
               <a
@@ -195,7 +195,7 @@ export default function Footer({ onNavigate }: FooterProps) {
         </div>
 
         {/* Middle Section: Navigation Columns (Desktop Grid / Mobile Accordion) */}
-        <div className="py-10 border-b border-white/10">
+        <div className="py-10 border-b border-border-on-dark">
 
           {/* Desktop View (4 columns) */}
           <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -226,7 +226,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             {FOOTER_GROUPS.map((group, idx) => {
               const isOpen = !!openAccordions[idx];
               return (
-                <div key={idx} className="border-b border-white/10 last:border-b-0">
+                <div key={idx} className="border-b border-border-on-dark last:border-b-0">
                   <button
                     onClick={() => toggleAccordion(idx)}
                     className="w-full py-3.5 flex items-center justify-between text-start text-white text-body font-medium focus:outline-none"
@@ -258,7 +258,7 @@ export default function Footer({ onNavigate }: FooterProps) {
         </div>
 
         {/* Official Badges Section */}
-        <div className="section-compact border-b border-white/10">
+        <div className="section-compact border-b border-border-on-dark">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
             <span className="text-body-sm text-text-muted font-medium shrink-0">
               مجوزها و نمادهای رسمی:
@@ -267,7 +267,7 @@ export default function Footer({ onNavigate }: FooterProps) {
               {BADGES.map((badge, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-3 bg-surface-primary text-text-heading px-4 py-2.5 rounded-control border border-white/20 shadow-subtle min-w-[180px]"
+                  className="flex items-center gap-3 bg-surface-primary text-text-heading px-4 py-2.5 rounded-control border border-border-subtle shadow-subtle min-w-[180px]"
                 >
                   <div className="w-8 h-8 rounded-small bg-brand-orange/10 text-brand-orange flex items-center justify-center shrink-0">
                     <badge.icon className="w-4 h-4" />

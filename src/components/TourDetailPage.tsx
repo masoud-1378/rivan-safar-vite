@@ -550,7 +550,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="مثال: مریم کریمی"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                 />
                 {errors.name && <p className="text-caption text-danger mt-1">{errors.name}</p>}
               </div>
@@ -564,7 +564,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:shadow-focus focus:outline-none"
                 />
                 {errors.phone && <p className="text-caption text-danger mt-1">{errors.phone}</p>}
               </div>
@@ -575,7 +575,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   <select
                     value={formData.passengers}
                     onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   >
                     <option value="1">۱ نفر (اتاق یک تخته)</option>
                     <option value="2">۲ نفر (اتاق دو تخته)</option>
@@ -591,7 +591,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                     value={formData.hotelPreference}
                     onChange={(e) => setFormData({ ...formData, hotelPreference: e.target.value })}
                     placeholder="مثال: هتل ۵ ستاره یا نام هتل"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   />
                 </div>
               </div>
@@ -603,7 +603,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="مثال: تاریخ ترجیحی حرکت، سن همراهان کودک، درخواست گشت شهری اضافه…"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                 ></textarea>
               </div>
 
