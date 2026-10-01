@@ -106,12 +106,22 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
     return destMap[tour] || '/tours';
   };
 
+  /** مسیریابی جست‌وجو: مقصد شناخته‌شده → صفحه مقصد، بقیه → ‎/tours?q=‎ */
+  const navigateForQuery = (rawQuery: string) => {
+    if (!onNavigate) return;
+    const q = rawQuery.trim();
+    if (!q) {
+      onNavigate('/tours');
+      return;
+    }
+    const path = getDestinationPath(q);
+    onNavigate(path === '/tours' ? `/tours?q=${encodeURIComponent(q)}` : path);
+  };
+
   const handleSuggestionClick = (tour: string) => {
     setSearchQuery(tour);
     setIsFocused(false);
-    if (onNavigate) {
-      onNavigate(getDestinationPath(tour));
-    }
+    navigateForQuery(tour);
   };
 
   const handleSearch = () => {
@@ -120,13 +130,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
     setIsFocused(false);
     setTimeout(() => {
       setIsSearching(false);
-      if (onNavigate) {
-        if (searchQuery.trim()) {
-          onNavigate(getDestinationPath(searchQuery.trim()));
-        } else {
-          onNavigate('/tours');
-        }
-      }
+      navigateForQuery(searchQuery);
     }, 400);
   };
 

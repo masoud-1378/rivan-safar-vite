@@ -37,7 +37,11 @@ export default async function ExhibitionEditionPage({
 }) {
   const { series, edition } = await params;
   const [exhibitionsData, contact] = await Promise.all([getExhibitions(), getContactInfo()]);
-  if (!exhibitionsData[series]) notFound();
+  const seriesData = exhibitionsData[series];
+  if (!seriesData) notFound();
+  // P1-09: نامک دوره هم باید با دورهٔ واقعی جاری بخواند؛ در غیر این صورت ۴۰۴
+  // تا URLهای جعلی ایندکس نشوند.
+  if (seriesData.upcomingEdition?.editionSlug !== edition) notFound();
   const seo = resolveSeo(`/exhibition/${series}/${edition}`);
   return (
     <>

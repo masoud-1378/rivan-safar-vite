@@ -14,7 +14,7 @@ import SmartImage from './SmartImage';
 import { fa } from '@/lib/utils';
 import {
   liveExtras, isDomesticTour, faDateTime, boardLabel,
-  transportLabel, transportSpecLabel,
+  transportLabel, transportSpecLabel, isValidMobile, normalizeMobile,
 } from './tour-live';
 
 interface TourDetailPageProps {
@@ -33,12 +33,14 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
     phone: '',
     passengers: '2',
     hotelPreference: '',
-    datePreference: '',
     notes: ''
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
+  const [submitStored, setSubmitStored] = useState(true);
+  const [errors, setErrors] = useState({ name: '', phone: '' });
+  const [formError, setFormError] = useState('');
 
   if (!tour) {
     return (
@@ -77,14 +79,23 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
     !!consultant && !!(consultant.name || consultant.phone || consultant.audioUrl);
   const transportKind = extras.transportKind;
 
+  const validateForm = () => {
+    const errs = { name: '', phone: '' };
+    if (formData.name.trim().length < 3) errs.name = 'نام و نام خانوادگی را کامل وارد کنید.';
+    if (!isValidMobile(formData.phone)) errs.phone = 'شماره موبایل معتبر نیست؛ مثل ۰۹۱۲۳۴۵۶۷۸۹.';
+    setErrors(errs);
+    return !errs.name && !errs.phone;
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone) return;
+    setFormError('');
+    if (!validateForm()) return;
 
     setFormLoading(true);
     const result = await submitLead({
-      fullName: formData.name,
-      phone: formData.phone,
+      fullName: formData.name.trim(),
+      phone: normalizeMobile(formData.phone),
       sourcePath: `/tour/${tourSlug}`,
       tourContext: tour.title,
       destinationHint: tour.destination,
@@ -94,9 +105,14 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
         .join(' — '),
     });
     setFormLoading(false);
-    setSubmitMessage(result.message);
-    setFormSubmitted(result.ok);
-    if (result.ok) trackLeadSubmit(`/tour/${tourSlug}`, result.stored);
+    if (result.ok) {
+      setSubmitMessage(result.message);
+      setSubmitStored(result.stored);
+      setFormSubmitted(true);
+      trackLeadSubmit(`/tour/${tourSlug}`, result.stored);
+    } else {
+      setFormError(result.message);
+    }
   };
 
   return (
@@ -491,20 +507,41 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
           </div>
 
           {formSubmitted ? (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-card p-6 text-center text-emerald-900">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
-                <Check className="w-6 h-6" />
+            submitStored ? (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-card p-6 text-center text-emerald-900">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
+                  <Check className="w-6 h-6" />
+                </div>
+                <h4 className="text-h4 font-bold mb-2">درخواست تماس شما ثبت شد</h4>
+                <p className="text-body-sm text-emerald-800 mb-4">
+                  {submitMessage || `کارشناس ریوان سفر در ساعات کاری برای تأیید قیمت و ظرفیت ${tour.title} با شما تماس می‌گیرد.`}
+                </p>
+                <div className="text-caption text-emerald-700">
+                  در صورت تمایل می‌توانید مستقیماً با تلفن <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a> تماس حاصل فرمایید.
+                </div>
               </div>
-              <h4 className="text-h4 font-bold mb-2">درخواست تماس شما ثبت شد</h4>
-              <p className="text-body-sm text-emerald-800 mb-4">
-                {submitMessage || `کارشناس ریوان سفر در ساعات کاری برای تأیید قیمت و ظرفیت ${tour.title} با شما تماس می‌گیرد.`}
-              </p>
-              <div className="text-caption text-emerald-700">
-                در صورت تمایل می‌توانید مستقیماً با تلفن <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a> تماس حاصل فرمایید.
+            ) : (
+              <div className="bg-amber-50 border border-amber-200 rounded-card p-6 text-center text-amber-900">
+                <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-3">
+                  <Phone className="w-6 h-6" />
+                </div>
+                <h4 className="text-h4 font-bold mb-2">ثبت آنلاین ممکن نشد</h4>
+                <p className="text-body-sm text-amber-800 mb-4">
+                  {submitMessage}
+                </p>
+                <div className="text-caption text-amber-700">
+                  برای پیگیری سریع، لطفاً با تلفن <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a> تماس بگیرید.
+                </div>
               </div>
-            </div>
+            )
           ) : (
             <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-right space-y-4">
+              {formError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-control text-red-700 text-body-sm flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{formError}</span>
+                </div>
+              )}
               <div>
                 <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی <span className="text-red-500">*</span></label>
                 <input
@@ -515,6 +552,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   placeholder="مثال: مریم کریمی"
                   className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
                 />
+                {errors.name && <p className="text-caption text-red-600 mt-1">{errors.name}</p>}
               </div>
 
               <div>
@@ -526,8 +564,9 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-right focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-start focus:border-brand-orange focus:outline-none"
                 />
+                {errors.phone && <p className="text-caption text-red-600 mt-1">{errors.phone}</p>}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

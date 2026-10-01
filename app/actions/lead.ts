@@ -29,6 +29,9 @@ export interface LeadResult {
  */
 const recentByPhone = new Map<string, number>();
 
+/** الگوی موبایل ایرانی — هم‌تراز با اعتبارسنجی سمت کلاینت (مهارت iran-validation). */
+const IRANIAN_MOBILE_RE = /^(?:\+98|0098|0)?9\d{9}$/;
+
 /** شماره تماس پشتیبانی از تنظیمات؛ اگر خوانده نشد، همان شمارهٔ پیش‌فرض. */
 async function supportPhoneDisplay(
   db: NonNullable<ReturnType<typeof getDb>>
@@ -53,7 +56,7 @@ export async function createLead(input: LeadInput): Promise<LeadResult> {
     .replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
     .replace(/[^\d+]/g, '');
 
-  if (fullName.length < 3 || phone.length < 10) {
+  if (fullName.length < 3 || !IRANIAN_MOBILE_RE.test(phone)) {
     return {
       ok: false,
       stored: false,

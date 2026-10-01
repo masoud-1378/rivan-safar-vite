@@ -22,7 +22,7 @@ export default function AnnouncementBar({ onClose }: AnnouncementBarProps) {
           <span className="text-white/90 flex items-center justify-center gap-1.5 flex-wrap">
             {announcement}
             <a 
-              href="#destinations" 
+              href="/tours" 
               className="inline-flex items-center gap-1 text-brand-orange font-bold border-b border-brand-orange/40 hover:border-brand-orange hover:text-brand-orange-soft transition-all pb-[1px]"
             >
               مشاهده تورها
@@ -40,7 +40,7 @@ export default function AnnouncementBar({ onClose }: AnnouncementBarProps) {
           <span className="text-white/95 flex items-center justify-center gap-2">
             {announcement}
             <a 
-              href="#destinations" 
+              href="/tours" 
               className="inline-flex items-center gap-1 text-brand-orange font-bold border-b border-brand-orange/40 hover:border-brand-orange hover:text-brand-orange-soft transition-all pb-[1px]"
             >
               مشاهده تورها

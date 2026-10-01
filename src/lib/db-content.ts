@@ -198,7 +198,9 @@ export async function getCountries(): Promise<Record<string, Place>> {
 
 export async function getCities(): Promise<Record<string, Place>> {
   const all = await getDestinationsOnce();
-  const cities = all.filter((p) => p.type === 'city');
+  // P1-10: جزیره‌ها (kish/phuket) هم جزو مقصدهای سطح شهرند — در دیتای
+  // استاتیک هم داخل همان نگاشت CITIES نگه‌داری می‌شوند.
+  const cities = all.filter((p) => p.type === 'city' || p.type === 'island');
   if (cities.length === 0) return CITIES;
   return Object.fromEntries(cities.map((c) => [c.slug, c]));
 }
@@ -347,8 +349,12 @@ export async function getLiveContent(): Promise<{
       ? Object.fromEntries(allPlaces.filter((p) => p.type === 'country').map((c) => [c.slug, c]))
       : COUNTRIES;
   const cities =
-    allPlaces.filter((p) => p.type === 'city').length > 0
-      ? Object.fromEntries(allPlaces.filter((p) => p.type === 'city').map((c) => [c.slug, c]))
+    allPlaces.filter((p) => p.type === 'city' || p.type === 'island').length > 0
+      ? Object.fromEntries(
+          allPlaces
+            .filter((p) => p.type === 'city' || p.type === 'island')
+            .map((c) => [c.slug, c]),
+        )
       : CITIES;
   const guides = await getGuides();
   const exhibitions = await getExhibitions();

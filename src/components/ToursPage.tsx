@@ -57,6 +57,8 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
 
   // Booking Form Modal State inside Detail Modal
   const [bookingSubmitted, setBookingSubmitted] = useState<boolean>(false);
+  const [bookingError, setBookingError] = useState<string>('');
+  const [bookingSuccess, setBookingSuccess] = useState<{ message: string; stored: boolean } | null>(null);
   const [bookingForm, setBookingForm] = useState({
     name: '',
     mobile: '',
@@ -73,6 +75,12 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
     const q = searchParams.get('origin');
     if (q && originOptions.some((o) => o.slug === q)) setOriginFilter(q);
   }, [searchParams, originOptions]);
+
+  // --- جست‌وجوی مقصد: پیش‌پر از پارامتر ?q= (از جست‌وجوی صفحه اصلی) ---
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) setSearchDestination(q);
+  }, [searchParams]);
 
   // --- ایرلاین: از مقادیر واقعی تورهای زنده ---
   const airlineOptions = useMemo(() => {
@@ -188,10 +196,22 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
     }
   };
 
+  /** بستن مودال جزئیات تور + ریست کامل وضعیت فرم رزرو */
+  const closeDetailModal = () => {
+    setSelectedDetailTour(null);
+    setBookingForm({ name: '', mobile: '', passengers: '2', selectedHotel: '', notes: '' });
+    setBookingSubmitted(false);
+    setBookingError('');
+    setBookingSuccess(null);
+  };
+
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (bookingSubmitted) return;
+    setBookingSubmitted(true);
+    setBookingError('');
     const result = await submitLead({
-      fullName: bookingForm.name,
+      fullName: bookingForm.name.trim(),
       phone: bookingForm.mobile,
       sourcePath: '/tours',
       tourContext: selectedDetailTour?.title,
@@ -199,10 +219,13 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
       passengers: bookingForm.passengers,
       notes: bookingForm.selectedHotel ? `هتل: ${bookingForm.selectedHotel}` : undefined,
     });
-    setSelectedDetailTour(null);
-    setBookingForm({ name: '', mobile: '', passengers: '2', selectedHotel: '', notes: '' });
-    if (result.ok) trackLeadSubmit('/tours', result.stored);
-    alert(result.message);
+    setBookingSubmitted(false);
+    if (result.ok) {
+      trackLeadSubmit('/tours', result.stored);
+      setBookingSuccess({ message: result.message, stored: result.stored });
+    } else {
+      setBookingError(result.message);
+    }
   };
 
   return (
@@ -840,7 +863,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               className="bg-surface-primary rounded-card max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-right shadow-2xl"
             >
               <button 
-                onClick={() => setSelectedDetailTour(null)}
+                onClick={closeDetailModal}
                 className="absolute top-4 left-4 icon-btn icon-btn-medium bg-page-background text-text-secondary hover:text-text-heading rounded-full"
               >
                 <X className="w-5 h-5" />
@@ -906,11 +929,33 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
               </div>
 
               {/* Booking Request Form */}
-              <form onSubmit={handleBookingSubmit} className="bg-surface-dark text-white p-5 rounded-card text-right">
-                <h3 className="text-h4 mb-3">ثبت درخواست تماس برای این تور</h3>
-                <p className="text-caption text-white/80 mb-4">
-                  با ثبت این فرم، کارشناسان ریوان سفر در ساعات کاری ظرفیت نهایی و قیمت را با شما هماهنگ می‌کنند.
-                </p>
+              {bookingSuccess ? (
+                <div className={`p-5 rounded-card text-center border ${bookingSuccess.stored ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'}`}>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${bookingSuccess.stored ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {bookingSuccess.stored ? <CheckCircle2 className="w-6 h-6" /> : <Phone className="w-6 h-6" />}
+                  </div>
+                  <h3 className="text-h4 font-bold mb-2">{bookingSuccess.stored ? 'درخواست تماس شما ثبت شد' : 'ثبت آنلاین ممکن نشد'}</h3>
+                  <p className="text-body-sm mb-4 leading-relaxed">{bookingSuccess.message}</p>
+                  <button
+                    type="button"
+                    onClick={closeDetailModal}
+                    className="btn btn-primary btn-medium"
+                  >
+                    بستن
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleBookingSubmit} className="bg-surface-dark text-white p-5 rounded-card text-right">
+                  <h3 className="text-h4 mb-3">ثبت درخواست تماس برای این تور</h3>
+                  <p className="text-caption text-white/80 mb-4">
+                    با ثبت این فرم، کارشناسان ریوان سفر در ساعات کاری ظرفیت نهایی و قیمت را با شما هماهنگ می‌کنند.
+                  </p>
+                  {bookingError && (
+                    <div className="mb-4 p-3 bg-red-500/15 border border-red-400/40 rounded-control text-red-100 text-body-sm flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>{bookingError}</span>
+                    </div>
+                  )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div className="form-field">
@@ -959,7 +1004,8 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                 >
                   {bookingSubmitted ? 'در حال ارسال…' : 'ثبت درخواست تماس برای این تور'}
                 </button>
-              </form>
+                </form>
+              )}
 
             </motion.div>
           </div>

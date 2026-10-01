@@ -108,7 +108,7 @@ export default function SummerTours({ onNavigate }: SummerToursProps) {
         {/* View All */}
         <div className="mt-10 sm:mt-12 text-center">
           <a 
-            href="#summer-tours"
+            href="/tours"
             className="text-link text-btn"
           >
             <span>مشاهده همهٔ تورهای تابستان</span>

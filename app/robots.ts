@@ -3,6 +3,10 @@ import { SITE_URL } from '@/src/lib/siteConfig';
 
 import { isIndexingEnabled } from '@/src/lib/site-contact';
 
+// P1-12: گیت لانچ از تنظیمات DB خوانده می‌شود؛ منجمدِ زمان بیلد نباشد تا
+// باز/بسته کردن گیت بدون دیپلوی اثر کند.
+export const dynamic = 'force-dynamic';
+
 /**
  * تا عبور از Launch Gate ایندکس عمومی بسته می‌ماند.
  * باز کردن: شرط زیر را بردارید و رجیستری seoLandings را Published کنید.

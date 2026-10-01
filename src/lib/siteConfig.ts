@@ -1,11 +1,11 @@
 /**
  * تنظیم مرکزی سایت — تنها محل خواندن دامنه اصلی و اطلاعات کسب‌وکار.
- * طبق سند 01_SEO_STRATEGY: دامنه نهایی rivansafar.ir است و انتقال باید امن باشد.
+ * دامنه نهایی www.rivansafar.ir است (فکت زنده: rivansafar.ir با ۳۰۸ به www ریدایرکت می‌کند).
  *
  * اولویت خواندن SITE_URL:
  *  1. متغیر محیطی VITE_SITE_URL (بیلد / ران‌تایم Vite)
  *  2. متغیر APP_URL (محیط AI Studio / Cloud Run)
- *  3. مقدار پیش‌فرض امن https://rivansafar.ir
+ *  3. مقدار پیش‌فرض امن https://www.rivansafar.ir
  */
 
 const viteEnv =
@@ -19,7 +19,7 @@ const viteEnv =
       process.env?.APP_URL
     : undefined);
 
-const rawSiteUrl = viteEnv || 'https://rivansafar.ir';
+const rawSiteUrl = viteEnv || 'https://www.rivansafar.ir';
 
 function normalise(url: string): string {
   const trimmed = url.trim().replace(/\/+$/, '');
@@ -28,12 +28,12 @@ function normalise(url: string): string {
 }
 
 function safeSiteUrl(url: string): string {
-  const candidate = normalise(url || 'https://rivansafar.ir');
+  const candidate = normalise(url || 'https://www.rivansafar.ir');
   try {
     const parsed = new URL(candidate);
     return parsed.origin;
   } catch {
-    return 'https://rivansafar.ir';
+    return 'https://www.rivansafar.ir';
   }
 }
 

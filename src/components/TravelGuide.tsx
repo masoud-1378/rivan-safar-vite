@@ -34,7 +34,7 @@ export default function TravelGuide() {
 
           {/* Desktop Link to all guides */}
           <motion.a 
-            href="#all-guides"
+            href="/guides"
             initial={{ opacity: 0, x: -10 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -134,7 +134,7 @@ export default function TravelGuide() {
         {/* Mobile Action Button */}
         <div className="mt-8 md:hidden text-center">
           <a 
-            href="#all-guides"
+            href="/guides"
             className="text-link text-btn w-full justify-center mt-6"
           >
             <span>مشاهده همه راهنماهای سفر</span>

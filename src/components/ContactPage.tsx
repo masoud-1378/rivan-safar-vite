@@ -23,6 +23,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
+  const [leadStored, setLeadStored] = useState(true);
   const [errors, setErrors] = useState({ name: '', phone: '' });
   const [formError, setFormError] = useState('');
 
@@ -54,6 +55,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
     setLoading(false);
     if (result.ok) {
       setSubmitMessage(result.message);
+      setLeadStored(result.stored);
       setSubmitted(true);
       trackLeadSubmit('/contact', result.stored);
     } else {
@@ -156,15 +158,30 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
               </p>
 
               {submitted ? (
-                <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-card text-center text-emerald-900">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
-                    <Check className="w-6 h-6" />
+                leadStored ? (
+                  <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-card text-center text-emerald-900">
+                    <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
+                      <Check className="w-6 h-6" />
+                    </div>
+                    <h4 className="text-h4 font-bold mb-2">پیام شما با موفقیت دریافت شد</h4>
+                    <p className="text-body-sm text-emerald-800">
+                      {submitMessage || 'کارشناسان ریوان سفر در ساعات کاری پاسخگوی شما هستند.'}
+                    </p>
                   </div>
-                  <h4 className="text-h4 font-bold mb-2">پیام شما با موفقیت دریافت شد</h4>
-                  <p className="text-body-sm text-emerald-800">
-                    {submitMessage || 'کارشناسان ریوان سفر در ساعات کاری پاسخگوی شما هستند.'}
-                  </p>
-                </div>
+                ) : (
+                  <div className="p-6 bg-amber-50 border border-amber-200 rounded-card text-center text-amber-900">
+                    <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-3">
+                      <Phone className="w-6 h-6" />
+                    </div>
+                    <h4 className="text-h4 font-bold mb-2">ثبت آنلاین ممکن نشد</h4>
+                    <p className="text-body-sm text-amber-800">
+                      {submitMessage}
+                    </p>
+                    <div className="text-caption text-amber-700 mt-3">
+                      برای پیگیری سریع، لطفاً با تلفن <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a> تماس بگیرید.
+                    </div>
+                  </div>
+                )
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {formError && (
