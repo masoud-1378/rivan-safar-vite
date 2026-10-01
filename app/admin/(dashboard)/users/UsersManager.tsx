@@ -1,21 +1,21 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Archive, UserPlus } from 'lucide-react';
+import { Archive, RefreshCw, UserPlus } from 'lucide-react';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { Field, Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { formatJalali } from '@/lib/jalali';
 import { fa } from '@/lib/utils';
 import {
   listAdminUsers,
-  inviteAdmin,
+  createAdminUser,
   setUserRole,
   toggleUserActive,
   removeAdmin,
@@ -28,16 +28,36 @@ const ROLE_OPTIONS = [
   { value: 'owner', label: 'مالک' },
 ];
 
+type FieldErrors = Partial<Record<'email' | 'username' | 'password' | 'role', string>>;
+
+/** رمزی قوی می‌سازد: ۱۶ نویسه از چهار دستهٔ نویسه‌ای، با crypto مرورگر. */
+function generateStrongPassword(length = 16) {
+  const lower = 'abcdefghijkmnpqrstuvwxyz';
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const digits = '23456789';
+  const symbols = '!@#$%^&*';
+  const all = lower + upper + digits + symbols;
+  const rand = new Uint32Array(length * 2);
+  crypto.getRandomValues(rand);
+  const chars = [lower, upper, digits, symbols].map((set, i) => set[rand[i] % set.length]);
+  for (let i = 4; i < length; i++) chars.push(all[rand[i] % all.length]);
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = rand[length + i] % (i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join('');
+}
+
 const faTime = (date: Date) => `${fa(String(date.getHours()).padStart(2, '0'))}:${fa(String(date.getMinutes()).padStart(2, '0'))}`;
 
 export default function UsersManager({ initial }: { initial: UserRow[] }) {
   const [users, setUsers] = useState<UserRow[]>(initial);
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [role, setRole] = useState<'owner' | 'editor'>('editor');
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [removing, setRemoving] = useState<UserRow | null>(null);
-  // دعوتِ دوبارهٔ ایمیلِ عضو: هشدار درون‌خطی با نقش فعلی + تأیید صریح تغییر نقش
-  const [existingMember, setExistingMember] = useState<UserRow | null>(null);
-  const [confirmRoleChange, setConfirmRoleChange] = useState(false);
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
 
@@ -63,35 +83,47 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
     });
   };
 
-  const handleInvite = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const value = email.trim();
-    if (!value) {
-      toast({ variant: 'error', title: 'ایمیل را وارد کنید.' });
+    const nextErrors: FieldErrors = {};
+    if (!email.trim()) nextErrors.email = 'ایمیل را وارد کنید.';
+    if (!username.trim()) nextErrors.username = 'نام کاربری را وارد کنید.';
+    if (!password) nextErrors.password = 'رمز عبور را وارد کنید.';
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
       return;
     }
-    const member = users.find((u) => u.email.toLowerCase() === value.toLowerCase()) ?? null;
-    if (member && member.role !== role) {
-      // ایمیل از قبل عضو است و نقشِ درخواستی فرق می‌کند: بدون تأیید صریح جلو نرو.
-      setExistingMember(member);
-      setConfirmRoleChange(false);
-      return;
-    }
-    doInvite(value, role, false);
-  };
-
-  const doInvite = (value: string, r: 'owner' | 'editor', confirmed: boolean) => {
-    run(async () => {
-      await inviteAdmin(value, r, confirmed);
-      setEmail('');
-      setExistingMember(null);
-      setConfirmRoleChange(false);
-    }, 'دعوت‌نامه ارسال شد.');
-  };
-
-  const cancelExistingWarning = () => {
-    setExistingMember(null);
-    setConfirmRoleChange(false);
+    setErrors({});
+    startTransition(async () => {
+      try {
+        const res = await createAdminUser({
+          email: email.trim(),
+          username: username.trim(),
+          password,
+          role,
+        });
+        if (res.ok) {
+          toast({ variant: 'success', title: 'کاربر ساخته شد.' });
+          setEmail('');
+          setUsername('');
+          setPassword('');
+          setRole('editor');
+          setErrors({});
+          loadUsers();
+          return;
+        }
+        // نکته: strict در tsconfig خاموش است و یونیون تمایزی narrow نمی‌شود؛
+        // پس شاخهٔ خطا را صریح از روی همان تایپ قرارداد جدا می‌کنیم.
+        const failure = res as Extract<Awaited<ReturnType<typeof createAdminUser>>, { ok: false }>;
+        if (failure.field) {
+          setErrors({ [failure.field]: failure.message });
+        } else {
+          toast({ variant: 'error', title: failure.message });
+        }
+      } catch (err) {
+        toast({ variant: 'error', title: err instanceof Error ? err.message : 'خطا در ساخت کاربر.' });
+      }
+    });
   };
 
   const onRemove = () => {
@@ -104,6 +136,7 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
 
   const columns: Column<UserRow>[] = [
     { key: 'email', header: 'ایمیل', sortable: true, cell: (u) => <span dir="ltr" className="font-medium">{u.email}</span> },
+    { key: 'username', header: 'نام کاربری', sortable: true, cell: (u) => <span dir="ltr" className="text-muted-foreground">{u.username ?? '-'}</span> },
     {
       key: 'role',
       header: 'نقش',
@@ -147,74 +180,111 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
     <div className="admin-enter space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">مدیریت کاربران پنل</h1>
-        <p className="mt-1 text-sm text-muted-foreground">فقط مالک می‌تواند کاربران را دعوت، تغییر نقش، غیرفعال یا بایگانی کند.</p>
+        <p className="mt-1 text-sm text-muted-foreground">فقط مالک می‌تواند کاربر بسازد، نقش را تغییر دهد، غیرفعال یا بایگانی کند.</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlus className="size-4" />
-            دعوت مدیر یا ویراستار جدید
+            افزودن کاربر
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleInvite} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-3">
-            <Field label="ایمیل" htmlFor="invite-email">
+          <form onSubmit={handleCreate} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="ایمیل" htmlFor="new-user-email">
               <Input
-                id="invite-email"
+                id="new-user-email"
                 type="email"
                 dir="ltr"
-                required
+                autoComplete="off"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  if (existingMember) cancelExistingWarning();
+                  if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
                 }}
                 placeholder="admin@example.com"
+                error={errors.email}
               />
             </Field>
-            <Field label="نقش" htmlFor="invite-role">
-              <Select
-                id="invite-role"
-                value={role}
+            <Field
+              label="نام کاربری"
+              htmlFor="new-user-username"
+              hint="حروف کوچک لاتین، عدد، نقطه، آندرلاین و خط‌تیره؛ دست‌کم ۳ نویسه."
+            >
+              <Input
+                id="new-user-username"
+                type="text"
+                dir="ltr"
+                autoComplete="off"
+                value={username}
                 onChange={(e) => {
-                  const r = e.target.value as 'owner' | 'editor';
-                  setRole(r);
-                  // اگر نقشِ درخواستی با نقش فعلی عضو یکی شد، دیگر تغییری در کار نیست.
-                  if (existingMember && existingMember.role === r) cancelExistingWarning();
+                  setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''));
+                  if (errors.username) setErrors((prev) => ({ ...prev, username: undefined }));
                 }}
-                options={ROLE_OPTIONS}
+                placeholder="masoud.admin"
+                error={errors.username}
               />
             </Field>
-            <Button type="submit" disabled={pending} className="h-10">
-              {pending ? 'در حال انجام...' : 'ارسال دعوت‌نامه'}
-            </Button>
-          </form>
-          {existingMember && (
-            <div className="mt-3 rounded-sm border border-amber-500/40 bg-amber-500/10 p-4">
-              <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                این ایمیل هم‌اکنون با نقش «{existingMember.role === 'owner' ? 'مالک' : 'ویراستار'}» عضو است؛
-                دعوتِ دوباره بدون تأیید شما نقشش را عوض نمی‌کند.
-              </p>
-              <Checkbox
-                className="mt-2"
-                checked={confirmRoleChange}
-                onCheckedChange={setConfirmRoleChange}
-                label={`تغییر نقش به «${role === 'owner' ? 'مالک' : 'ویراستار'}»`}
+            <Field
+              label="رمز عبور"
+              htmlFor="new-user-password"
+              hint="دست‌کم ۱۰ نویسه."
+              error={errors.password}
+            >
+              <PasswordInput
+                id="new-user-password"
+                strength
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+                }}
+                placeholder="••••••••••"
               />
-              <div className="mt-3 flex gap-2">
-                <Button
-                  disabled={pending || !confirmRoleChange}
-                  onClick={() => doInvite(email.trim(), role, true)}
-                >
-                  {pending ? 'در حال انجام...' : 'تأیید و ارسال دعوت‌نامه'}
-                </Button>
-                <Button variant="ghost" onClick={cancelExistingWarning}>
-                  انصراف
-                </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mt-1.5 w-fit px-2 text-xs text-muted-foreground"
+                onClick={() => {
+                  setPassword(generateStrongPassword());
+                  if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+                }}
+              >
+                <RefreshCw className="size-3.5" />
+                تولید رمز
+              </Button>
+            </Field>
+            <div>
+              <Field label="نقش" htmlFor="new-user-role" error={errors.role}>
+                <Select
+                  id="new-user-role"
+                  value={role}
+                  onChange={(e) => {
+                    setRole(e.target.value as 'owner' | 'editor');
+                    if (errors.role) setErrors((prev) => ({ ...prev, role: undefined }));
+                  }}
+                  options={ROLE_OPTIONS}
+                />
+              </Field>
+              <div className="mt-2 space-y-1.5 rounded-field border border-border bg-muted/40 p-3 text-xs leading-6 text-muted-foreground">
+                <p>
+                  <strong className="text-foreground">مالک:</strong>
+                  {' '}دسترسی کامل؛ از جمله مدیریت کاربران، حذف لندینگ‌های سئو، حذف دائمی از بایگانی، حالت تعمیرات و اجرای دادهٔ نمونه.
+                </p>
+                <p>
+                  <strong className="text-foreground">ویراستار:</strong>
+                  {' '}مدیریت محتوای پنل مثل مرکز مدیریت تورها، کاتالوگ، مقالات و راهنماها، نمایشگاه‌ها، سئو و درخواست‌های تماس؛ بدون دسترسی به بخش کاربران، حذف دائمی و حالت تعمیرات.
+                </p>
               </div>
             </div>
-          )}
+            <div className="sm:col-span-2">
+              <Button type="submit" disabled={pending} className="h-10">
+                {pending ? 'در حال افزودن کاربر…' : 'افزودن کاربر'}
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
 
@@ -225,10 +295,10 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
             rows={users}
             columns={columns}
             rowKey={(u) => u.id}
-            searchKeys={['email']}
-            searchPlaceholder="جست‌وجوی ایمیل…"
+            searchKeys={['email', 'username']}
+            searchPlaceholder="جست‌وجوی ایمیل یا نام کاربری…"
             emptyTitle="کاربری ثبت نشده است"
-            emptyDescription="از فرم بالا اولین مدیر را دعوت کنید."
+            emptyDescription="از فرم بالا اولین کاربر را بسازید."
           />
         </CardContent>
       </Card>

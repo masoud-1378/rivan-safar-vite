@@ -417,6 +417,7 @@ export const adminUsers = pgTable('admin_users', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().unique(),
   email: varchar('email', { length: 200 }).notNull(),
+  username: varchar('username', { length: 60 }),
   role: adminRoleEnum('role').notNull().default('editor'),
   active: boolean('active').notNull().default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),

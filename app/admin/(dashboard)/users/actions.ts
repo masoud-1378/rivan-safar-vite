@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDb, type AppDb } from '@/db/client';
 import { adminUsers, auditLogs } from '@/db/schema';
-import { eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { requireAdmin, createAdminDb } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 import { assertUserChangeAllowed } from '@/src/lib/user-guards';
@@ -12,6 +12,7 @@ export interface AdminUserRow {
   id: string;
   userId: string;
   email: string;
+  username: string | null;
   role: 'owner' | 'editor';
   active: boolean;
   createdAt: string;
@@ -28,69 +29,113 @@ async function auditUser(db: AppDb, actor: string, action: string, entityId: str
   await db.insert(auditLogs).values({ actor, action, entity: 'admin_users', entityId, reasonFa });
 }
 
-export async function inviteAdmin(email: string, role: 'owner' | 'editor', confirmRoleChange = false) {
+type CreateAdminUserInput = {
+  email: string;
+  username: string;
+  password: string;
+  role: 'owner' | 'editor';
+};
+
+type CreateAdminUserResult =
+  | { ok: true }
+  | { ok: false; field?: 'email' | 'username' | 'password' | 'role'; message: string };
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// نام کاربری سبک وردپرس: حروف کوچک لاتین، عدد، نقطه، آندرلاین، خط‌تیره
+const USERNAME_RE = /^[a-z0-9._-]{3,60}$/;
+
+/**
+ * افزودن مستقیم کاربر پنل توسط مالک — بدون ایمیل دعوت.
+ * Auth و admin_users با هم ساخته می‌شوند؛ اگر ثبت در دیتابیس شکست خورد،
+ * کاربر یتیمِ Auth جبراناً پاک می‌شود تا پنل و Auth ناهماهنگ نمانند.
+ */
+export async function createAdminUser(input: CreateAdminUserInput): Promise<CreateAdminUserResult> {
   const session = await requireAdmin(['owner']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const normalized = email.trim().toLowerCase();
-  if (!normalized || !normalized.includes('@')) throw new Error('ایمیل معتبر نیست.');
 
-  // ۰) اگر این ایمیل از قبل در admin_users هست، اول گاردها را رد کن —
-  //    دعوتِ دوباره نباید بی‌سروصدا نقش را بازنویسی کند و نباید آخرین مالک فعال را از مالکی بیندازد.
-  const existing = await db
-    .select()
+  const email = input.email.trim().toLowerCase();
+  const username = input.username.trim().toLowerCase();
+  const { password, role } = input;
+
+  // اعتبارسنجی ورودی‌ها
+  if (!EMAIL_RE.test(email)) {
+    return { ok: false, field: 'email', message: 'ایمیل معتبر نیست.' };
+  }
+  if (!USERNAME_RE.test(username)) {
+    return {
+      ok: false,
+      field: 'username',
+      message: 'نام کاربری باید ۳ تا ۶۰ نویسه و فقط از حروف کوچک لاتین، عدد، نقطه، آندرلاین یا خط‌تیره باشد.',
+    };
+  }
+  if (!password || password.length < 10) {
+    return { ok: false, field: 'password', message: 'رمز حداقل ۱۰ نویسه باشد.' };
+  }
+  if (role !== 'owner' && role !== 'editor') {
+    return { ok: false, field: 'role', message: 'نقش معتبر نیست.' };
+  }
+
+  // کنترل تکراری روی ردیف‌های زنده (بایگانی‌نشده) admin_users
+  const emailDup = await db
+    .select({ id: adminUsers.id })
     .from(adminUsers)
-    .where(eq(adminUsers.email, normalized))
+    .where(and(eq(adminUsers.email, email), isNull(adminUsers.deletedAt)))
     .limit(1);
-  if (existing.length > 0) {
-    const target = existing[0];
-    // تغییر نقشِ عضوِ فعلی فقط با تأیید صریح؛ بدون فلگ، بی‌سروصدا بازنویسی نمی‌کنیم.
-    if (target.role !== role && !confirmRoleChange) {
-      throw new Error(
-        `این ایمیل هم‌اکنون با نقش «${target.role === 'owner' ? 'مالک' : 'ویراستار'}» عضو است؛ تغییر نقش به «${role === 'owner' ? 'مالک' : 'ویراستار'}» نیاز به تأیید صریح دارد.`,
-      );
+  if (emailDup.length > 0) {
+    return { ok: false, field: 'email', message: 'این ایمیل از قبل در پنل ثبت شده است.' };
+  }
+  const usernameDup = await db
+    .select({ id: adminUsers.id })
+    .from(adminUsers)
+    .where(and(eq(adminUsers.username, username), isNull(adminUsers.deletedAt)))
+    .limit(1);
+  if (usernameDup.length > 0) {
+    return { ok: false, field: 'username', message: 'این نام کاربری قبلاً گرفته شده است.' };
+  }
+
+  // نکته: گاردهای assertUserChangeAllowed به رکورد موجودِ هدف نیاز دارند و روی «ساخت»
+  // صدق نمی‌کنند — ردیف تازه نه حسابِ عامل است و نه با افزودنش پنل بی‌مالک می‌شود.
+
+  // ۱) ساخت کاربر در Supabase Auth با service_role (بدون ایمیل دعوت)
+  const admin = createAdminDb();
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { username },
+  });
+  if (error || !data.user) {
+    console.error('[createAdminUser] خطای Supabase هنگام ساخت کاربر:', email, error);
+    const msg = String(error?.message ?? '');
+    if (error?.code === 'email_exists' || /already|registered|exists/i.test(msg)) {
+      return { ok: false, field: 'email', message: 'این ایمیل از قبل در سیستم احراز هویت ثبت شده است.' };
     }
-    await assertUserChangeAllowed(db, target.id, session.email, {
-      wouldBeOwner: role === 'owner',
-      wouldBeActive: true,
-      verb: 'دعوت مجدد',
-    });
+    return { ok: false, message: 'ساخت کاربر ناموفق بود؛ دوباره تلاش کنید.' };
   }
+  const userId = data.user.id;
 
-  // ۱) ساخت کاربر در Supabase Auth و ارسال ایمیل دعوت (با service_role).
-  //    اگر کاربر از قبل وجود داشته باشد، فقط ایمیل دعوت دوباره فرستاده می‌شود.
-  const { data, error } = await createAdminDb().auth.admin.inviteUserByEmail(normalized);
-  if (error) {
-    console.error('[inviteAdmin] خطای Supabase هنگام دعوت:', normalized, error);
-    throw new Error('ارسال دعوت ناموفق بود.');
-  }
-  const userId = data.user?.id;
-  if (!userId) {
-    console.error('[inviteAdmin] پاسخ Supabase بدون شناسهٔ کاربر برگشت:', normalized, data);
-    throw new Error('ساخت کاربر ناموفق بود.');
-  }
-
-  // ۲) ثبت/به‌روزرسانی نقش در admin_users (بدون تکیه بر unique بودن ایمیل در دیتابیس).
+  // ۲) ثبت در admin_users؛ در صورت شکست، کاربر یتیمِ Auth جبراناً پاک می‌شود
   try {
-    if (existing.length > 0) {
-      const target = existing[0];
-      await db
-        .update(adminUsers)
-        .set({ userId, role, active: true, deletedAt: null })
-        .where(eq(adminUsers.id, target.id));
-      await auditUser(db, session.email, 'user.invite', target.id, `دعوت مجدد «${normalized}» با نقش ${role === 'owner' ? 'مالک' : 'ویراستار'}`);
-    } else {
-      const inserted = await db
-        .insert(adminUsers)
-        .values({ userId, email: normalized, role, active: true })
-        .returning({ id: adminUsers.id });
-      await auditUser(db, session.email, 'user.invite', inserted[0].id, `دعوت «${normalized}» با نقش ${role === 'owner' ? 'مالک' : 'ویراستار'}`);
-    }
+    const inserted = await db
+      .insert(adminUsers)
+      .values({ userId, email, username, role, active: true })
+      .returning({ id: adminUsers.id });
+    await auditUser(
+      db,
+      session.email,
+      'user.create',
+      inserted[0].id,
+      `افزودن کاربر «${username}» با نقش ${role === 'owner' ? 'مالک' : 'ویراستار'}`,
+    );
   } catch (e) {
-    // دعوت در Auth موفق شده ولی ثبت در admin_users نه — کاربر در Auth یتیم می‌ماند.
-    console.error('[inviteAdmin] دعوت در Auth موفق شد ولی ثبت در admin_users شکست خورد:', normalized, e);
-    throw e instanceof Error ? e : new Error('ثبت کاربر در پایگاه داده ناموفق بود.');
+    console.error('[createAdminUser] ساخت در Auth موفق شد ولی ثبت در admin_users شکست خورد؛ حذف جبرانی:', email, e);
+    await admin.auth.admin
+      .deleteUser(userId)
+      .catch((delErr) => console.error('[createAdminUser] حذف جبرانی کاربر یتیم شکست خورد:', userId, delErr));
+    return { ok: false, message: 'ثبت کاربر در پایگاه داده ناموفق بود.' };
   }
+
   revalidatePath('/admin/users');
   return { ok: true };
 }

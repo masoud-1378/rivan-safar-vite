@@ -56,6 +56,7 @@ const ACTION_LABELS: Record<string, string> = {
   restore: 'بازیابی',
   hard_delete: 'حذف دائمی',
   'user.invite': 'دعوت کاربر',
+  'user.create': 'افزودن کاربر',
   'user.role': 'تغییر نقش کاربر',
   'user.active': 'تغییر وضعیت کاربر',
 };
