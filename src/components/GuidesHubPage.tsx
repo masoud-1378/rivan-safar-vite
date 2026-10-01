@@ -43,7 +43,7 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
     <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
       {/* ---------------- Hero & Search ---------------- */}
       <section className="bg-surface-primary border-b border-border-default section-compact">
-        <div className="container-main px-4 sm:px-6 lg:px-8 text-right">
+        <div className="container-main px-4 sm:px-6 lg:px-8 text-start">
           <div className="max-w-3xl">
             <span className="badge badge-standard mb-3">
               <BookOpen className="w-3.5 h-3.5" />
@@ -58,13 +58,13 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
 
             {/* Search */}
             <div className="relative max-w-lg mb-4">
-              <Search className="w-5 h-5 text-text-secondary absolute right-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-5 h-5 text-text-secondary absolute start-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="جست‌وجو در موضوعات راهنمای سفر…"
-                className="w-full bg-surface-secondary border border-border-default rounded-control pr-11 pl-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                className="w-full bg-surface-secondary border border-border-default rounded-control ps-11 pe-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
               />
             </div>
 
@@ -107,7 +107,7 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
                 key={guide.id}
                 href={`/guide/${guide.slug}`}
                 onClick={(e) => { e.preventDefault(); onNavigate(`/guide/${guide.slug}`); }}
-                className="group bg-surface-primary border border-border-default rounded-card overflow-hidden shadow-subtle hover:shadow-card hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between text-right"
+                className="group bg-surface-primary border border-border-default rounded-card overflow-hidden shadow-subtle hover:shadow-card hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between text-start"
               >
                 <div>
                   <div className="relative aspect-[16/9] overflow-hidden">
@@ -116,7 +116,7 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
                       alt={guide.title}
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute top-3 right-3 bg-brand-navy/90 text-white px-2.5 py-1 rounded-md text-caption font-bold">
+                    <div className="absolute top-3 start-3 bg-brand-navy/90 text-white px-2.5 py-1 rounded-md text-caption font-bold">
                       {guide.categoryLabel}
                     </div>
                   </div>

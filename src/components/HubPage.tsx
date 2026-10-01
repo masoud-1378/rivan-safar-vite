@@ -37,7 +37,7 @@ export default function HubPage({ type, onNavigate }: HubPageProps) {
       {/* ---------------- Hero Section ---------------- */}
       <section className="bg-surface-primary border-b border-border-default section-compact">
         <div className="container-main px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl text-right">
+          <div className="max-w-3xl text-start">
             <span className="badge badge-warning mb-3">
               <Globe className="w-3.5 h-3.5" />
               <span>{isForeign ? 'مسیرهای بین‌المللی ریوان سفر' : 'سفرهای سراسر ایران'}</span>
@@ -101,11 +101,11 @@ export default function HubPage({ type, onNavigate }: HubPageProps) {
                   alt={`تور ${dest.name}`}
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute top-3 right-3 bg-brand-navy/90 text-white px-2.5 py-1 rounded-md text-caption font-bold">
+                <div className="absolute top-3 start-3 bg-brand-navy/90 text-white px-2.5 py-1 rounded-md text-caption font-bold">
                   {dest.parentCountryName || dest.name}
                 </div>
                 {!dest.visaRequired && (
-                  <div className="absolute bottom-3 right-3 bg-emerald-700/90 text-white px-2.5 py-0.5 rounded-md text-caption font-medium">
+                  <div className="absolute bottom-3 start-3 bg-emerald-700/90 text-white px-2.5 py-0.5 rounded-md text-caption font-medium">
                     بدون نیاز به ویزا
                   </div>
                 )}
@@ -140,7 +140,7 @@ export default function HubPage({ type, onNavigate }: HubPageProps) {
       {/* ---------------- Active Tours List ---------------- */}
       <section className="bg-surface-primary border-y border-border-default section-standard">
         <div className="container-main px-4 sm:px-6 lg:px-8">
-          <div className="text-right mb-6">
+          <div className="text-start mb-6">
             <h2 className="text-h2 text-text-heading font-bold mb-1.5">
               {isForeign ? 'تورهای فعال خارجی آماده استعلام' : 'تورهای فعال داخلی با تاریخ‌های مشخص'}
             </h2>
@@ -174,7 +174,7 @@ export default function HubPage({ type, onNavigate }: HubPageProps) {
       {/* ---------------- Key Decision Factors & Trust Block ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-surface-primary border border-border-default rounded-card p-6 text-right">
+          <div className="bg-surface-primary border border-border-default rounded-card p-6 text-start">
             <div className="w-10 h-10 rounded-control bg-brand-orange/10 text-brand-orange flex items-center justify-center mb-4">
               <ShieldCheck className="w-5 h-5" />
             </div>
@@ -184,7 +184,7 @@ export default function HubPage({ type, onNavigate }: HubPageProps) {
             </p>
           </div>
 
-          <div className="bg-surface-primary border border-border-default rounded-card p-6 text-right">
+          <div className="bg-surface-primary border border-border-default rounded-card p-6 text-start">
             <div className="w-10 h-10 rounded-control bg-brand-orange/10 text-brand-orange flex items-center justify-center mb-4">
               <Clock className="w-5 h-5" />
             </div>
@@ -194,7 +194,7 @@ export default function HubPage({ type, onNavigate }: HubPageProps) {
             </p>
           </div>
 
-          <div className="bg-surface-primary border border-border-default rounded-card p-6 text-right">
+          <div className="bg-surface-primary border border-border-default rounded-card p-6 text-start">
             <div className="w-10 h-10 rounded-control bg-brand-orange/10 text-brand-orange flex items-center justify-center mb-4">
               <FileText className="w-5 h-5" />
             </div>

@@ -45,7 +45,7 @@ export default function DestinationsCatalogPage({ onNavigate }: DestinationsCata
     <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
       {/* ---------------- Header & Search ---------------- */}
       <section className="bg-surface-primary border-b border-border-default section-compact">
-        <div className="container-main px-4 sm:px-6 lg:px-8 text-right">
+        <div className="container-main px-4 sm:px-6 lg:px-8 text-start">
           <div className="max-w-3xl">
             <span className="badge badge-standard mb-3">
               <Globe className="w-3.5 h-3.5" />
@@ -61,13 +61,13 @@ export default function DestinationsCatalogPage({ onNavigate }: DestinationsCata
             {/* Search and Category Filters */}
             <div className="flex flex-col sm:flex-row gap-3 items-center">
               <div className="relative flex-1 w-full">
-                <Search className="w-5 h-5 text-text-secondary absolute right-3.5 top-1/2 -translate-y-1/2" />
+                <Search className="w-5 h-5 text-text-secondary absolute start-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="جست‌وجوی نام شهر، کشور یا مقصد…"
-                  className="w-full bg-surface-secondary border border-border-default rounded-control pr-11 pl-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none transition-colors"
+                  className="w-full bg-surface-secondary border border-border-default rounded-control ps-11 pe-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none transition-colors"
                 />
               </div>
             </div>
@@ -123,11 +123,11 @@ export default function DestinationsCatalogPage({ onNavigate }: DestinationsCata
                     alt={`تور ${dest.name}`}
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute top-3 right-3 bg-brand-navy/90 text-white px-2.5 py-1 rounded-md text-caption font-bold">
+                  <div className="absolute top-3 start-3 bg-brand-navy/90 text-white px-2.5 py-1 rounded-md text-caption font-bold">
                     {dest.parentCountryName || dest.name}
                   </div>
                   {!dest.visaRequired && (
-                    <div className="absolute bottom-3 right-3 bg-emerald-700/90 text-white px-2.5 py-0.5 rounded-md text-caption font-medium">
+                    <div className="absolute bottom-3 start-3 bg-emerald-700/90 text-white px-2.5 py-0.5 rounded-md text-caption font-medium">
                       بدون ویزا
                     </div>
                   )}

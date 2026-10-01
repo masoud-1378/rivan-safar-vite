@@ -41,7 +41,7 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
     <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
       {/* ---------------- Hero Section ---------------- */}
       <section className="bg-surface-primary border-b border-border-default section-compact">
-        <div className="container-main px-4 sm:px-6 lg:px-8 text-right">
+        <div className="container-main px-4 sm:px-6 lg:px-8 text-start">
           <div className="max-w-3xl">
             <span className="badge badge-warning mb-3">
               <Building2 className="w-3.5 h-3.5" />
@@ -72,7 +72,7 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
 
       {/* ---------------- Upcoming Exhibition Series Cards ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-        <div className="text-right mb-6">
+        <div className="text-start mb-6">
           <h2 className="text-h2 text-text-heading font-bold mb-1.5">
             رویدادهای تجاری و نمایشگاه‌های پیش‌رو
           </h2>
@@ -87,7 +87,7 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
               key={ex.id}
               href={`/exhibition/${ex.slug}`}
               onClick={(e) => { e.preventDefault(); onNavigate(`/exhibition/${ex.slug}`); }}
-              className="group bg-surface-primary border border-border-default rounded-card overflow-hidden shadow-subtle hover:shadow-card hover:-translate-y-0.5 transition-all duration-300 cursor-pointer flex flex-col lg:flex-row text-right"
+              className="group bg-surface-primary border border-border-default rounded-card overflow-hidden shadow-subtle hover:shadow-card hover:-translate-y-0.5 transition-all duration-300 cursor-pointer flex flex-col lg:flex-row text-start"
             >
               {/* Image Column */}
               <div className="lg:w-72 xl:w-80 relative shrink-0 aspect-[16/9] lg:aspect-auto">
@@ -96,7 +96,7 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
                   alt={ex.title}
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute top-3 right-3 bg-brand-navy/90 text-white px-2.5 py-1 rounded-md text-caption font-bold">
+                <div className="absolute top-3 start-3 bg-brand-navy/90 text-white px-2.5 py-1 rounded-md text-caption font-bold">
                   {ex.city} ({ex.country})
                 </div>
               </div>
@@ -156,7 +156,7 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-right">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-start">
             <div className="bg-surface-secondary/70 border border-border-default rounded-card p-6">
               <div className="w-10 h-10 rounded-control bg-brand-orange/10 text-brand-orange flex items-center justify-center mb-4">
                 <FileText className="w-5 h-5" />

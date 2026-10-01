@@ -247,14 +247,14 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
     <>
       {/* Top Announcement Bar */}
       {showAnnouncement && (
-        <div className="fixed top-0 left-0 right-0 z-[51] bg-surface-dark pt-safe">
+        <div className="fixed top-0 end-0 start-0 z-[51] bg-surface-dark pt-safe">
           <AnnouncementBar onClose={() => setShowAnnouncement(false)} />
         </div>
       )}
 
       {/* Desktop & Tablet Navbar */}
       <header
-        className={`fixed left-0 right-0 z-50 transition-all duration-300 border-b border-border-default ${
+        className={`fixed end-0 start-0 z-50 transition-all duration-300 border-b border-border-default ${
           showAnnouncement ? 'top-[calc(38px+env(safe-area-inset-top))] md:top-[calc(34px+env(safe-area-inset-top))]' : 'top-[env(safe-area-inset-top)]'
         } ${
           isScrolled
@@ -285,9 +285,9 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
             <div className="hidden flex items-center gap-2 md:gap-3 group">
               <div className="relative text-brand-orange">
                 <span className="text-3xl md:text-5xl font-black font-sans tracking-tighter">R</span>
-                <Plane className="w-4 h-4 md:w-5 md:h-5 absolute -top-1 -right-3 md:-right-5 transform rotate-45 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                <Plane className="w-4 h-4 md:w-5 md:h-5 absolute -top-1 -start-3 md:-start-5 transform rotate-45 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               </div>
-              <div className="flex flex-col border-r-2 border-border-default pr-2 md:pr-3">
+              <div className="flex flex-col border-s-2 border-border-default ps-2 md:ps-3">
                 <span className="text-base md:text-price-lg text-text-heading leading-tight">ریوان سفر</span>
               </div>
             </div>
@@ -337,7 +337,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                         <div className="p-7 lg:p-8 grid grid-cols-5 gap-6">
                           {foreignToursData.map((col) => (
                             <div key={col.title}>
-                              <h3 className="text-[15px] font-bold text-text-heading mb-4 border-r-2 border-border-brand pr-2.5 leading-snug">
+                              <h3 className="text-[15px] font-bold text-text-heading mb-4 border-s-2 border-border-brand ps-2.5 leading-snug">
                                 {col.title}
                               </h3>
                               <ul className="flex flex-col gap-3">
@@ -402,14 +402,14 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
 
                     {item.hasMegamenu && item.name === 'تورهای داخلی' && (
                       <div
-                        className={`absolute top-[100%] right-0 w-[560px] bg-surface-primary rounded-b-[14px] shadow-floating transition-all duration-300 z-50 overflow-hidden border-t border-border-default ${
+                        className={`absolute top-[100%] start-0 w-[560px] bg-surface-primary rounded-b-[14px] shadow-floating transition-all duration-300 z-50 overflow-hidden border-t border-border-default ${
                           activeMenu === item.name ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
                         }`}
                       >
                         <div className="p-7 grid grid-cols-2 gap-8">
                           {domesticToursData.map((col) => (
                             <div key={col.title}>
-                              <h3 className="text-[15px] font-bold text-text-heading mb-4 border-r-2 border-border-brand pr-2.5 leading-snug">
+                              <h3 className="text-[15px] font-bold text-text-heading mb-4 border-s-2 border-border-brand ps-2.5 leading-snug">
                                 {col.title}
                               </h3>
                               <ul className="flex flex-col gap-3">
@@ -446,13 +446,13 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
 
                     {item.hasMegamenu && item.name === 'تورهای نمایشگاهی' && (
                       <div
-                        className={`absolute top-[100%] right-0 w-[500px] bg-surface-primary rounded-b-[14px] shadow-floating transition-all duration-300 z-50 overflow-hidden border-t border-border-default ${
+                        className={`absolute top-[100%] start-0 w-[500px] bg-surface-primary rounded-b-[14px] shadow-floating transition-all duration-300 z-50 overflow-hidden border-t border-border-default ${
                           activeMenu === item.name ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
                         }`}
                       >
                         <div className="p-7 grid grid-cols-2 gap-8">
                           <div>
-                            <h3 className="text-[15px] font-bold text-text-heading mb-4 border-r-2 border-border-brand pr-2.5 leading-snug">
+                            <h3 className="text-[15px] font-bold text-text-heading mb-4 border-s-2 border-border-brand ps-2.5 leading-snug">
                               {exhibitionToursData.title}
                             </h3>
                             <ul className="flex flex-col gap-3">
@@ -550,18 +550,18 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="fixed top-0 right-0 bottom-0 w-[85%] max-w-[400px] bg-surface-primary z-[70] shadow-2xl flex flex-col lg:hidden"
+              className="fixed top-0 start-0 bottom-0 w-[85%] max-w-[400px] bg-surface-primary z-[70] shadow-2xl flex flex-col lg:hidden"
             >
               {/* Drawer Header */}
               <div className="flex items-center justify-center p-5 border-b border-border-default relative">
                 <div className="flex items-center gap-2 relative text-brand-orange">
                   <span className="text-3xl font-black font-sans tracking-tighter">R</span>
-                  <Plane className="w-4 h-4 absolute -top-1 -right-3 transform rotate-45" />
-                  <span className="text-lg font-black text-text-heading mr-2 border-r-2 border-border-default pr-2">ریوان سفر</span>
+                  <Plane className="w-4 h-4 absolute -top-1 -start-3 transform rotate-45" />
+                  <span className="text-lg font-black text-text-heading ms-2 border-s-2 border-border-default ps-2">ریوان سفر</span>
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="icon-btn icon-btn-medium absolute left-5 bg-page-background text-text-secondary hover:bg-brand-orange-soft hover:text-brand-orange"
+                  className="icon-btn icon-btn-medium absolute end-5 bg-page-background text-text-secondary hover:bg-brand-orange-soft hover:text-brand-orange"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -601,7 +601,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                           >
-                            <div className="pt-2 pb-2 pl-4 pr-2 space-y-2 border-r-2 border-border-brand/30 mr-2 mt-2">
+                            <div className="pt-2 pb-2 pe-4 ps-2 space-y-2 border-s-2 border-border-brand/30 ms-2 mt-2">
                               {item.subcategories.map((sub) => {
                                 const isAlwaysOpen = item.name === 'تورهای نمایشگاهی';
                                 const isExpanded = isAlwaysOpen || mobileSubExpanded === sub.title;
@@ -632,12 +632,12 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                                         exit={isAlwaysOpen ? undefined : { height: 0, opacity: 0 }}
                                         className="overflow-hidden"
                                       >
-                                        <div className="flex flex-col gap-2 pt-2 pb-1 pr-4">
+                                        <div className="flex flex-col gap-2 pt-2 pb-1 ps-4">
                                           {sub.links.map(link => (
                                             <button
                                               key={link.name}
                                               onClick={() => handleNavClick(link.path)}
-                                              className="text-body-sm text-right text-text-secondary hover:text-brand-orange py-1.5 transition-colors"
+                                              className="text-body-sm text-start text-text-secondary hover:text-brand-orange py-1.5 transition-colors"
                                             >
                                               {link.name}
                                             </button>

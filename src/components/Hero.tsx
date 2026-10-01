@@ -144,7 +144,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="flex flex-col items-center lg:items-start text-center lg:text-right w-full"
+            className="flex flex-col items-center lg:items-start text-center lg:text-start w-full"
           >
             <h1 className="text-display text-text-heading mb-5 sm:mb-6">
               <span className="block text-brand-orange mb-2">ریوان سفر</span>
@@ -196,9 +196,9 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.15 }}
-                    className="mt-3 flex flex-wrap items-center gap-2 px-1 text-right"
+                    className="mt-3 flex flex-wrap items-center gap-2 px-1 text-start"
                   >
-                    <span className="text-caption text-text-secondary font-medium shrink-0 ml-1">
+                    <span className="text-caption text-text-secondary font-medium shrink-0 me-1">
                       مقصدهای محبوب:
                     </span>
                     {DESTINATIONS.filter(d => d.popular).slice(0, 5).map((dest, idx) => (
@@ -227,7 +227,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 right-0 z-50 mt-2 bg-surface-primary border border-border-default/80 rounded-2xl shadow-elevated overflow-hidden text-right"
+                    className="absolute top-full end-0 start-0 z-50 mt-2 bg-surface-primary border border-border-default/80 rounded-2xl shadow-elevated overflow-hidden text-start"
                   >
                     <div className="py-1.5">
                       {filteredSuggestions.length > 0 ? (
@@ -239,14 +239,14 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                               e.preventDefault();
                               handleSuggestionClick(dest.name);
                             }}
-                            className="flex items-center gap-2.5 w-full px-4 py-2 text-right hover:bg-page-background transition-colors cursor-pointer"
+                            className="flex items-center gap-2.5 w-full px-4 py-2 text-start hover:bg-page-background transition-colors cursor-pointer"
                           >
                             <MapPin className="w-4 h-4 text-brand-orange shrink-0" />
                             <span className="font-medium text-body-sm text-text-heading">{dest.name}</span>
                           </button>
                         ))
                       ) : (
-                        <div className="px-4 py-3 text-right">
+                        <div className="px-4 py-3 text-start">
                           <p className="text-body-sm font-medium text-text-heading">مقصدی با این نام پیدا نشد</p>
                         </div>
                       )}
@@ -305,7 +305,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                 <motion.div
                   animate={{ y: [0, -12, 0] }}
                   transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                  className="bg-surface-primary/90 backdrop-blur-md p-2 sm:p-3 rounded-card sm:rounded-feature shadow-floating border border-white/60 hidden sm:flex items-center justify-center gap-2 sm:gap-3 pr-3 sm:pr-4 pl-3 sm:pl-4 select-none"
+                  className="bg-surface-primary/90 backdrop-blur-md p-2 sm:p-3 rounded-card sm:rounded-feature shadow-floating border border-white/60 hidden sm:flex items-center justify-center gap-2 sm:gap-3 ps-3 sm:ps-4 pe-3 sm:pe-4 select-none"
                 >
                   <div className="text-body-sm font-black text-text-heading leading-none">رضایت مسافران</div>
                   <div className="bg-brand-orange-soft w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-control sm:rounded-control text-brand-orange shrink-0">
@@ -323,7 +323,7 @@ export default function Hero({ showAnnouncement = true, onNavigate }: HeroProps)
                 <motion.div
                   animate={{ y: [0, -12, 0] }}
                   transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 0.5 }}
-                  className="bg-surface-primary/90 backdrop-blur-md p-1.5 sm:p-2 rounded-card sm:rounded-feature shadow-floating border border-white/60 hidden sm:flex items-center gap-2 sm:gap-4 pl-3 sm:pl-5 select-none"
+                  className="bg-surface-primary/90 backdrop-blur-md p-1.5 sm:p-2 rounded-card sm:rounded-feature shadow-floating border border-white/60 hidden sm:flex items-center gap-2 sm:gap-4 pe-3 sm:pe-5 select-none"
                 >
                   <div className="bg-page-background w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center rounded-control sm:rounded-card text-text-heading">
                     <MapPin className="w-4 h-4 sm:w-6 sm:h-6" />

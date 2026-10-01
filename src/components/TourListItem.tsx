@@ -96,7 +96,7 @@ export default function TourListItem({
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 md:hidden" />
         
         {/* Top Badges */}
-        <div className="absolute top-3 right-3 left-3 flex items-start justify-end gap-2 z-10 pointer-events-none">
+        <div className="absolute top-3 start-3 end-3 flex items-start justify-end gap-2 z-10 pointer-events-none">
           {/* Status Badge */}
           {(statusBadge || badge || featureElement) && (
             <div className="flex flex-col gap-1.5 items-end">
@@ -147,7 +147,7 @@ export default function TourListItem({
 
       {/* --- Action Area (Desktop) --- */}
       <div className="hidden md:flex shrink-0 w-[140px] lg:w-[180px] p-4 lg:p-5 flex-col justify-center border-r border-border-subtle">
-        <div className="text-right">
+        <div className="text-start">
           <span className="block text-caption text-text-secondary mb-1">
             {pricePending || soldOut ? 'وضعیت قیمت' : 'شروع قیمت از'}
           </span>
@@ -177,7 +177,7 @@ export default function TourListItem({
       {/* --- Action Area (Mobile) --- */}
       <div className="md:hidden flex flex-col px-4 pb-4">
         <div className="flex items-center justify-between mb-3">
-          <div className="text-right">
+          <div className="text-start">
             <span className="block text-caption text-text-secondary mb-0.5">
               {pricePending || soldOut ? 'وضعیت قیمت' : 'شروع قیمت از'}
             </span>

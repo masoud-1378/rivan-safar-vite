@@ -46,7 +46,7 @@ export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePage
 
       {/* ---------------- Hero Section ---------------- */}
       <section className="bg-surface-primary border-b border-border-default section-compact">
-        <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl text-right">
+        <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl text-start">
           <div className="flex items-center gap-2 mb-3">
             <span className="badge badge-warning">
               <FileText className="w-3.5 h-3.5" />
@@ -88,7 +88,7 @@ export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePage
       </section>
 
       {/* ---------------- Visa Details & Steps ---------------- */}
-      <section className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl section-standard space-y-8 text-right">
+      <section className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl section-standard space-y-8 text-start">
         
         {/* Document Checklist */}
         <div className="bg-surface-primary border border-border-default rounded-card p-6 md:p-8">
@@ -171,7 +171,7 @@ export default function VisaGuidePage({ countrySlug, onNavigate }: VisaGuidePage
         </div>
 
         {/* Rejection Prevention Callout */}
-        <div className="p-6 bg-amber-50 border border-amber-200 rounded-card text-right">
+        <div className="p-6 bg-amber-50 border border-amber-200 rounded-card text-start">
           <div className="flex items-center gap-2 text-amber-900 font-bold mb-2">
             <AlertCircle className="w-5 h-5 text-amber-700" />
             <h3>چگونه از رد شدن ویزا جلوگیری کنیم؟</h3>

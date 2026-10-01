@@ -169,10 +169,10 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
               className="relative group w-full"
             >
               {/* Layer 2 (Lowest) */}
-              <div className="hidden sm:block absolute -bottom-3 left-6 right-6 h-[90%] bg-border-default/60 rounded-card md:rounded-feature transition-all duration-500 group-hover:translate-y-2 group-hover:opacity-40 z-0" />
+              <div className="hidden sm:block absolute -bottom-3 end-6 start-6 h-[90%] bg-border-default/60 rounded-card md:rounded-feature transition-all duration-500 group-hover:translate-y-2 group-hover:opacity-40 z-0" />
               
               {/* Layer 1 (Middle) */}
-              <div className="hidden sm:block absolute -bottom-1.5 left-3 right-3 h-[95%] bg-page-background/90 rounded-card md:rounded-feature shadow-subtle transition-all duration-500 group-hover:translate-y-1 group-hover:opacity-70 z-0" />
+              <div className="hidden sm:block absolute -bottom-1.5 end-3 start-3 h-[95%] bg-page-background/90 rounded-card md:rounded-feature shadow-subtle transition-all duration-500 group-hover:translate-y-1 group-hover:opacity-70 z-0" />
 
               {/* Main Card — لینک HTML واقعی به صفحه مقصد */}
               <a
@@ -186,7 +186,7 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
                   className="card-destination-image"
                 />
                 
-                <div className="absolute top-4 right-4 z-20">
+                <div className="absolute top-4 start-4 z-20">
                   <div className="badge bg-surface-dark/40 backdrop-blur border-white/10 text-white whitespace-nowrap">
                     <Star className="w-3.5 h-3.5 text-brand-orange" />
                     <span>{dest.badge}</span>
@@ -261,10 +261,10 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
               className="relative group w-full"
             >
               {/* Layer 2 (Lowest) */}
-              <div className="hidden sm:block absolute -bottom-3 left-6 right-6 h-[90%] bg-border-default/60 rounded-card md:rounded-feature transition-all duration-500 group-hover:translate-y-2 group-hover:opacity-40 z-0" />
+              <div className="hidden sm:block absolute -bottom-3 end-6 start-6 h-[90%] bg-border-default/60 rounded-card md:rounded-feature transition-all duration-500 group-hover:translate-y-2 group-hover:opacity-40 z-0" />
               
               {/* Layer 1 (Middle) */}
-              <div className="hidden sm:block absolute -bottom-1.5 left-3 right-3 h-[95%] bg-page-background/90 rounded-card md:rounded-feature shadow-subtle transition-all duration-500 group-hover:translate-y-1 group-hover:opacity-70 z-0" />
+              <div className="hidden sm:block absolute -bottom-1.5 end-3 start-3 h-[95%] bg-page-background/90 rounded-card md:rounded-feature shadow-subtle transition-all duration-500 group-hover:translate-y-1 group-hover:opacity-70 z-0" />
 
               {/* Main Card — لینک HTML واقعی به صفحه مقصد */}
               <a
@@ -278,7 +278,7 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
                   className="card-destination-image"
                 />
                 
-                <div className="absolute top-4 right-4 z-20">
+                <div className="absolute top-4 start-4 z-20">
                   <div className="badge bg-surface-dark/40 backdrop-blur border-white/10 text-white whitespace-nowrap">
                     <Star className="w-3.5 h-3.5 text-brand-orange" />
                     <span>{dest.badge}</span>

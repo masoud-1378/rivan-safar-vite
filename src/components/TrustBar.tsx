@@ -40,7 +40,7 @@ export default function TrustBar() {
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-brand-orange-soft/70 flex items-center justify-center shrink-0 text-brand-orange group-hover:bg-brand-orange group-hover:text-white transition-all shadow-subtle">
                   <item.icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" strokeWidth={1.75} />
                 </div>
-                <div className="flex flex-col min-w-0 text-right">
+                <div className="flex flex-col min-w-0 text-start">
                   <span className="text-body-sm font-bold text-text-heading group-hover:text-brand-orange transition-colors truncate">
                     {item.title}
                   </span>

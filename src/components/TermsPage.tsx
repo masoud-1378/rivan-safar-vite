@@ -9,7 +9,7 @@ export default function TermsPage({ onNavigate }: TermsPageProps) {
   return (
     <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
       <section className="bg-surface-primary border-b border-border-default section-compact">
-        <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl text-right">
+        <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl text-start">
           <span className="badge badge-standard mb-3">
             <FileText className="w-3.5 h-3.5" />
             <span>قوانین و مقررات</span>
@@ -23,7 +23,7 @@ export default function TermsPage({ onNavigate }: TermsPageProps) {
         </div>
       </section>
 
-      <section className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl section-standard space-y-6 text-right">
+      <section className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl section-standard space-y-6 text-start">
         <div className="bg-surface-primary border border-border-default rounded-card p-6 md:p-8 space-y-6">
           <div>
             <h2 className="text-h3 font-bold text-text-heading mb-2">۱. استعلام و عقد قرارداد</h2>

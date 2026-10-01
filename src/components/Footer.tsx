@@ -97,7 +97,7 @@ export default function Footer({ onNavigate }: FooterProps) {
   };
 
   return (
-    <footer className="bg-surface-dark text-text-on-dark-secondary relative overflow-hidden text-right font-sans">
+    <footer className="bg-surface-dark text-text-on-dark-secondary relative overflow-hidden text-start font-sans">
       {/* Top Accent Line */}
       <div className="h-[3px] bg-brand-orange w-full" />
 
@@ -138,7 +138,7 @@ export default function Footer({ onNavigate }: FooterProps) {
               if (socials.length === 0) return null;
               return (
                 <div className="pt-2 flex items-center gap-3">
-                  <span className="text-body-sm text-white/70 font-medium ml-2">شبکه‌های اجتماعی:</span>
+                  <span className="text-body-sm text-white/70 font-medium me-2">شبکه‌های اجتماعی:</span>
                   {socials.map(({ href, label, Icon }) => (
                     <a
                       key={label}
@@ -229,14 +229,14 @@ export default function Footer({ onNavigate }: FooterProps) {
                 <div key={idx} className="border-b border-white/10 last:border-b-0">
                   <button
                     onClick={() => toggleAccordion(idx)}
-                    className="w-full py-3.5 flex items-center justify-between text-right text-white text-body font-medium focus:outline-none"
+                    className="w-full py-3.5 flex items-center justify-between text-start text-white text-body font-medium focus:outline-none"
                   >
                     <span>{group.title}</span>
                     <ChevronDown className={`w-4 h-4 text-brand-orange transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {isOpen && (
-                    <ul className="pb-4 space-y-2.5 pr-2">
+                    <ul className="pb-4 space-y-2.5 ps-2">
                       {group.links.map((link, lIdx) => (
                         <li key={lIdx}>
                           <a
@@ -272,7 +272,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                   <div className="w-8 h-8 rounded-small bg-brand-orange/10 text-brand-orange flex items-center justify-center shrink-0">
                     <badge.icon className="w-4 h-4" />
                   </div>
-                  <div className="flex flex-col text-right">
+                  <div className="flex flex-col text-start">
                     <span className="text-caption font-bold text-text-heading leading-tight">
                       {badge.title}
                     </span>

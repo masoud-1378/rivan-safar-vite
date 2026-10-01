@@ -134,7 +134,7 @@ export default function TourCard({
 
         {/* Top Badges */}
         {effectiveBadge && (
-          <div className="absolute top-3 left-3 z-10">
+          <div className="absolute top-3 end-3 z-10">
             <div className={`backdrop-blur-md shadow-subtle text-[11.5px] font-extrabold px-2.5 py-1 rounded-full whitespace-nowrap ${
               soldOut 
                 ? 'bg-surface-dark/90 text-white' 
@@ -213,7 +213,7 @@ export default function TourCard({
         </div>
 
         {/* 3. Footer Block - Price Row */}
-        <div className="mt-auto pt-3 border-t border-border-default/60 flex items-center justify-between gap-2 text-right">
+        <div className="mt-auto pt-3 border-t border-border-default/60 flex items-center justify-between gap-2 text-start">
           {soldOut ? (
             <>
               <span className="text-body-sm text-text-secondary font-medium">وضعیت تور</span>
