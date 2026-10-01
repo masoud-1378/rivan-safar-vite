@@ -45,7 +45,8 @@ export default function CatalogManager({ initial, sectionSettings }: { initial: 
   };
   const edit = (destination: DestinationRow) => { setEditing(destination); setShowForm(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   // برچسب‌های فارسی نوع و دسته‌بندی — همان مقادیر کانونی فرم (یافتهٔ گشت: مقادیر خام انگلیسی نمایش داده می‌شد).
-  const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(DESTINATION_CATEGORIES.map((c) => [c.value, c.label]));
+  // نکته: «region» دسته‌بندی کانونی نیست ولی در داده‌های قدیمی به‌عنوان دسته آمده؛ همان «منطقه» نشان داده می‌شود.
+  const CATEGORY_LABELS: Record<string, string> = { ...Object.fromEntries(DESTINATION_CATEGORIES.map((c) => [c.value, c.label])), region: 'منطقه' };
   const TYPE_LABELS: Record<string, string> = { city: 'شهر', country: 'کشور', region: 'منطقه' };
   const columns: Column<DestinationRow>[] = [
     { key: 'name', header: 'نام', sortable: true, cell: (destination) => <span className="font-semibold">{destination.name}</span> },
