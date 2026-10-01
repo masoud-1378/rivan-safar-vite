@@ -121,7 +121,10 @@ export default function TourForm({
         returnGuarantee: initial?.trustSpecs?.returnGuarantee || '',
         cityTax: initial?.trustSpecs?.cityTax || '',
         tipsNote: initial?.trustSpecs?.tipsNote || '',
-        luggageKg: Number(initial?.trustSpecs?.luggageKg) || 30,
+        luggageKg: ((): number => {
+          const v: unknown = initial?.trustSpecs?.luggageKg;
+          return v === '' || v == null ? 30 : Number(v);
+        })(),
         activityLevel: initial?.trustSpecs?.activityLevel || 'easy',
         requiredDocs: Array.isArray(initial?.trustSpecs?.requiredDocs)
           ? (initial.trustSpecs.requiredDocs as string[])

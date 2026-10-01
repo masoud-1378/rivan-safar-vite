@@ -49,6 +49,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
   const [newCountryName, setNewCountryName] = useState('');
   const [newCountrySlug, setNewCountrySlug] = useState('');
   const [newCountrySlugTouched, setNewCountrySlugTouched] = useState(false);
+  const [newCountryAdvancedOpen, setNewCountryAdvancedOpen] = useState(false);
   const [newCountryError, setNewCountryError] = useState('');
 
   const set = <K extends keyof DestinationInput>(k: K, v: DestinationInput[K]) => setForm((f) => ({ ...f, [k]: v }));
@@ -201,17 +202,25 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
                     placeholder="مثلاً گرجستان"
                   />
                 </Field>
-                <Field label="نامک" hint="خودکار از نام ساخته می‌شود؛ اگر خواستید عوضش کنید" error={newCountryError}>
-                  <Input
-                    dir="ltr"
-                    value={newCountrySlug}
-                    onChange={(e) => {
-                      setNewCountrySlugTouched(true);
-                      setNewCountrySlug(e.target.value);
-                      setNewCountryError('');
-                    }}
-                  />
-                </Field>
+                <Collapsible
+                  trigger="پیشرفته"
+                  openLabel="بستن بخش پیشرفته"
+                  open={newCountryAdvancedOpen}
+                  onOpenChange={setNewCountryAdvancedOpen}
+                  className="rounded-xl border border-border bg-muted/20 p-3 sm:col-span-2"
+                >
+                  <Field label="نامک" hint="خودکار از نام ساخته می‌شود؛ معمولاً لازم نیست دست بزنید" error={newCountryError}>
+                    <Input
+                      dir="ltr"
+                      value={newCountrySlug}
+                      onChange={(e) => {
+                        setNewCountrySlugTouched(true);
+                        setNewCountrySlug(e.target.value);
+                        setNewCountryError('');
+                      }}
+                    />
+                  </Field>
+                </Collapsible>
               </div>
               <div className="flex gap-2">
                 <Button type="button" size="sm" disabled={pending} onClick={handleAddCountry}>

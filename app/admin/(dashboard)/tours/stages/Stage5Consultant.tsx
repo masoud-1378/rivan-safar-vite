@@ -23,7 +23,7 @@ interface Stage5ConsultantProps {
 
 const STATUS_OPTIONS = [
   { value: 'published', label: 'منتشر شده (قابل رزرو روی سایت)' },
-  { value: 'pending', label: 'پیش‌نویس (فقط قابل رویت در ادمین)' },
+  { value: 'pending', label: 'پیش‌نویس (فعلاً روی سایت هم دیده می‌شود)' },
   { value: 'archived', label: 'بایگانی‌شده (تکمیل ظرفیت یا منقضی)' },
 ];
 
