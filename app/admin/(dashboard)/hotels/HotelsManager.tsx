@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { Pencil, Plus, Archive, ImagePlus, Trash2, Loader2 } from 'lucide-react';
 import { deleteHotel, saveHotel, type HotelRow } from './actions';
 import { deleteHotelPhoto, listHotelPhotos, uploadHotelPhoto, type HotelPhoto } from './photos';
@@ -42,6 +42,12 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
   const [uploading, setUploading] = useState(false);
   const [deletingPhoto, setDeletingPhoto] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  // گشت (ایراد ۴): مقدار جاری select مقصد را در لحظهٔ ثبت از ref می‌خوانیم تا
+  // race بین انتخاب دراپ‌داون و کلیک سریع «ذخیره» (state کهنه) مقصد را گم نکند.
+  const placeRef = useRef<HTMLSelectElement | null>(null);
+  // نگهبان وضعیت آپلود برای فالبک وارسی فایل (جلوگیری از stale closure).
+  const uploadingRef = useRef(false);
+  uploadingRef.current = uploading;
 
   // گشت (ایراد ۱۰): وقتی از ردیف مقصد «افزودن هتل» زده می‌شود، آدرس ?city= دارد؛ ریلود ساده
   // همان پارام را نگه می‌داشت و دیالوگ بعد از ثبت موفق دوباره باز می‌شد. با آدرس تمیز برمی‌گردیم.
@@ -82,7 +88,14 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
     try {
       const fd = new FormData();
       fd.append('photo', file);
-      const photo = await uploadHotelPhoto(editing.slug, editing.nameFa, fd);
+      // گشت (ایراد ۳): آپلود هرگز نباید در «در حال پردازش…» گیر کند؛
+      // بعد از ۶۰ ثانیه خطا می‌دهیم تا دکمه آزاد شود.
+      const photo = await Promise.race([
+        uploadHotelPhoto(editing.slug, editing.nameFa, fd),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('آپلود بیش از حد طول کشید؛ دوباره تلاش کنید.')), 60000),
+        ),
+      ]);
       setPhotos((prev) => [photo, ...prev]);
     } catch (err) {
       toast({ variant: 'error', title: err instanceof Error ? err.message : 'آپلود ناموفق بود.' });
@@ -90,6 +103,21 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
       setUploading(false);
     }
   };
+
+  // گشت (ایراد ۳): فالبک تشخیص فایل — در برخی مرورگرها onChange اینپوت مخفی
+  // فایل شلیک نمی‌شود. تا وقتی دیالوگ باز است هر ثانیه files را وارسی می‌کنیم؛
+  // onChange سر جایش می‌ماند و هر فایل فقط یک‌بار برداشته می‌شود.
+  useEffect(() => {
+    if (!open) return;
+    const timer = setInterval(() => {
+      const input = fileRef.current;
+      if (input?.files?.length && !uploadingRef.current) {
+        void onPickPhoto({ target: input } as React.ChangeEvent<HTMLInputElement>);
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open ]);
 
   const onDeletePhoto = async () => {
     const id = deletingPhoto;
@@ -121,7 +149,8 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
           slug: editing?.slug ?? '',
           nameFa: name.trim(),
           stars,
-          placeSlug,
+          // گشت (ایراد ۴): مقدار جاری select در لحظهٔ ثبت؛ اگر ref خالی بود همان state.
+          placeSlug: placeRef.current?.value ?? placeSlug,
         });
         setOpen(false);
         backToHotelsTab();
@@ -231,6 +260,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
           </Field>
           <Field label="شهر / مقصد">
             <Select
+              ref={placeRef}
               value={placeSlug}
               onChange={(e) => setPlaceSlug(e.target.value)}
               options={[{ value: '', label: 'انتخاب کنید…' }, ...places.map((p) => ({ value: p.slug, label: p.name }))]}

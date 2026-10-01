@@ -32,20 +32,27 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
     setMounted(true);
   }, []);
 
+  // گشت (ایراد ۲): کال‌بک‌های inline در هر ریرندر هویت تازه می‌گیرند؛ اگر
+  // onOpenChange در وابستگی‌های افکت فوکوس باشد، افکت با هر نویسه دوباره
+  // اجرا و فوکوس دزدیده می‌شود. پس آخرین نسخهٔ کال‌بک را در ref نگه می‌داریم
+  // و افکت فقط به باز/بسته‌بودن دیالوگ وابسته است.
+  const onOpenChangeRef = React.useRef(onOpenChange);
+  onOpenChangeRef.current = onOpenChange;
+
   React.useEffect(() => {
     if (!open) return;
     const prev = document.activeElement as HTMLElement | null;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     panel.current?.querySelector<HTMLElement>("[data-autofocus], button, input, textarea, select, a[href]")?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onOpenChange(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onOpenChangeRef.current(false);
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
       prev?.focus();
     };
-  }, [open, onOpenChange]);
+  }, [open]);
 
   if (!open || !mounted) return null;
 

@@ -8,18 +8,21 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   endAddon?: React.ReactNode;
   /** Optional error message; renders below and sets aria-invalid. */
   error?: string;
+  /** Ref forwarded to the inner native input (React 19 ref-as-prop). */
+  ref?: React.Ref<HTMLInputElement>;
 }
 
 /**
  * ورودی متن. Persian text is RTL by default; pass `dir="ltr"` for phone
  * numbers, emails and codes so digits keep their natural order.
  */
-export function Input({ className, type, startAddon, endAddon, error, id, dir, ...props }: InputProps) {
+export function Input({ className, type, startAddon, endAddon, error, id, dir, ref, ...props }: InputProps) {
   const grouped = Boolean(startAddon || endAddon);
   const input = (
     <input
       id={id}
       type={type}
+      ref={ref}
       dir={grouped ? undefined : dir}
       aria-invalid={error ? true : undefined}
       className={cn(

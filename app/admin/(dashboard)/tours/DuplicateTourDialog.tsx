@@ -41,9 +41,14 @@ async function firstFreeSlug(base: string): Promise<string> {
  */
 export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDialogProps) {
   const { toast } = useToast();
-  const [title, setTitle] = useState(`${tour.title}${COPY_SUFFIX}`);
+  // گشت (ایراد ۲): ورودی عنوان آنکنترلد است (ref + defaultValue) تا تایپ کردن
+  // هیچ ریرندری تحریک نکند؛ مقدار نهایی روی دیبونس/blur کامیت می‌شود و نامک
+  // از همان عنوان نهایی مشتق می‌شود.
+  const titleRef = useRef<HTMLInputElement | null>(null);
   const [slug, setSlug] = useState('');
   const [slugTouched, setSlugTouched] = useState(false);
+  // نسخهٔ ref برای خواندن تازه داخل closure دیبونس (جلوگیری از بازنویسی نامک دستی).
+  const slugTouchedRef = useRef(false);
   const [departure, setDeparture] = useState(tour.closestDeparture || '');
   const [titleError, setTitleError] = useState('');
   const [slugError, setSlugError] = useState('');
@@ -71,25 +76,35 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onTitleChange = (v: string) => {
-    setTitle(v);
+  const deriveSlug = (titleValue: string) => {
+    const my = ++slugReq.current;
+    const base = titleValue.endsWith(COPY_SUFFIX) ? titleValue.slice(0, -COPY_SUFFIX.length) : titleValue;
+    void firstFreeSlug(faSlug(base)).then((s) => {
+      if (slugReq.current === my) setSlug(s);
+    });
+  };
+
+  /** کامیت عنوان: خطای عنوان پاک می‌شود و اگر نامک دستی نشده، از عنوان نهایی بازسازی می‌شود. */
+  const commitTitle = () => {
     setTitleError('');
-    if (slugTouched) return;
+    if (slugTouchedRef.current) return;
+    deriveSlug(titleRef.current?.value ?? '');
+  };
+
+  const onTitleInput = () => {
+    setTitleError('');
+    if (slugTouchedRef.current) return;
     // گشت (ایراد ۷): دیبونس ۳۵۰ms + نگهبان کهنگی؛ با هر نویسه یک اکشن سرور نزن
     // و پاسخ دیررس، نامکِ تازه‌تر را خراب نکند.
     if (slugTimer.current) clearTimeout(slugTimer.current);
     slugTimer.current = setTimeout(() => {
-      const my = ++slugReq.current;
-      const base = v.endsWith(COPY_SUFFIX) ? v.slice(0, -COPY_SUFFIX.length) : v;
-      void firstFreeSlug(faSlug(base)).then((s) => {
-        if (slugReq.current === my) setSlug(s);
-      });
+      if (!slugTouchedRef.current) deriveSlug(titleRef.current?.value ?? '');
     }, 350);
   };
 
   const submit = async () => {
     if (busy) return;
-    const cleanTitle = title.trim();
+    const cleanTitle = (titleRef.current?.value ?? '').trim();
     const cleanSlug = slug.trim().toLowerCase();
     let ok = true;
     if (cleanTitle.length < 2) {
@@ -159,8 +174,10 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         <Field label="عنوان تور جدید" htmlFor="dup-title" error={titleError}>
           <Input
             id="dup-title"
-            value={title}
-            onChange={(e) => onTitleChange(e.target.value)}
+            ref={titleRef}
+            defaultValue={`${tour.title}${COPY_SUFFIX}`}
+            onInput={onTitleInput}
+            onBlur={commitTitle}
             placeholder="عنوان تور…"
           />
         </Field>
@@ -177,6 +194,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
             onChange={(e) => {
               setSlug(e.target.value);
               setSlugTouched(true);
+              slugTouchedRef.current = true;
               setSlugError('');
             }}
             placeholder="tour-slug"
