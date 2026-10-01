@@ -54,10 +54,10 @@ export function Calendar({ value, defaultValue = null, onChange, min, max, markW
     onChange?.(date);
   }
 
-  const nav = "flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+  const nav = "flex size-7 cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
 
   return (
-    <div className={cn("rounded-xl border border-border bg-card p-3", compact ? "w-[220px]" : "w-[260px]", className)}>
+    <div className={cn("rounded-sm border border-border bg-card p-3", compact ? "w-[220px]" : "w-[260px]", className)}>
       <div className="flex items-center justify-between px-1">
         <span className={cn("font-semibold", compact ? "text-xs" : "text-sm")}>
           {JALALI_MONTHS[view.jm - 1]} {fa(view.jy)}
@@ -88,7 +88,7 @@ export function Calendar({ value, defaultValue = null, onChange, min, max, markW
               disabled={!!disabled}
               onClick={() => pick(d)}
               className={cn(
-                "flex w-full min-w-0 items-center justify-center rounded-md leading-none whitespace-nowrap tabular-nums transition-colors",
+                "flex w-full min-w-0 items-center justify-center rounded-sm leading-none whitespace-nowrap tabular-nums transition-colors",
                 compact ? "h-6" : "h-8",
                 isSel && "bg-primary font-semibold text-primary-foreground",
                 !isSel && isToday && "ring-1 ring-inset ring-foreground/40",

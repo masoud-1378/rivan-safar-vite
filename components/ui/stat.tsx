@@ -16,7 +16,7 @@ export interface StatProps {
 export function Stat({ label, value, unit, delta, deltaLabel = "نسبت به دوره‌ی قبل", size = "md", className }: StatProps) {
   const up = (delta ?? 0) >= 0;
   return (
-    <div className={cn("min-w-0 overflow-hidden rounded-xl border border-border bg-card", size === "sm" ? "p-3" : "p-4", className)}>
+    <div className={cn("min-w-0 overflow-hidden rounded-sm border border-border bg-card", size === "sm" ? "p-3" : "p-4", className)}>
       <p className="text-xs text-muted-foreground">{label}</p>
       <div className="mt-1 flex items-end justify-between gap-2">
         <p className={cn("min-w-0 font-bold leading-tight wrap-break-word", size === "sm" ? "text-lg" : "text-xl sm:text-2xl")}>

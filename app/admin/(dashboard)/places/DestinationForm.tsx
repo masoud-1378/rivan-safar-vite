@@ -193,7 +193,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
             </div>
           </Field>
           {showAddCountry && (
-            <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3 sm:col-span-2">
+            <div className="rounded-sm border border-border bg-muted/30 p-4 space-y-3 sm:col-span-2">
               <div className="text-sm font-semibold">افزودن کشور تازه</div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label="نام فارسی کشور *">
@@ -213,7 +213,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
                   openLabel="بستن بخش پیشرفته"
                   open={newCountryAdvancedOpen}
                   onOpenChange={setNewCountryAdvancedOpen}
-                  className="rounded-xl border border-border bg-muted/20 p-3 sm:col-span-2"
+                  className="rounded-sm border border-border bg-muted/20 p-3 sm:col-span-2"
                 >
                   <Field label="نامک" hint="خودکار از نام ساخته می‌شود؛ معمولاً لازم نیست دست بزنید" error={newCountryError}>
                     <Input
@@ -259,7 +259,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
           openLabel="بستن بخش تکمیلی"
           open={extraOpen}
           onOpenChange={setExtraOpen}
-          className="rounded-xl border border-border bg-muted/20 p-4"
+          className="rounded-sm border border-border bg-muted/20 p-4"
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="نام کشور مادر" hint="معمولاً خودکار از «کشور مادر» پر می‌شود؛ فقط اگر لازم بود دستی بنویسید"><Input value={form.parentCountryName} onChange={(e) => set('parentCountryName', e.target.value)} /></Field>
@@ -293,7 +293,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
           ) : (
             <div className="space-y-3">
               {faqs.map((faq, idx) => (
-                <div key={idx} className="space-y-3 rounded-xl border border-border bg-muted/30 p-4">
+                <div key={idx} className="space-y-3 rounded-sm border border-border bg-muted/30 p-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold">پرسش {fa(idx + 1)}</span>
                     <Button type="button" variant="ghost" size="sm" onClick={() => removeFaq(idx)}>حذف پرسش</Button>
@@ -311,7 +311,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
           openLabel="بستن بخش پیشرفته"
           open={advancedOpen}
           onOpenChange={setAdvancedOpen}
-          className="rounded-xl border border-border bg-muted/20 p-4"
+          className="rounded-sm border border-border bg-muted/20 p-4"
         >
           <Field
             label="نامک"

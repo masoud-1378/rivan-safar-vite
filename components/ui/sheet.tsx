@@ -84,7 +84,7 @@ export function Sheet({
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         className={cn(
-          "absolute flex flex-col bg-popover text-popover-foreground shadow-2xl will-change-transform",
+          "absolute flex flex-col bg-popover text-popover-foreground shadow-overlay will-change-transform",
           "transition-[transform,opacity]",
           side === "start" && "inset-y-0 start-0 w-full max-w-sm border-e border-border",
           side === "end" && "inset-y-0 end-0 w-full max-w-sm border-s border-border",
@@ -107,7 +107,7 @@ export function Sheet({
             type="button"
             aria-label="بستن"
             onClick={() => onOpenChange(false)}
-            className="ms-auto flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="ms-auto flex size-8 cursor-pointer items-center justify-center rounded-sm text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <X className="size-4" />
           </button>

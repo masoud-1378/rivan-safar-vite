@@ -6,7 +6,7 @@ export function Skeleton({ className, shimmer, ...props }: React.HTMLAttributes<
     <div
       aria-hidden
       className={cn(
-        "rounded-md bg-secondary",
+        "rounded-sm bg-secondary",
         shimmer
           ? "relative overflow-hidden before:absolute before:inset-0 before:animate-shine before:bg-gradient-to-l before:from-transparent before:via-foreground/10 before:to-transparent"
           : "animate-pulse-soft",

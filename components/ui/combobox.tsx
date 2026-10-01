@@ -42,7 +42,7 @@ export function Combobox({ options, value = "", onChange, placeholder = "جست�
 
   return (
     <div ref={root} className={cn("relative", className)}>
-      <div className="flex h-10 w-full items-center rounded-field border-line border-input bg-background/60 shadow-field pe-2 ps-3 transition-colors focus-within:border-transparent focus-within:ring-2 focus-within:ring-ring/60">
+      <div className="flex h-10 w-full items-center rounded-field border-0 border-b border-input bg-transparent pe-2 ps-3 transition-colors focus-within:border-brand">
         <input
           role="combobox"
           aria-expanded={open}
@@ -77,7 +77,7 @@ export function Combobox({ options, value = "", onChange, placeholder = "جست�
               aria-selected={o === value}
               onMouseDown={(e) => { e.preventDefault(); pick(o); }}
               onMouseEnter={() => setIndex(i)}
-              className={cn("flex cursor-pointer items-center justify-between rounded-md px-2.5 py-2", i === index && "bg-accent")}
+              className={cn("flex cursor-pointer items-center justify-between rounded-sm px-2.5 py-2", i === index && "bg-accent")}
             >
               <span className="inline-block pe-[0.2em]">
                 {q && o.startsWith(q) ? (<><span className="font-semibold">{q}</span>{o.slice(q.length)}</>) : o}

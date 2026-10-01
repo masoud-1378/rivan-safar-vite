@@ -92,9 +92,9 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+      <div className="flex items-center justify-between rounded-sm border border-emerald-500/20 bg-emerald-500/5 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-600 text-white">
+          <div className="flex size-10 items-center justify-center rounded-sm bg-emerald-600 text-white">
             <Map className="size-5" />
           </div>
           <div>
@@ -116,7 +116,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
 
       {/* Day by Day list */}
       {itinerary.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/80 p-8 text-center">
+        <div className="flex flex-col items-center justify-center rounded-sm border-2 border-dashed border-border/80 p-8 text-center">
           <CalendarDays className="size-10 text-muted-foreground/40 mb-3" />
           <h4 className="text-sm font-bold text-foreground mb-1">هنوز برنامه روزانه‌ای تنظیم نشده است</h4>
           <p className="text-xs text-muted-foreground max-w-sm mb-4">
@@ -137,11 +137,11 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
           {itinerary.map((dayItem, idx) => (
             <div
               key={idx}
-              className="rounded-2xl border border-border bg-card p-4 shadow-sm space-y-3 transition-all"
+              className="rounded-sm border border-border bg-card p-4 space-y-3 transition-all"
             >
               <div className="flex items-center justify-between pb-2 border-b border-border/60">
                 <div className="flex items-center gap-2">
-                  <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 text-xs font-bold">
+                  <span className="flex size-7 items-center justify-center rounded-sm bg-emerald-500/10 text-emerald-600 text-xs font-bold">
                     روز {dayItem.day}
                   </span>
                   <span className="text-xs font-bold text-foreground">
@@ -196,7 +196,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
                           type="button"
                           onClick={() => handleUpdateDay(idx, { activityType: act.id })}
                           className={cn(
-                            "flex items-center gap-2 rounded-xl border p-2 text-right transition-colors text-xs",
+                            "flex items-center gap-2 rounded-sm border p-2 text-right transition-colors text-xs",
                             active
                               ? "border-emerald-500 bg-emerald-500/10 font-bold text-foreground"
                               : "border-border/60 bg-secondary/30 text-muted-foreground hover:bg-secondary/60"
@@ -229,7 +229,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
                   value={dayItem.description}
                   onChange={(e) => handleUpdateDay(idx, { description: e.target.value })}
                   placeholder="توضیح دهید مسافر در این روز چه کارهایی انجام می‌دهد، چه جاهایی را می‌بیند و چه ساعتی بازمی‌گردد…"
-                  className="w-full rounded-xl border border-input bg-background p-2.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="w-full rounded-sm border border-input bg-background p-2.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 />
               </Field>
             </div>
@@ -240,7 +240,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
       {/* Included & Excluded Services Boxes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
         {/* Included Services */}
-        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+        <div className="rounded-sm border border-border bg-card p-4 space-y-3">
           <div className="flex items-center gap-2 text-xs font-bold text-foreground">
             <CheckCircle2 className="size-4 text-emerald-500" />
             <span>خدمات رایگان و همراه تور (Included)</span>
@@ -263,7 +263,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
             {included.map((item, i) => (
               <span
                 key={i}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs text-foreground"
+                className="inline-flex items-center gap-1.5 rounded-sm border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs text-foreground"
               >
                 {item}
                 <button
@@ -279,7 +279,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
         </div>
 
         {/* Excluded Services */}
-        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+        <div className="rounded-sm border border-border bg-card p-4 space-y-3">
           <div className="flex items-center gap-2 text-xs font-bold text-foreground">
             <XCircle className="size-4 text-destructive" />
             <span>خدمات غیررایگان یا گشت‌های اختیاری (Excluded)</span>
@@ -302,7 +302,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
             {excluded.map((item, i) => (
               <span
                 key={i}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-1 text-xs text-foreground"
+                className="inline-flex items-center gap-1.5 rounded-sm border border-destructive/30 bg-destructive/10 px-2.5 py-1 text-xs text-foreground"
               >
                 {item}
                 <button

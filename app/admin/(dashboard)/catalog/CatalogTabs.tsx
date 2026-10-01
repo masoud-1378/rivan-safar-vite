@@ -39,9 +39,9 @@ export default function CatalogTabs({
               aria-selected={active}
               title={t.desc}
               className={cn(
-                'group flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors',
+                'group flex items-center gap-2 rounded-sm px-4 py-2.5 text-sm font-semibold transition-colors',
                 active
-                  ? 'bg-brand text-brand-foreground shadow-sm'
+                  ? 'bg-brand text-brand-foreground'
                   : 'border border-border/60 bg-secondary/40 text-muted-foreground hover:bg-secondary hover:text-foreground',
               )}
             >

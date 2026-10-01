@@ -150,7 +150,7 @@ export default function AdminCommand() {
     <button
       type="button"
       onClick={openPalette}
-      className="flex w-full cursor-pointer items-center gap-2 rounded-lg border border-input bg-background/60 px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-ring/50 hover:text-foreground"
+      className="flex w-full cursor-pointer items-center gap-2 rounded-sm border border-input bg-background/60 px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-ring/50 hover:text-foreground"
     >
       <Search className="size-4" />
       <span className="flex-1 text-start">جست‌وجو در پنل…</span>
@@ -167,7 +167,7 @@ export function AdminCommandIconButton() {
       type="button"
       onClick={openPalette}
       aria-label="جست‌وجو در پنل"
-      className="grid size-11 cursor-pointer place-items-center rounded-xl border border-border bg-card text-foreground transition-colors hover:bg-accent"
+      className="grid size-11 cursor-pointer place-items-center rounded-sm border border-border bg-card text-foreground transition-colors hover:bg-accent"
     >
       <Search className="size-5" />
     </button>

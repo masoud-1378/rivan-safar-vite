@@ -164,7 +164,7 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-6">
       {dbDown ? (
-        <div className="rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm">
+        <div className="rounded-sm border border-warning/40 bg-warning/10 p-4 text-sm">
           اتصال به دیتابیس در این لحظه برقرار نشد؛ آمار صفر نمایش داده می‌شود. چند لحظه بعد صفحه را تازه کنید.
         </div>
       ) : null}
@@ -175,7 +175,7 @@ export default async function AdminDashboard() {
           <h1 className="text-2xl font-bold sm:text-3xl">داشبورد مدیریت</h1>
           <p className="mt-1 text-sm text-muted-foreground">محتوا، تورها و درخواست‌های مشتری را از یکجا مدیریت کنید.</p>
         </div>
-        <Link href="/admin/leads" className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium transition hover:bg-accent">
+        <Link href="/admin/leads" className="inline-flex items-center gap-2 rounded-sm border border-border px-3 py-2 text-sm font-medium transition hover:bg-accent">
           <Inbox className="size-4" /> مشاهده درخواست‌ها <ArrowLeft className="size-4" />
         </Link>
       </header>
@@ -190,8 +190,8 @@ export default async function AdminDashboard() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {quickLinks.map(({ href, label, value, icon: Icon }) => (
-              <Link key={href} href={href} className="group flex items-center justify-between rounded-xl border border-border p-4 transition hover:border-brand hover:bg-accent/40">
-                <span className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-lg bg-accent text-brand"><Icon className="size-5" /></span><span><span className="block font-medium">{label}</span><span className="text-xs text-muted-foreground">{fa(value)} رکورد</span></span></span>
+              <Link key={href} href={href} className="group flex items-center justify-between rounded-sm border border-border p-4 transition hover:border-brand hover:bg-accent/40">
+                <span className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-sm bg-accent text-brand"><Icon className="size-5" /></span><span><span className="block font-medium">{label}</span><span className="text-xs text-muted-foreground">{fa(value)} رکورد</span></span></span>
                 <ArrowLeft className="size-4 text-muted-foreground transition group-hover:-translate-x-1" />
               </Link>
             ))}
@@ -201,9 +201,9 @@ export default async function AdminDashboard() {
         <Card className="p-5">
           <div className="mb-4"><h2 className="font-semibold">وضعیت سامانه</h2><p className="text-sm text-muted-foreground">مواردی که نیاز به توجه دارند</p></div>
           <div className="space-y-3 text-sm">
-            <Link href="/admin/seo" className="flex items-center justify-between rounded-lg bg-accent/50 p-3 hover:bg-accent"><span>لندینگ‌های پیش‌نویس</span><Badge variant={Number(drafts) ? 'warning' : 'success'}>{fa(drafts)}</Badge></Link>
-            <Link href="/admin/tours" className="flex items-center justify-between rounded-lg bg-accent/50 p-3 hover:bg-accent"><span>قیمت‌های رو به انقضا</span><Badge variant={Number(expiringPrices) ? 'warning' : 'success'}>{fa(expiringPrices)}</Badge></Link>
-            <Link href="/admin/tours" className="flex items-center justify-between rounded-lg bg-accent/50 p-3 hover:bg-accent"><span>حرکت‌های ثبت‌شده</span><Badge variant="secondary">{fa(departures)}</Badge></Link>
+            <Link href="/admin/seo" className="flex items-center justify-between rounded-sm bg-accent/50 p-3 hover:bg-accent"><span>لندینگ‌های پیش‌نویس</span><Badge variant={Number(drafts) ? 'warning' : 'success'}>{fa(drafts)}</Badge></Link>
+            <Link href="/admin/tours" className="flex items-center justify-between rounded-sm bg-accent/50 p-3 hover:bg-accent"><span>قیمت‌های رو به انقضا</span><Badge variant={Number(expiringPrices) ? 'warning' : 'success'}>{fa(expiringPrices)}</Badge></Link>
+            <Link href="/admin/tours" className="flex items-center justify-between rounded-sm bg-accent/50 p-3 hover:bg-accent"><span>حرکت‌های ثبت‌شده</span><Badge variant="secondary">{fa(departures)}</Badge></Link>
           </div>
         </Card>
       </div>

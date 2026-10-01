@@ -191,7 +191,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
             placeholder="مثلاً: ۱۵ آبان"
           />
         </Field>
-        <dl className="space-y-1.5 rounded-xl border border-border/70 bg-muted/40 p-3 text-xs">
+        <dl className="space-y-1.5 rounded-sm border border-border/70 bg-muted/40 p-3 text-xs">
           <div className="flex items-center justify-between gap-2">
             <dt className="text-muted-foreground">مبدأ (حفظ می‌شود)</dt>
             <dd className="font-medium text-foreground">{tour.origin || '—'}</dd>

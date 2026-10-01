@@ -246,7 +246,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
               ) : (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {photos.map((p) => (
-                    <div key={p.id} className="overflow-hidden rounded-xl border border-border">
+                    <div key={p.id} className="overflow-hidden rounded-sm border border-border">
                       <img src={p.url} alt={p.altFa} className="aspect-[4/3] w-full object-cover" loading="lazy" />
                       <button
                         type="button"

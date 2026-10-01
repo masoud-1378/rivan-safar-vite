@@ -275,14 +275,14 @@ export default function BlockEditor({ kind, value, onChange, addLabel, title, hi
         </div>
       )}
       {items.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+        <p className="rounded-sm border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
           هنوز چیزی ثبت نشده است.
         </p>
       ) : null}
       {items.map((raw, index) => {
         const n = fa(index + 1);
         return (
-          <div key={index} className="space-y-3 rounded-xl border border-border bg-card p-4">
+          <div key={index} className="space-y-3 rounded-sm border border-border bg-card p-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-foreground">
                 {meta.itemLabel} {n}

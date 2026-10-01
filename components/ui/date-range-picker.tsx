@@ -97,11 +97,11 @@ export function RangeCalendar({ value, defaultValue = EMPTY, onChange, min, max,
     return { jy, jm };
   });
 
-  const nav = "flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+  const nav = "flex size-7 cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
   const length = rangeLength(range);
 
   return (
-    <div className={cn("inline-flex flex-col", !bare && "rounded-xl border border-border bg-card p-3", className)}>
+    <div className={cn("inline-flex flex-col", !bare && "rounded-sm border border-border bg-card p-3", className)}>
       <div className={cn("flex flex-col gap-4 sm:flex-row", compact ? "sm:gap-3" : "sm:gap-5")} onMouseLeave={() => setHover(null)}>
         {views.map((m, mi) => {
           const first = toGregorian(m.jy, m.jm, 1);
@@ -155,7 +155,7 @@ export function RangeCalendar({ value, defaultValue = EMPTY, onChange, min, max,
                         onMouseEnter={() => setHover(date)}
                         onFocus={() => setHover(date)}
                         className={cn(
-                          "flex size-full min-w-0 items-center justify-center rounded-md leading-none whitespace-nowrap tabular-nums transition-colors",
+                          "flex size-full min-w-0 items-center justify-center rounded-sm leading-none whitespace-nowrap tabular-nums transition-colors",
                           (isStart || isEnd) && !previewing && "bg-primary font-semibold text-primary-foreground",
                           (isStart || isEnd) && previewing && "bg-primary/80 font-semibold text-primary-foreground",
                           between && "rounded-none",
@@ -236,8 +236,8 @@ export function DateRangePicker({ value, defaultValue = EMPTY, onChange, placeho
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "flex h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-input bg-background/60 px-3 text-sm transition-colors",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+          "flex h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-field border-0 border-b border-input bg-transparent px-3 text-sm transition-colors",
+          "focus-visible:outline-none focus-visible:border-brand",
         )}
       >
         <span className={cn("flex min-w-0 items-center gap-2", !range.from && "text-muted-foreground/70")}>
@@ -250,7 +250,7 @@ export function DateRangePicker({ value, defaultValue = EMPTY, onChange, placeho
           </span>
         )}
       </button>
-      <FloatPortal open={open} mounted={mounted} style={style} theme={theme} panelRef={panel} role="dialog" className="fixed z-50 rounded-xl border border-border bg-card p-3 shadow-xl">
+      <FloatPortal open={open} mounted={mounted} style={style} theme={theme} panelRef={panel} role="dialog" className="fixed z-50 rounded border border-border bg-card p-3 shadow-overlay">
           {presets.length > 0 && (
             <div className="mb-3 flex flex-wrap gap-1.5">
               {presets.map((p) => (

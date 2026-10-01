@@ -73,9 +73,9 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+      <div className="flex items-center justify-between rounded-sm border border-amber-500/20 bg-amber-500/5 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-amber-600 text-white">
+          <div className="flex size-10 items-center justify-center rounded-sm bg-amber-600 text-white">
             <ShieldCheck className="size-5" />
           </div>
           <div>
@@ -88,7 +88,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
       </div>
 
       {/* Visa & Guarantee Section */}
-      <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+      <div className="rounded-sm border border-border bg-card p-5 space-y-4">
         <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
           <FileText className="size-4 text-brand" />
           <span>وضعیت ویزا و ضمانت‌نامه بازگشت</span>
@@ -96,7 +96,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Visa Requirement toggle */}
-          <div className="flex flex-col justify-center rounded-xl border border-border/80 bg-secondary/20 p-4">
+          <div className="flex flex-col justify-center rounded-sm border border-border/80 bg-secondary/20 p-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -125,7 +125,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
       </div>
 
       {/* Destination Hidden Fees & Luggage */}
-      <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+      <div className="rounded-sm border border-border bg-card p-5 space-y-4">
         <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
           <Coins className="size-4 text-amber-500" />
           <span>شفاف‌سازی هزینه‌های محلی مقصد و بار مجاز مسافر</span>
@@ -171,7 +171,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
       </div>
 
       {/* Activity Level Selector */}
-      <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+      <div className="rounded-sm border border-border bg-card p-5 space-y-3">
         <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
           <Activity className="size-4 text-emerald-500" />
           <span>میزان فعالیت فیزیکی و تناسب سنی تور</span>
@@ -186,9 +186,9 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
                 type="button"
                 onClick={() => updateTrust({ activityLevel: lvl.id })}
                 className={cn(
-                  "p-3 rounded-xl border text-right transition-all",
+                  "p-3 rounded-sm border text-right transition-all",
                   isSelected
-                    ? "border-emerald-500 bg-emerald-500/10 shadow-sm"
+                    ? "border-emerald-500 bg-emerald-500/10"
                     : "border-border/60 bg-secondary/20 hover:bg-secondary/50"
                 )}
               >
@@ -204,7 +204,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
       </div>
 
       {/* Required Documents Checklist */}
-      <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+      <div className="rounded-sm border border-border bg-card p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
             <FileText className="size-4 text-blue-500" />
@@ -226,7 +226,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
                   disabled={exists}
                   onClick={() => addDoc(doc)}
                   className={cn(
-                    "text-[11px] rounded-lg border px-2 py-1 transition-colors text-right",
+                    "text-[11px] rounded-sm border px-2 py-1 transition-colors text-right",
                     exists
                       ? "border-transparent bg-muted/60 text-muted-foreground/60 cursor-not-allowed"
                       : "border-border/80 bg-secondary/40 text-foreground hover:bg-brand/10 hover:border-brand/40"
@@ -258,7 +258,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
           {currentDocs.map((doc, idx) => (
             <div
               key={idx}
-              className="flex items-center justify-between rounded-xl border border-border/70 bg-secondary/15 px-3 py-2 text-xs"
+              className="flex items-center justify-between rounded-sm border border-border/70 bg-secondary/15 px-3 py-2 text-xs"
             >
               <div className="flex items-center gap-2 text-foreground font-medium">
                 <Check className="size-3.5 text-emerald-500" />

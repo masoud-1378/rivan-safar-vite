@@ -77,7 +77,7 @@ export function PriceCell({ id, price, onSaved }: PriceCellProps) {
         onClick={startEdit}
         title="ویرایش قیمت پایه"
         aria-label={`ویرایش قیمت پایه، قیمت فعلی ${formatToman(price)}`}
-        className="group flex min-h-[44px] w-full flex-col items-start justify-center gap-0.5 rounded-lg px-2 py-1 text-start transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+        className="group flex min-h-[44px] w-full flex-col items-start justify-center gap-0.5 rounded-sm px-2 py-1 text-start transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
       >
         <span className="inline-flex items-center gap-1.5 font-semibold tabular-nums text-foreground">
           {formatToman(price)}

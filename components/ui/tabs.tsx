@@ -87,7 +87,7 @@ export function TabsList({
       className={cn(
         "relative isolate",
         ctx.variant === "segmented"
-          ? "inline-flex rounded-lg border border-border bg-muted p-0.5"
+          ? "inline-flex rounded-sm border border-border bg-muted p-0.5"
           : "flex gap-1 border-b border-border",
         className,
       )}
@@ -95,7 +95,7 @@ export function TabsList({
       {ctx.variant === "segmented" && pill ? (
         <span
           aria-hidden
-          className="absolute inset-y-0.5 -z-10 rounded-md bg-background shadow-sm ring-1 ring-border transition-[transform,width] duration-200 ease-out"
+          className="absolute inset-y-0.5 -z-10 rounded-sm bg-background ring-1 ring-border transition-[transform,width] duration-200 ease-out"
           style={{ width: pill.w, left: 0, transform: `translateX(${pill.x}px)` }}
         />
       ) : null}
@@ -128,7 +128,7 @@ export function TabsTrigger({
         "relative z-10 cursor-pointer text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
         ctx.variant === "segmented"
           ? cn(
-              "rounded-md px-3 py-1.5",
+              "rounded-sm px-3 py-1.5",
               active ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground",
             )
           : cn(

@@ -59,7 +59,7 @@ export default function ArchiveManager({ groups, isOwner }: Props) {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div className="rounded-sm border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}

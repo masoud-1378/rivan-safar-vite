@@ -77,11 +77,11 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
   const catalogTab = searchParams.get('tab');
 
   return (
-    <div className="mb-6 rounded-2xl border border-border bg-card/60 p-4 backdrop-blur-md">
+    <div className="mb-6 rounded-sm border border-border bg-card/60 p-4 backdrop-blur-md">
       {/* Header title */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-brand/15 text-brand">
+          <div className="flex size-9 items-center justify-center rounded-sm bg-brand/15 text-brand">
             <Compass className="size-5" />
           </div>
           <div>
@@ -102,9 +102,9 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
               key={tab.id}
               href={tab.href}
               className={cn(
-                "group relative flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-all cursor-pointer",
+                "group relative flex items-center gap-2 rounded-sm px-3.5 py-2.5 text-xs font-semibold transition-all cursor-pointer",
                 isActive
-                  ? "bg-brand text-brand-foreground shadow-sm"
+                  ? "bg-brand text-brand-foreground"
                   : "bg-secondary/40 text-muted-foreground hover:bg-secondary hover:text-foreground border border-border/50"
               )}
             >

@@ -269,13 +269,13 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
           برای لینک ورودی، مبدأ را یک لندینگ دیگر و مقصد را همین صفحه انتخاب کنید.
         </p>
         {links.length === 0 ? (
-          <p className="mt-3 rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+          <p className="mt-3 rounded-sm border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
             هنوز لینکی ثبت نشده است.
           </p>
         ) : (
           <ul className="mt-3 space-y-2">
             {links.map((l) => (
-              <li key={l.id} className="flex items-center justify-between gap-2 rounded-lg border border-border p-3 text-sm">
+              <li key={l.id} className="flex items-center justify-between gap-2 rounded-sm border border-border p-3 text-sm">
                 <span className="flex min-w-0 items-center gap-1.5">
                   <Link2 className="size-4 shrink-0 text-muted-foreground" />
                   <span className="truncate">
@@ -292,7 +292,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
             ))}
           </ul>
         )}
-        <div className="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-border bg-accent/30 p-4 sm:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-3 rounded-sm border border-border bg-accent/30 p-4 sm:grid-cols-2">
           <Field label="از (مبدأ)" htmlFor="lk-from">
             <Select
               id="lk-from"
@@ -337,13 +337,13 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
           فقط‌خواندنی — همین‌ها هستند که چک «دست‌کم یک لینک ورودی» گیت را سبز می‌کنند.
         </p>
         {inLinks.length === 0 ? (
-          <p className="mt-3 rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+          <p className="mt-3 rounded-sm border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
             هنوز لینک ورودی‌ای به این صفحه ثبت نشده است.
           </p>
         ) : (
           <ul className="mt-3 space-y-2">
             {inLinks.map((l) => (
-              <li key={l.id} className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm">
+              <li key={l.id} className="flex items-center gap-2 rounded-sm border border-border p-3 text-sm">
                 <Link2 className="size-4 shrink-0 text-muted-foreground" />
                 <span className="min-w-0 truncate">
                   <span className="text-muted-foreground">{landingName(l.fromLandingId) ?? l.fromPath ?? '—'}</span>

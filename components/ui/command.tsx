@@ -66,7 +66,7 @@ export function Command({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground",
+        "overflow-hidden rounded border border-border bg-popover text-popover-foreground",
         className,
       )}
     >
@@ -124,7 +124,7 @@ export function Command({
                     onMouseEnter={() => setIndex(i)}
                     onClick={() => run(item)}
                     className={cn(
-                      "flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-start",
+                      "flex w-full cursor-pointer items-center justify-between rounded-sm px-2.5 py-2 text-start",
                       i === index && "bg-accent",
                     )}
                   >

@@ -276,7 +276,7 @@ export default function TourForm({
   return (
     <div className="space-y-6">
       {/* نوار وضعیت انتشار + پیش‌نمایش در سایت (گیت انتشار، مایگریشن 0011) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-border bg-card px-4 py-3">
         <div className="flex items-center gap-2">
           <Badge variant={formData.publishStatus === 'published' ? 'success' : 'warning'}>
             {formData.publishStatus === 'published' ? 'منتشرشده' : 'پیش‌نویس'}
@@ -312,7 +312,7 @@ export default function TourForm({
       </div>
 
       {/* 5-Stage Step Navigation Header */}
-      <div className="rounded-2xl border border-border bg-card p-2 sm:p-3 shadow-sm">
+      <div className="rounded-sm border border-border bg-card p-2 sm:p-3">
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {STAGES.map((stage) => {
             const Icon = stage.icon;
@@ -325,9 +325,9 @@ export default function TourForm({
                 type="button"
                 onClick={() => setActiveStage(stage.id)}
                 className={cn(
-                  "relative flex flex-col items-start gap-1 rounded-xl p-3 text-right transition-all border cursor-pointer",
+                  "relative flex flex-col items-start gap-1 rounded-sm p-3 text-right transition-all border cursor-pointer",
                   isActive
-                    ? "border-brand bg-brand/10 shadow-sm"
+                    ? "border-brand bg-brand/10"
                     : isPassed
                     ? "border-border/70 bg-secondary/30 hover:bg-secondary/60"
                     : "border-transparent bg-transparent hover:bg-muted/40 opacity-70"
@@ -335,7 +335,7 @@ export default function TourForm({
               >
                 <div className="flex w-full items-center justify-between">
                   <div className={cn(
-                    "flex size-7 items-center justify-center rounded-lg text-xs font-bold",
+                    "flex size-7 items-center justify-center rounded-sm text-xs font-bold",
                     isActive 
                       ? "bg-brand text-brand-foreground" 
                       : isPassed 
@@ -412,7 +412,7 @@ export default function TourForm({
           )}
 
           {/* Bottom Sticky Action Bar */}
-          <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card/95 p-3.5 shadow-xl backdrop-blur">
+          <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-border bg-card/95 p-3.5 shadow-overlay backdrop-blur">
             {/* Step navigation buttons */}
             <div className="flex items-center gap-2">
               <Button
@@ -519,13 +519,13 @@ export default function TourForm({
         {/* Live Preview Panel */}
         {showLivePreview && (
           <div className="xl:col-span-4">
-            <div className="sticky top-6 rounded-2xl border border-border bg-card p-4 space-y-4 shadow-sm">
+            <div className="sticky top-6 rounded-sm border border-border bg-card p-4 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
                 <span className="text-xs font-bold text-foreground">پیش‌نمایش کارت تور در سایت</span>
                 <span className="text-[11px] text-muted-foreground">مشاهده زنده</span>
               </div>
 
-              <div className="overflow-hidden rounded-xl border border-border/80 bg-background shadow-xs">
+              <div className="overflow-hidden rounded-sm border border-border/80 bg-background shadow-xs">
                 {formData.image ? (
                   <img
                     src={formData.image}
@@ -544,7 +544,7 @@ export default function TourForm({
                       {formData.carrierName || formData.airline || 'هوایی'}
                     </span>
                     {formData.badge && (
-                      <span className="rounded-md bg-brand/10 text-brand px-2 py-0.5 text-[10px] font-bold">
+                      <span className="rounded-sm bg-brand/10 text-brand px-2 py-0.5 text-[10px] font-bold">
                         {formData.badge}
                       </span>
                     )}

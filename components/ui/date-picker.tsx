@@ -47,8 +47,8 @@ export function DatePicker({ value, onChange, placeholder = "انتخاب تار
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "flex h-10 w-full min-w-0 cursor-pointer items-center justify-between gap-2 overflow-hidden rounded-field border-line border-input bg-background/60 shadow-field px-3 text-sm transition-colors",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+          "flex h-10 w-full min-w-0 cursor-pointer items-center justify-between gap-2 overflow-hidden rounded-field border-0 border-b border-input bg-transparent px-3 text-sm transition-colors",
+          "focus-visible:outline-none focus-visible:border-brand",
         )}
       >
         <span className={cn("flex min-w-0 items-center gap-2", !date && "text-muted-foreground/70")}>
@@ -61,7 +61,7 @@ export function DatePicker({ value, onChange, placeholder = "انتخاب تار
           </span>
         )}
       </button>
-      <FloatPortal open={open} mounted={mounted} style={style} theme={theme} panelRef={panel} role="dialog" className="fixed z-50 shadow-xl">
+      <FloatPortal open={open} mounted={mounted} style={style} theme={theme} panelRef={panel} role="dialog" className="fixed z-50 rounded shadow-overlay">
         <Calendar {...cal} value={date} onChange={(d) => { set(d); setOpen(false); }} />
       </FloatPortal>
     </div>

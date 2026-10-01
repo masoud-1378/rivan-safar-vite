@@ -158,9 +158,9 @@ export default function Stage1Identity({
   return (
     <div className="space-y-6" id="tour-stage-1">
       {/* Intro info banner */}
-      <div className="flex items-center justify-between rounded-xl border border-brand/20 bg-brand/5 p-4">
+      <div className="flex items-center justify-between rounded-sm border border-brand/20 bg-brand/5 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-brand text-brand-foreground">
+          <div className="flex size-10 items-center justify-center rounded-sm bg-brand text-brand-foreground">
             <Compass className="size-5" />
           </div>
           <div>
@@ -219,7 +219,7 @@ export default function Stage1Identity({
 
         {/* Guaranteed Departure toggle */}
         <div className="flex flex-col justify-end">
-          <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-border bg-card/60 p-3 hover:bg-card transition-colors">
+          <label className="flex items-center gap-3 cursor-pointer rounded-sm border border-border bg-card/60 p-3 hover:bg-card transition-colors">
             <input
               type="checkbox"
               checked={Boolean(data.guaranteedDeparture || data.badge === 'حرکت تضمین‌شده')}
@@ -260,7 +260,7 @@ export default function Stage1Identity({
       </div>
 
       {/* Destinations Hierarchy Tree Selector */}
-      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+      <div className="rounded-sm border border-border bg-card p-4 space-y-3">
         <div className="flex items-center justify-between">
           <label className="text-xs font-bold text-foreground flex items-center gap-2">
             <MapPin className="size-4 text-brand" />
@@ -286,7 +286,7 @@ export default function Stage1Identity({
           <Search className="size-4 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
         </div>
         {destSearchQuery && (
-          <div className="max-h-56 overflow-y-auto rounded-lg border border-border/60 divide-y divide-border/40">
+          <div className="max-h-56 overflow-y-auto rounded-sm border border-border/60 divide-y divide-border/40">
             {destSearchResults.length === 0 ? (
               <p className="px-3 py-4 text-xs text-muted-foreground text-center">چیزی پیدا نشد.</p>
             ) : (
@@ -323,7 +323,7 @@ export default function Stage1Identity({
             {selectedSlugs.map((slug) => (
               <span
                 key={slug}
-                className="inline-flex items-center gap-1 rounded-lg bg-brand/10 border border-brand/20 px-2.5 py-1 text-xs font-medium text-brand"
+                className="inline-flex items-center gap-1 rounded-sm bg-brand/10 border border-brand/20 px-2.5 py-1 text-xs font-medium text-brand"
               >
                 {nameBySlug.get(slug) || slug}
                 <button
@@ -339,14 +339,14 @@ export default function Stage1Identity({
         )}
 
         {/* Collapsible tree */}
-        <div className="space-y-2 rounded-xl border border-border/70 p-3 max-h-72 overflow-y-auto">
+        <div className="space-y-2 rounded-sm border border-border/70 p-3 max-h-72 overflow-y-auto">
           {tree.regions.map((region) => {
             const desc = regionDescendants(region.slug, tree);
             const allOn = desc.length > 0 && desc.every((s) => selectedSlugs.includes(s));
             const open = openRegions[region.slug] ?? false;
 
             return (
-              <div key={region.slug} className="rounded-lg border border-border/60">
+              <div key={region.slug} className="rounded-sm border border-border/60">
                 <div className="flex items-center gap-2 p-2.5 bg-secondary/20">
                   <CheckBox checked={allOn} onToggle={() => toggleMany(desc)} label={region.name} />
                   <button
@@ -367,7 +367,7 @@ export default function Stage1Identity({
                       const cOpen = openCountries[country.slug] ?? false;
 
                       return (
-                        <div key={country.slug} className="rounded-md bg-muted/30">
+                        <div key={country.slug} className="rounded-sm bg-muted/30">
                           <div className="flex items-center gap-2 px-2.5 py-1.5">
                             <CheckBox checked={cOn} onToggle={() => toggleMany(cdesc)} label={country.name} />
                             <button
@@ -405,7 +405,7 @@ export default function Stage1Identity({
       </div>
 
       {/* Row 3: Transport Kind Selector (Air vs Rail vs Land) */}
-      <div className="rounded-xl border border-border/70 bg-card p-4 space-y-4">
+      <div className="rounded-sm border border-border/70 bg-card p-4 space-y-4">
         <label className="text-xs font-bold text-foreground block">
           شیوه حمل‌ونقل و شرکت مجری *
         </label>
@@ -420,14 +420,14 @@ export default function Stage1Identity({
                 key={opt.id}
                 onClick={() => onChange({ transportKind: opt.id })}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl border p-3.5 text-right transition-all",
+                  "flex items-center gap-3 rounded-sm border p-3.5 text-right transition-all",
                   isSelected
-                    ? "border-brand bg-brand/10 text-foreground font-bold shadow-sm"
+                    ? "border-brand bg-brand/10 text-foreground font-bold"
                     : "border-border/60 bg-secondary/30 text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
                 )}
               >
                 <div className={cn(
-                  "flex size-9 shrink-0 items-center justify-center rounded-lg",
+                  "flex size-9 shrink-0 items-center justify-center rounded-sm",
                   isSelected ? "bg-brand text-brand-foreground" : "bg-muted text-muted-foreground"
                 )}>
                   <Icon className="size-4" />
@@ -465,7 +465,7 @@ export default function Stage1Identity({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           {origins.length === 0 ? (
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs space-y-1.5">
+            <div className="rounded-sm border border-amber-500/30 bg-amber-500/5 p-4 text-xs space-y-1.5">
               <p className="font-bold text-foreground">هنوز هیچ مبدأی ثبت نشده است</p>
               <p className="text-muted-foreground">برای ساخت تور اول باید دست‌کم یک شهر مبدأ داشته باشید.</p>
               <a
@@ -519,7 +519,7 @@ export default function Stage1Identity({
       </div>
 
       {/* Row 5: Price & Currency Transparency */}
-      <div className="rounded-xl border border-border/70 bg-card p-4 space-y-4">
+      <div className="rounded-sm border border-border/70 bg-card p-4 space-y-4">
         <div className="flex items-center justify-between">
           <label className="text-xs font-bold text-foreground">
             قیمت‌گذاری پایه و شفافیت ارزی / تومانی *
@@ -550,7 +550,7 @@ export default function Stage1Identity({
                 <select
                   value={data.splitPriceCurrency || 'USD'}
                   onChange={(e) => onChange({ splitPriceCurrency: e.target.value })}
-                  className="rounded-xl border border-input bg-background px-3 py-2 text-xs font-bold"
+                  className="rounded-sm border border-input bg-background px-3 py-2 text-xs font-bold"
                 >
                   <option value="USD">دلار ($)</option>
                   <option value="EUR">یورو (€)</option>
@@ -562,7 +562,7 @@ export default function Stage1Identity({
         </div>
 
         {/* حساب سرانگشتی درآمد: ظرفیت × قیمت پایه — فقط نمایشی، ذخیره نمی‌شود */}
-        <div className="rounded-xl border border-border/60 bg-secondary/20 p-3.5 flex flex-wrap items-end gap-x-5 gap-y-3">
+        <div className="rounded-sm border border-border/60 bg-secondary/20 p-3.5 flex flex-wrap items-end gap-x-5 gap-y-3">
           <span className="text-xs font-bold text-foreground">حساب سرانگشتی درآمد</span>
           <div className="w-36">
             <Field label="ظرفیت تور (نفر)">

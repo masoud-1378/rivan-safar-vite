@@ -27,7 +27,7 @@ export function PasswordInput({ strength, className, onChange, value, defaultVal
   const level = passwordStrength(String(value ?? v));
   return (
     <div className="space-y-2">
-      <div className={cn("flex h-10 items-center rounded-field border-line border-input bg-background/60 shadow-field pe-1 ps-3 transition-colors focus-within:border-transparent focus-within:ring-2 focus-within:ring-ring/60", className)} dir="ltr">
+      <div className={cn("flex h-10 items-center rounded-field border-0 border-b border-input bg-transparent pe-1 ps-3 transition-colors focus-within:border-brand", className)} dir="ltr">
         <input
           type={show ? "text" : "password"}
           autoComplete="new-password"

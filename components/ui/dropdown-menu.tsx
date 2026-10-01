@@ -83,7 +83,7 @@ export function DropdownMenu({
         panelRef={panel}
         role="menu"
         className={cn(
-          "fixed z-50 min-w-44 rounded-lg border border-border bg-popover p-1 text-sm text-popover-foreground shadow-lg",
+          "fixed z-50 min-w-44 rounded border border-border bg-popover p-1 text-sm text-popover-foreground shadow-overlay",
           "animate-fade-up [animation-duration:150ms]",
         )}
       >
@@ -110,7 +110,7 @@ export function DropdownMenu({
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full cursor-pointer items-center justify-between gap-6 rounded-md px-2 py-1.5 text-start outline-none transition-colors",
+                  "flex w-full cursor-pointer items-center justify-between gap-6 rounded-sm px-2 py-1.5 text-start outline-none transition-colors",
                   "hover:bg-accent focus:bg-accent disabled:cursor-not-allowed disabled:opacity-50",
                   it.danger ? "text-destructive" : "text-foreground/90",
                 )}

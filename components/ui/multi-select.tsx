@@ -108,15 +108,15 @@ export function MultiSelect({
         onClick={() => show(!open)}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); show(true); } else onKeyDown(e); }}
         className={cn(
-          "flex min-h-10 w-full cursor-pointer flex-wrap items-center gap-1.5 rounded-field border-line border-input bg-background/60 shadow-field py-1.5 pe-2 ps-2 text-sm transition-colors",
-          "focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
-          open && "border-transparent ring-2 ring-ring/60",
+          "flex min-h-10 w-full cursor-pointer flex-wrap items-center gap-1.5 rounded-field border-0 border-b border-input bg-transparent py-1.5 pe-2 ps-2 text-sm transition-colors",
+          "focus-visible:outline-none focus-visible:border-brand",
+          open && "border-brand",
           disabled && "cursor-not-allowed opacity-50",
         )}
       >
         {chips.length === 0 && <span className="px-1 text-muted-foreground/70">{placeholder}</span>}
         {chips.slice(0, maxVisible).map((o) => (
-          <span key={o.value} className="inline-flex h-6 items-center gap-1 rounded-full bg-secondary ps-2 pe-1 text-xs font-medium text-secondary-foreground">
+          <span key={o.value} className="inline-flex h-6 items-center gap-1 rounded-sm bg-secondary ps-2 pe-1 text-xs font-medium text-secondary-foreground">
             {o.label}
             <button
               type="button"
@@ -165,7 +165,7 @@ export function MultiSelect({
                   onClick={() => { if (!off) toggle(o.value); }}
                   onMouseEnter={() => setIndex(i)}
                   className={cn(
-                    "flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-1.5",
+                    "flex cursor-pointer items-center gap-2.5 rounded-sm px-2.5 py-1.5",
                     i === index && "bg-accent",
                     off && "cursor-not-allowed opacity-40",
                   )}

@@ -51,7 +51,7 @@ export function ComboboxAsync({ loadOptions, value = null, onChange, placeholder
 
   return (
     <div ref={root} className={cn("relative", className)}>
-      <div className="flex h-10 items-center overflow-visible rounded-lg border border-input bg-background/60 pe-2 ps-3 transition-colors focus-within:border-transparent focus-within:ring-2 focus-within:ring-ring/60">
+      <div className="flex h-10 items-center overflow-visible rounded-field border-0 border-b border-input bg-transparent pe-2 ps-3 transition-colors focus-within:border-brand">
         <input
           role="combobox"
           aria-expanded={open}
@@ -73,7 +73,7 @@ export function ComboboxAsync({ loadOptions, value = null, onChange, placeholder
         {state === "loading" ? <Loader2 className="size-4 animate-spin text-muted-foreground" /> : <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />}
       </div>
       <FloatPortal open={listOpen} mounted={mounted} style={style} theme={theme} panelRef={panel} className="fixed z-50">
-        <ul id={listId} role="listbox" className="max-h-60 overflow-auto rounded-lg border border-border bg-popover p-1.5 text-sm/8 shadow-lg">
+        <ul id={listId} role="listbox" className="max-h-60 overflow-auto rounded-sm border border-border bg-popover p-1.5 text-sm/8 shadow-lg">
           {state === "error" && <li className="px-2.5 py-2 text-destructive">{errorText}</li>}
           {state === "loading" && items.length === 0 && <li className="px-2.5 py-2 text-muted-foreground">در حال جست‌وجو…</li>}
           {state === "idle" && items.length === 0 && <li className="px-2.5 py-2 text-muted-foreground">{emptyText}</li>}
@@ -84,7 +84,7 @@ export function ComboboxAsync({ loadOptions, value = null, onChange, placeholder
               aria-selected={o.value === value?.value}
               onMouseDown={(e) => { e.preventDefault(); pick(o); }}
               onMouseEnter={() => setIndex(i)}
-              className={cn("flex cursor-pointer items-center justify-between overflow-visible rounded-md px-2.5 py-2", i === index && "bg-accent")}
+              className={cn("flex cursor-pointer items-center justify-between overflow-visible rounded-sm px-2.5 py-2", i === index && "bg-accent")}
             >
               <span className="flex min-w-0 items-baseline overflow-visible">
                 <span className="pb-[0.2em] pe-[0.45em]">{o.label}</span>

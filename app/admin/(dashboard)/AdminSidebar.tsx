@@ -54,7 +54,7 @@ export function AdminNavHeader() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3 py-2">
-        <div className="grid size-10 place-items-center rounded-xl bg-brand text-brand-foreground">
+        <div className="grid size-10 place-items-center rounded-sm bg-brand text-brand-foreground">
           <Gauge className="size-5" />
         </div>
         <div className="min-w-0">

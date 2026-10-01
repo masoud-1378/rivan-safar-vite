@@ -134,9 +134,9 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
   return (
     <div className="space-y-6">
       {/* Stage Header */}
-      <div className="flex items-center justify-between rounded-xl border border-blue-500/20 bg-blue-500/5 p-4">
+      <div className="flex items-center justify-between rounded-sm border border-blue-500/20 bg-blue-500/5 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-blue-600 text-white">
+          <div className="flex size-10 items-center justify-center rounded-sm bg-blue-600 text-white">
             <Building2 className="size-5" />
           </div>
           <div>
@@ -170,7 +170,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
 
       {/* انتخاب هتل از جدول ثبت‌شده‌ها: نام و ستاره از رکورد پر می‌شود؛ قیمت همان‌جا دستی (ویژهٔ این تور) */}
       {showHotelPicker && (
-        <div ref={pickerRef} className="rounded-2xl border border-border bg-card p-4 space-y-3">
+        <div ref={pickerRef} className="rounded-sm border border-border bg-card p-4 space-y-3">
           <div className="relative">
             <Input
               value={hotelQuery}
@@ -185,7 +185,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
               هنوز هتلی در جدول ثبت نشده است؛ از «افزودن هتل جدید» به‌صورت دستی وارد کنید.
             </p>
           ) : (
-            <div className="max-h-64 overflow-y-auto rounded-lg border border-border/60 divide-y divide-border/40">
+            <div className="max-h-64 overflow-y-auto rounded-sm border border-border/60 divide-y divide-border/40">
               {catalogResults.length === 0 ? (
                 <p className="px-3 py-4 text-xs text-muted-foreground text-center">چیزی پیدا نشد.</p>
               ) : (
@@ -217,7 +217,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
       )}
 
       {hotels.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/80 p-10 text-center">
+        <div className="flex flex-col items-center justify-center rounded-sm border-2 border-dashed border-border/80 p-10 text-center">
           <Building2 className="size-10 text-muted-foreground/40 mb-3" />
           <h4 className="text-sm font-bold text-foreground mb-1">هنوز هتلی برای این تور ثبت نشده است</h4>
           <p className="text-xs text-muted-foreground max-w-sm mb-4">
@@ -238,7 +238,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
           {hotels.map((hotel, idx) => (
             <div
               key={idx}
-              className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4 transition-all hover:border-border/80"
+              className="rounded-sm border border-border bg-card p-5 space-y-4 transition-all hover:border-border/80"
             >
               {/* Hotel header line */}
               <div className="flex items-center justify-between pb-3 border-b border-border/60">
@@ -250,7 +250,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                     {hotel.name ? `هتل ${hotel.name}` : `پکیج اقامتی شماره ${idx + 1}`}
                   </span>
                   {hotel.hotelId && (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                    <span className="inline-flex items-center gap-1 rounded-sm bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
                       <Check className="size-3" />
                       متصل به جدول هتل‌ها
                     </span>
@@ -300,7 +300,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                           key={star}
                           onClick={() => handleUpdateHotel(idx, { stars: star })}
                           className={cn(
-                            "flex size-9 items-center justify-center rounded-lg border transition-colors",
+                            "flex size-9 items-center justify-center rounded-sm border transition-colors",
                             (hotel.stars ?? 0) >= star
                               ? "bg-amber-500/10 border-amber-500/30 text-amber-500"
                               : "bg-secondary/30 border-border/60 text-muted-foreground"
@@ -319,7 +319,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                     <select
                       value={hotel.board || 'BB'}
                       onChange={(e) => handleUpdateHotel(idx, { board: e.target.value })}
-                      className="w-full rounded-xl border border-input bg-background px-3 py-2 text-xs font-medium"
+                      className="w-full rounded-sm border border-input bg-background px-3 py-2 text-xs font-medium"
                     >
                       {BOARD_OPTIONS.map((b) => (
                         <option key={b.value} value={b.value}>
@@ -333,7 +333,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
 
               {/* نرخ رزرو — کتابچه §۳ (فاز ۲، قلم ۷): «نوع رزرو» راهنمای ترتیب فیلدهاست؛
                   هر نوع، زیرفیلد نرخ خودش را نشان می‌دهد و در pricePerPerson می‌نشیند (همان فیلدی که سایت می‌خواند). */}
-              <div className="rounded-xl bg-secondary/20 p-4 border border-border/50 space-y-3">
+              <div className="rounded-sm bg-secondary/20 p-4 border border-border/50 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-bold text-foreground">
                     <DollarSign className="size-4 text-emerald-500" />
@@ -348,7 +348,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                   <select
                     value={hotel.bookingType ?? ''}
                     onChange={(e) => handleUpdateHotel(idx, { bookingType: (e.target.value || undefined) as HotelBookingType | undefined })}
-                    className="w-full rounded-xl border border-input bg-background px-3 py-2 text-xs font-medium"
+                    className="w-full rounded-sm border border-input bg-background px-3 py-2 text-xs font-medium"
                     aria-label="نوع رزرو هتل"
                   >
                     <option value="">انتخاب کنید…</option>
@@ -411,7 +411,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                 <div className="space-y-1.5 pt-1">
                   <span className="text-[11px] text-muted-foreground">تفکیک نرخ اتاق‌ها (اختیاری) — اگر «نرخ هر نفر» خالی باشد، نرخ اتاق ۲تخته روی سایت نمایش داده می‌شود.</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <div className="rounded-lg bg-card p-3 border border-border/60">
+                    <div className="rounded-sm bg-card p-3 border border-border/60">
                       <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground mb-1.5">
                         <Users className="size-3.5 text-blue-500" />
                         <span>اتاق ۲تخته *</span>
@@ -424,7 +424,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                       />
                     </div>
 
-                    <div className="rounded-lg bg-card p-3 border border-border/60">
+                    <div className="rounded-sm bg-card p-3 border border-border/60">
                       <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground mb-1.5">
                         <User className="size-3.5 text-purple-500" />
                         <span>اتاق ۱تخته</span>
@@ -437,7 +437,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                       />
                     </div>
 
-                    <div className="rounded-lg bg-card p-3 border border-border/60">
+                    <div className="rounded-sm bg-card p-3 border border-border/60">
                       <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground mb-1.5">
                         <Baby className="size-3.5 text-amber-500" />
                         <span>کودک با تخت (۶ تا ۱۲ سال)</span>
@@ -450,7 +450,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                       />
                     </div>
 
-                    <div className="rounded-lg bg-card p-3 border border-border/60">
+                    <div className="rounded-sm bg-card p-3 border border-border/60">
                       <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground mb-1.5">
                         <Baby className="size-3.5 text-teal-500" />
                         <span>کودک بدون تخت (۲ تا ۶ سال)</span>

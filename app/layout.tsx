@@ -50,6 +50,11 @@ export default async function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap"
           rel="stylesheet"
         />
+        {/* Noto Naskh Arabic — فقط تیترهای پنل مدیریت (تم کاغذ) از آن استفاده می‌کند */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

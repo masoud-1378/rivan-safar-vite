@@ -168,7 +168,7 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
           {steps.map((step, i) => (
             <li
               key={step.title}
-              className={`flex items-start justify-between gap-3 rounded-xl border p-3 ${
+              className={`flex items-start justify-between gap-3 rounded-sm border p-3 ${
                 step.done ? 'border-success/30 bg-success/5' : 'border-border bg-card'
               }`}
             >

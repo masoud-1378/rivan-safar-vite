@@ -62,8 +62,8 @@ export function SearchInput({
   return (
     <div
       className={cn(
-        "flex w-full items-center gap-2 rounded-field border-line border-input bg-background/60 shadow-field text-sm transition-colors",
-        "focus-within:border-transparent focus-within:ring-2 focus-within:ring-ring/60",
+        "flex w-full items-center gap-2 rounded-field border-0 border-b border-input bg-transparent text-sm transition-colors",
+        "focus-within:border-brand",
         sm ? "h-8 px-2.5" : "h-10 px-3",
         disabled && "cursor-not-allowed opacity-50",
         className,

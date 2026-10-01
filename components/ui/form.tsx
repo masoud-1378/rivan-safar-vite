@@ -110,7 +110,7 @@ export function FormErrors<T>({ errors, labels }: { errors: Errors<T>; labels: P
   const entries = Object.entries(errors).filter(([, m]) => m) as [string, string][];
   if (!entries.length) return null;
   return (
-    <ul role="alert" className="space-y-1 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs">
+    <ul role="alert" className="space-y-1 rounded-sm border border-destructive/30 bg-destructive/10 p-3 text-xs">
       {entries.map(([k, m]) => (
         <li key={k}><a href={`#${k}`} className="font-medium underline underline-offset-4">{labels[k as keyof T] ?? k}</a>: {m}</li>
       ))}

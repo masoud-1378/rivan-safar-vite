@@ -33,14 +33,14 @@ export function NotificationInbox({ items, onRead, onReadAll, className }: { ite
       className={cn("w-80 p-0", className)}
       align="end"
       trigger={
-        <span className="relative inline-flex size-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground">
+        <span className="relative inline-flex size-9 items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:text-foreground">
           <Bell className="size-4" />
           {unread > 0 && <span className="absolute -end-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold text-brand-foreground">{fa(unread)}</span>}
         </span>
       }
     >
       <div className="flex items-center justify-between border-b border-border px-3 py-2">
-        <div className="inline-flex rounded-md bg-background p-0.5 text-xs">
+        <div className="inline-flex rounded-sm bg-background p-0.5 text-xs">
           {(["all", "unread"] as const).map((t) => (
             <button key={t} type="button" onClick={() => setTab(t)} className={cn("cursor-pointer rounded px-2 py-1 transition-colors", tab === t ? "bg-secondary font-semibold" : "text-muted-foreground")}>
               {t === "all" ? "همه" : `نخوانده (${fa(unread)})`}

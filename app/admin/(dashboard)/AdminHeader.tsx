@@ -29,12 +29,12 @@ export default function AdminHeader({ role, email }: { role: 'owner' | 'editor';
             onClick={() => setNavOpen(true)}
             aria-label="باز کردن منوی ناوبری"
             aria-haspopup="dialog"
-            className="grid size-11 cursor-pointer place-items-center rounded-xl border border-border bg-card text-foreground transition-colors hover:bg-accent"
+            className="grid size-11 cursor-pointer place-items-center rounded-sm border border-border bg-card text-foreground transition-colors hover:bg-accent"
           >
             <Menu className="size-5" />
           </button>
           <span className="flex items-center gap-2 font-bold">
-            <span className="grid size-9 place-items-center rounded-xl bg-brand text-brand-foreground">ر</span>
+            <span className="grid size-9 place-items-center rounded-sm bg-brand text-brand-foreground">ر</span>
             ریوان سفر
           </span>
         </div>

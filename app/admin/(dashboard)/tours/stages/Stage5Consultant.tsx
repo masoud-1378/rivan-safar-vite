@@ -47,9 +47,9 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between rounded-xl border border-purple-500/20 bg-purple-500/5 p-4">
+      <div className="flex items-center justify-between rounded-sm border border-purple-500/20 bg-purple-500/5 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-purple-600 text-white">
+          <div className="flex size-10 items-center justify-center rounded-sm bg-purple-600 text-white">
             <UserCheck className="size-5" />
           </div>
           <div>
@@ -62,7 +62,7 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
       </div>
 
       {/* Consultant Card Details */}
-      <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+      <div className="rounded-sm border border-border bg-card p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
             <UserCheck className="size-4 text-purple-600" />
@@ -134,7 +134,7 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
       </div>
 
       {/* Description / Summary textarea */}
-      <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+      <div className="rounded-sm border border-border bg-card p-5 space-y-3">
         <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
           <FileCheck2 className="size-4 text-brand" />
           <span>توضیحات کلی، مقدمه سفر و نکات تکمیلی</span>
@@ -144,12 +144,12 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
           value={data.description}
           onChange={(e) => onChange({ description: e.target.value })}
           placeholder="روایت جذاب و صادقانه از حال و هوای سفر، تجربیات خاص این مسیر و چرایی انتخاب این پکیج توسط مسافر…"
-          className="w-full rounded-xl border border-input bg-background p-3 text-xs leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="w-full rounded-sm border border-input bg-background p-3 text-xs leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>
 
       {/* Publishing Status */}
-      <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+      <div className="rounded-sm border border-border bg-card p-5 space-y-4">
         <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
           <Sparkles className="size-4 text-amber-500" />
           <span>وضعیت ظرفیت تور</span>
@@ -170,7 +170,7 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
             </Field>
           </div>
 
-          <div className="flex flex-col justify-center rounded-xl bg-secondary/30 p-4 border border-border/60">
+          <div className="flex flex-col justify-center rounded-sm bg-secondary/30 p-4 border border-border/60">
             <span className="text-xs font-bold text-foreground">راهنمای وضعیت</span>
             <p className="text-[11px] text-muted-foreground mt-1">
               این فقط وضعیت ظرفیت است (روی سایت به‌صورت برچسب دیده می‌شود). دیده‌شدن یا پنهان‌ماندن تور روی سایت

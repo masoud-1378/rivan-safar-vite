@@ -85,12 +85,12 @@ export default function SettingsPage({ initial, role }: { initial: Record<string
         <p className="mt-1 text-sm text-muted-foreground">تنظیمات مرکزی که در کل سایت، سئو و پنل استفاده می‌شوند. هر تغییر در گزارش تغییرات ثبت می‌شود.</p>
       </div>
       {error ? (
-        <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p role="alert" className="rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
         </p>
       ) : null}
       {savedTick > 0 && !error ? (
-        <p className="rounded-lg border border-success/40 bg-success/10 px-3 py-2 text-sm text-success">
+        <p className="rounded-sm border border-success/40 bg-success/10 px-3 py-2 text-sm text-success">
           ذخیره شد.
         </p>
       ) : null}

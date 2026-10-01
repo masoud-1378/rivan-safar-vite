@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 /** جدول. Columns start from the right; use `numeric` on cells with amounts. */
 export function Table({ className, ...props }: React.TableHTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-border">
+    <div className="w-full overflow-x-auto rounded-sm border border-border">
       <table className={cn("w-full caption-bottom text-sm", className)} {...props} />
     </div>
   );

@@ -191,7 +191,7 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
             </Button>
           </form>
           {existingMember && (
-            <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
+            <div className="mt-3 rounded-sm border border-amber-500/40 bg-amber-500/10 p-4">
               <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
                 این ایمیل هم‌اکنون با نقش «{existingMember.role === 'owner' ? 'مالک' : 'ویراستار'}» عضو است؛
                 دعوتِ دوباره بدون تأیید شما نقشش را عوض نمی‌کند.

@@ -50,7 +50,7 @@ export function ToastProvider({ children, max = 3, position = "bottom-start" }: 
       <div aria-live="polite" className={cn("pointer-events-none fixed z-[60] flex w-[min(360px,calc(100vw-2rem))] flex-col gap-2", pos, fromTop ? "" : "flex-col-reverse")}>
         {items.map((t) => <ToastCard key={t.id} toast={t} onClose={() => dismiss(t.id)} />)}
         {items.length > 1 && (
-          <button type="button" onClick={dismissAll} className="pointer-events-auto self-end rounded-md px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground">
+          <button type="button" onClick={dismissAll} className="pointer-events-auto self-end rounded-sm px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground">
             بستن همه ({fa(items.length)})
           </button>
         )}
@@ -74,7 +74,7 @@ export function ToastCard({ toast, onClose, className }: { toast: Omit<Toast, "i
     <div
       role="status"
       className={cn(
-        "pointer-events-auto flex items-start gap-3 rounded-xl border border-border bg-popover px-3.5 py-3 text-popover-foreground shadow-[0_12px_40px_-16px_oklch(0_0_0/70%)]",
+        "pointer-events-auto flex items-start gap-3 rounded-sm border border-border bg-popover px-3.5 py-3 text-popover-foreground shadow-[0_12px_40px_-16px_oklch(0_0_0/70%)]",
         "animate-slide-in",
         className,
       )}
@@ -90,7 +90,7 @@ export function ToastCard({ toast, onClose, className }: { toast: Omit<Toast, "i
         {toast.description && <p className="text-xs text-muted-foreground">{toast.description}</p>}
       </div>
       {toast.action && (
-        <button type="button" onClick={() => { toast.action?.onClick(); onClose?.(); }} className="cursor-pointer rounded-md border border-border px-2 py-1 text-xs transition-colors hover:bg-accent">
+        <button type="button" onClick={() => { toast.action?.onClick(); onClose?.(); }} className="cursor-pointer rounded-sm border border-border px-2 py-1 text-xs transition-colors hover:bg-accent">
           {toast.action.label}
         </button>
       )}

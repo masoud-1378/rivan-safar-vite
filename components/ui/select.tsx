@@ -18,8 +18,8 @@ export function Select({ className, options, placeholder, ...props }: SelectProp
     <div className="relative">
       <select
         className={cn(
-          "h-10 w-full cursor-pointer appearance-none rounded-field border-line border-input bg-background/60 shadow-field ps-3 pe-9 text-sm text-foreground",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:border-transparent",
+          "h-10 w-full cursor-pointer appearance-none rounded-field border-0 border-b border-input bg-transparent ps-3 pe-9 text-sm text-foreground",
+          "focus-visible:outline-none focus-visible:border-brand",
           "disabled:cursor-not-allowed disabled:opacity-50",
           className,
         )}

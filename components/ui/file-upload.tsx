@@ -46,7 +46,7 @@ export function FileUpload({ accept, multiple = true, maxSize, onFiles, hint, cl
         onDrop={(e) => { e.preventDefault(); setOver(false); add(e.dataTransfer.files); }}
         className={cn(
           "flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-field border-line border-dashed p-6 text-center transition-colors",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+          "focus-visible:outline-none focus-visible:border-brand",
           over ? "border-foreground/60 bg-accent/60" : "border-input hover:bg-accent/40",
         )}
       >

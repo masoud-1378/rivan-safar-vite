@@ -21,7 +21,7 @@ export function Accordion({ items, multiple, defaultOpen = [], className }: Acco
     setOpen((o) => (o.includes(id) ? o.filter((x) => x !== id) : multiple ? [...o, id] : [id]));
 
   return (
-    <div className={cn("divide-y divide-border rounded-xl border border-border bg-card", className)}>
+    <div className={cn("divide-y divide-border rounded-sm border border-border bg-card", className)}>
       {items.map((it) => {
         const isOpen = open.includes(it.id);
         return (

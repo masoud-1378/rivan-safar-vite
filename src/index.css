@@ -1615,67 +1615,68 @@ html, body {
   transform: translateX(-4px);
 }
 
-/* --- vibefarsi:theme-pomegranate --- */
-/* انار، خمیری — فقط پنل مدیریت. متن و تیتر با Vazirmatn. */
+/* --- vibefarsi:theme-paper --- */
+/* کاغذ، مجله‌ای — فقط پنل مدیریت. تیترها با Noto Naskh Arabic؛ لهجهٔ برند نارنجی ریوان سفر (#FF6600). */
 /* `body:has(.admin-vibefarsi)` توکن‌ها را به هر پورتالی که روی body سوار می‌شود
    (تقویم، پالت فرمان، پاپ‌آور) می‌رساند؛ بدون دست‌زدن به فایل کامپوننت‌ها. */
 .admin-vibefarsi,
-[data-theme='pomegranate'],
+[data-theme='paper'],
 body:has(.admin-vibefarsi) {
   color-scheme: light;
 
   /* رنگ */
-  --background: oklch(0.94 0.025 15);
-  --foreground: oklch(0.27 0.05 15);
-  --card: oklch(0.975 0.012 15);
-  --card-foreground: oklch(0.27 0.05 15);
-  --popover: oklch(0.985 0.008 15);
-  --popover-foreground: oklch(0.27 0.05 15);
-  --primary: oklch(0.6 0.2 18);
-  --primary-foreground: oklch(0.99 0.005 15);
-  --secondary: oklch(0.9 0.035 15);
-  --secondary-foreground: oklch(0.27 0.05 15);
-  --muted: oklch(0.92 0.03 15);
-  --muted-foreground: oklch(0.5 0.05 15);
-  --accent: oklch(0.9 0.04 15);
-  --accent-foreground: oklch(0.27 0.05 15);
-  --destructive: oklch(0.55 0.2 28);
-  --success: oklch(0.58 0.14 160);
-  --warning: oklch(0.68 0.15 65);
-  --border: oklch(0.27 0.05 15 / 9%);
-  --input: oklch(0.27 0.05 15 / 12%);
-  --ring: oklch(0.6 0.2 18);
-  --brand: oklch(0.6 0.17 340);
-  --brand-foreground: oklch(0.99 0 0);
+  --background: oklch(0.985 0.004 85);
+  --foreground: oklch(0.2 0.01 60);
+  --card: oklch(0.985 0.004 85);
+  --card-foreground: oklch(0.2 0.01 60);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.01 60);
+  --primary: oklch(0.2 0.01 60);
+  --primary-foreground: oklch(0.985 0.004 85);
+  --secondary: oklch(0.94 0.008 85);
+  --secondary-foreground: oklch(0.2 0.01 60);
+  --muted: oklch(0.955 0.006 85);
+  --muted-foreground: oklch(0.47 0.015 60);
+  --accent: oklch(0.94 0.008 85);
+  --accent-foreground: oklch(0.2 0.01 60);
+  --destructive: oklch(0.55 0.2 25);
+  --success: oklch(0.52 0.13 160);
+  --warning: oklch(0.62 0.14 70);
+  --border: oklch(0.2 0.01 60 / 14%);
+  --input: oklch(0.2 0.01 60 / 30%);
+  --ring: oklch(0.5 0.02 60);
+  /* نارنجی برند ریوان سفر (#FF6600 از :root ریپو)؛ متن مرکبی برای خوانایی روی نارنجی */
+  --brand: oklch(0.696 0.204 43.5);
+  --brand-foreground: oklch(0.2 0.01 60);
 
   /* زبان طراحی: فونت، فرم، خط، عمق، حرکت و تراکم */
-  --radius: 1.25rem;
+  --radius: 0.25rem;
   --type-body: "Vazirmatn", "IRANSans", "Vazirmatn", system-ui, sans-serif;
-  --type-display: "Vazirmatn", "IRANSans", "Vazirmatn", system-ui, sans-serif;
-  --type-display-weight: 800;
-  --shape-control: 999px;
-  --shape-field: 1rem;
-  --shape-surface: 1.75rem;
-  --shape-overlay: 1.5rem;
+  --type-display: "Noto Naskh Arabic", "IRANSans", "Vazirmatn", serif;
+  --type-display-weight: 700;
+  --shape-control: 0.125rem;
+  --shape-field: 0rem;
+  --shape-surface: 0.125rem;
+  --shape-overlay: 0.25rem;
   --line: 1px;
-  --line-field: 1px;
+  --line-field: 0 0 1px 0;
   --line-style: solid;
-  --field: var(--card);
-  --depth-control: inset 0 -3px 0 0 oklch(0.2 0.08 15 / 16%), inset 0 2px 0 0 oklch(1 0 0 / 35%), 0 10px 20px -10px oklch(0.45 0.16 18 / 55%);
-  --depth-press: inset 0 2px 5px 0 oklch(0.2 0.08 15 / 22%);
-  --depth-field: inset 0 2px 5px 0 oklch(0.3 0.08 15 / 9%);
-  --depth-surface: inset 0 2px 0 0 oklch(1 0 0 / 80%), inset 0 -4px 10px 0 oklch(0.45 0.1 15 / 7%), 0 24px 44px -24px oklch(0.45 0.14 18 / 40%);
-  --depth-overlay: inset 0 2px 0 0 oklch(1 0 0 / 80%), 0 30px 60px -22px oklch(0.45 0.14 18 / 45%);
+  --field: transparent;
+  --depth-control: 0 0 #0000;
+  --depth-press: 0 0 #0000;
+  --depth-field: 0 0 #0000;
+  --depth-surface: 0 0 #0000;
+  --depth-overlay: 0 12px 32px -16px oklch(0.2 0.01 60 / 25%);
   --surface-filter: none;
-  --press: scale(0.95);
-  --motion: 420ms;
-  --motion-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --press: translateY(1px);
+  --motion: 160ms;
+  --motion-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
   --backdrop: none;
-  --spacing: 0.275rem;
+  --spacing: 0.26rem;
 }
-/* --- vibefarsi:theme-pomegranate-end --- */
+/* --- vibefarsi:theme-paper-end --- */
 
-/* انار: تیترهای پنل با Vazirmatn وزن ۸۰۰ */
+/* کاغذ: تیترهای پنل با Noto Naskh Arabic وزن ۷۰۰ */
 .admin-vibefarsi h1,
 .admin-vibefarsi h2,
 .admin-vibefarsi h3,
@@ -1687,59 +1688,25 @@ body:has(.admin-vibefarsi) {
   letter-spacing: 0;
 }
 
-/* --- admin motion: انیمیشن‌های نرم پنل --- */
+/* --- admin motion: حرکت تحریریه‌ای کاغذ (۱۶۰ms، بدون حرکت تزئینی) --- */
 @media (prefers-reduced-motion: no-preference) {
   .admin-vibefarsi *,
   .admin-vibefarsi *::before,
   .admin-vibefarsi *::after,
-  [data-theme='pomegranate'] *,
-  [data-theme='pomegranate'] *::before,
-  [data-theme='pomegranate'] *::after {
+  [data-theme='paper'] *,
+  [data-theme='paper'] *::before,
+  [data-theme='paper'] *::after {
     transition-property: color, background-color, border-color, box-shadow, transform, opacity;
     transition-duration: var(--motion);
     transition-timing-function: var(--motion-ease);
   }
-
-  .admin-vibefarsi [data-slot='card'],
-  .admin-vibefarsi .admin-enter {
-    animation: admin-rise var(--motion) var(--motion-ease) both;
-  }
-
-  .admin-vibefarsi .admin-enter > * {
-    animation: admin-rise var(--motion) var(--motion-ease) both;
-  }
-
-  .admin-vibefarsi .admin-enter > *:nth-child(1) { animation-delay: 40ms; }
-  .admin-vibefarsi .admin-enter > *:nth-child(2) { animation-delay: 90ms; }
-  .admin-vibefarsi .admin-enter > *:nth-child(3) { animation-delay: 140ms; }
-  .admin-vibefarsi .admin-enter > *:nth-child(4) { animation-delay: 190ms; }
-  .admin-vibefarsi .admin-enter > *:nth-child(5) { animation-delay: 240ms; }
-  .admin-vibefarsi .admin-enter > *:nth-child(6) { animation-delay: 290ms; }
-
-  .admin-vibefarsi .admin-lift:hover,
-  [data-theme='pomegranate'] .admin-lift:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--depth-surface);
-  }
 }
+/* --- admin motion end --- */
 
-/* کشوی ناوبری موبایل: هدف لمسیِ دست‌کم ۴۴ پیکسل (قلم ۳ بازسازی) —
-   بیرون از @media حرکت است تا با reduced-motion هم برقرار بماند. */
+/* کشوی ناوبری موبایل: هدف لمسیِ دست‌کم ۴۴ پیکسل (قلم ۳ بازسازی) */
 .admin-mobile-nav nav a {
   min-height: 44px;
 }
-
-@keyframes admin-rise {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-/* --- admin motion end --- */
 
 /* --- vibefarsi:tailwind-map --- */
 @theme inline {
@@ -1782,8 +1749,8 @@ body:has(.admin-vibefarsi) {
 }
 /* --- vibefarsi:tailwind-map-end --- */
 
-/* --- vibefarsi:pomegranate-map --- */
-/* نگاشت زبان طراحی انار به یوتیلیتی‌های tailwind؛ بیرون از اسکوپ پنل،
+/* --- vibefarsi:paper-map --- */
+/* نگاشت زبان طراحی کاغذ به یوتیلیتی‌های tailwind؛ بیرون از اسکوپ پنل،
    fallbackها ظاهر فعلی سایت عمومی را حفظ می‌کنند. */
 @theme inline {
   --radius-field: var(--shape-field, 0.75rem);
@@ -1797,7 +1764,7 @@ body:has(.admin-vibefarsi) {
   --ease-motion: var(--motion-ease, cubic-bezier(0.22, 1, 0.36, 1));
   --font-display: var(--type-display, var(--font-sans));
 }
-/* --- vibefarsi:pomegranate-map-end --- */
+/* --- vibefarsi:paper-map-end --- */
 
 /* پهنای خط تم به‌صورت یوتیلیتی: border-line */
 @utility border-line {
