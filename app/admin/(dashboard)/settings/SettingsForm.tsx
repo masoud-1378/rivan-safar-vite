@@ -29,20 +29,20 @@ function SettingField({ def, value, onChange, disabled, error }: { def: SettingD
   }
   if (def.kind === 'select' && def.options) {
     return (
-      <Field label="" error={error}>
+      <Field error={error}>
         <Select value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} options={def.options} />
       </Field>
     );
   }
   if (def.kind === 'textarea') {
     return (
-      <Field label="" error={error}>
+      <Field error={error}>
         <Textarea value={value} disabled={disabled} dir={def.ltr ? 'ltr' : undefined} onChange={(e) => onChange(e.target.value)} className="min-h-20" />
       </Field>
     );
   }
   return (
-    <Field label="" error={error}>
+    <Field error={error}>
       <Input
         type={def.kind === 'number' ? 'number' : def.kind === 'email' ? 'email' : def.kind === 'url' ? 'url' : 'text'}
         value={value}

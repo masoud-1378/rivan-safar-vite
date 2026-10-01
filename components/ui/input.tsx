@@ -43,7 +43,9 @@ export function Input({ className, type, startAddon, endAddon, error, id, dir, r
 
   if (!grouped) return withError(input, error);
 
-  // The whole group takes the direction, so a `dir="ltr"` phone field puts «+98» on the left.
+  // In grouped mode the wrapper is the visible box, so className (e.g. h-9)
+  // merges here for size overrides to take effect (یافتهٔ ۱: پیش‌تر className
+  // به div بیرونی نمی‌رسید و h-9 روی جست‌وجوی DataTable بی‌اثر بود).
   return withError(
     <div
       dir={dir}
@@ -51,6 +53,7 @@ export function Input({ className, type, startAddon, endAddon, error, id, dir, r
         "flex h-10 w-full items-center gap-2 rounded-field border-0 border-b border-input bg-transparent px-3 text-sm transition-all duration-(--motion) ease-motion",
         "focus-within:border-brand",
         error && "border-destructive",
+        className,
       )}
     >
       {startAddon && <span className="shrink-0 text-muted-foreground">{startAddon}</span>}
@@ -84,7 +87,7 @@ export function Field({
   className,
   children,
 }: {
-  label: React.ReactNode;
+  label?: React.ReactNode;
   htmlFor?: string;
   hint?: React.ReactNode;
   error?: React.ReactNode;
@@ -93,7 +96,7 @@ export function Field({
 }) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <Label htmlFor={htmlFor}>{label}</Label>
+      {label ? <Label htmlFor={htmlFor}>{label}</Label> : null}
       {children}
       {error ? (
         <p className="text-xs text-destructive" role="alert">{error}</p>

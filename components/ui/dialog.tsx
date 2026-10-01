@@ -88,7 +88,7 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
           </div>
         )}
         {children && <div className="mt-4">{children}</div>}
-        {footer && <div className="mt-5 flex flex-row-reverse justify-start gap-2 sm:flex-row">{footer}</div>}
+        {footer && <div className="mt-5 flex justify-start gap-2">{footer}</div>}
       </div>
     </div>,
     document.body

@@ -168,11 +168,11 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
       description={`از «${tour.title}» یک نسخهٔ تازه می‌سازید. مبدأ و ویزا از تور اصلی حفظ می‌شوند و نسخهٔ تازه به‌صورت پیش‌نویس ساخته می‌شود.`}
       footer={
         <>
-          <Button size="lg" disabled={busy} onClick={() => void submit()} className="gap-2">
+          <Button size="md" disabled={busy} onClick={() => void submit()} className="gap-2">
             <Copy className="size-4" />
             {busy ? 'در حال تکثیر…' : 'تکثیر تور'}
           </Button>
-          <Button size="lg" variant="outline" onClick={onClose} disabled={busy}>
+          <Button size="md" variant="outline" onClick={onClose} disabled={busy}>
             انصراف
           </Button>
         </>

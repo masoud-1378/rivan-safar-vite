@@ -272,7 +272,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
             title="صفحه اصلی ریوان سفر"
           >
             <Image
-              src="/images/logo-rivan-safar.png"
+              src="/images/logo-rivan-safar-simple.png"
               alt="آژانس مسافرتی ریوان سفر"
               width={1200}
               height={657}

@@ -108,7 +108,7 @@ export default function SectionSettingsDialog({
                       <span>{(local[d.key] ?? d.defaultValue) === 'true' ? 'فعال' : 'غیرفعال'}</span>
                     </div>
                   ) : d.kind === 'select' && d.options ? (
-                    <Field label="" error={fieldErrors[d.key]}>
+                    <Field error={fieldErrors[d.key]}>
                       <Select
                         value={local[d.key] ?? d.defaultValue}
                         disabled={pending}
@@ -120,7 +120,7 @@ export default function SectionSettingsDialog({
                       />
                     </Field>
                   ) : d.kind === 'textarea' ? (
-                    <Field label="" error={fieldErrors[d.key]}>
+                    <Field error={fieldErrors[d.key]}>
                       <Textarea
                         value={local[d.key] ?? d.defaultValue}
                         disabled={pending}
@@ -132,7 +132,7 @@ export default function SectionSettingsDialog({
                       />
                     </Field>
                   ) : (
-                    <Field label="" error={fieldErrors[d.key]}>
+                    <Field error={fieldErrors[d.key]}>
                       <Input
                         type={d.kind === 'number' ? 'number' : 'text'}
                         value={local[d.key] ?? d.defaultValue}

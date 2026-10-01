@@ -36,7 +36,7 @@ export default function AdminHeader({ role, email }: { role: 'owner' | 'editor';
           </button>
           <span className="flex items-center gap-2">
             <Image
-              src="/images/logo-rivan-safar.png"
+              src="/images/logo-rivan-safar-simple.png"
               alt="ریوان سفر البرز"
               width={1200}
               height={657}
