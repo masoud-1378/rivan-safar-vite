@@ -24,6 +24,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
   const [loading, setLoading] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
   const [errors, setErrors] = useState({ name: '', phone: '' });
+  const [formError, setFormError] = useState('');
 
   const validate = () => {
     const errs = { name: '', phone: '' };
@@ -35,6 +36,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
     if (!validate()) return;
 
     setLoading(true);
@@ -50,9 +52,13 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
         .join(' — '),
     });
     setLoading(false);
-    setSubmitMessage(result.message);
-    setSubmitted(true);
-    if (result.ok) trackLeadSubmit('/contact', result.stored);
+    if (result.ok) {
+      setSubmitMessage(result.message);
+      setSubmitted(true);
+      trackLeadSubmit('/contact', result.stored);
+    } else {
+      setFormError(result.message);
+    }
   };
 
   return (
@@ -161,6 +167,11 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {formError && (
+                    <p className="p-3 bg-red-50 border border-red-200 rounded-control text-red-700 text-body-sm">
+                      {formError}
+                    </p>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی <span className="text-red-500">*</span></label>
