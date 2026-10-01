@@ -124,7 +124,8 @@ export function MultiSelect({
               tabIndex={-1}
               disabled={disabled}
               onClick={(e) => { e.stopPropagation(); toggle(o.value); }}
-              className="-m-1 flex size-6 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+              // خود دکمه ۲۴px می‌ماند تا چیپ خراب نشود؛ در موبایل/تاچ هیت‌باکس نامرئی تا ۴۴px.
+              className="-m-1 relative flex size-6 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground max-md:before:absolute max-md:before:-inset-2.5 max-md:before:content-['']"
             >
               <X className="size-3" />
             </button>

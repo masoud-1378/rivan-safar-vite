@@ -37,8 +37,10 @@ export function Checkbox({ checked, defaultChecked = false, onCheckedChange, dis
       disabled={disabled}
       onClick={toggle}
       className={cn(
-        // باکس تنها (بدون لیبل): ناحیهٔ لمسی نامرئی تا ~۳۲px؛ خود باکس ۱۶px می‌ماند.
+        // باکس تنها (بدون لیبل): خود باکس ۱۶px می‌ماند؛ ناحیهٔ لمسی نامرئی
+        // در دسکتاپ ~۳۲px و در موبایل/تاچ ۴۴px است.
         "relative mt-0.5 flex size-4 shrink-0 cursor-pointer items-center justify-center rounded border transition-colors after:absolute after:-inset-2 after:content-[\"\"]",
+        !label && "max-md:after:-inset-[14px]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "disabled:cursor-not-allowed disabled:opacity-50",
         state ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background/60",
