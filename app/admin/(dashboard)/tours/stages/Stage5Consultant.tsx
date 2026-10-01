@@ -112,7 +112,7 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
                   placeholder="https://rivansafar.com/audio/..."
                   className="ps-9"
                 />
-                <Mic className="size-4 text-purple-500 absolute left-3 top-2.5" />
+                <Mic className="size-4 text-purple-500 absolute start-3 top-2.5" />
               </div>
             </Field>
           </div>
