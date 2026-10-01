@@ -123,7 +123,6 @@ export const siteDestinations = pgTable(
     nameEn: varchar('name_en', { length: 160 }).notNull(),
     type: varchar('type', { length: 60 }).notNull(), // 'country' | 'city'
     parentCountrySlug: varchar('parent_country_slug', { length: 160 }),
-    parentCountryName: varchar('parent_country_name', { length: 160 }),
     category: varchar('category', { length: 120 }).notNull(),
     image: text('image').notNull(),
     heroTagline: varchar('hero_tagline', { length: 300 }).notNull(),
@@ -530,6 +529,8 @@ export const leadRequests = pgTable('lead_requests', {
   destinationHint: varchar('destination_hint', { length: 120 }),
   passengers: varchar('passengers', { length: 20 }),
   notes: text('notes'),
+  // ۳-۱۰: یادداشت داخلی ادمین؛ جدا از یادداشت فقط‌خواندنیِ خودِ کاربر.
+  adminNotes: text('admin_notes'),
   status: leadStatusEnum('status').notNull().default('new'),
   assignee: varchar('assignee', { length: 160 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),

@@ -42,6 +42,31 @@ export async function updateLeadStatus(id: string, status: LeadStatus, assignee?
 }
 
 /**
+ * ۳-۱۰: یادداشت داخلی ادمین برای لید — جدا از یادداشت فقط‌خواندنیِ خودِ کاربر
+ * (ستون notes). فقط در پنل خوانده و نوشته می‌شود.
+ * ⚠️ پیش‌نیاز دیپلوی: مایگریشن 0016 روی Supabase اجرا شده باشد.
+ */
+export async function updateLeadAdminNotes(id: string, adminNotes: string) {
+  const session = await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const notes = adminNotes.trim();
+  await db
+    .update(leadRequests)
+    .set({ adminNotes: notes || null })
+    .where(eq(leadRequests.id, id));
+  await db.insert(auditLogs).values({
+    actor: session.email,
+    action: 'lead.admin_notes',
+    entity: 'lead_requests',
+    entityId: id,
+    reasonFa: 'ثبت یادداشت ادمین',
+  });
+  revalidatePath('/admin/leads');
+  return { ok: true };
+}
+
+/**
  * عملیات گروهی لیدها (L6): تغییر وضعیت گروهی و/یا تخصیص گروهی مسئول پیگیری.
  * دست‌کم یکی از status یا assignee باید داده شود.
  */

@@ -13,8 +13,9 @@ import { useToast } from '@/components/ui/toast';
 import { Textarea } from '@/components/ui/textarea';
 import { fa, faSlug } from '@/lib/utils';
 import { saveDestination, checkDestinationSlugUnique, type DestinationInput, type DestinationRow, type FaqItem } from './actions';
+import { DESTINATION_CATEGORIES, isValidDestinationCategory } from './categories';
 
-const EMPTY: DestinationInput = { slug: '', name: '', nameEn: '', type: 'city', parentCountrySlug: '', parentCountryName: '', category: '', image: '', heroTagline: '', description: '', bestSeason: '', visaRequired: false, visaType: '', flightDuration: '', currency: '', startingPrice: '', startingPriceNote: '', lastVerifiedAt: '', activeToursCount: 0, popularDistricts: [], keyHighlights: [], travelTips: [], faqs: [], relatedGuides: [] };
+const EMPTY: DestinationInput = { slug: '', name: '', nameEn: '', type: 'city', parentCountrySlug: '', category: '', image: '', heroTagline: '', description: '', bestSeason: '', visaRequired: false, visaType: '', flightDuration: '', currency: '', startingPrice: '', startingPriceNote: '', lastVerifiedAt: '', activeToursCount: 0, popularDistricts: [], keyHighlights: [], travelTips: [], faqs: [], relatedGuides: [] };
 const nlToArray = (v: string) => v.split('\n').map((s) => s.trim()).filter(Boolean);
 
 export interface CountryOption {
@@ -30,7 +31,7 @@ interface DestinationFormProps {
 }
 
 export default function DestinationForm({ initial, editingId, onDone, countries: initialCountries }: DestinationFormProps) {
-  const src: DestinationInput = initial ? { slug: initial.slug, name: initial.name, nameEn: initial.nameEn, type: initial.type, parentCountrySlug: initial.parentCountrySlug, parentCountryName: initial.parentCountryName, category: initial.category, image: initial.image, heroTagline: initial.heroTagline, description: initial.description, bestSeason: initial.bestSeason, visaRequired: initial.visaRequired, visaType: initial.visaType, flightDuration: initial.flightDuration, currency: initial.currency, startingPrice: initial.startingPrice, startingPriceNote: initial.startingPriceNote, lastVerifiedAt: initial.lastVerifiedAt, activeToursCount: initial.activeToursCount, popularDistricts: initial.popularDistricts, keyHighlights: initial.keyHighlights, travelTips: initial.travelTips, faqs: initial.faqs, relatedGuides: initial.relatedGuides } : EMPTY;
+  const src: DestinationInput = initial ? { slug: initial.slug, name: initial.name, nameEn: initial.nameEn, type: initial.type, parentCountrySlug: initial.parentCountrySlug, category: initial.category, image: initial.image, heroTagline: initial.heroTagline, description: initial.description, bestSeason: initial.bestSeason, visaRequired: initial.visaRequired, visaType: initial.visaType, flightDuration: initial.flightDuration, currency: initial.currency, startingPrice: initial.startingPrice, startingPriceNote: initial.startingPriceNote, lastVerifiedAt: initial.lastVerifiedAt, activeToursCount: initial.activeToursCount, popularDistricts: initial.popularDistricts, keyHighlights: initial.keyHighlights, travelTips: initial.travelTips, faqs: initial.faqs, relatedGuides: initial.relatedGuides } : EMPTY;
   const [form, setForm] = useState<DestinationInput>(src);
   const [guidesTxt, setGuidesTxt] = useState((src.relatedGuides ?? []).join('\n'));
   const [faqs, setFaqs] = useState<FaqItem[]>(src.faqs ?? []);
@@ -43,6 +44,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
   const [extraOpen, setExtraOpen] = useState(false);
   const [nameError, setNameError] = useState('');
   const [slugError, setSlugError] = useState('');
+  const [categoryError, setCategoryError] = useState('');
 
   // قلم ۱۲: انتخاب کشور مادر از فهرست + افزودن کشور تازه همان‌جا.
   const [countries, setCountries] = useState<CountryOption[]>(initialCountries);
@@ -80,6 +82,15 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
       setSlugError('نامک لازم است؛ اول نام فارسی را بنویسید تا خودکار ساخته شود.');
       setExtraOpen(true);
       setAdvancedOpen(true);
+      return;
+    }
+    // ۲-۱۲: دسته‌بندی حتماً یکی از شش‌تایی باشد تا مقصد تازه زیر چیپ فیلتر هاب بنشیند.
+    if (!isValidDestinationCategory(form.category)) {
+      setCategoryError(
+        form.category
+          ? `مقدار قبلی «${form.category}» معتبر نیست؛ یکی از شش دسته را انتخاب کنید.`
+          : 'دسته‌بندی را انتخاب کنید.',
+      );
       return;
     }
     const payload: DestinationInput = {
@@ -130,8 +141,8 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
         }
         await saveDestination(null, { ...EMPTY, slug, name, type: 'country' });
         setCountries((cs) => [...cs, { slug, name }].sort((a, b) => a.name.localeCompare(b.name, 'fa')));
-        // کشور تازه ساخته‌شده همان‌جا انتخاب می‌شود و نامش هم پر می‌شود.
-        setForm((f) => ({ ...f, parentCountrySlug: slug, parentCountryName: name }));
+        // کشور تازه ساخته‌شده همان‌جا انتخاب می‌شود.
+        setForm((f) => ({ ...f, parentCountrySlug: slug }));
         setNewCountryName('');
         setNewCountrySlug('');
         setNewCountrySlugTouched(false);
@@ -167,13 +178,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
                 className="grow"
                 value={form.parentCountrySlug}
                 onChange={(e) => {
-                  const slug = e.target.value;
-                  const country = countries.find((c) => c.slug === slug);
-                  setForm((f) => ({
-                    ...f,
-                    parentCountrySlug: slug,
-                    parentCountryName: country ? country.name : f.parentCountryName,
-                  }));
+                  setForm((f) => ({ ...f, parentCountrySlug: e.target.value }));
                 }}
                 options={[
                   { value: '', label: 'بدون کشور مادر' },
@@ -248,7 +253,26 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
               </div>
             </div>
           )}
-          <Field label="دسته‌بندی"><Input value={form.category} onChange={(e) => set('category', e.target.value)} /></Field>
+          {/* ۲-۱۲: دسته‌بندی از متن آزاد به انتخاب از شش‌تاییِ Place['category'].
+              مقدار قدیمیِ خارج از شش‌تایی (اگر باشد) به‌عنوان «مقدار قبلی» نشان
+              داده می‌شود تا هنگام ویرایش، آگاهانه جایگزین شود. */}
+          <Field
+            label="دسته‌بندی *"
+            hint="مشخص می‌کند مقصد زیر کدام فیلتر در هاب مقصدهای سایت دیده می‌شود."
+            error={categoryError}
+          >
+            <Select
+              value={form.category}
+              onChange={(e) => { set('category', e.target.value); setCategoryError(''); }}
+              placeholder="انتخاب دسته‌بندی…"
+              options={[
+                ...(form.category && !isValidDestinationCategory(form.category)
+                  ? [{ value: form.category, label: `«${form.category}» (مقدار قبلی)` }]
+                  : []),
+                ...DESTINATION_CATEGORIES.map((c) => ({ value: c.value as string, label: c.label })),
+              ]}
+            />
+          </Field>
           <Field label="تصویر" hint="آدرس کامل تصویر"><Input value={form.image} dir="ltr" onChange={(e) => set('image', e.target.value)} /></Field>
           </div>
         </div>
@@ -261,7 +285,6 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
           className="rounded-sm border border-border bg-muted/20 p-4"
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="نام کشور مادر" hint="معمولاً خودکار از «کشور مادر» پر می‌شود؛ فقط اگر لازم بود دستی بنویسید"><Input value={form.parentCountryName} onChange={(e) => set('parentCountryName', e.target.value)} /></Field>
           <Field label="شعار هدر"><Input value={form.heroTagline} onChange={(e) => set('heroTagline', e.target.value)} /></Field>
           <Field label="بهترین فصل"><Input value={form.bestSeason} onChange={(e) => set('bestSeason', e.target.value)} /></Field>
           <Field label="ویزا لازم است؟"><Select value={form.visaRequired ? 'yes' : 'no'} onChange={(e) => set('visaRequired', e.target.value === 'yes')} options={[{ value: 'no', label: 'خیر' }, { value: 'yes', label: 'بله' }]} /></Field>

@@ -27,6 +27,8 @@ export interface GuideInput {
   // F8: نام ویژگی «نامک» است چون مقدار ذخیره‌شده نامک تور است، نه شناسه؛ ستون دیتابیس دست نمی‌خورد.
   relatedTourSlug: string;
   status: GuideStatus;
+  /** ۴-۱۰: تاریخ بازبینی دوره‌ای؛ ISO string یا null. */
+  lastReviewedAt: string | null;
 }
 
 function asJsonArray(v: unknown): unknown[] {
@@ -104,6 +106,8 @@ export async function saveGuide(id: string | null | undefined, data: GuideInput)
   if (!slug) throw new Error('نامک (slug) لازم است.');
   if (titleFa.length < 2) throw new Error('عنوان راهنما لازم است.');
   const status: GuideStatus = VALID_STATUS.includes(data.status) ? data.status : 'draft';
+  // ۴-۱۰: تاریخ بازبینی؛ مقدار خراب نادیده گرفته می‌شود.
+  const reviewedAt = data.lastReviewedAt ? new Date(data.lastReviewedAt) : null;
   const values = {
     slug,
     titleFa,
@@ -120,6 +124,7 @@ export async function saveGuide(id: string | null | undefined, data: GuideInput)
     relatedDestinationSlug: data.relatedDestinationSlug || null,
     relatedTourId: data.relatedTourSlug || null,
     status,
+    lastReviewedAt: reviewedAt && !Number.isNaN(reviewedAt.getTime()) ? reviewedAt : null,
     updatedAt: new Date(),
   };
   if (id) {

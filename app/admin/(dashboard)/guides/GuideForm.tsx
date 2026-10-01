@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { fa, faSlug } from '@/lib/utils';
 import { saveGuide, type GuideInput, type GuideRow, type GuideStatus } from './actions';
+import { DatePicker } from '@/components/ui/date-picker';
 import BlockEditor, { cleanBlocks, validateBlocks } from '@/components/ui/block-editor';
 
 export interface GuidePickerOption {
@@ -95,6 +96,10 @@ export default function GuideForm({
   const [sectionsError, setSectionsError] = useState<string | undefined>();
   const [faqsError, setFaqsError] = useState<string | undefined>();
   const [status, setStatus] = useState<GuideStatus>(initial?.status ?? 'draft');
+  // ۴-۱۰: تاریخ بازبینی دوره‌ای؛ ستون last_reviewed_at از قبل در دیتابیس هست.
+  const [lastReviewedAt, setLastReviewedAt] = useState<Date | null>(
+    initial?.lastReviewedAt ? new Date(initial.lastReviewedAt) : null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -140,6 +145,7 @@ export default function GuideForm({
       relatedDestinationSlug: relatedDestinationSlug.trim(),
       relatedTourSlug: relatedTourSlug.trim(),
       status,
+      lastReviewedAt: lastReviewedAt ? lastReviewedAt.toISOString() : null,
     };
 
     startTransition(async () => {
@@ -280,6 +286,14 @@ export default function GuideForm({
             value={status}
             onChange={(e) => setStatus(e.target.value as GuideStatus)}
             options={STATUSES.map((s) => ({ value: s.value, label: s.label }))}
+          />
+        </Field>
+
+        <Field label="تاریخ بازبینی" hint="تاریخ شمسی؛ برای یادآوری بازبینی دوره‌ای محتواست.">
+          <DatePicker
+            value={lastReviewedAt}
+            onChange={setLastReviewedAt}
+            placeholder="انتخاب تاریخ بازبینی"
           />
         </Field>
       </div>

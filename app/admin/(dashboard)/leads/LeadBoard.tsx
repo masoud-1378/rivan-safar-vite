@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import { bulkUpdateLeads, updateLeadStatus, type LeadStatus } from './actions';
+import { useEffect, useState, useTransition } from 'react';
+import { bulkUpdateLeads, updateLeadAdminNotes, updateLeadStatus, type LeadStatus } from './actions';
 import { LEAD_STATUSES, LEAD_STATUS_FA, LEAD_STATUS_VARIANT } from './lead-status';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { DataTable, type Column, type DataTableSelection } from '@/components/ui
 import { Dialog } from '@/components/ui/dialog';
 import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
 
@@ -22,6 +23,8 @@ export interface LeadRow {
   destinationHint: string | null;
   passengers: string | null;
   notes: string | null;
+  /** ۳-۱۰: یادداشت داخلی ادمین؛ جدا از یادداشت فقط‌خواندنیِ کاربر. */
+  adminNotes: string | null;
   status: LeadStatus;
   assignee: string | null;
   createdAt: string;
@@ -47,15 +50,21 @@ function DefRow({ label, children, hint }: { label: string; children: React.Reac
   );
 }
 
-export function LeadBoard({ initial, variant = 'general' }: { initial: LeadRow[]; variant?: 'general' | 'tour' }) {
+export function LeadBoard({ initial, variant = 'general', pageSize = 8 }: { initial: LeadRow[]; variant?: 'general' | 'tour'; pageSize?: number }) {
   const [filter, setFilter] = useState<LeadStatus | 'all'>('all');
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<LeadRow | null>(null);
+  const [adminNoteDraft, setAdminNoteDraft] = useState('');
   const [bulkStatus, setBulkStatus] = useState<{ open: boolean; value: LeadStatus } | null>(null);
   const [bulkAssignee, setBulkAssignee] = useState<{ open: boolean; value: string } | null>(null);
   const { toast } = useToast();
+
+  // ۳-۱۰: با باز شدن جزئیات هر لید، پیش‌نویس یادداشت ادمین از سرور پر می‌شود.
+  useEffect(() => {
+    setAdminNoteDraft(detail?.adminNotes ?? '');
+  }, [detail?.id]);
 
   const rows = initial.filter((row) => filter === 'all' || row.status === filter).map((row) => ({ ...row })) as (LeadRow & Record<string, unknown>)[];
 
@@ -91,6 +100,22 @@ export function LeadBoard({ initial, variant = 'general' }: { initial: LeadRow[]
       } catch {
         // L4: پیام خنثی؛ نه حدس دربارهٔ علت، نه سرزنش کاربر.
         setMessage('وضعیت عوض نشد؛ دوباره تلاش کنید.');
+      }
+    });
+  };
+
+  // ۳-۱۰: ذخیرهٔ یادداشت داخلی ادمین؛ جدا از یادداشت فقط‌خواندنیِ کاربر.
+  const saveAdminNotes = () => {
+    if (!detail) return;
+    const id = detail.id;
+    const notes = adminNoteDraft.trim();
+    startTransition(async () => {
+      try {
+        await updateLeadAdminNotes(id, notes);
+        setDetail((d) => (d && d.id === id ? { ...d, adminNotes: notes || null } : d));
+        toast({ variant: 'success', title: 'یادداشت ادمین ذخیره شد.' });
+      } catch {
+        toast({ variant: 'error', title: 'یادداشت ذخیره نشد؛ دوباره تلاش کنید.' });
       }
     });
   };
@@ -193,6 +218,7 @@ export function LeadBoard({ initial, variant = 'general' }: { initial: LeadRow[]
             rows={rows}
             columns={columns}
             rowKey={(row) => row.id}
+            pageSize={pageSize}
             searchKeys={['fullName', 'phone', 'tourContext', 'destinationHint']}
             searchPlaceholder="جست‌وجوی نام، تلفن یا مقصد…"
             emptyTitle={emptyTitle}
@@ -255,6 +281,28 @@ export function LeadBoard({ initial, variant = 'general' }: { initial: LeadRow[]
               <p className="mb-1 text-xs text-muted-foreground">یادداشت</p>
               <div className="rounded-sm border border-border bg-muted/40 p-3 text-sm leading-6">
                 {detail.notes || 'یادداشتی ثبت نشده است.'}
+              </div>
+            </div>
+            {/* ۳-۱۰: یادداشت داخلی ادمین — قابل‌ویرایش، فقط در پنل */}
+            <div className="mt-3">
+              <p className="mb-1 text-xs text-muted-foreground">یادداشت ادمین</p>
+              <p className="mb-1 text-[11px] text-muted-foreground/70">فقط تیم می‌بیند؛ روی سایت نمایش داده نمی‌شود.</p>
+              <Textarea
+                value={adminNoteDraft}
+                onChange={(e) => setAdminNoteDraft(e.target.value)}
+                placeholder="مثلاً: سه‌شنبه ساعت ۱۰ تماس گرفته شد؛ خواست کاتالوگ بفرستیم."
+                className="min-h-16"
+              />
+              <div className="mt-2 flex justify-start">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={saveAdminNotes}
+                  disabled={pending || adminNoteDraft.trim() === (detail.adminNotes ?? '').trim()}
+                >
+                  {pending ? 'در حال ذخیره…' : 'ذخیره یادداشت'}
+                </Button>
               </div>
             </div>
           </div>

@@ -6,6 +6,7 @@ import { siteDestinations, siteTours } from '@/db/schema';
 import { and, asc, count, desc, eq, isNull, ne, sql } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
+import { isValidDestinationCategory } from './categories';
 
 export interface FaqItem {
   question: string;
@@ -18,7 +19,6 @@ export interface DestinationInput {
   nameEn: string;
   type: string;
   parentCountrySlug: string;
-  parentCountryName: string;
   category: string;
   image: string;
   heroTagline: string;
@@ -69,7 +69,6 @@ export async function listDestinations() {
     nameEn: r.nameEn,
     type: r.type,
     parentCountrySlug: r.parentCountrySlug ?? '',
-    parentCountryName: r.parentCountryName ?? '',
     category: r.category,
     image: r.image,
     heroTagline: r.heroTagline,
@@ -108,6 +107,10 @@ export async function saveDestination(id: string | undefined | null, data: Desti
   const name = (data.name || '').trim();
   if (!slug) throw new Error('نامک (slug) لازم است.');
   if (name.length < 2) throw new Error('نام مقصد لازم است.');
+  // ۲-۱۲: گارد سمت سرور؛ دسته‌بندیِ خالی یعنی «هنوز انتخاب نشده» (جریان افزودن
+  // کشور تازه)، ولی مقدارِ پرِ خارج از شش‌تایی پذیرفته نیست.
+  const category = (data.category || '').trim();
+  if (category && !isValidDestinationCategory(category)) throw new Error('دسته‌بندی نامعتبر است.');
 
   // کلید تکراری مقصد: نامک (گارد سمت سرور؛ مسابقهٔ هم‌زمان را هم می‌گیرد).
   // ردیف‌های بایگانی‌شده نامک را اشغال نمی‌کنند (هم‌خوان با ایندکس جزئی مایگریشن 0010).
@@ -128,8 +131,7 @@ export async function saveDestination(id: string | undefined | null, data: Desti
     nameEn: data.nameEn || '',
     type: data.type || 'city',
     parentCountrySlug: data.parentCountrySlug || null,
-    parentCountryName: data.parentCountryName || null,
-    category: data.category || '',
+    category,
     image: data.image || '',
     heroTagline: data.heroTagline || '',
     description: data.description || '',

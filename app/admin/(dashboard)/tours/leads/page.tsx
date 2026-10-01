@@ -12,6 +12,12 @@ export const metadata: Metadata = {
 
 export default async function TourLeadsPage() {
   const [{ rows }, settings] = await Promise.all([getLeadStats(), getSettingsMap()]);
+
+  // ۴-۱۱: اندازهٔ صفحهٔ برد از کلید leads.page_size؛ بازهٔ مجاز رجیستری ۵ تا ۱۰۰.
+  const rawPageSize = Number(settings['leads.page_size']);
+  const pageSize = Number.isFinite(rawPageSize)
+    ? Math.min(100, Math.max(5, Math.floor(rawPageSize)))
+    : 20;
   
   // Filter leads that have tour context or originated from tour pages.
   // L2: بدون فالبک بی‌صدا؛ وقتی لید توری نیست، خود برد empty state آموزشی نشان می‌دهد.
@@ -41,6 +47,7 @@ export default async function TourLeadsPage() {
 
       <LeadBoard
         variant="tour"
+        pageSize={pageSize}
         initial={tourRows.map((r) => ({
           id: r.id,
           fullName: r.fullName,
@@ -50,6 +57,7 @@ export default async function TourLeadsPage() {
           destinationHint: r.destinationHint,
           passengers: r.passengers,
           notes: r.notes,
+          adminNotes: r.adminNotes,
           status: r.status as 'new' | 'contacted' | 'qualified' | 'won' | 'lost' | 'invalid',
           assignee: r.assignee,
           createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),

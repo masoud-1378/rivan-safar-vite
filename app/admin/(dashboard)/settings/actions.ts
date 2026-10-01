@@ -73,17 +73,6 @@ export async function updateSettings(
   return { ok: Object.keys(errors).length === 0, saved, errors };
 }
 
-export async function getSiteUrl() {
-  const db = getDb();
-  if (!db) return 'https://rivansafar.ir';
-  const row = await db
-    .select()
-    .from(siteSettings)
-    .where(eq(siteSettings.settingKey, 'site.url'))
-    .limit(1);
-  return row[0]?.settingValue || 'https://rivansafar.ir';
-}
-
 export async function getPublicSettings(): Promise<Record<string, string>> {
   const db = getDb();
   if (!db) return withDefaults([]);
