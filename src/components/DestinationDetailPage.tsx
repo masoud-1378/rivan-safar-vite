@@ -3,7 +3,7 @@ import { Phone, MapPin, Globe, Calendar, Clock, ShieldCheck, ChevronLeft, CheckC
 import { type Place } from '../data/destinationsData';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
-import { submitLead } from '../../app/actions/lead';
+import { safeCreateLead } from '../lib/lead-submit-safe';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import TourListItem from './TourListItem';
@@ -60,7 +60,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
     if (!formData.name || !formData.phone) return;
 
     setFormLoading(true);
-    const result = await submitLead({
+    const result = await safeCreateLead({
       fullName: formData.name,
       phone: formData.phone,
       sourcePath: `/destination/${countrySlug}/${placeSlug}`,

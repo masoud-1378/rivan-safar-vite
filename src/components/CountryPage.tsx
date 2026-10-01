@@ -20,7 +20,7 @@ import {
 import { type Place } from '../data/destinationsData';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
-import { submitLead } from '../../app/actions/lead';
+import { safeCreateLead } from '../lib/lead-submit-safe';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import TourListItem from './TourListItem';
@@ -91,7 +91,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
     if (!inquiryPhone.trim()) return;
 
     setIsSubmitting(true);
-    const result = await submitLead({
+    const result = await safeCreateLead({
       fullName: inquiryName,
       phone: inquiryPhone,
       sourcePath: `/destination/${country.slug}`,

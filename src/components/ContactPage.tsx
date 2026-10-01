@@ -4,7 +4,7 @@ import {
   Building2, Check, Send, ShieldCheck, Sparkles
 } from 'lucide-react';
 import { useContact } from '@/src/lib/contact-context';
-import { createLead } from '../../app/actions/lead';
+import { safeCreateLead } from '../lib/lead-submit-safe';
 import { trackLeadSubmit } from '../lib/analytics';
 import { isValidMobile, normalizeMobile } from './tour-live';
 
@@ -41,7 +41,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
     if (!validate()) return;
 
     setLoading(true);
-    const result = await createLead({
+    const result = await safeCreateLead({
       fullName: formData.name.trim(),
       phone: normalizeMobile(formData.phone),
       sourcePath: '/contact',

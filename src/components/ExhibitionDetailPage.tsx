@@ -7,7 +7,7 @@ import {
 import { type ExhibitionSeries } from '../data/exhibitionsData';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
-import { createLead } from '../../app/actions/lead';
+import { safeCreateLead } from '../lib/lead-submit-safe';
 import { trackLeadSubmit } from '../lib/analytics';
 import { isValidMobile, normalizeMobile } from './tour-live';
 import SmartImage from './SmartImage';
@@ -63,7 +63,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
     if (!validateForm()) return;
 
     setFormLoading(true);
-    const result = await createLead({
+    const result = await safeCreateLead({
       fullName: formData.name.trim(),
       phone: normalizeMobile(formData.phone),
       sourcePath: `/exhibition/${eventSeriesSlug}`,

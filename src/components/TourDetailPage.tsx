@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { 
   Phone, Calendar, Clock, MapPin, Plane, ShieldCheck, CheckCircle2, 
   XCircle, Building2, User, Send, Check, AlertCircle, HelpCircle, 
-  ChevronLeft, Sparkles, FileText, ArrowRight, CalendarDays, FileCheck2,
+  ChevronLeft, Sparkles, FileText, CalendarDays, FileCheck2,
   Headphones, Mic, Luggage, Wallet, BadgeCheck
 } from 'lucide-react';
 import { type TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
-import { submitLead } from '../../app/actions/lead';
+import { safeCreateLead } from '../lib/lead-submit-safe';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import { fa } from '@/lib/utils';
@@ -93,7 +93,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
     if (!validateForm()) return;
 
     setFormLoading(true);
-    const result = await submitLead({
+    const result = await safeCreateLead({
       fullName: formData.name.trim(),
       phone: normalizeMobile(formData.phone),
       sourcePath: `/tour/${tourSlug}`,

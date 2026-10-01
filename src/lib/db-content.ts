@@ -181,12 +181,19 @@ export async function getDestinations(): Promise<Place[]> {
   }
 }
 
-/** یک بار خوانده می‌شود و هر دو فهرست از همان نتیجه ساخته می‌شوند. */
-let destinationsCache: Promise<Place[]> | null = null;
+/** یک بار خوانده می‌شود و هر دو فهرست از همان نتیجه ساخته می‌شوند.
+ * میز P-B فاز ۲ (PB-05): کش ماژول‌اسکوپ بدون TTL در نمونهٔ گرم سرورلس برای
+ * همیشه کهنه می‌ماند؛ پس هر ۵ دقیقه تازه‌سازی می‌شود. تصمیم امنیتی نمی‌گیرد
+ * (فقط فهرست مقصد)، پس همین TTL کافی است و نیازی به استور خارجی نیست. */
+const DESTINATIONS_TTL_MS = 5 * 60 * 1000;
+let destinationsCache: { promise: Promise<Place[]>; at: number } | null = null;
 
 export function getDestinationsOnce(): Promise<Place[]> {
-  if (!destinationsCache) destinationsCache = getDestinations();
-  return destinationsCache;
+  const now = Date.now();
+  if (!destinationsCache || now - destinationsCache.at > DESTINATIONS_TTL_MS) {
+    destinationsCache = { promise: getDestinations(), at: now };
+  }
+  return destinationsCache.promise;
 }
 
 export async function getCountries(): Promise<Record<string, Place>> {

@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { type TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
-import { submitLead } from '../../app/actions/lead';
+import { safeCreateLead } from '../lib/lead-submit-safe';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import { fa, faSlug } from '@/lib/utils';
@@ -210,7 +210,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
     if (bookingSubmitted) return;
     setBookingSubmitted(true);
     setBookingError('');
-    const result = await submitLead({
+    const result = await safeCreateLead({
       fullName: bookingForm.name.trim(),
       phone: bookingForm.mobile,
       sourcePath: '/tours',

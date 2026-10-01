@@ -10,6 +10,10 @@ export default function TravelGuide() {
   const { tours, countries, cities, guides, exhibitions } = useContent();
   /** کارت‌های صفحه اصلی فقط از رجیستری راهنماهای واقعی تغذیه می‌شوند (سند ۰۴) */
   const guideList = Object.values(guides);
+  // میز P-B فاز ۲ (PB-04): اگر دیتابیس سالم است ولی هیچ راهنمایی منتشرشده
+  // نیست، guideList خالی می‌شود و guideList[0] کرش می‌کرد. در این حالت سکشن
+  // اصلاً رندر نمی‌شود.
+  if (guideList.length === 0) return null;
   const MAIN_ARTICLE = guideList[0];
   const SUB_ARTICLES = guideList.slice(1);
   return (
