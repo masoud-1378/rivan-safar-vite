@@ -25,6 +25,8 @@ export interface TourHotelOptionItem {
   priceChildWithBed?: string;
   priceChildNoBed?: string;
   locationNote?: string;
+  /** اتصال به رکورد جدول هتل‌ها (accommodations.id)؛ قیمت‌ها همیشه ویژهٔ این تور دستی وارد می‌شوند */
+  hotelId?: string;
 }
 
 export interface TourItineraryDayItem {
@@ -320,6 +322,7 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
   const carrier = (data.carrierName || data.airline || '').trim();
   const badge = data.badge || (data.guaranteedDeparture ? 'حرکت تضمین‌شده' : null);
   const normalizedHotels = hotelOptions.map((h) => ({
+    hotelId: h.hotelId ?? null,
     name: h.name ?? '',
     stars: Number(h.stars) || 3,
     board: h.board ?? 'BB',

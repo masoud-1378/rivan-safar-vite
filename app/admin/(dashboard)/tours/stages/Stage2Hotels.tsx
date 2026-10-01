@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Building2, 
   Plus, 
@@ -11,25 +11,30 @@ import {
   User, 
   Baby, 
   Info,
-  DollarSign
+  DollarSign,
+  Search,
+  Check,
+  Unlink
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { HotelBookingType, TourHotelOptionItem, TourInput } from '../actions';
+import type { HotelRow } from '../../hotels/actions';
 
 interface Stage2HotelsProps {
   data: TourInput;
   onChange: (fields: Partial<TourInput>) => void;
+  hotels: HotelRow[];
 }
 
 const BOARD_OPTIONS = [
-  { value: 'BB', label: 'BB (صبحانه بوفه)' },
-  { value: 'HB', label: 'HB (صبحانه + ناهار یا شام)' },
-  { value: 'FB', label: 'FB (صبحانه، ناهار و شام کامل)' },
-  { value: 'ALL', label: 'ALL (تمامی وعده‌ها و نوشیدنی‌ها تا ساعت ۲۳)' },
-  { value: 'UALL', label: 'UALL (سرویس ۲۴ ساعته نامحدود)' },
-  { value: 'RO', label: 'RO (فقط اتاق بدون پذیرایی)' },
+  { value: 'BB', label: 'صبحانه بوفه (BB)' },
+  { value: 'HB', label: 'صبحانه + ناهار یا شام (HB)' },
+  { value: 'FB', label: 'صبحانه، ناهار و شام کامل (FB)' },
+  { value: 'ALL', label: 'تمامی وعده‌ها و نوشیدنی‌ها تا ساعت ۲۳ (ALL)' },
+  { value: 'UALL', label: 'سرویس ۲۴ ساعته نامحدود (UALL)' },
+  { value: 'RO', label: 'فقط اتاق بدون پذیرایی (RO)' },
 ];
 
 // کتابچه §۳ (فاز ۲، قلم ۷): سه نوع رزرو — هر کدام زیرفیلد نرخ خودش را نشان می‌دهد.
@@ -40,8 +45,10 @@ const BOOKING_TYPE_OPTIONS: Array<{ value: HotelBookingType; label: string }> = 
   { value: 'on_request', label: 'درخواستی' },
 ];
 
-export default function Stage2Hotels({ data, onChange }: Stage2HotelsProps) {
+export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: Stage2HotelsProps) {
   const hotels: TourHotelOptionItem[] = Array.isArray(data.hotelOptions) ? data.hotelOptions : [];
+  const [showHotelPicker, setShowHotelPicker] = useState(false);
+  const [hotelQuery, setHotelQuery] = useState('');
 
   const handleAddHotel = () => {
     const next: TourHotelOptionItem[] = [
@@ -60,6 +67,41 @@ export default function Stage2Hotels({ data, onChange }: Stage2HotelsProps) {
     ];
     onChange({ hotelOptions: next });
   };
+
+  // افزودن هتل از جدول ثبت‌شده‌ها: نام و ستاره از رکورد می‌آید، قیمت همان‌جا دستی وارد می‌شود (ویژهٔ این تور)
+  const handleAddHotelFromTable = (h: HotelRow) => {
+    const next: TourHotelOptionItem[] = [
+      ...hotels,
+      {
+        hotelId: h.id,
+        name: h.nameFa,
+        stars: h.stars || 4,
+        board: 'BB',
+        pricePerPerson: '',
+        priceDouble: '',
+        priceSingle: '',
+        priceChildWithBed: '',
+        priceChildNoBed: '',
+        locationNote: '',
+      },
+    ];
+    onChange({ hotelOptions: next });
+    setShowHotelPicker(false);
+    setHotelQuery('');
+  };
+
+  const handleUnlinkHotel = (index: number) => {
+    const next = hotels.map((h, i) => {
+      if (i !== index) return h;
+      const { hotelId: _dropped, ...rest } = h;
+      return rest;
+    });
+    onChange({ hotelOptions: next });
+  };
+
+  const catalogResults = hotelQuery.trim()
+    ? catalogHotels.filter((h) => h.nameFa.includes(hotelQuery.trim())).slice(0, 30)
+    : catalogHotels.slice(0, 30);
 
   const handleUpdateHotel = (index: number, patch: Partial<TourHotelOptionItem>) => {
     const next = [...hotels];
@@ -83,19 +125,75 @@ export default function Stage2Hotels({ data, onChange }: Stage2HotelsProps) {
           <div>
             <h3 className="text-sm font-bold text-foreground">مرحله دوم: ماتریس هتل‌ها و ظرفیت اتاق‌ها</h3>
             <p className="text-xs text-muted-foreground">
-              تعریف پکیج‌های اقامتی، ستاره هتل، رژیم غذایی (BB, ALL, FB) و تفکیک شفاف قیمت اتاق ۲تخته، ۱تخته و کودکان
+              تعریف پکیج‌های اقامتی، ستاره هتل، نوع پذیرایی (صبحانه بوفه، همه‌چیز شامل و…) و تفکیک شفاف قیمت اتاق ۲تخته، ۱تخته و کودکان
             </p>
           </div>
         </div>
-        <Button
-          type="button"
-          onClick={handleAddHotel}
-          className="gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs h-9"
-        >
-          <Plus className="size-4" />
-          افزودن هتل جدید
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowHotelPicker((v) => !v)}
+            className="gap-2 text-xs h-9"
+          >
+            <Search className="size-4" />
+            انتخاب از هتل‌های ثبت‌شده
+          </Button>
+          <Button
+            type="button"
+            onClick={handleAddHotel}
+            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs h-9"
+          >
+            <Plus className="size-4" />
+            افزودن هتل جدید
+          </Button>
+        </div>
       </div>
+
+      {/* انتخاب هتل از جدول ثبت‌شده‌ها: نام و ستاره از رکورد پر می‌شود؛ قیمت همان‌جا دستی (ویژهٔ این تور) */}
+      {showHotelPicker && (
+        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+          <div className="relative">
+            <Input
+              value={hotelQuery}
+              onChange={(e) => setHotelQuery(e.target.value)}
+              placeholder="نام هتل را بنویسید…"
+              className="ps-9 text-xs"
+            />
+            <Search className="size-4 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
+          </div>
+          {catalogHotels.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-3">
+              هنوز هتلی در جدول ثبت نشده است؛ از «افزودن هتل جدید» به‌صورت دستی وارد کنید.
+            </p>
+          ) : (
+            <div className="max-h-64 overflow-y-auto rounded-lg border border-border/60 divide-y divide-border/40">
+              {catalogResults.length === 0 ? (
+                <p className="px-3 py-4 text-xs text-muted-foreground text-center">چیزی پیدا نشد.</p>
+              ) : (
+                catalogResults.map((h) => (
+                  <button
+                    key={h.id}
+                    type="button"
+                    onClick={() => handleAddHotelFromTable(h)}
+                    className="flex w-full items-center justify-between px-3 py-2.5 text-xs transition-colors hover:bg-accent/40 min-h-11"
+                  >
+                    <span className="flex items-center gap-2 text-foreground">
+                      <Building2 className="size-3.5 text-blue-600 shrink-0" />
+                      <span className="font-medium">{h.nameFa}</span>
+                      <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                        <Star className="size-3 text-amber-500 fill-amber-500" />
+                        {h.stars}
+                      </span>
+                    </span>
+                    <Plus className="size-4 text-muted-foreground shrink-0" />
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {hotels.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/80 p-10 text-center">
@@ -130,15 +228,34 @@ export default function Stage2Hotels({ data, onChange }: Stage2HotelsProps) {
                   <span className="text-xs font-bold text-foreground">
                     {hotel.name ? `هتل ${hotel.name}` : `پکیج اقامتی شماره ${idx + 1}`}
                   </span>
+                  {hotel.hotelId && (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                      <Check className="size-3" />
+                      متصل به جدول هتل‌ها
+                    </span>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveHotel(idx)}
-                  className="inline-flex items-center gap-1.5 text-xs text-destructive/80 hover:text-destructive transition-colors p-1"
-                >
-                  <Trash2 className="size-4" />
-                  حذف هتل
-                </button>
+                <div className="flex items-center gap-3">
+                  {hotel.hotelId && (
+                    <button
+                      type="button"
+                      onClick={() => handleUnlinkHotel(idx)}
+                      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors p-1"
+                      title="نام و ستاره دستی می‌ماند؛ فقط اتصال به جدول قطع می‌شود"
+                    >
+                      <Unlink className="size-4" />
+                      جدا کردن
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveHotel(idx)}
+                    className="inline-flex items-center gap-1.5 text-xs text-destructive/80 hover:text-destructive transition-colors p-1"
+                  >
+                    <Trash2 className="size-4" />
+                    حذف هتل
+                  </button>
+                </div>
               </div>
 
               {/* Basic Hotel Specs: Name, Stars, Board */}
@@ -201,7 +318,9 @@ export default function Stage2Hotels({ data, onChange }: Stage2HotelsProps) {
                     <DollarSign className="size-4 text-emerald-500" />
                     <span>نرخ رزرو</span>
                   </div>
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">ویژهٔ این تور</span>
+                  {hotel.hotelId && (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">ویژهٔ این تور</span>
+                  )}
                 </div>
 
                 <Field label="نوع رزرو">
