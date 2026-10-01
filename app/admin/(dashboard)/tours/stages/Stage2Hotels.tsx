@@ -16,7 +16,7 @@ import {
 import { Field, Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { TourHotelOptionItem, TourInput } from '../actions';
+import type { HotelBookingType, TourHotelOptionItem, TourInput } from '../actions';
 
 interface Stage2HotelsProps {
   data: TourInput;
@@ -30,6 +30,14 @@ const BOARD_OPTIONS = [
   { value: 'ALL', label: 'ALL (تمامی وعده‌ها و نوشیدنی‌ها تا ساعت ۲۳)' },
   { value: 'UALL', label: 'UALL (سرویس ۲۴ ساعته نامحدود)' },
   { value: 'RO', label: 'RO (فقط اتاق بدون پذیرایی)' },
+];
+
+// کتابچه §۳ (فاز ۲، قلم ۷): سه نوع رزرو — هر کدام زیرفیلد نرخ خودش را نشان می‌دهد.
+// مقدار ذخیره‌شده کد لاتین است؛ برچسب فارسی در UI.
+const BOOKING_TYPE_OPTIONS: Array<{ value: HotelBookingType; label: string }> = [
+  { value: 'guarantee', label: 'گارانتی' },
+  { value: 'semi_charter', label: 'نیم‌چارتر' },
+  { value: 'on_request', label: 'درخواستی' },
 ];
 
 export default function Stage2Hotels({ data, onChange }: Stage2HotelsProps) {
@@ -169,7 +177,7 @@ export default function Stage2Hotels({ data, onChange }: Stage2HotelsProps) {
                 </div>
 
                 <div className="md:col-span-4">
-                  <Field label="خدمات غذایی (Board)">
+                  <Field label="خدمات غذایی">
                     <select
                       value={hotel.board || 'BB'}
                       onChange={(e) => handleUpdateHotel(idx, { board: e.target.value })}
@@ -185,71 +193,135 @@ export default function Stage2Hotels({ data, onChange }: Stage2HotelsProps) {
                 </div>
               </div>
 
-              {/* Detailed Pricing Grid by Room Type */}
+              {/* نرخ رزرو — کتابچه §۳ (فاز ۲، قلم ۷): «نوع رزرو» راهنمای ترتیب فیلدهاست؛
+                  هر نوع، زیرفیلد نرخ خودش را نشان می‌دهد و در pricePerPerson می‌نشیند (همان فیلدی که سایت می‌خواند). */}
               <div className="rounded-xl bg-secondary/20 p-4 border border-border/50 space-y-3">
-                <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                  <DollarSign className="size-4 text-emerald-500" />
-                  <span>جدول تفکیک نرخ هر اتاق (تومان یا ارز)</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                    <DollarSign className="size-4 text-emerald-500" />
+                    <span>نرخ رزرو</span>
+                  </div>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">ویژهٔ این تور</span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {/* Double Room */}
-                  <div className="rounded-lg bg-card p-3 border border-border/60">
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground mb-1.5">
-                      <Users className="size-3.5 text-blue-500" />
-                      <span>اتاق ۲ تخته (Double) *</span>
-                    </div>
-                    <Input
-                      value={hotel.priceDouble || hotel.pricePerPerson || ''}
-                      onChange={(e) => handleUpdateHotel(idx, { 
-                        priceDouble: e.target.value,
-                        pricePerPerson: e.target.value 
-                      })}
-                      placeholder="مثلاً: 38,500,000 تومان"
-                      className="text-xs h-8"
-                    />
-                  </div>
+                <Field label="نوع رزرو">
+                  <select
+                    value={hotel.bookingType ?? ''}
+                    onChange={(e) => handleUpdateHotel(idx, { bookingType: (e.target.value || undefined) as HotelBookingType | undefined })}
+                    className="w-full rounded-xl border border-input bg-background px-3 py-2 text-xs font-medium"
+                    aria-label="نوع رزرو هتل"
+                  >
+                    <option value="">انتخاب کنید…</option>
+                    {BOOKING_TYPE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
 
-                  {/* Single Room */}
-                  <div className="rounded-lg bg-card p-3 border border-border/60">
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground mb-1.5">
-                      <User className="size-3.5 text-purple-500" />
-                      <span>اتاق ۱ تخته (Single)</span>
-                    </div>
+                {hotel.bookingType === 'guarantee' && (
+                  <Field label="نرخ گارانتی (هر نفر، تومان)" hint="نرخی که هتل به‌صورت گارانتی اعلام کرده؛ همین عدد روی سایت نمایش داده می‌شود.">
                     <Input
-                      value={hotel.priceSingle || ''}
-                      onChange={(e) => handleUpdateHotel(idx, { priceSingle: e.target.value })}
-                      placeholder="مثلاً: 49,000,000 تومان"
+                      value={hotel.pricePerPerson || ''}
+                      onChange={(e) => handleUpdateHotel(idx, { pricePerPerson: e.target.value })}
+                      placeholder="مثلاً: 38,500,000"
                       className="text-xs h-8"
+                      inputMode="numeric"
                     />
+                  </Field>
+                )}
+                {hotel.bookingType === 'semi_charter' && (
+                  <Field label="نرخ نیم‌چارتر (هر نفر، تومان)" hint="نرخ نیم‌چارتر این هتل برای همین تور؛ همین عدد روی سایت نمایش داده می‌شود.">
+                    <Input
+                      value={hotel.pricePerPerson || ''}
+                      onChange={(e) => handleUpdateHotel(idx, { pricePerPerson: e.target.value })}
+                      placeholder="مثلاً: 38,500,000"
+                      className="text-xs h-8"
+                      inputMode="numeric"
+                    />
+                  </Field>
+                )}
+                {hotel.bookingType === 'on_request' && (
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] text-muted-foreground">قیمت نهایی موقع رزرو استعلام می‌شود؛ اگر سقف تقریبی دارید بنویسید.</p>
+                    <Field label="سقف تقریبی (هر نفر، تومان)">
+                      <Input
+                        value={hotel.pricePerPerson || ''}
+                        onChange={(e) => handleUpdateHotel(idx, { pricePerPerson: e.target.value })}
+                        placeholder="مثلاً: 45,000,000"
+                        className="text-xs h-8"
+                        inputMode="numeric"
+                      />
+                    </Field>
                   </div>
-
-                  {/* Child with bed */}
-                  <div className="rounded-lg bg-card p-3 border border-border/60">
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground mb-1.5">
-                      <Baby className="size-3.5 text-amber-500" />
-                      <span>کودک با تخت (۶ تا ۱۲ سال)</span>
-                    </div>
+                )}
+                {!hotel.bookingType && (
+                  <Field label="نرخ هر نفر (تومان)" hint="برای ردیف‌های قدیمی؛ با انتخاب نوع رزرو، برچسب دقیق می‌شود.">
                     <Input
-                      value={hotel.priceChildWithBed || ''}
-                      onChange={(e) => handleUpdateHotel(idx, { priceChildWithBed: e.target.value })}
-                      placeholder="مثلاً: 29,000,000 تومان"
+                      value={hotel.pricePerPerson || ''}
+                      onChange={(e) => handleUpdateHotel(idx, { pricePerPerson: e.target.value })}
+                      placeholder="مثلاً: 38,500,000"
                       className="text-xs h-8"
+                      inputMode="numeric"
                     />
-                  </div>
+                  </Field>
+                )}
 
-                  {/* Child without bed */}
-                  <div className="rounded-lg bg-card p-3 border border-border/60">
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground mb-1.5">
-                      <Baby className="size-3.5 text-teal-500" />
-                      <span>کودک بدون تخت (۲ تا ۶ سال)</span>
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-[11px] text-muted-foreground">تفکیک نرخ اتاق‌ها (اختیاری) — اگر «نرخ هر نفر» خالی باشد، نرخ اتاق ۲تخته روی سایت نمایش داده می‌شود.</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="rounded-lg bg-card p-3 border border-border/60">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground mb-1.5">
+                        <Users className="size-3.5 text-blue-500" />
+                        <span>اتاق ۲تخته *</span>
+                      </div>
+                      <Input
+                        value={hotel.priceDouble || ''}
+                        onChange={(e) => handleUpdateHotel(idx, { priceDouble: e.target.value })}
+                        placeholder="مثلاً: 38,500,000 تومان"
+                        className="text-xs h-8"
+                      />
                     </div>
-                    <Input
-                      value={hotel.priceChildNoBed || ''}
-                      onChange={(e) => handleUpdateHotel(idx, { priceChildNoBed: e.target.value })}
-                      placeholder="مثلاً: 19,000,000 تومان"
-                      className="text-xs h-8"
-                    />
+
+                    <div className="rounded-lg bg-card p-3 border border-border/60">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground mb-1.5">
+                        <User className="size-3.5 text-purple-500" />
+                        <span>اتاق ۱تخته</span>
+                      </div>
+                      <Input
+                        value={hotel.priceSingle || ''}
+                        onChange={(e) => handleUpdateHotel(idx, { priceSingle: e.target.value })}
+                        placeholder="مثلاً: 49,000,000 تومان"
+                        className="text-xs h-8"
+                      />
+                    </div>
+
+                    <div className="rounded-lg bg-card p-3 border border-border/60">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground mb-1.5">
+                        <Baby className="size-3.5 text-amber-500" />
+                        <span>کودک با تخت (۶ تا ۱۲ سال)</span>
+                      </div>
+                      <Input
+                        value={hotel.priceChildWithBed || ''}
+                        onChange={(e) => handleUpdateHotel(idx, { priceChildWithBed: e.target.value })}
+                        placeholder="مثلاً: 29,000,000 تومان"
+                        className="text-xs h-8"
+                      />
+                    </div>
+
+                    <div className="rounded-lg bg-card p-3 border border-border/60">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground mb-1.5">
+                        <Baby className="size-3.5 text-teal-500" />
+                        <span>کودک بدون تخت (۲ تا ۶ سال)</span>
+                      </div>
+                      <Input
+                        value={hotel.priceChildNoBed || ''}
+                        onChange={(e) => handleUpdateHotel(idx, { priceChildNoBed: e.target.value })}
+                        placeholder="مثلاً: 19,000,000 تومان"
+                        className="text-xs h-8"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

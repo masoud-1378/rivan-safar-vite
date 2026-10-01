@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import { Pencil, Plus, Archive } from 'lucide-react';
+import { useRef, useState, useTransition } from 'react';
+import { Pencil, Plus, Archive, ImagePlus, Trash2, Loader2 } from 'lucide-react';
 import { deleteHotel, saveHotel, type HotelRow } from './actions';
+import { deleteHotelPhoto, listHotelPhotos, uploadHotelPhoto, type HotelPhoto } from './photos';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import { NumberField } from '@/components/ui/number-field';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
+import { formatHotelStars } from '@/lib/hotel-stars';
 
 interface HotelsManagerProps {
   initial: HotelRow[];
@@ -24,23 +26,29 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
   const [editing, setEditing] = useState<HotelRow | null>(null);
   const [deleting, setDeleting] = useState<HotelRow | null>(null);
   const [name, setName] = useState('');
-  // یافتهٔ ۱۵: ستاره می‌تواند null (دست‌نخورده) بماند — مثل رکوردهای قدیمیِ stars=NULL.
-  const [stars, setStars] = useState<number | null>(5);
+  // کتابچه §۳ (فاز ۲): پیش‌فرض خالی؛ ستاره اجباری است.
+  const [stars, setStars] = useState<number | null>(null);
   const [placeSlug, setPlaceSlug] = useState('');
   const [nameError, setNameError] = useState<string | undefined>();
   const [starsError, setStarsError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
+  // عکس‌های هتل (کتابچه §۳): فقط در حالت ویرایش — آپلود واقعی به Supabase Storage.
+  const [photos, setPhotos] = useState<HotelPhoto[]>([]);
+  const [photosLoading, setPhotosLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const reload = () => window.location.reload();
 
   const startCreate = () => {
     setEditing(null);
     setName('');
-    setStars(5);
+    setStars(null);
     setPlaceSlug('');
     setNameError(undefined);
     setStarsError(undefined);
+    setPhotos([]);
     setOpen(true);
   };
 
@@ -51,7 +59,39 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
     setPlaceSlug(hotel.placeSlug);
     setNameError(undefined);
     setStarsError(undefined);
+    setPhotos([]);
     setOpen(true);
+    setPhotosLoading(true);
+    listHotelPhotos(hotel.slug)
+      .then(setPhotos)
+      .catch(() => setPhotos([]))
+      .finally(() => setPhotosLoading(false));
+  };
+
+  const onPickPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !editing) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('photo', file);
+      const photo = await uploadHotelPhoto(editing.slug, editing.nameFa, fd);
+      setPhotos((prev) => [photo, ...prev]);
+    } catch (err) {
+      toast({ variant: 'error', title: err instanceof Error ? err.message : 'آپلود ناموفق بود.' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onDeletePhoto = async (id: string) => {
+    try {
+      await deleteHotelPhoto(id);
+      setPhotos((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      toast({ variant: 'error', title: err instanceof Error ? err.message : 'حذف عکس ناموفق بود.' });
+    }
   };
 
   const submit = () => {
@@ -59,8 +99,12 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
       setNameError('نام هتل لازم است.');
       return;
     }
-    // یافتهٔ ۱۵: null یعنی دست‌نخورده — خطا نده.
-    if (stars !== null && (!Number.isInteger(stars) || stars < 0 || stars > 7)) {
+    // کتابچه §۳: ستاره اجباری است؛ خالی یعنی انتخاب‌نشده.
+    if (stars === null) {
+      setStarsError('ستارهٔ هتل را انتخاب کنید.');
+      return;
+    }
+    if (!Number.isInteger(stars) || stars < 0 || stars > 7) {
       setStarsError('ستارهٔ هتل باید بین ۰ تا ۷ باشد.');
       return;
     }
@@ -79,7 +123,7 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
         const message = e instanceof Error ? e.message : 'خطا در ذخیره.';
         if (message === 'این نام قبلاً ثبت شده') {
           setNameError(message);
-        } else if (message === 'ستارهٔ هتل باید بین ۰ تا ۷ باشد.') {
+        } else if (message === 'ستارهٔ هتل باید بین ۰ تا ۷ باشد.' || message === 'ستارهٔ هتل را انتخاب کنید.') {
           setStarsError(message);
         } else {
           toast({ variant: 'error', title: message });
@@ -110,7 +154,7 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
   const placeName = (slug: string) => places.find((p) => p.slug === slug)?.name ?? slug ?? '—';
   const columns: Column<HotelRow>[] = [
     { key: 'nameFa', header: 'نام هتل', sortable: true, cell: (h) => <span className="font-semibold">{h.nameFa}</span> },
-    { key: 'stars', header: 'ستاره', numeric: true, sortable: true, cell: (h) => (h.stars == null ? '—' : fa(h.stars)) },
+    { key: 'stars', header: 'ستاره', numeric: true, sortable: true, cell: (h) => formatHotelStars(h.stars) },
     { key: 'placeSlug', header: 'مقصد', sortable: true, cell: (h) => (h.placeSlug ? placeName(h.placeSlug) : '—') },
     {
       key: 'id',
@@ -176,7 +220,7 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
           <Field label="نام هتل" error={nameError}>
             <Input value={name} onChange={(e) => { setName(e.target.value); setNameError(undefined); }} placeholder="مثلاً Rixos Premium Dubai" data-autofocus />
           </Field>
-          <Field label="ستاره" error={starsError}>
+          <Field label="ستاره *" error={starsError}>
             <NumberField value={stars} onChange={(v) => { setStars(v); setStarsError(undefined); }} min={0} max={7} aria-label="ستاره هتل" />
           </Field>
           <Field label="شهر / مقصد">
@@ -186,6 +230,39 @@ export default function HotelsManager({ initial, places }: HotelsManagerProps) {
               options={[{ value: '', label: 'انتخاب کنید…' }, ...places.map((p) => ({ value: p.slug, label: p.name }))]}
             />
           </Field>
+          {editing ? (
+            <div className="space-y-2">
+              <span className="text-sm font-medium">عکس‌ها</span>
+              {photosLoading ? (
+                <p className="text-xs text-muted-foreground">در حال بارگذاری…</p>
+              ) : photos.length === 0 ? (
+                <p className="text-xs text-muted-foreground">هنوز عکسی ثبت نشده است.</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {photos.map((p) => (
+                    <div key={p.id} className="overflow-hidden rounded-xl border border-border">
+                      <img src={p.url} alt={p.altFa} className="aspect-[4/3] w-full object-cover" loading="lazy" />
+                      <button
+                        type="button"
+                        onClick={() => onDeletePhoto(p.id)}
+                        className="flex min-h-[44px] w-full items-center justify-center gap-1.5 text-xs text-destructive hover:bg-destructive/5"
+                      >
+                        <Trash2 className="size-4" />
+                        حذف
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickPhoto} aria-label="انتخاب عکس هتل" />
+              <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => fileRef.current?.click()}>
+                {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
+                {uploading ? 'در حال آپلود…' : 'افزودن عکس'}
+              </Button>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">پس از ثبت هتل می‌توانید عکس اضافه کنید.</p>
+          )}
         </div>
       </Dialog>
       <AlertDialog
