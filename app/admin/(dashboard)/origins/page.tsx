@@ -1,19 +1,12 @@
 import type { Metadata } from 'next';
-import { listOriginsAdmin } from './actions';
-import OriginsManager from './OriginsManager';
-import TourHubNav from '../tours/TourHubNav';
+import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'مبدأها | پنل ریوان سفر',
   robots: 'noindex,nofollow',
 };
 
-export default async function AdminOriginsPage() {
-  const origins = await listOriginsAdmin();
-  return (
-    <div className="space-y-6">
-      <TourHubNav counts={{ origins: origins.length }} />
-      <OriginsManager initial={origins} />
-    </div>
-  );
+/** مسیر قدیمی؛ کاتالوگ یکپارچه جایگزینش شده تا لینک‌های داخلی نشکنند. */
+export default function AdminOriginsPage() {
+  redirect('/admin/catalog?tab=origins');
 }

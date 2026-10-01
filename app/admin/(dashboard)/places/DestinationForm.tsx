@@ -40,6 +40,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
   // قلم ۱۱: نامک خودکار از نام فارسی؛ ویرایش دستی فقط در «پیشرفته».
   const [slugTouched, setSlugTouched] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [extraOpen, setExtraOpen] = useState(false);
   const [nameError, setNameError] = useState('');
   const [slugError, setSlugError] = useState('');
 
@@ -77,6 +78,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
     }
     if (!slug) {
       setSlugError('نامک لازم است؛ اول نام فارسی را بنویسید تا خودکار ساخته شود.');
+      setExtraOpen(true);
       setAdvancedOpen(true);
       return;
     }
@@ -96,6 +98,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
         const { unique } = await checkDestinationSlugUnique(slug, editingId ?? null);
         if (!unique) {
           setSlugError('این نامک قبلاً برای مقصد دیگری ثبت شده.');
+          setExtraOpen(true);
           setAdvancedOpen(true);
           return;
         }
@@ -148,7 +151,10 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
         <CardDescription>اطلاعات مقصد، نکات سفر و پرسش‌های متداول را وارد کنید.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <h3 className="mb-1 text-sm font-semibold">هویت مقصد</h3>
+          <p className="mb-3 text-xs text-muted-foreground">همین ۶ فیلد برای ثبت یک مقصد تازه کافی است؛ بقیه در «تکمیلی».</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="نام فارسی *" error={nameError}><Input value={form.name} onChange={(e) => setName(e.target.value)} /></Field>
           <Field label="نام انگلیسی"><Input value={form.nameEn} dir="ltr" onChange={(e) => set('nameEn', e.target.value)} /></Field>
           <Field label="نوع"><Select value={form.type} onChange={(e) => set('type', e.target.value)} options={[{ value: 'city', label: 'شهر' }, { value: 'country', label: 'کشور' }]} /></Field>
@@ -243,9 +249,20 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
               </div>
             </div>
           )}
-          <Field label="نام کشور مادر"><Input value={form.parentCountryName} onChange={(e) => set('parentCountryName', e.target.value)} /></Field>
           <Field label="دسته‌بندی"><Input value={form.category} onChange={(e) => set('category', e.target.value)} /></Field>
           <Field label="تصویر" hint="آدرس کامل تصویر"><Input value={form.image} dir="ltr" onChange={(e) => set('image', e.target.value)} /></Field>
+          </div>
+        </div>
+
+        <Collapsible
+          trigger="تکمیلی"
+          openLabel="بستن بخش تکمیلی"
+          open={extraOpen}
+          onOpenChange={setExtraOpen}
+          className="rounded-xl border border-border bg-muted/20 p-4"
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="نام کشور مادر" hint="معمولاً خودکار از «کشور مادر» پر می‌شود؛ فقط اگر لازم بود دستی بنویسید"><Input value={form.parentCountryName} onChange={(e) => set('parentCountryName', e.target.value)} /></Field>
           <Field label="شعار هدر"><Input value={form.heroTagline} onChange={(e) => set('heroTagline', e.target.value)} /></Field>
           <Field label="بهترین فصل"><Input value={form.bestSeason} onChange={(e) => set('bestSeason', e.target.value)} /></Field>
           <Field label="ویزا لازم است؟"><Select value={form.visaRequired ? 'yes' : 'no'} onChange={(e) => set('visaRequired', e.target.value === 'yes')} options={[{ value: 'no', label: 'خیر' }, { value: 'yes', label: 'بله' }]} /></Field>
@@ -312,10 +329,13 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
             />
           </Field>
         </Collapsible>
+        </Collapsible>
 
-        <div className="flex gap-2">
-          <Button onClick={submit} disabled={pending}>{pending ? 'در حال ذخیره...' : editingId ? 'ذخیره تغییرات' : 'ثبت مقصد'}</Button>
-          <Button type="button" variant="outline" onClick={onDone}>انصراف</Button>
+        <div className="sticky bottom-0 z-10 -mx-5 -mb-5 border-t border-border bg-card/95 px-5 py-3 backdrop-blur">
+          <div className="flex gap-2">
+            <Button onClick={submit} disabled={pending}>{pending ? 'در حال ذخیره...' : editingId ? 'ذخیره تغییرات' : 'ثبت مقصد'}</Button>
+            <Button type="button" variant="outline" onClick={onDone}>انصراف</Button>
+          </div>
         </div>
       </CardContent>
     </Card>

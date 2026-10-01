@@ -84,7 +84,7 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
       done: counts.destinations > 0,
       // یافتهٔ ۱۰: به‌جای Buttonِ asChild (‏a داخل button نامعتبر است)، ‏a استایل‌دار.
       action: (
-        <a href="/admin/places" className={buttonClasses('outline', 'sm')}>
+        <a href="/admin/catalog?tab=destinations" className={buttonClasses('outline', 'sm')}>
           مدیریت مقصدها
         </a>
       ),
@@ -95,7 +95,7 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
       description: `تا اینجا ${fa(counts.origins)} مبدأ ثبت شده است.`,
       done: counts.origins > 0,
       action: (
-        <a href="/admin/origins" className={buttonClasses('outline', 'sm')}>
+        <a href="/admin/catalog?tab=origins" className={buttonClasses('outline', 'sm')}>
           مدیریت مبدأها
         </a>
       ),
