@@ -40,6 +40,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
   const [photos, setPhotos] = useState<HotelPhoto[]>([]);
   const [photosLoading, setPhotosLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [deletingPhoto, setDeletingPhoto] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const reload = () => window.location.reload();
@@ -88,7 +89,10 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
     }
   };
 
-  const onDeletePhoto = async (id: string) => {
+  const onDeletePhoto = async () => {
+    const id = deletingPhoto;
+    if (!id) return;
+    setDeletingPhoto(null);
     try {
       await deleteHotelPhoto(id);
       setPhotos((prev) => prev.filter((p) => p.id !== id));
@@ -247,7 +251,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
                       <img src={p.url} alt={p.altFa} className="aspect-[4/3] w-full object-cover" loading="lazy" />
                       <button
                         type="button"
-                        onClick={() => onDeletePhoto(p.id)}
+                        onClick={() => setDeletingPhoto(p.id)}
                         className="flex min-h-[44px] w-full items-center justify-center gap-1.5 text-xs text-destructive hover:bg-destructive/5"
                       >
                         <Trash2 className="size-4" />
@@ -276,6 +280,15 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
         confirmText="بایگانی هتل"
         destructive
         onConfirm={onDelete}
+      />
+      <AlertDialog
+        open={Boolean(deletingPhoto)}
+        onOpenChange={(openState) => !openState && setDeletingPhoto(null)}
+        title="حذف عکس هتل"
+        description={editing ? `این عکس از هتل «${editing.nameFa}» برای همیشه حذف می‌شود؛ فایل آن از فضای ذخیره‌سازی هم پاک می‌شود و این کار برگشت‌پذیر نیست.` : 'این عکس برای همیشه حذف می‌شود و برگشت‌پذیر نیست.'}
+        confirmText="حذف عکس"
+        destructive
+        onConfirm={onDeletePhoto}
       />
     </div>
   );

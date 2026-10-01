@@ -19,13 +19,14 @@ import {
 import { Field, Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { normalizeFaSearch } from '@/lib/persian';
 import type { HotelBookingType, TourHotelOptionItem, TourInput } from '../actions';
-import type { HotelRow } from '../../hotels/actions';
+import type { HotelPickerItem } from '../../hotels/actions';
 
 interface Stage2HotelsProps {
   data: TourInput;
   onChange: (fields: Partial<TourInput>) => void;
-  hotels: HotelRow[];
+  hotels: HotelPickerItem[];
 }
 
 const BOARD_OPTIONS = [
@@ -55,7 +56,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
       ...hotels,
       {
         name: '',
-        stars: 4,
+        // ستاره عمداً خالی می‌ماند تا مدیر آگاهانه انتخاب کند (ادعای ستاره نباید حدسی باشد)
         board: 'BB',
         pricePerPerson: '',
         priceDouble: '',
@@ -69,13 +70,14 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
   };
 
   // افزودن هتل از جدول ثبت‌شده‌ها: نام و ستاره از رکورد می‌آید، قیمت همان‌جا دستی وارد می‌شود (ویژهٔ این تور)
-  const handleAddHotelFromTable = (h: HotelRow) => {
+  // اگر کاتالوگ برای هتل ستاره ثبت نکرده باشد، ستاره خالی می‌ماند — هرگز حدس زده نمی‌شود.
+  const handleAddHotelFromTable = (h: HotelPickerItem) => {
     const next: TourHotelOptionItem[] = [
       ...hotels,
       {
         hotelId: h.id,
         name: h.nameFa,
-        stars: h.stars || 4,
+        ...(h.stars ? { stars: h.stars } : {}),
         board: 'BB',
         pricePerPerson: '',
         priceDouble: '',
@@ -99,8 +101,9 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
     onChange({ hotelOptions: next });
   };
 
-  const catalogResults = hotelQuery.trim()
-    ? catalogHotels.filter((h) => h.nameFa.includes(hotelQuery.trim())).slice(0, 30)
+  const catalogQuery = normalizeFaSearch(hotelQuery);
+  const catalogResults = catalogQuery
+    ? catalogHotels.filter((h) => normalizeFaSearch(h.nameFa).includes(catalogQuery)).slice(0, 30)
     : catalogHotels.slice(0, 30);
 
   const handleUpdateHotel = (index: number, patch: Partial<TourHotelOptionItem>) => {
@@ -181,9 +184,12 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                     <span className="flex items-center gap-2 text-foreground">
                       <Building2 className="size-3.5 text-blue-600 shrink-0" />
                       <span className="font-medium">{h.nameFa}</span>
+                      {h.cityName ? (
+                        <span className="text-[10px] text-muted-foreground">({h.cityName})</span>
+                      ) : null}
                       <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
                         <Star className="size-3 text-amber-500 fill-amber-500" />
-                        {h.stars}
+                        {h.stars ?? '—'}
                       </span>
                     </span>
                     <Plus className="size-4 text-muted-foreground shrink-0" />
@@ -280,13 +286,13 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
                           onClick={() => handleUpdateHotel(idx, { stars: star })}
                           className={cn(
                             "flex size-9 items-center justify-center rounded-lg border transition-colors",
-                            (hotel.stars || 3) >= star
+                            (hotel.stars ?? 0) >= star
                               ? "bg-amber-500/10 border-amber-500/30 text-amber-500"
                               : "bg-secondary/30 border-border/60 text-muted-foreground"
                           )}
                           title={`${star} ستاره`}
                         >
-                          <Star className={cn("size-4", (hotel.stars || 3) >= star ? "fill-amber-500" : "")} />
+                          <Star className={cn("size-4", (hotel.stars ?? 0) >= star ? "fill-amber-500" : "")} />
                         </button>
                       ))}
                     </div>

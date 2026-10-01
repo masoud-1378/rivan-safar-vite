@@ -261,7 +261,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                       </td>
                       <td className="py-4 px-4 text-center">
                         <span className="inline-flex px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold text-caption border border-amber-200">
-                          {opt.stars} ستاره
+                          {opt.stars ? `${opt.stars} ستاره` : '—'}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-center text-text-secondary">

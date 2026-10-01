@@ -3,13 +3,13 @@
 import { useRouter } from 'next/navigation';
 import TourForm from '../TourForm';
 import type { TourRow, DestinationTree, OriginRow } from '../actions';
-import type { HotelRow } from '../../hotels/actions';
+import type { HotelPickerItem } from '../../hotels/actions';
 
 interface Props {
   initial: TourRow | null;
   tree: DestinationTree;
   origins: OriginRow[];
-  hotels: HotelRow[];
+  hotels: HotelPickerItem[];
 }
 
 /** پوستهٔ کلاینتی صفحهٔ تور تازه: بعد از ذخیره به صفحهٔ ویرایش همان تور می‌رود. */

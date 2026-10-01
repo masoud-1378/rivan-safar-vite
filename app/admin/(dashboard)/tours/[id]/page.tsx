@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { listDestinationTree, listOrigins, getTourById } from '../actions';
-import { listHotels } from '../../hotels/actions';
+import { listHotelsForPicker } from '../../hotels/actions';
 import { AdminBreadcrumb } from '../AdminBreadcrumb';
 import { EditTourClient } from './EditTourClient';
 
@@ -20,7 +20,7 @@ export default async function AdminTourEditPage({ params }: Props) {
     getTourById(id).catch(() => null),
     listDestinationTree().catch(() => ({ regions: [], all: [] })),
     listOrigins().catch(() => []),
-    listHotels().catch(() => []),
+    listHotelsForPicker().catch(() => []),
   ]);
   if (!tour) notFound();
 

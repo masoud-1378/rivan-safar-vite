@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { listDestinationTree, listOrigins, getTourBySlug, type TourRow } from '../actions';
-import { listHotels } from '../../hotels/actions';
+import { listHotelsForPicker } from '../../hotels/actions';
 import { AdminBreadcrumb } from '../AdminBreadcrumb';
 import { NewTourClient } from './NewTourClient';
 
@@ -19,7 +19,7 @@ export default async function AdminTourNewPage({ searchParams }: Props) {
   const [tree, origins, hotels, source] = await Promise.all([
     listDestinationTree().catch(() => ({ regions: [], all: [] })),
     listOrigins().catch(() => []),
-    listHotels().catch(() => []),
+    listHotelsForPicker().catch(() => []),
     duplicate ? getTourBySlug(duplicate).catch(() => null) : Promise.resolve(null),
   ]);
 
@@ -27,7 +27,8 @@ export default async function AdminTourNewPage({ searchParams }: Props) {
   let duplicateTitle: string | null = null;
   if (source) {
     const { id: _id, slug: _slug, ...rest } = source;
-    initial = { ...rest, id: '', slug: '', title: `${source.title} (کپی)`, publishStatus: 'draft' };
+    // تکثیر همیشه پیش‌نویسِ در انتظار تأیید ظرفیت است — وضعیت منبع به ارث نمی‌رسد.
+    initial = { ...rest, id: '', slug: '', title: `${source.title} (کپی)`, publishStatus: 'draft', status: 'pending', statusLabel: 'در انتظار تأیید ظرفیت' };
     duplicateTitle = source.title;
   }
 

@@ -30,7 +30,7 @@ import type {
   TourItineraryDayItem,
 } from './actions';
 import { saveTour, checkSlugUnique } from './actions';
-import type { HotelRow } from '../hotels/actions';
+import type { HotelPickerItem } from '../hotels/actions';
 import { validateDraft, getStageCompletion } from './tour-helpers';
 
 // 5 Modular Stage Components
@@ -47,7 +47,7 @@ export interface TourFormProps {
   onDone: (id?: string | null) => void;
   tree: DestinationTree;
   origins: OriginRow[];
-  hotels: HotelRow[];
+  hotels: HotelPickerItem[];
 }
 
 export type StageId = 1 | 2 | 3 | 4 | 5;
@@ -103,7 +103,7 @@ export default function TourForm({
       formattedPrice: initial?.formattedPrice || '',
       priceNote: initial?.priceNote || 'برای هر بزرگسال در اتاق دو تخته',
       status: initial?.status || 'pending',
-      statusLabel: initial?.statusLabel || 'پیش‌نویس',
+      statusLabel: initial?.statusLabel || 'در انتظار تأیید ظرفیت',
       // گیت انتشار (مایگریشن 0011): پیش‌فرض همیشه پیش‌نویس؛ «انتشار» فقط با دکمهٔ خودش.
       publishStatus: initial?.publishStatus === 'published' ? 'published' : 'draft',
       image: initial?.image || '',
@@ -275,12 +275,22 @@ export default function TourForm({
           </span>
         </div>
         {formData.slug.trim() ? (
-          <a href={`/tour/${formData.slug.trim()}`} target="_blank" rel="noopener noreferrer">
-            <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs">
-              <ExternalLink className="size-4" />
-              پیش‌نمایش در سایت
-            </Button>
-          </a>
+          formData.publishStatus === 'published' ? (
+            <a href={`/tour/${formData.slug.trim()}`} target="_blank" rel="noopener noreferrer">
+              <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs">
+                <ExternalLink className="size-4" />
+                پیش‌نمایش در سایت
+              </Button>
+            </a>
+          ) : (
+            <span className="flex items-center gap-2">
+              <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs" disabled title="پیش‌نمایش پس از انتشار فعال می‌شود">
+                <ExternalLink className="size-4" />
+                پیش‌نمایش در سایت
+              </Button>
+              <span className="text-[11px] text-muted-foreground">پس از انتشار فعال می‌شود.</span>
+            </span>
+          )
         ) : (
           <span className="text-[11px] text-muted-foreground">
             برای پیش‌نمایش، اول نامک (مرحلهٔ ۱) را وارد کن.

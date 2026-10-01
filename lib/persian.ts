@@ -231,3 +231,20 @@ export function timeAgo(date: Date, now = new Date()): string {
   const mo = Math.round(d / 30);
   return mo < 12 ? `${fa(mo)} ماه پیش` : `${fa(Math.round(mo / 12))} سال پیش`;
 }
+
+/* ---------- fa search ---------- */
+
+/**
+ * نرمال‌سازی متن برای جست‌وجوی فارسی: «ي» عربی ← «ی»، «ك» عربی ← «ک»،
+ * حذف اعراب و کشیده، یکدست‌سازی فاصله‌ها. هر دو سمت جست‌وجو (ورودی و داده)
+ * باید با همین تابع نرمال شوند تا «تهران» با «تهران»‌های کیبورد عربی هم پیدا شود.
+ */
+export function normalizeFaSearch(input: string): string {
+  return (input || "")
+    .replace(/ي/g, "ی")
+    .replace(/ك/g, "ک")
+    .replace(/[\u064B-\u0652\u0670]/g, "")
+    .replace(/\u0640/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}

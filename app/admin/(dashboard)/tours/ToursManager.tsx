@@ -40,6 +40,7 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
   const [duplicating, setDuplicating] = useState<TourRow | null>(null);
   const [pending, startTransition] = useTransition();
   const [statusFilter, setStatusFilter] = useState('all');
+  const [publishFilter, setPublishFilter] = useState<'all' | 'draft' | 'published'>('all');
   const { toast } = useToast();
   const router = useRouter();
 
@@ -52,7 +53,11 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
     return [...seen.entries()].map(([value, label]) => ({ value, label }));
   }, [tours]);
 
-  const visible = statusFilter === 'all' ? tours : tours.filter((t) => t.status === statusFilter);
+  const visible = tours.filter(
+    (t) =>
+      (statusFilter === 'all' || t.status === statusFilter) &&
+      (publishFilter === 'all' || t.publishStatus === publishFilter)
+  );
 
   const onDelete = async () => {
     if (!deleting) return;
@@ -148,7 +153,7 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
   return (
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2"><div><h1 className="text-2xl font-bold text-foreground">تورها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول تورها — قیمت پایه را می‌توانید مستقیم از جدول ویرایش کنید</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="tours" title="تنظیمات تورها" tabs={['general']} values={sectionSettings} /><Link href="/admin/tours/new"><Button><Plus />افزودن تور جدید</Button></Link></div></div>
-      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">تورها ({fa(tours.length)})</h2><DataTable rows={visible} columns={columns} rowKey={(tour) => tour.id} searchKeys={['title', 'destination', 'typeLabel']} searchPlaceholder="جست‌وجوی عنوان، مقصد یا نوع تور…" toolbar={<Select aria-label="فیلتر وضعیت" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} options={[{ value: 'all', label: 'همه وضعیت‌ها' }, ...statusOptions]} className="h-11 w-40" />} emptyTitle={statusFilter === 'all' ? 'توری ثبت نشده است' : 'توری با این وضعیت پیدا نشد'} emptyDescription={statusFilter === 'all' ? 'برای شروع، تور جدیدی اضافه کنید.' : 'فیلتر وضعیت را عوض کنید یا جست‌وجو را پاک کنید.'} /></CardContent></Card>
+      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">تورها ({fa(tours.length)})</h2><DataTable rows={visible} columns={columns} rowKey={(tour) => tour.id} searchKeys={['title', 'destination', 'typeLabel']} searchPlaceholder="جست‌وجوی عنوان، مقصد یا نوع تور…" toolbar={<><Select aria-label="فیلتر وضعیت ظرفیت" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} options={[{ value: 'all', label: 'همه ظرفیت‌ها' }, ...statusOptions]} className="h-11 w-40" /><Select aria-label="فیلتر انتشار" value={publishFilter} onChange={(e) => setPublishFilter(e.target.value as 'all' | 'draft' | 'published')} options={[{ value: 'all', label: 'همه (انتشار)' }, { value: 'draft', label: 'پیش‌نویس' }, { value: 'published', label: 'منتشرشده' }]} className="h-11 w-36" /></>} emptyTitle={statusFilter === 'all' && publishFilter === 'all' ? 'توری ثبت نشده است' : 'توری با این فیلتر پیدا نشد'} emptyDescription={statusFilter === 'all' && publishFilter === 'all' ? 'برای شروع، تور جدیدی اضافه کنید.' : 'فیلترها را عوض کنید یا جست‌وجو را پاک کنید.'} /></CardContent></Card>
       {duplicating && (
         <DuplicateTourDialog
           key={duplicating.id}

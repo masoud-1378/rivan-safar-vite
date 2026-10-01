@@ -21,6 +21,7 @@ import { Select } from '@/components/ui/select';
 import { AmountInput } from '@/components/ui/amount-input';
 import { Badge } from '@/components/ui/badge';
 import { cn, formatToman } from '@/lib/utils';
+import { normalizeFaSearch } from '@/lib/persian';
 import { faToSlugFa } from '../tour-helpers';
 import type { DestinationTree, OriginRow, TourInput } from '../actions';
 import type { TourDraftErrors } from '../tour-helpers';
@@ -132,10 +133,10 @@ export default function Stage1Identity({
   };
 
   // جست‌وجوی تخت مقصدها: در حالت جست‌وجو به‌جای دریلِ درخت، لیست مستقیم نتایج با انتخاب تک‌کلیکی
-  const destSearchQuery = destQuery.trim();
+  const destSearchQuery = normalizeFaSearch(destQuery);
   const destSearchResults = destSearchQuery
     ? tree.all
-        .filter((a) => (a.type === 'city' || a.type === 'country') && a.name.includes(destSearchQuery))
+        .filter((a) => (a.type === 'city' || a.type === 'country') && normalizeFaSearch(a.name).includes(destSearchQuery))
         .slice(0, 30)
     : [];
 
