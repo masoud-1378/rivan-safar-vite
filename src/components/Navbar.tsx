@@ -717,9 +717,13 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
             </a>
           </div>
 
-          {/* WhatsApp Button */}
+          {/* WhatsApp Button — لینک از تنظیمات سایت؛ اگر خالی باشد همان شماره تماس */}
           <a
-            href="https://wa.me/982633350139"
+            href={(() => {
+              const w = contact.social.whatsapp?.trim();
+              if (w) return /^https?:\/\//i.test(w) ? w : `https://wa.me/${w.replace(/\D/g, '')}`;
+              return 'https://wa.me/982633350139';
+            })()}
             target="_blank"
             rel="noopener noreferrer"
             className="flex flex-col items-center justify-center gap-1 text-text-secondary hover:text-[#25D366] transition-colors"

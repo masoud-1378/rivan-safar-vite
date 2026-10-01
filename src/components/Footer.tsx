@@ -127,38 +127,33 @@ export default function Footer({ onNavigate }: FooterProps) {
               ریوان سفر؛ همراه شما برای انتخاب، برنامه‌ریزی و بررسی تورهای خارجی، داخلی و نمایشگاهی.
             </p>
 
-            {/* Social Media Links */}
-            <div className="pt-2 flex items-center gap-3">
-              <span className="text-body-sm text-white/70 font-medium ml-2">شبکه‌های اجتماعی:</span>
-              <a
-                href="#instagram"
-                aria-label="اینستاگرام ریوان سفر"
-                className="w-9 h-9 rounded-small bg-white/5 hover:bg-brand-orange hover:text-on-brand text-text-on-dark-secondary flex items-center justify-center transition-colors"
-              >
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a
-                href="#telegram"
-                aria-label="تلگرام ریوان سفر"
-                className="w-9 h-9 rounded-small bg-white/5 hover:bg-brand-orange hover:text-on-brand text-text-on-dark-secondary flex items-center justify-center transition-colors"
-              >
-                <Send className="w-4 h-4" />
-              </a>
-              <a
-                href="#whatsapp"
-                aria-label="واتساپ ریوان سفر"
-                className="w-9 h-9 rounded-small bg-white/5 hover:bg-brand-orange hover:text-on-brand text-text-on-dark-secondary flex items-center justify-center transition-colors"
-              >
-                <MessageCircle className="w-4 h-4" />
-              </a>
-              <a
-                href="#linkedin"
-                aria-label="لینکدین ریوان سفر"
-                className="w-9 h-9 rounded-small bg-white/5 hover:bg-brand-orange hover:text-on-brand text-text-on-dark-secondary flex items-center justify-center transition-colors"
-              >
-                <Linkedin className="w-4 h-4" />
-              </a>
-            </div>
+            {/* Social Media Links — از تنظیمات سایت؛ اگر خالی باشد رندر نمی‌شود */}
+            {(() => {
+              const socials = [
+                { href: contact.social.instagram, label: 'اینستاگرام ریوان سفر', Icon: Instagram },
+                { href: contact.social.telegram, label: 'تلگرام ریوان سفر', Icon: Send },
+                { href: contact.social.whatsapp, label: 'واتساپ ریوان سفر', Icon: MessageCircle },
+                { href: contact.social.linkedin, label: 'لینکدین ریوان سفر', Icon: Linkedin },
+              ].filter((s) => s.href && s.href.trim());
+              if (socials.length === 0) return null;
+              return (
+                <div className="pt-2 flex items-center gap-3">
+                  <span className="text-body-sm text-white/70 font-medium ml-2">شبکه‌های اجتماعی:</span>
+                  {socials.map(({ href, label, Icon }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={label}
+                      className="w-9 h-9 rounded-small bg-white/5 hover:bg-brand-orange hover:text-on-brand text-text-on-dark-secondary flex items-center justify-center transition-colors"
+                    >
+                      <Icon className="w-4 h-4" />
+                    </a>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Contact Details Box (5 cols on lg) */}

@@ -14,6 +14,13 @@ export interface ContactInfo {
   ctaLabel: string;
   brand: string;
   tagline: string;
+  announcementText: string;
+  social: {
+    instagram: string;
+    telegram: string;
+    whatsapp: string;
+    linkedin: string;
+  };
 }
 
 const FALLBACK: ContactInfo = {
@@ -29,6 +36,8 @@ const FALLBACK: ContactInfo = {
   ctaLabel: 'درخواست تماس',
   brand: 'ریوان سفر',
   tagline: 'سفر خوب، از انتخاب روشن شروع می‌شود',
+  announcementText: 'ثبت‌نام تورهای نوروزی آغاز شد.',
+  social: { instagram: '', telegram: '', whatsapp: '', linkedin: '' },
 };
 
 export async function getContactInfo(): Promise<ContactInfo> {
@@ -58,6 +67,13 @@ export async function getContactInfo(): Promise<ContactInfo> {
       ctaLabel: s['contact.cta_label'] || FALLBACK.ctaLabel,
       brand: s['site.brand'] || FALLBACK.brand,
       tagline: s['site.tagline'] || FALLBACK.tagline,
+      announcementText: s['site.announcement_text'] || FALLBACK.announcementText,
+      social: {
+        instagram: s['social.instagram'] || '',
+        telegram: s['social.telegram'] || '',
+        whatsapp: s['social.whatsapp'] || '',
+        linkedin: s['social.linkedin'] || '',
+      },
     };
   } catch {
     return FALLBACK;

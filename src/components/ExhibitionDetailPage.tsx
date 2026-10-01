@@ -31,6 +31,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   if (!ex) {
     return (
@@ -54,8 +55,34 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
     }, 600);
   };
 
+  // اعتبارسنجی دوره (۴-۷): اگر دوره درخواستی با دوره پیش‌رو نخواند، اطلاع‌رسانی می‌کنیم
+  const editionMismatch =
+    !!editionSlug && editionSlug !== ex.upcomingEdition.editionSlug;
+
+  const faqs = (ex.faqs || []).filter((f) => f && f.question && f.answer);
+  const faqJsonLd =
+    faqs.length > 0
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: faqs.map((f) => ({
+            '@type': 'Question',
+            name: f.question,
+            acceptedAnswer: { '@type': 'Answer', text: f.answer },
+          })),
+        }
+      : null;
+
   return (
     <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+      {faqJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(faqJsonLd).replace(/</g, '\\u003c'),
+          }}
+        />
+      )}
       {/* ---------------- Breadcrumb ---------------- */}
       <div className="bg-surface-secondary border-b border-border-default/60 py-2.5">
         <div className="container-main px-4 sm:px-6 lg:px-8">
@@ -72,6 +99,16 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
           </nav>
         </div>
       </div>
+
+      {/* دوره درخواستی با دوره پیش‌رو نمی‌خواند؛ اطلاع‌رسانی صادقانه */}
+      {editionMismatch && (
+        <div className="container-main px-4 sm:px-6 lg:px-8 mt-4">
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-card text-amber-900 text-body-sm leading-relaxed">
+            اطلاعات این دوره ({editionSlug}) هنوز منتشر نشده است؛ جزئیات زیر مربوط به دوره پیش‌روست.
+            برای هماهنگی سفر به دوره‌های دیگر، با کارشناسان ما در تماس باشید.
+          </div>
+        </div>
+      )}
 
       {/* ---------------- Hero Section ---------------- */}
       <section className="bg-surface-primary border-b border-border-default section-compact">
@@ -113,10 +150,22 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   <Calendar className="w-4 h-4 text-brand-orange shrink-0" />
                   <span>تاریخ دوره پیش‌رو: <strong>{ex.upcomingEdition.solarDate}</strong> </span>
                 </div>
+                {ex.upcomingEdition.gregorianDate && (
+                  <div className="flex items-center gap-2 text-text-secondary">
+                    <Globe className="w-4 h-4 text-text-muted shrink-0" />
+                    <span>تاریخ میلادی: <span dir="ltr" className="font-mono">{ex.upcomingEdition.gregorianDate}</span></span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 text-text-secondary">
                   <Building2 className="w-4 h-4 text-brand-navy shrink-0" />
                   <span>محل برگزاری: {ex.venue}</span>
                 </div>
+                {ex.upcomingEdition.hotelArea && (
+                  <div className="flex items-center gap-2 text-text-secondary">
+                    <MapPin className="w-4 h-4 text-brand-navy shrink-0" />
+                    <span>منطقه پیشنهادی اقامت: {ex.upcomingEdition.hotelArea}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 text-red-600 font-bold">
                   <Clock className="w-4 h-4 shrink-0" />
                   <span>مهلت اقدام برای ویزا: {ex.upcomingEdition.visaDeadline}</span>
@@ -248,6 +297,53 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* ---------------- پرسش‌های پرتکرار (از داده زنده) ---------------- */}
+      {faqs.length > 0 && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="text-right mb-6">
+            <h2 className="text-h2 text-text-heading font-bold mb-1.5">
+              سؤال‌های پرتکرار درباره {ex.title}
+            </h2>
+            <p className="text-body-sm text-text-secondary">
+              پاسخ کوتاه به چیزهایی که مسافران تجاری معمولاً می‌پرسند.
+            </p>
+          </div>
+          <div className="space-y-3">
+            {faqs.map((faq, idx) => {
+              const open = openFaqIndex === idx;
+              return (
+                <div
+                  key={idx}
+                  className={`bg-surface-primary border rounded-card overflow-hidden transition-colors ${
+                    open ? 'border-brand-orange/50' : 'border-border-default'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaqIndex(open ? null : idx)}
+                    className="w-full flex items-center justify-between gap-3 p-4 sm:p-5 text-right"
+                    aria-expanded={open}
+                  >
+                    <span className="flex items-center gap-2.5 text-body font-bold text-text-heading">
+                      <HelpCircle className="w-5 h-5 text-brand-orange shrink-0" />
+                      {faq.question}
+                    </span>
+                    <ChevronLeft
+                      className={`w-5 h-5 text-text-muted shrink-0 transition-transform ${open ? 'rotate-90' : '-rotate-90'}`}
+                    />
+                  </button>
+                  {open && (
+                    <div className="px-4 sm:px-5 pb-5 pt-0 text-body-sm text-text-secondary leading-relaxed">
+                      {faq.answer}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
       )}

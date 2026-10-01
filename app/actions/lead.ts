@@ -29,9 +29,29 @@ export interface LeadResult {
  */
 const recentByPhone = new Map<string, number>();
 
-export async function submitLead(input: LeadInput): Promise<LeadResult> {
+/** شماره تماس پشتیبانی از تنظیمات؛ اگر خوانده نشد، همان شمارهٔ پیش‌فرض. */
+async function supportPhoneDisplay(
+  db: NonNullable<ReturnType<typeof getDb>>
+): Promise<string> {
+  try {
+    const rows = await db
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.settingKey, 'business.phone_display'))
+      .limit(1);
+    return rows[0]?.settingValue?.trim() || '۰۲۶ — ۳۳۳۵۰۱۳۹';
+  } catch {
+    return '۰۲۶ — ۳۳۳۵۰۱۳۹';
+  }
+}
+
+export async function createLead(input: LeadInput): Promise<LeadResult> {
   const fullName = (input.fullName || '').trim();
-  const phone = (input.phone || '').replace(/[^\d+]/g, '');
+  // ارقام فارسی/عربی را به انگلیسی برمی‌گردانیم تا در sanitize حذف نشوند
+  const phone = (input.phone || '')
+    .replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+    .replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+    .replace(/[^\d+]/g, '');
 
   if (fullName.length < 3 || phone.length < 10) {
     return {
@@ -62,9 +82,11 @@ export async function submitLead(input: LeadInput): Promise<LeadResult> {
     };
   }
 
+  let supportPhone = '۰۲۶ — ۳۳۳۵۰۱۳۹';
   try {
     const db = getDb();
     if (!db) throw new Error('no-db');
+    supportPhone = await supportPhoneDisplay(db);
     const autoAssign = await db
       .select()
       .from(siteSettings)
@@ -96,8 +118,10 @@ export async function submitLead(input: LeadInput): Promise<LeadResult> {
     return {
       ok: true,
       stored: false,
-      message:
-        'ثبت آنلاین درخواست موقتاً ممکن نشد؛ لطفاً با شماره ۰۲۶ — ۳۳۳۵۰۱۳۹ تماس بگیرید.',
+      message: `ثبت آنلاین درخواست موقتاً ممکن نشد؛ لطفاً با شماره ${supportPhone} تماس بگیرید.`,
     };
   }
 }
+
+/** نام قدیمی اکشن؛ فرم‌های موجود همین را صدا می‌زنند. */
+export const submitLead = createLead;

@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Search, Filter, ChevronDown, Check, ArrowLeft, Phone, Calendar, 
   MapPin, SlidersHorizontal, Info, Clock, Sparkles, X, ShieldCheck, 
@@ -13,7 +13,8 @@ import { useContact } from '@/src/lib/contact-context';
 import { submitLead } from '../../app/actions/lead';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
-import { fa } from '@/lib/utils';
+import { fa, faSlug } from '@/lib/utils';
+import { uniqueOrigins } from './tour-live';
 import TourListItem from './TourListItem';
 
 interface ToursPageProps {
@@ -33,15 +34,12 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
   // --- Search & Filter States ---
   const [selectedType, setSelectedType] = useState<string>('all');
   const [searchDestination, setSearchDestination] = useState<string>('');
-  const [selectedMonth, setSelectedMonth] = useState<string>('all');
-  const [selectedPassengers, setSelectedPassengers] = useState<number>(1);
   const [flexibleDate, setFlexibleDate] = useState<boolean>(false);
 
   // Expanded filters
   const [priceRange, setPriceRange] = useState<string>('all');
   const [durationFilter, setDurationFilter] = useState<string>('all');
   const [visaFreeOnly, setVisaFreeOnly] = useState<boolean>(false);
-  const [originFilter, setOriginFilter] = useState<string>('all');
   const [hotelStarFilter, setHotelStarFilter] = useState<string>('all');
   const [airlineFilter, setAirlineFilter] = useState<string>('all');
   const [showMoreFilters, setShowMoreFilters] = useState<boolean>(false);
@@ -62,10 +60,29 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
   const [bookingForm, setBookingForm] = useState({
     name: '',
     mobile: '',
-    passengers: 2,
+    passengers: '2',
     selectedHotel: '',
     notes: ''
   });
+
+  // --- مبدأ: از مقادیر واقعی تورهای زنده + پارامتر ?origin= ---
+  const searchParams = useSearchParams();
+  const originOptions = useMemo(() => uniqueOrigins(tours), [tours]);
+  const [originFilter, setOriginFilter] = useState<string>(() => searchParams.get('origin') || 'all');
+  useEffect(() => {
+    const q = searchParams.get('origin');
+    if (q && originOptions.some((o) => o.slug === q)) setOriginFilter(q);
+  }, [searchParams, originOptions]);
+
+  // --- ایرلاین: از مقادیر واقعی تورهای زنده ---
+  const airlineOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of tours) {
+      const a = (t.airline || '').trim();
+      if (a) set.add(a);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'fa'));
+  }, [tours]);
 
   // FAQ Accordion
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
@@ -96,11 +113,6 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
         if (!matchesDest && !matchesTitle) return false;
       }
 
-      // Month
-      if (selectedMonth !== 'all') {
-        if (!tour.closestDeparture.includes(selectedMonth)) return false;
-      }
-
       // Visa free
       if (visaFreeOnly && tour.visaRequired) return false;
 
@@ -114,14 +126,14 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
       if (durationFilter === 'medium' && (tour.nights < 4 || tour.nights > 6)) return false;
       if (durationFilter === 'long' && tour.nights < 7) return false;
 
-      // Origin
-      if (originFilter !== 'all' && tour.origin !== originFilter) return false;
+      // Origin — تطبیق با نامک فارسی مبدأ
+      if (originFilter !== 'all' && faSlug(tour.origin || '') !== originFilter) return false;
 
       // Hotel Stars
       if (hotelStarFilter !== 'all' && tour.hotelStars.toString() !== hotelStarFilter) return false;
 
-      // Airline
-      if (airlineFilter !== 'all' && !tour.airline.includes(airlineFilter)) return false;
+      // Airline — گزینه‌ها از مقادیر واقعی همین فیلد ساخته می‌شوند
+      if (airlineFilter !== 'all' && (tour.airline || '').trim() !== airlineFilter) return false;
 
       return true;
     }).sort((a, b) => {
@@ -131,7 +143,7 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
       return 0; // default order
     });
   }, [
-    tours, selectedType, searchDestination, selectedMonth, visaFreeOnly,
+    tours, selectedType, searchDestination, visaFreeOnly,
     priceRange, durationFilter, originFilter, hotelStarFilter, airlineFilter, sortBy
   ]);
 
@@ -140,7 +152,6 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
     let count = 0;
     if (selectedType !== 'all') count++;
     if (searchDestination) count++;
-    if (selectedMonth !== 'all') count++;
     if (priceRange !== 'all') count++;
     if (durationFilter !== 'all') count++;
     if (visaFreeOnly) count++;
@@ -149,14 +160,13 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
     if (airlineFilter !== 'all') count++;
     return count;
   }, [
-    selectedType, searchDestination, selectedMonth, priceRange, 
+    selectedType, searchDestination, priceRange, 
     durationFilter, visaFreeOnly, originFilter, hotelStarFilter, airlineFilter
   ]);
 
   const clearAllFilters = () => {
     setSelectedType('all');
     setSearchDestination('');
-    setSelectedMonth('all');
     setPriceRange('all');
     setDurationFilter('all');
     setVisaFreeOnly(false);
@@ -186,11 +196,11 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
       sourcePath: '/tours',
       tourContext: selectedDetailTour?.title,
       destinationHint: selectedDetailTour?.destination,
-      passengers: String(bookingForm.passengers),
+      passengers: bookingForm.passengers,
       notes: bookingForm.selectedHotel ? `هتل: ${bookingForm.selectedHotel}` : undefined,
     });
     setSelectedDetailTour(null);
-    setBookingForm({ name: '', mobile: '', passengers: 2, selectedHotel: '', notes: '' });
+    setBookingForm({ name: '', mobile: '', passengers: '2', selectedHotel: '', notes: '' });
     if (result.ok) trackLeadSubmit('/tours', result.stored);
     alert(result.message);
   };
@@ -302,10 +312,10 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                 <button onClick={() => setSearchDestination('')} className="mr-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
-            {selectedMonth !== 'all' && (
+            {originFilter !== 'all' && (
               <span className="chip chip-small chip-selected">
-                {selectedMonth}
-                <button onClick={() => setSelectedMonth('all')} className="mr-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                مبدأ: {originOptions.find((o) => o.slug === originFilter)?.label || originFilter}
+                <button onClick={() => setOriginFilter('all')} className="mr-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {visaFreeOnly && (
@@ -458,9 +468,9 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                         className="form-input form-select text-body-sm"
                       >
                         <option value="all">همه مبدأها</option>
-                        <option value="تهران">تهران</option>
-                        <option value="مشهد">مشهد</option>
-                        <option value="اصفهان">اصفهان</option>
+                        {originOptions.map((o) => (
+                          <option key={o.slug} value={o.slug}>{o.label}</option>
+                        ))}
                       </select>
                     </div>
 
@@ -488,9 +498,9 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                         className="form-input form-select text-body-sm"
                       >
                         <option value="all">همه ایرلاین‌ها</option>
-                        <option value="ماهان">ماهان ایر</option>
-                        <option value="ترکیش">ترکیش ایرلاینز</option>
-                        <option value="ایران ایرلاینز">ایران ایرلاینز</option>
+                        {airlineOptions.map((a) => (
+                          <option key={a} value={a}>{a}</option>
+                        ))}
                       </select>
                     </div>
 
@@ -925,6 +935,20 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
                       onChange={(e) => setBookingForm({...bookingForm, mobile: e.target.value})}
                       className="form-input !bg-white/10 !border-white/20 !text-white placeholder:!text-white/50 focus:!border-brand-orange text-left"
                     />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label form-label-required !text-white">تعداد مسافران</label>
+                    <select
+                      value={bookingForm.passengers}
+                      onChange={(e) => setBookingForm({...bookingForm, passengers: e.target.value})}
+                      className="form-input !bg-white/10 !border-white/20 !text-white focus:!border-brand-orange [&>option]:text-black"
+                    >
+                      <option value="1">۱ نفر</option>
+                      <option value="2">۲ نفر</option>
+                      <option value="3">۳ نفر</option>
+                      <option value="4">۴ نفر</option>
+                      <option value="5+">۵ نفر به بالا</option>
+                    </select>
                   </div>
                 </div>
 

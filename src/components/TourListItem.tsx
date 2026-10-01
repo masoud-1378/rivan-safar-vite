@@ -98,13 +98,21 @@ export default function TourListItem({
         {/* Top Badges */}
         <div className="absolute top-3 right-3 left-3 flex items-start justify-end gap-2 z-10 pointer-events-none">
           {/* Status Badge */}
-          {statusBadge && (
+          {(statusBadge || badge || featureElement) && (
             <div className="flex flex-col gap-1.5 items-end">
-              <span className={`inline-flex px-2 py-1 rounded-md text-caption font-bold text-white shadow-sm ${
-                soldOut ? 'bg-red-500/90' : 'bg-brand-orange/90'
-              }`}>
-                {statusBadge}
-              </span>
+              {statusBadge && (
+                <span className={`inline-flex px-2 py-1 rounded-md text-caption font-bold text-white shadow-sm ${
+                  soldOut ? 'bg-red-500/90' : 'bg-brand-orange/90'
+                }`}>
+                  {statusBadge}
+                </span>
+              )}
+              {badge && (
+                <span className="inline-flex px-2 py-1 rounded-md text-caption font-bold text-white bg-brand-navy/90 shadow-sm">
+                  {badge}
+                </span>
+              )}
+              {featureElement}
             </div>
           )}
         </div>

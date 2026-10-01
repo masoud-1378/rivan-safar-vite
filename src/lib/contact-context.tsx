@@ -18,6 +18,8 @@ const FALLBACK: ContactInfo = {
   ctaLabel: 'درخواست تماس',
   brand: 'ریوان سفر',
   tagline: 'سفر خوب، از انتخاب روشن شروع می‌شود',
+  announcementText: 'ثبت‌نام تورهای نوروزی آغاز شد.',
+  social: { instagram: '', telegram: '', whatsapp: '', linkedin: '' },
 };
 
 const ContactContext = createContext<ContactInfo>(FALLBACK);

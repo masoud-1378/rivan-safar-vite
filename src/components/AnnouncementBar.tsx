@@ -1,11 +1,15 @@
 import React from 'react';
 import { X, ArrowLeft } from 'lucide-react';
+import { useContact } from '@/src/lib/contact-context';
 
 interface AnnouncementBarProps {
   onClose?: () => void;
 }
 
 export default function AnnouncementBar({ onClose }: AnnouncementBarProps) {
+  const contact = useContact();
+  // متن بنر و ساعات پاسخگویی از تنظیمات سایت می‌آیند (نه هاردکد)
+  const announcement = contact.announcementText?.trim() || 'ثبت‌نام تورهای نوروزی آغاز شد.';
   return (
     <div 
       className="w-full bg-surface-dark text-white text-body-sm font-medium leading-[1.5] h-[38px] md:h-[34px] flex items-center  relative z-[51] select-none shadow-subtle transition-all duration-300"
@@ -16,7 +20,7 @@ export default function AnnouncementBar({ onClose }: AnnouncementBarProps) {
         {/* Mobile Layout (sm and below) */}
         <div className="flex md:hidden items-center justify-center flex-1 text-center pe-2 ps-2">
           <span className="text-white/90 flex items-center justify-center gap-1.5 flex-wrap">
-            تورهای نوروزی ۱۴۰۶
+            {announcement}
             <a 
               href="#destinations" 
               className="inline-flex items-center gap-1 text-brand-orange font-bold border-b border-brand-orange/40 hover:border-brand-orange hover:text-brand-orange-soft transition-all pb-[1px]"
@@ -34,7 +38,7 @@ export default function AnnouncementBar({ onClose }: AnnouncementBarProps) {
         {/* Center Text */}
         <div className="hidden md:flex items-center justify-center flex-1 text-center">
           <span className="text-white/95 flex items-center justify-center gap-2">
-            ثبت‌نام تورهای نوروزی آغاز شد.
+            {announcement}
             <a 
               href="#destinations" 
               className="inline-flex items-center gap-1 text-brand-orange font-bold border-b border-brand-orange/40 hover:border-brand-orange hover:text-brand-orange-soft transition-all pb-[1px]"
@@ -47,7 +51,7 @@ export default function AnnouncementBar({ onClose }: AnnouncementBarProps) {
 
         {/* Left Side: Working Hours */}
         <div className="hidden md:flex items-center justify-end text-white/85 text-caption md:text-body-sm w-48 shrink-0 ps-10">
-          <span>پاسخگویی امروز: ۹ تا ۲۱</span>
+          <span>پاسخگویی: {contact.workingHours}</span>
         </div>
 
         {/* Close Icon Button */}

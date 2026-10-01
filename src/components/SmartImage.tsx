@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { ImageOff } from 'lucide-react';
 
 interface SmartImageProps {
   src: string;
@@ -14,6 +15,7 @@ interface SmartImageProps {
  * جایگزین مستقیم `<img className="w-full h-full object-cover">` با next/image.
  * والد باید `relative` (یا absolute/fixed) باشد — همه کانتینرهای کارت همین‌طورند.
  * remotePatterns برای images.unsplash.com در next.config.ts فعال است.
+ * اگر src خالی باشد، به‌جای next/image شکسته یک placeholder تمیز نشان می‌دهد.
  */
 export default function SmartImage({
   src,
@@ -22,6 +24,17 @@ export default function SmartImage({
   priority = false,
   sizes = '(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw',
 }: SmartImageProps) {
+  if (!src || !src.trim()) {
+    return (
+      <div
+        className={`absolute inset-0 flex items-center justify-center bg-surface-secondary ${className}`}
+        role="img"
+        aria-label={alt}
+      >
+        <ImageOff className="w-8 h-8 text-text-muted/50" />
+      </div>
+    );
+  }
   return (
     <Image
       src={src}

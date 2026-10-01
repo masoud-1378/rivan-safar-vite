@@ -100,9 +100,20 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
             {guide.title}
           </h1>
 
-          <p className="text-body font-medium text-text-secondary leading-relaxed mb-6">
+          <p className="text-body font-medium text-text-secondary leading-relaxed mb-4">
             {guide.summary}
           </p>
+
+          {(guide.author || guide.reviewer) && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-text-muted mb-6">
+              {guide.author && (
+                <span>نویسنده: <span className="font-bold text-text-secondary">{guide.author}</span></span>
+              )}
+              {guide.reviewer && (
+                <span>بازبین: <span className="font-bold text-text-secondary">{guide.reviewer}</span></span>
+              )}
+            </div>
+          )}
 
           {/* Key Takeaway Box */}
           <div className="p-5 bg-surface-secondary border border-brand-orange/30 rounded-card text-right">

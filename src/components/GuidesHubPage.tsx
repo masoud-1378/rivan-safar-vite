@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   BookOpen, Calendar, Clock, ChevronLeft, Search, 
   FileText, ShieldCheck, Phone, Sparkles 
@@ -18,14 +18,20 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
-  const categories = [
-    { id: 'all', label: 'همه راهنماها' },
-    { id: 'visa', label: 'مدارک و ویزا' },
-    { id: 'budget', label: 'مدیریت بودجه و خرید هوشمند' },
-    { id: 'comparison', label: 'مقایسه تور و هتل' },
-  ];
-
   const allGuides = Object.values(guides);
+
+  // چیپ‌های دسته‌بندی از داده زنده (نه هاردکد)
+  const categories = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const g of allGuides) {
+      const id = (g.category || '').trim();
+      if (id && !seen.has(id)) seen.set(id, g.categoryLabel || id);
+    }
+    return [
+      { id: 'all', label: 'همه راهنماها' },
+      ...[...seen].map(([id, label]) => ({ id, label })),
+    ];
+  }, [allGuides]);
 
   const filteredGuides = allGuides.filter((guide) => {
     const matchCategory = selectedCategory === 'all' || guide.category === selectedCategory;

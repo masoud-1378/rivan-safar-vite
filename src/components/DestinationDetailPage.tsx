@@ -7,6 +7,7 @@ import { submitLead } from '../../app/actions/lead';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import TourListItem from './TourListItem';
+import { liveExtras } from './tour-live';
 
 interface DestinationDetailPageProps {
   countrySlug: string;
@@ -44,7 +45,12 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
   }
 
   // Find tours matching this city
-  const destinationTours = tours.filter(t => (t.destination?.includes(city.name) ?? false) || (t.title?.includes(city.name) ?? false));
+  const destinationTours = tours.filter((t) => {
+    // اگر تورساز مقصدهای تور را مشخص کرده، همان معیار است؛ وگرنه رفتار قبلی
+    const slugs = liveExtras(t).destinationSlugs;
+    if (slugs && slugs.length > 0) return slugs.includes(city.slug);
+    return (t.destination?.includes(city.name) ?? false) || (t.title?.includes(city.name) ?? false);
+  });
 
   // Alternative destinations
   const alternativeCities = Object.values(cities).filter(c => c.slug !== city.slug && c.category === city.category).slice(0, 3);

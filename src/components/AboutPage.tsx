@@ -1,14 +1,18 @@
+'use client';
+
 import React from 'react';
 import { 
   Building2, ShieldCheck, Award, Users, Phone, MapPin, 
   Clock, CheckCircle2, ChevronLeft, Globe 
 } from 'lucide-react';
+import { useContact } from '@/src/lib/contact-context';
 
 interface AboutPageProps {
   onNavigate: (path: string) => void;
 }
 
 export default function AboutPage({ onNavigate }: AboutPageProps) {
+  const contact = useContact();
   return (
     <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
       {/* ---------------- Hero Section ---------------- */}
@@ -96,7 +100,7 @@ export default function AboutPage({ onNavigate }: AboutPageProps) {
             </div>
             <div>
               <span className="font-bold text-text-heading block mb-1">تلفن تماس:</span>
-              <span dir="ltr" className="font-mono font-bold text-text-heading">026-33350139</span>
+              <a href={contact.phoneHref} dir="ltr" className="font-mono font-bold text-text-heading hover:text-brand-orange transition-colors">{contact.phoneDisplay}</a>
             </div>
           </div>
         </div>

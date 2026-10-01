@@ -4,6 +4,9 @@ import {
   Building2, Check, Send, ShieldCheck, Sparkles
 } from 'lucide-react';
 import { useContact } from '@/src/lib/contact-context';
+import { createLead } from '../../app/actions/lead';
+import { trackLeadSubmit } from '../lib/analytics';
+import { isValidMobile, normalizeMobile } from './tour-live';
 
 interface ContactPageProps {
   onNavigate: (path: string) => void;
@@ -19,16 +22,37 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState('');
+  const [errors, setErrors] = useState({ name: '', phone: '' });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validate = () => {
+    const errs = { name: '', phone: '' };
+    if (formData.name.trim().length < 3) errs.name = 'نام و نام خانوادگی را کامل وارد کنید.';
+    if (!isValidMobile(formData.phone)) errs.phone = 'شماره موبایل باید ۱۱ رقم باشد و با ۰۹ شروع شود.';
+    setErrors(errs);
+    return !errs.name && !errs.phone;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone) return;
+    if (!validate()) return;
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setSubmitted(true);
-    }, 500);
+    const result = await createLead({
+      fullName: formData.name.trim(),
+      phone: normalizeMobile(formData.phone),
+      sourcePath: '/contact',
+      notes: [
+        `موضوع: ${formData.subject}`,
+        formData.message.trim() ? `پیام: ${formData.message.trim()}` : '',
+      ]
+        .filter(Boolean)
+        .join(' — '),
+    });
+    setLoading(false);
+    setSubmitMessage(result.message);
+    setSubmitted(true);
+    if (result.ok) trackLeadSubmit('/contact', result.stored);
   };
 
   return (
@@ -132,7 +156,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                   </div>
                   <h4 className="text-h4 font-bold mb-2">پیام شما با موفقیت دریافت شد</h4>
                   <p className="text-body-sm text-emerald-800">
-                    کارشناسان ریوان سفر در ساعات کاری پاسخگوی شما هستند.
+                    {submitMessage || 'کارشناسان ریوان سفر در ساعات کاری پاسخگوی شما هستند.'}
                   </p>
                 </div>
               ) : (
@@ -148,6 +172,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                         placeholder="مثال: رضا احمدی"
                         className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
                       />
+                      {errors.name && <p className="text-caption text-red-600 mt-1">{errors.name}</p>}
                     </div>
 
                     <div>
@@ -161,6 +186,7 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                         placeholder="۰۹۱۲۳۴۵۶۷۸۹"
                         className="w-full bg-surface-secondary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-start focus:border-brand-orange focus:outline-none"
                       />
+                      {errors.phone && <p className="text-caption text-red-600 mt-1 text-right">{errors.phone}</p>}
                     </div>
                   </div>
 

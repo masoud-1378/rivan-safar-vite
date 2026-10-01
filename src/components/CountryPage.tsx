@@ -25,6 +25,7 @@ import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import TourListItem from './TourListItem';
 import { fa } from '@/lib/utils';
+import { liveExtras } from './tour-live';
 
 interface CountryPageProps {
   countrySlug: string;
@@ -68,6 +69,12 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
 
   // Find tours for this country
   const countryTours = tours.filter(t => {
+    // اگر تورساز مقصدهای تور را مشخص کرده، همان معیار است؛ وگرنه رفتار قبلی
+    const slugs = liveExtras(t).destinationSlugs;
+    if (slugs && slugs.length > 0) {
+      const citySlugs = countryCities.map(c => c.slug);
+      return slugs.some(s => citySlugs.includes(s) || s === country.slug);
+    }
     return countryCities.some(c => c.name === t.destination) || (t.destination?.includes(country.name) ?? false);
   });
 

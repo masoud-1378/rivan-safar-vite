@@ -1,7 +1,8 @@
 import React, { type ReactNode } from 'react';
 import SmartImage from './SmartImage';
-import { Plane, Car, Building2, ShieldCheck, MapPin, Sparkles } from 'lucide-react';
+import { Plane, Car, Building2, ShieldCheck, MapPin, Sparkles, TrainFront, Bus, Ship, Route } from 'lucide-react';
 import { fa } from '@/lib/utils';
+import { transportLabel } from './tour-live';
 
 export interface TourCardProps {
   key?: React.Key;
@@ -22,6 +23,10 @@ export interface TourCardProps {
   hasFlight?: boolean;
   visaFree?: boolean;
   visaRequired?: boolean;
+  /** نوع حمل‌ونقل زنده تور (بسته A)؛ اگر نباشد، کپسول همان «پرواز» قبلی را نشان می‌دهد. */
+  transportKind?: string | null;
+  /** نوع تور برای تشخیص داخلی/خارجی؛ اگر نباشد از مقصد استنتاج می‌شود. */
+  tourType?: 'foreign' | 'domestic' | 'exhibition';
   limited?: boolean;
   pricePending?: boolean;
   soldOut?: boolean;
@@ -47,6 +52,8 @@ export default function TourCard({
   hasFlight = true,
   visaFree,
   visaRequired,
+  transportKind,
+  tourType,
   limited = false,
   pricePending = false,
   soldOut = false,
@@ -55,26 +62,24 @@ export default function TourCard({
   className = '',
 }: TourCardProps) {
 
-  // Infer destination / country if not explicitly provided
-  const inferredCountry = country || (
-    /استانبول|آنتالیا|ترکیه|وان|کوش آداسی|مارماریس/i.test(title) ? 'ترکیه' :
-    /دبی|امارات/i.test(title) ? 'امارات' :
-    /فرانسه|پاریس|ایتالیا|رم|اروپا/i.test(title) ? 'فرانسه' :
-    /ژاپن|توکیو/i.test(title) ? 'ژاپن' :
-    /چین|پکن|شانگهای|گوانگجو/i.test(title) ? 'چین' :
-    /آلمان/i.test(title) ? 'آلمان' :
-    /کیش|مشهد|قشم|شیراز|اصفهان|ایران|چابهار|یزد|تبریز/i.test(title) ? 'ایران' :
-    (destination || 'ترکیه')
-  );
+  // کشور از داده صریح می‌آید؛ بدون حدس regex روی تیتر و بدون پیش‌فرض.
+  const inferredCountry = country || destination || '';
 
-  // Check if tour is domestic (داخل کشور)
-  const isDomestic = isDomesticProp !== undefined 
-    ? isDomesticProp 
-    : (
-      inferredCountry === 'ایران' || 
-      /ایران|کیش|مشهد|قشم|شیراز|اصفهان|یزد|تبریز|چابهار|سرعین|گیلان|مازندران|لرستان|همدان/i.test(title) ||
-      /ایران|کیش|مشهد|قشم/i.test(destination || '')
-    );
+  // داخلی/خارجی: اول پراپ صریح، بعد type، بعد فهرست مقصدهای داخلی.
+  const isDomestic = isDomesticProp !== undefined
+    ? isDomesticProp
+    : tourType
+      ? tourType === 'domestic'
+      : ['کیش', 'مشهد', 'قشم'].includes((destination || '').trim());
+
+  // آیکون کپسول حمل‌ونقل بر اساس نوع واقعی سفر
+  const transportKindKey = (transportKind || '').toLowerCase();
+  const TransportIcon =
+    transportKindKey === 'rail' ? TrainFront
+    : transportKindKey === 'land' ? Bus
+    : transportKindKey === 'sea' ? Ship
+    : transportKindKey === 'mixed' ? Route
+    : Plane;
 
   // Status badge overlay
   let effectiveBadge = badge;
@@ -157,18 +162,22 @@ export default function TourCard({
           {/* Subtitle: Duration | Country with MapPin icon */}
           <div className="flex items-center justify-center gap-1.5 text-text-secondary text-[13px] sm:text-[14px] font-medium mb-4">
             <span className="text-text-primary font-semibold">{duration}</span>
-            <span className="text-border-default/80 mx-1">|</span>
-            <span>{inferredCountry}</span>
+            {inferredCountry && (
+              <>
+                <span className="text-border-default/80 mx-1">|</span>
+                <span>{inferredCountry}</span>
+              </>
+            )}
             <MapPin className="w-3.5 h-3.5 text-text-secondary/70 shrink-0" />
           </div>
 
           {/* Features Capsule Pill (Exact design from user screenshot: Flight + Transfer + Hotel + Visa) */}
           <div className="w-full bg-[#f8fafc] border border-border-default/70 rounded-2xl py-2.5 px-3 flex items-center justify-between text-text-heading shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] mb-4">
             
-            {/* 1. Flight (پرواز) */}
+            {/* 1. Transport (نوع واقعی حمل‌ونقل تور) */}
             <div className="flex flex-col items-center justify-center gap-1 flex-1">
-              <Plane className="w-4 h-4 text-text-heading stroke-[1.8]" />
-              <span className="text-[11.5px] sm:text-[12px] font-bold text-text-heading">پرواز</span>
+              <TransportIcon className="w-4 h-4 text-text-heading stroke-[1.8]" />
+              <span className="text-[11.5px] sm:text-[12px] font-bold text-text-heading whitespace-nowrap">{transportLabel(transportKind)}</span>
             </div>
 
             <span className="text-border-default/90 text-[13px] font-light shrink-0 select-none">+</span>

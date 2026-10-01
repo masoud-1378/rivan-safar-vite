@@ -1,17 +1,8 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { MapPin } from 'lucide-react';
-
-const cities = [
-  'کرج',
-  'اصفهان',
-  'شیراز',
-  'مشهد',
-  'یزد',
-  'تبریز',
-  'اهواز',
-  'رشت'
-];
+import { useContent } from '@/src/lib/content-context';
+import { uniqueOrigins } from './tour-live';
 
 function FlightPathsBackground() {
   // Distribute points across a 1000x1000 grid for better scaling on both tall (mobile) and wide (desktop) screens
@@ -168,6 +159,9 @@ function FlightPathsBackground() {
 }
 
 export default function OriginCities() {
+  const { tours } = useContent();
+  // مبدأها از تورهای زنده می‌آیند؛ کلیک، صفحه تورها را با همان مبدأ فیلترشده باز می‌کند.
+  const cities = uniqueOrigins(tours);
   return (
     <section className="section-standard bg-page-background relative overflow-hidden">
       <FlightPathsBackground />
@@ -194,8 +188,8 @@ export default function OriginCities() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {cities.map((city, index) => (
             <motion.a
-              key={city}
-              href={`#tour-from-${city}`}
+              key={city.slug}
+              href={`/tours?origin=${city.slug}`}
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               whileInView={{ opacity: 1, scale: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
@@ -209,7 +203,7 @@ export default function OriginCities() {
                  <div className="flex flex-col">
                    <span className="text-caption sm:text-caption text-text-secondary font-medium mb-0.5">تور از</span>
                    <span className="text-body-sm font-black text-text-heading group-hover:text-brand-orange transition-colors duration-300">
-                     {city}
+                     {city.label}
                    </span>
                  </div>
                </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Building2, Calendar, MapPin, Globe, Phone, Clock, 
   ChevronLeft, FileText, CheckCircle2, ShieldCheck, ArrowLeft,
@@ -18,14 +18,20 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
   const { tours, countries, cities, guides, exhibitions } = useContent();
   const [selectedIndustry, setSelectedIndustry] = useState<string>('all');
 
-  const industries = [
-    { id: 'all', label: 'همه صنایع' },
-    { id: 'trade-industry', label: 'بازرگانی، صنایع و لوازم خانگی' },
-    { id: 'food-beverage', label: 'صنایع غذایی و کشاورزی' },
-    { id: 'tech-ai', label: 'فناوری اطلاعات و هوش مصنوعی' },
-  ];
-
   const allExhibitions = Object.values(exhibitions);
+
+  // چیپ‌های صنعت از داده زنده (نه هاردکد)
+  const industries = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const ex of allExhibitions) {
+      const id = (ex.industrySlug || '').trim();
+      if (id && !seen.has(id)) seen.set(id, ex.industry || id);
+    }
+    return [
+      { id: 'all', label: 'همه صنایع' },
+      ...[...seen].map(([id, label]) => ({ id, label })),
+    ];
+  }, [allExhibitions]);
 
   const filteredExhibitions = allExhibitions.filter(ex => {
     return selectedIndustry === 'all' || ex.industrySlug === selectedIndustry;

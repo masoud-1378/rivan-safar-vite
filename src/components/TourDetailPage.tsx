@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   Phone, Calendar, Clock, MapPin, Plane, ShieldCheck, CheckCircle2, 
   XCircle, Building2, User, Send, Check, AlertCircle, HelpCircle, 
-  ChevronLeft, Sparkles, FileText, ArrowRight
+  ChevronLeft, Sparkles, FileText, ArrowRight, CalendarDays, FileCheck2,
+  Headphones, Mic, Luggage, Wallet, BadgeCheck
 } from 'lucide-react';
 import { type TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
 import { useContent } from '@/src/lib/content-context';
@@ -11,6 +12,10 @@ import { submitLead } from '../../app/actions/lead';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import { fa } from '@/lib/utils';
+import {
+  liveExtras, isDomesticTour, faDateTime, boardLabel,
+  transportLabel, transportSpecLabel,
+} from './tour-live';
 
 interface TourDetailPageProps {
   tourSlug: string;
@@ -49,10 +54,28 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
   // Related tours
   const relatedTours = tours.filter(t => t.id !== tour.id && (t.destination === tour.destination || t.type === tour.type)).slice(0, 3);
 
-  const isDomestic = tour.destination === 'کیش' || 
-    tour.destination === 'مشهد' || 
-    tour.destination === 'قشم' || 
-    /ایران|کیش|مشهد|قشم|شیراز|اصفهان|یزد|تبریز|چابهار/i.test(tour.title);
+  const isDomestic = isDomesticTour(tour);
+
+  // فیلدهای زنده تورساز (بسته A) — همه اختیاری و دفاعی
+  const extras = liveExtras(tour);
+  const itineraryDays = (extras.itineraryDays || []).filter(
+    (d) => d && (d.title || d.description)
+  );
+  const trust = extras.trustSpecs || null;
+  const hasTrust =
+    !!trust &&
+    !!(
+      (trust.requiredDocs && trust.requiredDocs.length > 0) ||
+      trust.returnGuarantee ||
+      trust.cityTax ||
+      trust.tipsNote ||
+      trust.luggageKg ||
+      trust.activityLevel
+    );
+  const consultant = extras.consultantSpec || null;
+  const hasConsultant =
+    !!consultant && !!(consultant.name || consultant.phone || consultant.audioUrl);
+  const transportKind = extras.transportKind;
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,8 +165,8 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   <span className="text-text-heading font-bold">{tour.origin}</span>
                 </div>
                 <div>
-                  <span className="text-text-muted block mb-0.5">ایرلاین / حمل‌ونقل:</span>
-                  <span className="text-text-heading font-bold">{tour.airline}</span>
+                  <span className="text-text-muted block mb-0.5">{transportSpecLabel(transportKind)}</span>
+                  <span className="text-text-heading font-bold">{tour.airline?.trim() || transportLabel(transportKind)}</span>
                 </div>
                 <div>
                   <span className="text-text-muted block mb-0.5">نزدیک‌ترین حرکت:</span>
@@ -174,7 +197,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                     }`}>
                       {tour.statusLabel}
                     </span>
-                    <div className="text-[11px] text-text-muted mt-1">{tour.updatedAt}</div>
+                    <div className="text-[11px] text-text-muted mt-1">{faDateTime(tour.updatedAt) ?? '—'}</div>
                   </div>
                 </div>
 
@@ -228,6 +251,53 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
         </div>
       </section>
 
+      {/* ---------------- برنامه روزبه‌روز (از تورساز؛ فقط وقتی داده هست) ---------------- */}
+      {itineraryDays.length > 0 && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="text-right mb-6">
+            <h2 className="text-h2 text-text-heading font-bold mb-1.5">
+              برنامه روزبه‌روز سفر
+            </h2>
+            <p className="text-body-sm text-text-secondary">
+              هر روز این تور چه می‌گذرد — از حرکت تا بازگشت.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {itineraryDays.map((day) => (
+              <div
+                key={day.day}
+                className="bg-surface-primary border border-border-default rounded-card p-5 shadow-subtle"
+              >
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1.5 bg-brand-orange/10 text-brand-orange border border-brand-orange/30 rounded-full px-3 py-1 text-caption font-extrabold">
+                    <CalendarDays className="w-3.5 h-3.5" />
+                    روز {fa(day.day)}
+                  </span>
+                  {day.city && (
+                    <span className="inline-flex items-center gap-1 text-caption text-text-secondary font-bold">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {day.city}
+                    </span>
+                  )}
+                </div>
+                {day.title && (
+                  <h3 className="text-body font-bold text-text-heading mb-1.5">{day.title}</h3>
+                )}
+                {day.description && (
+                  <p className="text-body-sm text-text-secondary leading-relaxed">{day.description}</p>
+                )}
+                {day.meals && (
+                  <p className="text-caption text-text-muted mt-2">
+                    وعده‌های غذایی: {day.meals}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ---------------- Hotel Options Table ---------------- */}
       {tour.hotelOptions && tour.hotelOptions.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
@@ -266,7 +336,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                         </span>
                       </td>
                       <td className="py-4 px-4 text-center text-text-secondary">
-                        {opt.board}
+                        {boardLabel(opt.board)}
                       </td>
                       <td className="py-4 px-4 sm:px-6 text-left font-extrabold text-brand-orange">
                         {opt.pricePerPerson}
@@ -325,16 +395,72 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
       <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-right">
           
-          <div className="bg-surface-primary border border-border-default rounded-card p-6">
-            <h3 className="text-h4 font-bold text-text-heading mb-2">شرایط و مدارک سفر</h3>
-            <p className="text-caption text-text-secondary leading-relaxed">
-              {isDomestic
-                ? 'برای این تور داخلی، همراه داشتن کارت ملی هوشمند و شناسنامه معتبر برای پذیرش پرواز و تحویل اتاق در هتل الزامی است.'
-                : tour.visaRequired 
-                  ? 'این تور نیازمند ویزا است. مدارک لازم شامل گذرنامه با ۷ ماه اعتبار و مدارک شغلی/تمکن را کارشناس اخذ می‌کند.'
-                  : 'این مقصد نیازی به اخذ ویزا ندارد. داشتن گذرنامه با حداقل ۶ ماه اعتبار الزامی است.'}
-            </p>
-          </div>
+          {hasTrust && trust ? (
+            <div className="bg-surface-primary border border-border-default rounded-card p-6">
+              <h3 className="text-h4 font-bold text-text-heading mb-1.5">مدارک و هزینه‌های سفر</h3>
+              <p className="text-caption text-text-muted mb-4">
+                چک‌لیستی که کارشناس تور برای همین سفر تنظیم کرده است.
+              </p>
+              {trust.requiredDocs && trust.requiredDocs.length > 0 && (
+                <ul className="space-y-2 mb-4">
+                  {trust.requiredDocs.map((doc, i) => (
+                    <li key={i} className="flex items-start gap-2 text-body-sm text-text-heading">
+                      <FileCheck2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>{doc}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <dl className="space-y-2.5 text-caption">
+                {trust.returnGuarantee && (
+                  <div className="flex items-start gap-2">
+                    <dt className="text-text-muted font-bold shrink-0">تضمین بازگشت:</dt>
+                    <dd className="text-text-secondary leading-relaxed">{trust.returnGuarantee}</dd>
+                  </div>
+                )}
+                {trust.cityTax && (
+                  <div className="flex items-start gap-2">
+                    <dt className="text-text-muted font-bold shrink-0">مالیات شهری:</dt>
+                    <dd className="text-text-secondary leading-relaxed">{trust.cityTax}</dd>
+                  </div>
+                )}
+                {trust.tipsNote && (
+                  <div className="flex items-start gap-2">
+                    <dt className="text-text-muted font-bold shrink-0">انعام:</dt>
+                    <dd className="text-text-secondary leading-relaxed">{trust.tipsNote}</dd>
+                  </div>
+                )}
+                {!!trust.luggageKg && (
+                  <div className="flex items-start gap-2">
+                    <dt className="text-text-muted font-bold shrink-0">بار مجاز:</dt>
+                    <dd className="text-text-secondary">{fa(trust.luggageKg)} کیلوگرم</dd>
+                  </div>
+                )}
+                {trust.activityLevel && (
+                  <div className="flex items-start gap-2">
+                    <dt className="text-text-muted font-bold shrink-0">سطح تحرک:</dt>
+                    <dd className="text-text-secondary">
+                      {trust.activityLevel === 'easy' ? 'سبک و خانوادگی'
+                        : trust.activityLevel === 'moderate' ? 'متوسط'
+                        : trust.activityLevel === 'demanding' ? 'پرانرژی و فعال'
+                        : trust.activityLevel}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+          ) : (
+            <div className="bg-surface-primary border border-border-default rounded-card p-6">
+              <h3 className="text-h4 font-bold text-text-heading mb-2">شرایط و مدارک سفر</h3>
+              <p className="text-caption text-text-secondary leading-relaxed">
+                {isDomestic
+                  ? 'برای این تور داخلی، همراه داشتن کارت ملی هوشمند و شناسنامه معتبر برای پذیرش پرواز و تحویل اتاق در هتل الزامی است.'
+                  : tour.visaRequired 
+                    ? 'این تور نیازمند ویزا است. مدارک لازم شامل گذرنامه با ۷ ماه اعتبار و مدارک شغلی/تمکن را کارشناس اخذ می‌کند.'
+                    : 'این مقصد نیازی به اخذ ویزا ندارد. داشتن گذرنامه با حداقل ۶ ماه اعتبار الزامی است.'}
+              </p>
+            </div>
+          )}
 
           <div className="bg-surface-primary border border-border-default rounded-card p-6">
             <h3 className="text-h4 font-bold text-text-heading mb-2">قوانین کودک و تخت اضافه</h3>
@@ -460,6 +586,78 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
           )}
         </div>
       </section>
+
+      {/* ---------------- کارشناس تور (از تورساز؛ فقط وقتی داده هست) ---------------- */}
+      {hasConsultant && consultant && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="bg-surface-primary border border-brand-orange/30 rounded-card p-6 shadow-subtle">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Headphones className="w-5 h-5 text-brand-orange" />
+              <h2 className="text-h3 text-text-heading font-bold">کارشناس این تور</h2>
+            </div>
+            <p className="text-body-sm text-text-secondary mb-5">
+              برای سؤال تخصصی درباره همین تور، مستقیم با کارشناسش حرف بزنید.
+            </p>
+
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-brand-orange/10 text-brand-orange flex items-center justify-center shrink-0">
+                  <User className="w-6 h-6" />
+                </div>
+                <div>
+                  {consultant.name && (
+                    <div className="text-body font-bold text-text-heading flex items-center gap-1.5">
+                      {consultant.name}
+                      <BadgeCheck className="w-4 h-4 text-brand-orange" />
+                    </div>
+                  )}
+                  {consultant.title && (
+                    <div className="text-caption text-text-muted">{consultant.title}</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 sm:mr-auto">
+                {consultant.phone && (
+                  <a
+                    href={`tel:${consultant.phone.replace(/[^\d+]/g, '')}`}
+                    className="btn btn-primary btn-medium text-btn font-bold inline-flex items-center gap-2"
+                  >
+                    <Phone className="w-4 h-4" />
+                    تماس با کارشناس
+                  </a>
+                )}
+                {consultant.emergencyPhone && (
+                  <span className="text-caption text-text-secondary">
+                    تلفن اضطراری سفر:{' '}
+                    <a
+                      href={`tel:${consultant.emergencyPhone.replace(/[^\d+]/g, '')}`}
+                      dir="ltr"
+                      className="font-bold text-text-heading underline"
+                    >
+                      {consultant.emergencyPhone}
+                    </a>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {consultant.audioUrl && (
+              <div className="mt-5 pt-5 border-t border-border-default/60">
+                <div className="flex items-center gap-2 mb-2.5">
+                  <Mic className="w-4 h-4 text-text-secondary" />
+                  <span className="text-caption font-bold text-text-heading">
+                    پادکست معرفی تور — از زبان کارشناس
+                  </span>
+                </div>
+                <audio controls src={consultant.audioUrl} className="w-full" preload="none">
+                  مرورگر شما پخش صوت را پشتیبانی نمی‌کند.
+                </audio>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ---------------- Related Tours ---------------- */}
       {relatedTours.length > 0 && (
