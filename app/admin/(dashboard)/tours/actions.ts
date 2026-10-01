@@ -201,6 +201,9 @@ export async function listTours() {
     excludedServices: asStringArray(r.excludedServices),
     hotelOptions: Array.isArray(r.hotelOptions) ? r.hotelOptions : [],
     description: r.description,
+    itineraryDays: Array.isArray(r.itineraryDays) ? (r.itineraryDays as TourItineraryDayItem[]) : [],
+    trustSpecs: (r.trustSpecs as TourTrustSpecsItem | null) ?? null,
+    consultantSpec: (r.consultantSpec as TourConsultantSpecItem | null) ?? null,
   }));
 }
 
@@ -319,6 +322,41 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
     locationNote: h.locationNote || '',
   }));
 
+  // مرحله‌های ۳ تا ۵ ویزارد: برنامه روزبه‌روز، سپر اعتماد و مشخصات کارشناس.
+  // هر سه ستون jsonb روی site_tours آماده‌اند؛ این‌جا واقعاً نوشته می‌شوند.
+  const normalizedItinerary: TourItineraryDayItem[] = Array.isArray(data.itineraryDays)
+    ? data.itineraryDays.map((d, i) => {
+        const o = (d ?? {}) as Partial<TourItineraryDayItem>;
+        return {
+          day: Number(o.day) || i + 1,
+          title: String(o.title ?? ''),
+          city: String(o.city ?? ''),
+          description: String(o.description ?? ''),
+          activityType: String(o.activityType ?? 'guided'),
+          meals: o.meals ? String(o.meals) : undefined,
+        };
+      })
+    : [];
+
+  const rawTrust = (data.trustSpecs ?? {}) as Partial<TourTrustSpecsItem>;
+  const normalizedTrust: TourTrustSpecsItem = {
+    returnGuarantee: String(rawTrust.returnGuarantee ?? ''),
+    cityTax: String(rawTrust.cityTax ?? ''),
+    tipsNote: String(rawTrust.tipsNote ?? ''),
+    luggageKg: Number(rawTrust.luggageKg) || 0,
+    activityLevel: String(rawTrust.activityLevel ?? 'easy'),
+    requiredDocs: asStringArray(rawTrust.requiredDocs),
+  };
+
+  const rawConsultant = (data.consultantSpec ?? {}) as Partial<TourConsultantSpecItem>;
+  const normalizedConsultant: TourConsultantSpecItem = {
+    name: String(rawConsultant.name ?? ''),
+    title: String(rawConsultant.title ?? ''),
+    phone: String(rawConsultant.phone ?? ''),
+    audioUrl: String(rawConsultant.audioUrl ?? ''),
+    emergencyPhone: String(rawConsultant.emergencyPhone ?? ''),
+  };
+
   const values = {
     slug,
     title,
@@ -346,6 +384,9 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
     excludedServices: data.excludedServices ?? [],
     hotelOptions: normalizedHotels,
     description: data.description || '',
+    itineraryDays: normalizedItinerary,
+    trustSpecs: normalizedTrust,
+    consultantSpec: normalizedConsultant,
     updatedAt: new Date(),
   };
 

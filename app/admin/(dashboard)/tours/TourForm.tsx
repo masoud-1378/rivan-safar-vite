@@ -22,7 +22,8 @@ import type {
   DestinationTree, 
   OriginRow, 
   TourInput, 
-  TourRow 
+  TourRow,
+  TourItineraryDayItem,
 } from './actions';
 import { saveTour, checkSlugUnique } from './actions';
 import type { HotelRow } from '../hotels/actions';
@@ -113,21 +114,25 @@ export default function TourForm({
       guaranteedDeparture: initial?.badge === 'حرکت تضمین‌شده',
       splitPriceCurrency: 'USD',
       splitPriceAmount: '',
-      itineraryDays: [],
+      itineraryDays: Array.isArray(initial?.itineraryDays)
+        ? (initial.itineraryDays as TourItineraryDayItem[])
+        : [],
       trustSpecs: {
-        returnGuarantee: '',
-        cityTax: '',
-        tipsNote: '',
-        luggageKg: 30,
-        activityLevel: 'easy',
-        requiredDocs: [],
+        returnGuarantee: initial?.trustSpecs?.returnGuarantee || '',
+        cityTax: initial?.trustSpecs?.cityTax || '',
+        tipsNote: initial?.trustSpecs?.tipsNote || '',
+        luggageKg: Number(initial?.trustSpecs?.luggageKg) || 30,
+        activityLevel: initial?.trustSpecs?.activityLevel || 'easy',
+        requiredDocs: Array.isArray(initial?.trustSpecs?.requiredDocs)
+          ? (initial.trustSpecs.requiredDocs as string[])
+          : [],
       },
       consultantSpec: {
-        name: '',
-        title: '',
-        phone: '',
-        audioUrl: '',
-        emergencyPhone: '',
+        name: initial?.consultantSpec?.name || '',
+        title: initial?.consultantSpec?.title || '',
+        phone: initial?.consultantSpec?.phone || '',
+        audioUrl: initial?.consultantSpec?.audioUrl || '',
+        emergencyPhone: initial?.consultantSpec?.emergencyPhone || '',
       },
     };
   });
