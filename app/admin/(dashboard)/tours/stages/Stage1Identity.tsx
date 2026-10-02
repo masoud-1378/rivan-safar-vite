@@ -32,6 +32,7 @@ import { normalizeFaSearch } from '@/lib/persian';
 import { faToSlugFa, CAPACITY_OPTIONS } from '../tour-helpers';
 import { DepartureDateField } from '../DepartureDateField';
 import { uploadTourBanner } from '../banner-upload';
+import SmartImage from '@/src/components/SmartImage';
 import type { DestinationTree, OriginRow, TourInput } from '../actions';
 import type { TourDraftErrors } from '../tour-helpers';
 
@@ -637,28 +638,6 @@ export default function Stage1Identity({
               />
             </Field>
           </div>
-
-          <div>
-            <Field label="بخش ارزی تور (اختیاری؛ ویژهٔ تورهای خارجی)" hint="مثال: ۱٬۸۹۰ دلار برای هتل و خدمات خارج">
-              <div className="flex gap-2">
-                <Input
-                  value={data.splitPriceAmount || ''}
-                  onChange={(e) => onChange({ splitPriceAmount: e.target.value })}
-                  placeholder="مبلغ ارزی (مثلاً: 1890)"
-                  className="grow font-mono"
-                />
-                <select
-                  value={data.splitPriceCurrency || 'USD'}
-                  onChange={(e) => onChange({ splitPriceCurrency: e.target.value })}
-                  className="rounded-sm border border-input bg-background px-3 py-2 text-xs font-bold"
-                >
-                  <option value="USD">دلار ($)</option>
-                  <option value="EUR">یورو (€)</option>
-                  <option value="AED">درهم (AED)</option>
-                </select>
-              </div>
-            </Field>
-          </div>
         </div>
 
         {/* حساب سرانگشتی درآمد (T1): بیرون از مسیر الزامی‌ها، تاشو و بسته؛ فقط نمایشی، ذخیره نمی‌شود */}
@@ -719,9 +698,11 @@ export default function Stage1Identity({
             />
           </div>
         </Field>
+        {/* پیش‌نمایش بنر: عمداً با همان SmartImageِ سایت رندر می‌شود تا اگر آدرس
+            روی سایت باز نشود، این‌جا هم خراب دیده شود (نه سالمِ دروغین). */}
         {data.image.trim() ? (
-          <div className="mt-2 overflow-hidden rounded-sm border border-border/70">
-            <img src={data.image.trim()} alt="پیش‌نمایش بنر تور" className="aspect-video w-full object-cover" />
+          <div className="relative mt-2 aspect-video overflow-hidden rounded-sm border border-border/70">
+            <SmartImage src={data.image.trim()} alt="پیش‌نمایش بنر تور" className="object-cover" />
           </div>
         ) : null}
       </div>

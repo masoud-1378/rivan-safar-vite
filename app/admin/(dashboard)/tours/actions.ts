@@ -6,6 +6,7 @@ import { accommodations, auditLogs, originCities, siteDestinations, siteTours } 
 import { asc, desc, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
+import { assertRenderableImageUrl } from '@/src/lib/site-image-hosts';
 
 export type HotelBookingType = 'guarantee' | 'semi_charter' | 'on_request';
 
@@ -87,9 +88,6 @@ export interface TourInput {
   transportKind?: 'air' | 'land' | 'rail' | 'sea' | 'mixed';
   carrierName?: string;
   guaranteedDeparture?: boolean;
-  splitPriceCurrency?: string;
-  splitPriceAmount?: string;
-  splitFlightPrice?: string;
   itineraryDays?: TourItineraryDayItem[];
   trustSpecs?: TourTrustSpecsItem;
   consultantSpec?: TourConsultantSpecItem;
@@ -330,6 +328,8 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
   const title = (data.title || '').trim();
   if (!slug) throw new Error('نامک (slug) لازم است.');
   if (title.length < 2) throw new Error('عنوان تور لازم است.');
+  // بنر: آدرس دستی هم باید روی سایت باز شود، وگرنه پیش‌نمایش پنل دروغ می‌گوید.
+  assertRenderableImageUrl(data.image || '');
 
   const destSlugs = asStringArray(data.destinationSlugs);
   const [destRows, originRows] = await Promise.all([

@@ -40,6 +40,7 @@ import Stage2Hotels from './stages/Stage2Hotels';
 import Stage3Itinerary from './stages/Stage3Itinerary';
 import Stage4TrustTerms from './stages/Stage4TrustTerms';
 import Stage5Consultant from './stages/Stage5Consultant';
+import SmartImage from '@/src/components/SmartImage';
 
 export interface TourFormProps {
   initial?: TourRow | null;
@@ -147,8 +148,6 @@ export default function TourForm({
       ),
       carrierName: initial?.airline || '',
       guaranteedDeparture: initial?.badge === 'حرکت تضمین‌شده',
-      splitPriceCurrency: 'USD',
-      splitPriceAmount: '',
       itineraryDays: Array.isArray(initial?.itineraryDays)
         ? (initial.itineraryDays as TourItineraryDayItem[])
         : [],
@@ -562,11 +561,10 @@ export default function TourForm({
 
               <div className="overflow-hidden rounded-sm border border-border/80 bg-background">
                 {formData.image ? (
-                  <img
-                    src={formData.image}
-                    alt={formData.title}
-                    className="aspect-video w-full object-cover"
-                  />
+                  // عمداً همان SmartImageِ سایت: اگر آدرس روی سایت باز نشود، این‌جا هم خراب دیده می‌شود.
+                  <div className="relative aspect-video">
+                    <SmartImage src={formData.image} alt={formData.title} className="object-cover" />
+                  </div>
                 ) : (
                   <div className="flex aspect-video w-full items-center justify-center bg-muted text-xs text-muted-foreground">
                     بدون تصویر
