@@ -102,7 +102,20 @@ export default async function AdminDashboard() {
     );
     try {
       recentLeads = await Promise.race([
-        db.select().from(leadRequests).orderBy(leadRequests.createdAt).limit(5),
+        // فقط ستون‌هایی که داشبورد مصرف می‌کند؛ ستون ip (مایگریشن 0021)
+        // ممکن است روی دیتابیس اجرا نشده باشد و select همه‌ستونه خطا می‌داد.
+        db
+          .select({
+            id: leadRequests.id,
+            fullName: leadRequests.fullName,
+            phone: leadRequests.phone,
+            tourContext: leadRequests.tourContext,
+            destinationHint: leadRequests.destinationHint,
+            status: leadRequests.status,
+          })
+          .from(leadRequests)
+          .orderBy(leadRequests.createdAt)
+          .limit(5),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('db-timeout')), 8000),
         ),

@@ -38,6 +38,17 @@ const RATE_WINDOW_MS = 60_000;
 const MAX_PER_PHONE = 1;
 const MAX_PER_IP = 3;
 
+/** خطای «ستون وجود ندارد» در پستگرس (کد 42703) — برای سازگاری با دیتابیسی که
+ * مایگریشن 0021 (ستون ip) رویش اجرا نشده است. */
+function isUndefinedColumnError(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code?: unknown }).code === '42703'
+  );
+}
+
 /** سقف طول فیلدهای آزاد — SEC-04 (جلوگیری از پر کردن دیتابیس با متن‌های غول‌پیکر). */
 const cap = (v: string | undefined, n: number) => (v || '').trim().slice(0, n);
 
@@ -154,7 +165,7 @@ export async function createLead(input: LeadInput): Promise<LeadResult> {
       .from(siteSettings)
       .where(eq(siteSettings.settingKey, 'leads.success_message'))
       .limit(1);
-    await db.insert(leadRequests).values({
+    const leadValues = {
       fullName,
       phone,
       ip,
@@ -164,7 +175,16 @@ export async function createLead(input: LeadInput): Promise<LeadResult> {
       passengers,
       notes,
       assignee: autoAssign[0]?.settingValue || null,
-    });
+    };
+    try {
+      await db.insert(leadRequests).values(leadValues);
+    } catch (err) {
+      // ستون ip (مایگریشن 0021) روی این دیتابیس نیست؛ بدون ip دوباره تلاش می‌کنیم
+      // تا درخواست تماس از دست نرود. بقیهٔ خطاها مثل قبل به بیرون می‌روند.
+      if (!isUndefinedColumnError(err)) throw err;
+      const { ip: _droppedIp, ...leadValuesNoIp } = leadValues;
+      await db.insert(leadRequests).values(leadValuesNoIp);
+    }
     return {
       ok: true,
       stored: true,
