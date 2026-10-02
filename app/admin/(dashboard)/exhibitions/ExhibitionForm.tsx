@@ -210,7 +210,7 @@ export default function ExhibitionForm({
         <Field label="صنعت" htmlFor="ex-industry">
           <Input id="ex-industry" value={industry} onChange={(e) => onIndustry(e.target.value)} placeholder="مثال: فناوری اطلاعات" />
         </Field>
-        <Field label="تصویر" htmlFor="ex-image">
+        <Field label="تصویر" htmlFor="ex-image" hint="فقط لینک Unsplash">
           <Input id="ex-image" value={image} onChange={(e) => setImage(e.target.value)} className="text-start" dir="ltr" placeholder="https://..." />
         </Field>
         <Field label="تاریخ شروع" htmlFor="ex-start">

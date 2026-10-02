@@ -7,6 +7,7 @@ import { desc, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 import { fa } from '@/lib/utils';
+import { assertRenderableImageUrl } from '@/src/lib/site-image-hosts';
 
 export type GuideStatus = 'draft' | 'review' | 'published' | 'paused' | 'archived';
 
@@ -105,6 +106,8 @@ export async function saveGuide(id: string | null | undefined, data: GuideInput)
   const titleFa = (data.titleFa || '').trim();
   if (!slug) throw new Error('نامک (slug) لازم است.');
   if (titleFa.length < 2) throw new Error('عنوان راهنما لازم است.');
+  // تصویر اصلی راهنما آدرس دستی است؛ باید همان هاست‌هایی باشد که سایت می‌تواند رندر کند.
+  assertRenderableImageUrl(data.heroImage || '');
   const status: GuideStatus = VALID_STATUS.includes(data.status) ? data.status : 'draft';
   // ۴-۱۰: تاریخ بازبینی؛ مقدار خراب نادیده گرفته می‌شود.
   const reviewedAt = data.lastReviewedAt ? new Date(data.lastReviewedAt) : null;

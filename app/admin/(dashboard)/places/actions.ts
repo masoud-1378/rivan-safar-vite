@@ -7,6 +7,7 @@ import { and, asc, count, desc, eq, isNull, ne, sql } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 import { isValidDestinationCategory } from './categories';
+import { assertRenderableImageUrl } from '@/src/lib/site-image-hosts';
 
 export interface FaqItem {
   question: string;
@@ -124,6 +125,8 @@ export async function saveDestination(id: string | undefined | null, data: Desti
     )
     .limit(1);
   if (dup.length > 0) throw new Error('این نامک قبلاً ثبت شده است.');
+  // تصویر مقصد آدرس دستی است؛ باید همان هاست‌هایی باشد که سایت می‌تواند رندر کند.
+  assertRenderableImageUrl(data.image || '');
 
   const values = {
     slug,

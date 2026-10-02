@@ -273,7 +273,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
               ]}
             />
           </Field>
-          <Field label="تصویر" hint="آدرس کامل تصویر"><Input value={form.image} dir="ltr" onChange={(e) => set('image', e.target.value)} /></Field>
+          <Field label="تصویر" hint="آدرس کامل تصویر؛ فقط Unsplash"><Input value={form.image} dir="ltr" onChange={(e) => set('image', e.target.value)} /></Field>
           </div>
         </div>
 

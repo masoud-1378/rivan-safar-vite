@@ -690,7 +690,7 @@ export default function Stage1Identity({
 
       {/* تصویر بنر تور (T6): آپلود واقعی کنار فیلد URL + پیش‌نمایش زنده */}
       <div>
-        <Field label="تصویر بنر تور" hint="لینک تصویر باکیفیت و بدون واترمارک، یا آپلود مستقیم">
+        <Field label="تصویر بنر تور" hint="لینک تصویر باکیفیت و بدون واترمارک از Unsplash، یا آپلود مستقیم از همین‌جا">
           <div className="flex gap-2">
             <Input
               dir="ltr"

@@ -251,7 +251,7 @@ export default function GuideForm({
           />
         </Field>
 
-        <Field label="آدرس تصویر اصلی" htmlFor="guide-hero">
+        <Field label="آدرس تصویر اصلی" htmlFor="guide-hero" hint="فقط لینک Unsplash">
           <Input
             id="guide-hero"
             value={heroImage}

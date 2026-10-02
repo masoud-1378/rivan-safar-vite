@@ -6,6 +6,7 @@ import { exhibitions } from '@/db/schema';
 import { desc, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
+import { assertRenderableImageUrl } from '@/src/lib/site-image-hosts';
 
 export type ExhibitionStatus = 'draft' | 'review' | 'published' | 'paused' | 'archived';
 
@@ -97,6 +98,8 @@ export async function saveExhibition(id: string | null | undefined, data: Exhibi
   const titleFa = (data.titleFa || '').trim();
   if (!slug) throw new Error('نامک (slug) لازم است.');
   if (titleFa.length < 2) throw new Error('عنوان نمایشگاه لازم است.');
+  // تصویر نمایشگاه آدرس دستی است؛ باید همان هاست‌هایی باشد که سایت می‌تواند رندر کند.
+  assertRenderableImageUrl(data.image || '');
   const status: ExhibitionStatus = VALID_STATUS.includes(data.status) ? data.status : 'draft';
   const values = {
     slug,

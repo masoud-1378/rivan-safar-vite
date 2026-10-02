@@ -14,7 +14,7 @@ interface SmartImageProps {
 /**
  * جایگزین مستقیم `<img className="w-full h-full object-cover">` با next/image.
  * والد باید `relative` (یا absolute/fixed) باشد — همه کانتینرهای کارت همین‌طورند.
- * remotePatterns برای images.unsplash.com در next.config.ts فعال است.
+ * remotePatterns در next.config.ts: images.unsplash.com و هاست ذخیره‌سازی سوپابیس.
  * اگر src خالی باشد، به‌جای next/image شکسته یک placeholder تمیز نشان می‌دهد.
  */
 export default function SmartImage({
