@@ -13,7 +13,14 @@ import {
 import { desc, eq, and, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
+import { normalizeLandingPath } from '@/src/lib/db-content';
+import {
+  findRouteCollision,
+  nextLandingPathCandidate,
+  type PathCollision,
+} from '@/src/lib/landing-path';
 import { fa } from '@/lib/utils';
+import type { AppDb } from '@/db/client';
 
 export interface LandingInput {
   queryOwner: string;
@@ -25,6 +32,110 @@ export interface LandingInput {
   workflow?: 'draft' | 'review' | 'published' | 'paused' | 'archived';
   indexStatus?: 'index' | 'noindex';
   nextReviewAt?: string;
+}
+
+/** نتیجهٔ «نیازمند تأیید»: آدرس با روت سایت یا لندینگ دیگری تصادم دارد. */
+export interface LandingNeedsConfirm {
+  needsConfirm: true;
+  /** نزدیک‌ترین آدرس آزاد پیشنهادی، مثل /tours-2 */
+  suggestedPath: string;
+  collision: PathCollision;
+}
+
+export type CreateLandingResult =
+  | { id: string; finalPath: string }
+  | LandingNeedsConfirm;
+
+export type UpdateLandingResult =
+  | { ok: true; demotedToDraft: boolean; finalPath?: string }
+  | LandingNeedsConfirm;
+
+/** سقف تلاش برای پیدا کردن آدرس آزاد / تلاش مجدد پس از race. */
+const MAX_PATH_ATTEMPTS = 50;
+
+/**
+ * خطای یکتایی 23505 را به ستون درگیر نگاشت می‌کند.
+ * درایور postgres نام ایندکس را در constraint و گاهی فقط در message می‌آورد؛
+ * هر دو خوانده می‌شود تا نگاشت گم نشود.
+ */
+function uniquenessTarget(e: unknown): 'url' | 'query' | null {
+  if (!(e instanceof Error) || !('code' in e)) return null;
+  if ((e as { code?: string }).code !== '23505') return null;
+  const hay = [
+    (e as { constraint?: string }).constraint,
+    (e as { constraint_name?: string }).constraint_name,
+    e.message,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  if (hay.includes('query')) return 'query';
+  if (hay.includes('url')) return 'url';
+  return null;
+}
+
+/** آیا آدرس نرمال‌شده را لندینگ فعال دیگری (غیر از excludeId) گرفته است؟ عنوانش را برمی‌گرداند. */
+async function landingPathTaken(
+  db: AppDb,
+  path: string,
+  excludeId?: string,
+): Promise<string | null> {
+  const clean = normalizeLandingPath(path);
+  const rows = await db
+    .select({ id: seoLandings.id, urlPath: seoLandings.urlPath, titleFa: seoLandings.titleFa })
+    .from(seoLandings)
+    .where(isNull(seoLandings.deletedAt))
+    .limit(5000);
+  const hit = rows.find(
+    (r) => r.id !== excludeId && normalizeLandingPath(r.urlPath) === clean,
+  );
+  return hit ? hit.titleFa : null;
+}
+
+/**
+ * نزدیک‌ترین آدرس آزاد: نه با روت سایت تصادم دارد، نه لندینگ فعال دیگری آن را دارد.
+ * مقایسه با آدرس نرمال‌شده انجام می‌شود تا «/foo/» و «/foo» یکی حساب شوند.
+ */
+async function findFreeLandingPath(
+  db: AppDb,
+  base: string,
+  excludeId?: string,
+): Promise<string> {
+  const rows = await db
+    .select({ id: seoLandings.id, urlPath: seoLandings.urlPath })
+    .from(seoLandings)
+    .where(isNull(seoLandings.deletedAt))
+    .limit(5000);
+  const taken = new Set(
+    rows
+      .filter((r) => r.id !== excludeId)
+      .map((r) => normalizeLandingPath(r.urlPath)),
+  );
+  let candidate = normalizeLandingPath(base);
+  for (let i = 0; i < MAX_PATH_ATTEMPTS; i++) {
+    if (!findRouteCollision(candidate) && !taken.has(candidate)) return candidate;
+    candidate = nextLandingPathCandidate(candidate);
+  }
+  throw new Error('آدرس آزادی نزدیک این آدرس پیدا نشد؛ آدرس دیگری بنویسید.');
+}
+
+/** سازندهٔ نتیجهٔ needsConfirm برای هر دو اکشن ساخت و ویرایش. */
+async function needsConfirmFor(
+  db: AppDb,
+  requested: string,
+  excludeId: string | undefined,
+  takenTitle: string | null,
+  routeHit: PathCollision | null,
+): Promise<LandingNeedsConfirm> {
+  const collision: PathCollision = routeHit ?? {
+    kind: 'landing',
+    route: requested,
+    reason: `لندینگ دیگری («${takenTitle}») همین آدرس را دارد. دو صفحه نمی‌توانند یک آدرس داشته باشند.`,
+  };
+  return {
+    needsConfirm: true as const,
+    suggestedPath: await findFreeLandingPath(db, requested, excludeId),
+    collision,
+  };
 }
 
 export async function listLandings() {
@@ -64,34 +175,85 @@ async function audit(actor: string, action: string, entity: string, entityId: st
   await db.insert(auditLogs).values({ actor, action, entity, entityId, reasonFa });
 }
 
-export async function createLanding(input: LandingInput) {
+/**
+ * ساخت لندینگ — دو مرحله‌ای در برابر تصادم آدرس:
+ * ۱) اول آدرسِ خواسته‌شده سنجیده می‌شود؛ اگر با روت سایت یا لندینگ دیگری
+ *    تصادم داشت و پرچم confirmed نیامده بود، بدون این‌که چیزی ذخیره شود
+ *    needsConfirm برمی‌گردد تا فرم دیالوگ هشدار نشان بدهد.
+ * ۲) با confirmed=true سرور دوباره می‌سنجد (شاید بین دو ارسال چیزی عوض شده)
+ *    و نزدیک‌ترین آدرس آزاد را ذخیره می‌کند.
+ * آدرس همیشه نرمال‌شده ذخیره می‌شود تا قید یکتای url_path دقیقاً همان چیزی را
+ * بگیرد که getSeoLandingByPath مقایسه می‌کند؛ و درج در حلقهٔ race-safe است:
+ * اگر هم‌زمان کس دیگری همان آدرس را گرفت (23505)، شماره یکی زیاد می‌شود.
+ */
+export async function createLanding(
+  input: LandingInput,
+  opts?: { confirmed?: boolean },
+): Promise<CreateLandingResult> {
   const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   if (!input.queryOwner.trim() || !input.urlPath.trim() || !input.titleFa.trim() || !input.h1Fa.trim()) {
     throw new Error('فیلدهای ضروری: کد یکتای صفحه، مسیر URL، عنوان سئو، تیتر صفحه');
   }
+  const requested = normalizeLandingPath(input.urlPath.trim());
+
+  // گام ۱ — سنجش تصادم، پیش از هر نوشتن.
+  const routeHit = findRouteCollision(requested);
+  const takenTitle = routeHit ? null : await landingPathTaken(db, requested);
+  if ((routeHit || takenTitle) && !opts?.confirmed) {
+    return needsConfirmFor(db, requested, undefined, takenTitle, routeHit);
+  }
+  // گام ۲ — در حالت تأییدشده، نزدیک‌ترین آدرس آزادِ «همین لحظه» برداشته می‌شود.
+  const startPath = opts?.confirmed ? await findFreeLandingPath(db, requested) : requested;
+
   // ساخت همیشه پیش‌نویس است؛ انتشار فقط از مسیر بازبینی با گیت کامل انجام می‌شود.
-  const [row] = await db
-    .insert(seoLandings)
-    .values({
-      queryOwner: input.queryOwner.trim(),
-      urlPath: input.urlPath.trim(),
-      canonicalPath: input.urlPath.trim(),
-      pageType: input.pageType || 'landing',
-      titleFa: input.titleFa.trim(),
-      metaDescriptionFa: input.metaDescriptionFa?.trim() || null,
-      h1Fa: input.h1Fa.trim(),
-      workflow: 'draft',
-      indexStatus: input.indexStatus || 'noindex',
-      nextReviewAt: input.nextReviewAt ? new Date(input.nextReviewAt) : null,
-    })
-    .returning({ id: seoLandings.id });
-  revalidatePath('/admin/seo');
-  return { id: row.id };
+  let candidate = startPath;
+  for (let attempt = 0; attempt < MAX_PATH_ATTEMPTS; attempt++) {
+    try {
+      const [row] = await db
+        .insert(seoLandings)
+        .values({
+          queryOwner: input.queryOwner.trim(),
+          urlPath: candidate,
+          canonicalPath: candidate,
+          pageType: input.pageType || 'landing',
+          titleFa: input.titleFa.trim(),
+          metaDescriptionFa: input.metaDescriptionFa?.trim() || null,
+          h1Fa: input.h1Fa.trim(),
+          workflow: 'draft',
+          indexStatus: input.indexStatus || 'noindex',
+          nextReviewAt: input.nextReviewAt ? new Date(input.nextReviewAt) : null,
+        })
+        .returning({ id: seoLandings.id });
+      revalidatePath('/admin/seo');
+      return { id: row.id, finalPath: candidate };
+    } catch (e) {
+      // race: هم‌زمان لندینگ دیگری همین آدرس را گرفته — با سنجش کاملِ دوباره
+      // (روت + جدول) جلو می‌رویم تا کاندیدِ بعدی حتماً قابل سرو باشد.
+      if (uniquenessTarget(e) === 'url') {
+        candidate = await findFreeLandingPath(db, nextLandingPathCandidate(candidate));
+        continue;
+      }
+      if (uniquenessTarget(e) === 'query') {
+        throw new Error('این کد یکتای صفحه قبلاً ثبت شده است.');
+      }
+      throw e;
+    }
+  }
+  throw new Error('آدرس آزادی نزدیک این آدرس پیدا نشد؛ آدرس دیگری بنویسید.');
 }
 
-export async function updateLanding(id: string, input: Partial<LandingInput>) {
+/**
+ * ویرایش لندینگ — اگر آدرس عوض شده باشد، همان فلو دو مرحله‌ای تصادمِ
+ * createLanding را می‌رود: اول سنجش؛ اگر تصادم بود و confirmed نیامده بود،
+ * needsConfirm برمی‌گردد و هیچ فیلدی ذخیره نمی‌شود.
+ */
+export async function updateLanding(
+  id: string,
+  input: Partial<LandingInput>,
+  opts?: { confirmed?: boolean },
+): Promise<UpdateLandingResult> {
   const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
@@ -99,13 +261,23 @@ export async function updateLanding(id: string, input: Partial<LandingInput>) {
   const current = await db.select().from(seoLandings).where(eq(seoLandings.id, id)).limit(1);
   if (!current[0]) throw new Error('لندینگ یافت نشد.');
   const wasPublished = current[0].workflow === 'published';
-  const urlPathChanged = input.urlPath != null && input.urlPath.trim() !== current[0].urlPath;
+  // مقایسه با آدرس نرمال‌شده: «/foo/» و «/foo» تغییر مسیر حساب نمی‌شوند.
+  const requestedPath = input.urlPath?.trim() ? normalizeLandingPath(input.urlPath.trim()) : null;
+  const urlPathChanged = requestedPath != null && requestedPath !== normalizeLandingPath(current[0].urlPath);
+
+  // سنجش تصادمِ آدرس تازه، پیش از هر نوشتن (خودِ لندینگ از رقابت کنار است).
+  let savePath: string | undefined;
+  if (urlPathChanged && requestedPath) {
+    const routeHit = findRouteCollision(requestedPath);
+    const takenTitle = routeHit ? null : await landingPathTaken(db, requestedPath, id);
+    if ((routeHit || takenTitle) && !opts?.confirmed) {
+      return needsConfirmFor(db, requestedPath, id, takenTitle, routeHit);
+    }
+    savePath = opts?.confirmed ? await findFreeLandingPath(db, requestedPath, id) : requestedPath;
+  }
+
   const data: Record<string, unknown> = { updatedAt: new Date() };
   if (input.queryOwner) data.queryOwner = input.queryOwner.trim();
-  if (input.urlPath) {
-    data.urlPath = input.urlPath.trim();
-    data.canonicalPath = input.urlPath.trim();
-  }
   if (input.pageType) data.pageType = input.pageType;
   if (input.titleFa) data.titleFa = input.titleFa.trim();
   if (input.metaDescriptionFa !== undefined) data.metaDescriptionFa = input.metaDescriptionFa?.trim() || null;
@@ -125,18 +297,29 @@ export async function updateLanding(id: string, input: Partial<LandingInput>) {
   // سرور آن را به پیش‌نویس برمی‌گرداند (فرم هم پیشاپیش هشدار می‌دهد).
   const demotedToDraft = urlPathChanged && wasPublished;
   if (demotedToDraft) data.workflow = 'draft';
-  if (Object.keys(data).length <= 1) return { ok: true, demotedToDraft: false };
-  try {
-    await db.update(seoLandings).set(data).where(eq(seoLandings.id, id));
-  } catch (e) {
-    // یافتهٔ ۵: خطای یکتایی مسیر/کد یکتا به پیام فارسی.
-    if (e instanceof Error && 'code' in e && (e as { code?: string }).code === '23505') {
-      const constraint = (e as { constraint_name?: string }).constraint_name ?? '';
-      if (constraint.includes('url')) throw new Error('این مسیر URL قبلاً برای لندینگ دیگری ثبت شده است.');
-      if (constraint.includes('query')) throw new Error('این کد یکتای صفحه قبلاً ثبت شده است.');
-      throw new Error('این نام قبلاً ثبت شده');
+  if (Object.keys(data).length <= 1 && !savePath) return { ok: true, demotedToDraft: false };
+  // به‌روزرسانی race-safe برای آدرس: اگر بین سنجش و ذخیره، لندینگ دیگری همان
+  // آدرس را گرفت (23505 روی ایندکس url)، نزدیک‌ترین آدرس آزاد بعدی برداشته می‌شود.
+  for (let attempt = 0; attempt < MAX_PATH_ATTEMPTS; attempt++) {
+    try {
+      const patch: Record<string, unknown> = { ...data };
+      if (savePath) {
+        patch.urlPath = savePath;
+        patch.canonicalPath = savePath;
+      }
+      await db.update(seoLandings).set(patch).where(eq(seoLandings.id, id));
+      break;
+    } catch (e) {
+      const target = uniquenessTarget(e);
+      if (target === 'url' && savePath && attempt < MAX_PATH_ATTEMPTS - 1) {
+        savePath = await findFreeLandingPath(db, nextLandingPathCandidate(savePath), id);
+        continue;
+      }
+      // یافتهٔ ۵: خطای یکتایی مسیر/کد یکتا به پیام فارسی.
+      if (target === 'url') throw new Error('این مسیر URL قبلاً برای لندینگ دیگری ثبت شده است.');
+      if (target === 'query') throw new Error('این کد یکتای صفحه قبلاً ثبت شده است.');
+      throw e;
     }
-    throw e;
   }
   // بازبینی مجدد: ویرایش فیلدهای گیت‌حساس (مثلاً پاک‌شدن متا) روی لندینگ
   // منتشرشده نباید آن را گیت‌شکسته و منتشر رها کند.
@@ -145,7 +328,7 @@ export async function updateLanding(id: string, input: Partial<LandingInput>) {
     if (await demoteIfGateBroken(id)) demoted = true;
   }
   revalidatePath('/admin/seo');
-  return { ok: true, demotedToDraft: demoted };
+  return { ok: true, demotedToDraft: demoted, finalPath: savePath };
 }
 
 export async function deleteLanding(id: string) {

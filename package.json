@@ -14,7 +14,9 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "cms:check": "tsx scripts/cms-check.ts",
-    "seo:check": "tsx scripts/seo-check.ts"
+    "seo:check": "tsx scripts/seo-check.ts",
+    "routes:gen": "node scripts/generate-site-routes.mjs",
+    "routes:check": "node scripts/generate-site-routes.mjs --check"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

@@ -7,8 +7,10 @@ import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { Textarea } from '@/components/ui/textarea';
+import { AlertDialog } from '@/components/ui/alert-dialog';
 import { faSlug } from '@/lib/utils';
 import { createLanding, updateLanding, type LandingInput } from './actions';
+import type { PathCollision } from '@/src/lib/landing-path';
 
 const PAGE_TYPES = [
   { value: 'home', label: 'خانه' },
@@ -76,6 +78,11 @@ export default function LandingForm({
   const [errors, setErrors] = useState<{ queryOwner?: string; urlPath?: string; titleFa?: string; h1Fa?: string }>({});
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
+  // وضعیت دیالوگ «تصادم آدرس»: وقتی سرور needsConfirm برگرداند، این‌جا پر می‌شود.
+  const [confirmState, setConfirmState] = useState<{
+    suggestedPath: string;
+    collision: PathCollision;
+  } | null>(null);
 
   // S1/S2: تولید خودکار «کد یکتای صفحه» و «مسیر URL» از نوع صفحه و عنوان —
   // تا وقتی کاربر دستی دست نزده باشد.
@@ -95,14 +102,8 @@ export default function LandingForm({
     initial?.workflow === 'published' &&
     urlPath.trim() !== (initial?.urlPath ?? '').trim();
 
-  const submit = () => {
-    const nextErrors: typeof errors = {};
-    if (!queryOwner.trim()) nextErrors.queryOwner = 'کد یکتای صفحه را بنویسید.';
-    if (!urlPath.trim()) nextErrors.urlPath = 'مسیر URL را بنویسید.';
-    if (!titleFa.trim()) nextErrors.titleFa = 'عنوان سئو را بنویسید.';
-    if (!h1Fa.trim()) nextErrors.h1Fa = 'تیتر صفحه (H1) را بنویسید.';
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+  // ذخیرهٔ واقعی؛ confirmed=true یعنی ادمین تصادم را دیده و با آدرس شماره‌دار موافقت کرده.
+  const doSave = (confirmed: boolean) => {
     const input: LandingInput = {
       queryOwner: queryOwner.trim(),
       urlPath: urlPath.trim().startsWith('/') ? urlPath.trim() : '/' + urlPath.trim(),
@@ -119,8 +120,15 @@ export default function LandingForm({
     startTransition(async () => {
       try {
         if (editing && initial) {
-          const result = await updateLanding(initial.id, input);
-          if (result.demotedToDraft) {
+          const result = await updateLanding(initial.id, input, { confirmed });
+          if ('needsConfirm' in result) {
+            setConfirmState({ suggestedPath: result.suggestedPath, collision: result.collision });
+            return;
+          }
+          const typedPath = input.urlPath.replace(/\/+$/, '') || '/';
+          if (result.finalPath && result.finalPath !== typedPath) {
+            toast({ variant: 'success', title: `تغییرات با آدرس «${result.finalPath}» ذخیره شد.` });
+          } else if (result.demotedToDraft) {
             toast({
               variant: 'warning',
               title: 'مسیر عوض شد و لینک‌های ورودی صفحه مردند؛ لندینگ به پیش‌نویس برگشت.',
@@ -129,8 +137,15 @@ export default function LandingForm({
             toast({ variant: 'success', title: 'تغییرات لندینگ ذخیره شد.' });
           }
         } else {
-          await createLanding(input);
-          toast({ variant: 'success', title: 'لندینگ ساخته شد.' });
+          const result = await createLanding(input, { confirmed });
+          if ('needsConfirm' in result) {
+            setConfirmState({ suggestedPath: result.suggestedPath, collision: result.collision });
+            return;
+          }
+          toast({
+            variant: 'success',
+            title: confirmed ? `لندینگ با آدرس «${result.finalPath}» ساخته شد.` : 'لندینگ ساخته شد.',
+          });
         }
         if (onSaved) onSaved();
         window.location.reload();
@@ -138,6 +153,20 @@ export default function LandingForm({
         toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ذخیره لندینگ.' });
       }
     });
+  };
+
+  // تأیید دیالوگ تصادم: ارسال دوم با همان ورودی‌ها و پرچم confirmed.
+  const confirmCollision = () => doSave(true);
+
+  const submit = () => {
+    const nextErrors: typeof errors = {};
+    if (!queryOwner.trim()) nextErrors.queryOwner = 'کد یکتای صفحه را بنویسید.';
+    if (!urlPath.trim()) nextErrors.urlPath = 'مسیر URL را بنویسید.';
+    if (!titleFa.trim()) nextErrors.titleFa = 'عنوان سئو را بنویسید.';
+    if (!h1Fa.trim()) nextErrors.h1Fa = 'تیتر صفحه (H1) را بنویسید.';
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+    doSave(false);
   };
 
   return (
@@ -194,6 +223,28 @@ export default function LandingForm({
           {pending ? 'در حال ثبت...' : editing ? 'ذخیره تغییرات' : 'ایجاد لندینگ'}
         </Button>
       </div>
+      <AlertDialog
+        open={confirmState !== null}
+        onOpenChange={(open) => { if (!open) setConfirmState(null); }}
+        title="با آدرس پیشنهادی ذخیره شود؟"
+        description={
+          confirmState ? (
+            <span className="space-y-2">
+              <span className="block">{confirmState.collision.reason}</span>
+              <span className="block">
+                آدرس پیشنهادی:{' '}
+                <span dir="ltr" className="font-mono text-[13px]">«{confirmState.suggestedPath}»</span>
+              </span>
+              <span className="block text-muted-foreground">
+                اگر آدرس دیگری می‌خواهید، انصراف بزنید و در فیلد «مسیر URL» بنویسید.
+              </span>
+            </span>
+          ) : undefined
+        }
+        confirmText="ذخیره با آدرس پیشنهادی"
+        cancelText="انصراف"
+        onConfirm={confirmCollision}
+      />
     </div>
   );
 }
