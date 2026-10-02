@@ -80,15 +80,19 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
   const handleWorkflow = (id: string, workflow: Workflow) => {
     // ریشهٔ B-۹ (بخش کمبوباکس): تغییر اول در UI اعمال می‌شود تا اگر ذخیره
     // شکست خورد، با برگشتِ مقدار + پیام خطا «دیده» شود — نه بی‌صدا.
-    const prev = data;
+    // برگشت فقط همین سطر را به مقدارِ خودشِ پیش از این تغییر برمی‌گرداند،
+    // نه کل جدول را به اسنپ‌شاتِ قدیمی (وگرنه تغییر هم‌زمانِ سطر دیگر را پاک می‌کرد).
+    const prevWorkflow = (data.find((r) => r.id === id)?.workflow ?? 'draft') as Workflow;
     setData((rows) => rows.map((r) => (r.id === id ? { ...r, workflow } : r)));
+    const rollback = () =>
+      setData((rows) => rows.map((r) => (r.id === id ? { ...r, workflow: prevWorkflow } : r)));
     startTransition(async () => {
       try {
         if (workflow === 'published') {
           const check = await checkQualityGate(id);
           if (!check.canPublish) {
             setGateIssues(check.reasons);
-            setData(prev);
+            rollback();
             return;
           }
         }
@@ -96,7 +100,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
         toast({ variant: 'success', title: `وضعیت به «${WORKFLOW_MAP[workflow].label}» تغییر کرد.` });
         refresh();
       } catch (e) {
-        setData(prev);
+        rollback();
         toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در تغییر وضعیت.' });
       }
     });

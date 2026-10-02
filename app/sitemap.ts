@@ -12,8 +12,11 @@ import { getTours, getGuides, getExhibitions, getSeoLandings, normalizeLandingPa
  * آرایهٔ استاتیک فقط فالبکِ قطعی DB است.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticLandingPaths = getIndexableLandings().map((l) => l.urlPath);
-  const staticDynamicPaths = getDynamicIndexablePaths();
+  // مسیرهای استاتیک هم نرمالایز می‌شوند تا /x و /x/ هر دو نیایند.
+  const staticLandingPaths = getIndexableLandings().map((l) =>
+    normalizeLandingPath(l.urlPath),
+  );
+  const staticDynamicPaths = getDynamicIndexablePaths().map(normalizeLandingPath);
 
   // لندینگ‌های زنده از DB (منتشرشده + index)؛ خطا یا قطعی → همان استاتیک می‌ماند.
   const dbLandingPaths: string[] = [];

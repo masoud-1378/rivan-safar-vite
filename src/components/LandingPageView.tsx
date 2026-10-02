@@ -18,6 +18,24 @@ interface LandingPageViewProps {
 }
 
 /**
+ * فقط مسیر نسبیِ داخلی قبول می‌شود: to_path از ورودی پنل می‌آید و باید روی
+ * همین سایت بماند. هر چیزی که مسیر داخلی نباشد (absolute URL، //host،
+ * javascript: و…) null می‌دهد تا آن لینک رندر نشود.
+ */
+function safeInternalPath(raw: string | null | undefined): string | null {
+  const p = (raw ?? '').trim();
+  if (!p.startsWith('/') || p.startsWith('//') || /\s/.test(p)) return null;
+  try {
+    const u = new URL(p, 'https://rivan-safar.invalid');
+    // چون p با «/» شروع شده، روی همین originِ ساختگی می‌ماند؛ فقط
+    // pathname/search/hash را پس می‌دهیم تا host هرگز از بیرون نیاید.
+    return `${u.pathname}${u.search}${u.hash}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * رندر لندینگ سئوی منتشرشده (جدول seo_landings).
  * سرورکامپوننت؛ همهٔ داده از DB می‌آید و همین‌جا به‌صورت props تزریق می‌شود.
  */
@@ -120,17 +138,30 @@ export default function LandingPageView({
               لینک‌های مرتبط
             </h2>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {links.map((l) => (
-                <li key={l.id}>
-                  <Link
-                    href={l.toPath}
-                    className="flex items-center justify-between gap-2 rounded-card border border-border-default bg-surface-primary px-4 py-3 text-body-sm font-medium text-text-primary hover:border-brand-orange/50 hover:text-brand-orange transition-colors"
-                  >
-                    <span className="truncate">{l.anchorFa}</span>
-                    <ChevronLeft className="w-4 h-4 shrink-0 text-text-muted" />
-                  </Link>
-                </li>
-              ))}
+              {links.map((l) => {
+                const href = safeInternalPath(l.toPath);
+                return (
+                  <li key={l.id}>
+                    {href ? (
+                      <Link
+                        href={href}
+                        className="flex items-center justify-between gap-2 rounded-card border border-border-default bg-surface-primary px-4 py-3 text-body-sm font-medium text-text-primary hover:border-brand-orange/50 hover:text-brand-orange transition-colors"
+                      >
+                        <span className="truncate">{l.anchorFa}</span>
+                        <ChevronLeft className="w-4 h-4 shrink-0 text-text-muted" />
+                      </Link>
+                    ) : (
+                      // مسیر نامعتبر: لینک رندر نمی‌شود تا کاربر به بیرون نرود.
+                      <span
+                        title="مسیر این لینک معتبر نیست"
+                        className="flex items-center justify-between gap-2 rounded-card border border-border-default bg-surface-primary px-4 py-3 text-body-sm font-medium text-text-muted"
+                      >
+                        <span className="truncate">{l.anchorFa}</span>
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </section>

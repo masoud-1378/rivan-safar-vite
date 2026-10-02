@@ -17,22 +17,28 @@ const ALLOWED_HOSTS = ['images.unsplash.com'];
 // یعنی همان هاستی که `getPublicUrl` در آپلودر بنر تور و عکس هتل می‌سازد
 // (https://<ref>.supabase.co/storage/v1/object/public/...).
 const ALLOWED_HOST_SUFFIXES = ['.supabase.co'];
+// مسیر مجاز روی هاست سوپابیس — آینهٔ `pathname: '/storage/v1/object/public/**'`
+// از `next.config.ts`. فقط فایل‌های عمومی استوریج روی سایت رندر می‌شوند؛
+// بقیهٔ مسیرهای همین هاست (مثل /functions/v1/...) در `next/image` رد می‌شوند.
+const SUPABASE_STORAGE_PATH_PREFIX = '/storage/v1/object/public/';
 
 /** آدرس خالی یعنی «فیلد اختیاری پر نشده» — برای اعتبارسنجی رد نمی‌شود. */
 export function isRenderableImageUrl(raw: string): boolean {
   const url = (raw || '').trim();
   if (!url) return true;
   if (url.startsWith('/')) return true; // تصویر لوکالِ خود سایت
-  let host: string;
+  let parsed: URL;
   try {
-    const parsed = new URL(url);
+    parsed = new URL(url);
     if (parsed.protocol !== 'https:') return false;
-    host = parsed.hostname.toLowerCase();
   } catch {
     return false;
   }
+  const host = parsed.hostname.toLowerCase();
   if (ALLOWED_HOSTS.includes(host)) return true;
-  return ALLOWED_HOST_SUFFIXES.some((suffix) => host.endsWith(suffix));
+  if (!ALLOWED_HOST_SUFFIXES.some((suffix) => host.endsWith(suffix))) return false;
+  // هاست سوپابیس است ولی next/image فقط مسیر استوریج عمومی را قبول می‌کند.
+  return parsed.pathname.startsWith(SUPABASE_STORAGE_PATH_PREFIX);
 }
 
 /** پیام خطای اعتبارسنجی آدرس تصویر (هم‌خوان با persian-ui-copy: چه چیزی را عوض کند). */

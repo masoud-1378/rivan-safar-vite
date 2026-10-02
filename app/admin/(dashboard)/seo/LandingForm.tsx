@@ -177,7 +177,7 @@ export default function LandingForm({
           // نشان نمی‌دهیم تا حرف رابط با رفتار سرور یکی باشد.
           <Field label="وضعیت انتشار">
             <p className="rounded-sm border border-border bg-accent/30 px-3 py-2.5 text-sm text-muted-foreground">
-              لندینگ تازه همیشه «پیش‌نویس» ساخته می‌شود. انتشارش بعد از پاس شدن
+              لندینگ تازه همیشه «پیش‌نویس» ساخته می‌شود. انتشارش پس از تأیید
               چک‌لیست انتشار، از ستون «وضعیت» همین فهرست است.
             </p>
           </Field>

@@ -44,7 +44,7 @@ export default function SummerTours({ onNavigate }: SummerToursProps) {
     <section className="section-standard bg-surface-primary relative overflow-hidden">
       <div className="container-main px-4 sm:px-6 lg:px-8 relative z-10">
         
-        {/* Section Header */}
+        {/* Section Header — تیتر عمداً فصل‌خنثی است: سلکتور «تازه‌ترین» است نه «تابستان». */}
         <div className="mb-8 text-center">
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
@@ -53,7 +53,7 @@ export default function SummerTours({ onNavigate }: SummerToursProps) {
             transition={{ duration: 0.6 }}
             className="text-h2 text-text-heading"
           >
-            بهترین تورهای تابستان ۱۴۰۵
+            تازه‌ترین تورها
           </motion.h2>
           <motion.p
              initial={{ opacity: 0, y: 20 }}
@@ -62,7 +62,7 @@ export default function SummerTours({ onNavigate }: SummerToursProps) {
              transition={{ duration: 0.6, delay: 0.1 }}
              className="text-text-secondary mt-2 text-body-sm max-w-subtitle mx-auto"
           >
-            تورهای فعال تابستان را با تاریخ حرکت، هتل و قیمت پایه مقایسه کنید
+            تورهای فعال را با تاریخ حرکت، هتل و قیمت پایه مقایسه کنید
           </motion.p>
         </div>
 
@@ -100,7 +100,7 @@ export default function SummerTours({ onNavigate }: SummerToursProps) {
             href="#summer-tours"
             className="text-link text-btn"
           >
-            <span>مشاهده همهٔ تورهای تابستان</span>
+            <span>مشاهده همهٔ تورها</span>
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1 transition-transform" />
           </a>
         </div>

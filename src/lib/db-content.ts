@@ -5,6 +5,7 @@
  * - همه توابع فقط سمت سرور قابل استفاده‌اند.
  */
 import { getRest } from './supabase-rest';
+import { cache } from 'react';
 import { SAMPLE_TOURS, type TourItem, type TourItineraryDay } from '@/src/data/toursData';
 import { COUNTRIES, CITIES, type Place } from '@/src/data/destinationsData';
 import { GUIDES, type GuideItem } from '@/src/data/guidesData';
@@ -22,7 +23,10 @@ const arr = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 const iso = (v: unknown): string => {
   if (typeof v === 'string' && v) return v;
   if (v instanceof Date) return v.toISOString();
-  return new Date().toISOString();
+  // تنها مصرف‌کننده: updatedAt تور. نال/ناشناخته یعنی «قدیمی»، نه «الان»؛
+  // رشتهٔ خالی در مرتب‌سازیِ تازه‌ترین‌ها (Date.parse → NaN → ۰) آخر می‌ایستد
+  // و در نمایش تاریخ (faDateTime → null → «—») تاریخ جعلی نمی‌سازد.
+  return '';
 };
 
 /* ------------------------------------------------------------------ */
@@ -434,12 +438,18 @@ export async function getSeoLandings(): Promise<DbSeoLanding[]> {
   }
 }
 
-/** لندینگ منتشرشده دقیقاً روی همین مسیر؛ نبود → null (صداکننده ۴۰۴ می‌دهد). */
-export async function getSeoLandingByPath(path: string): Promise<DbSeoLanding | null> {
-  const clean = normalizeLandingPath(path);
-  const all = await getSeoLandings();
-  return all.find((l) => normalizeLandingPath(l.urlPath) === clean) ?? null;
-}
+/**
+ * لندینگ منتشرشده دقیقاً روی همین مسیر؛ نبود → null (صداکننده ۴۰۴ می‌دهد).
+ * با `cache()` ری‌اکت: در یک ریکوئست یک‌بار خوانده می‌شود (مثلاً در
+ * [...landingPath] هم صفحه و هم متا از resolveSeoLive همان رکورد را می‌خواهند).
+ */
+export const getSeoLandingByPath = cache(
+  async (path: string): Promise<DbSeoLanding | null> => {
+    const clean = normalizeLandingPath(path);
+    const all = await getSeoLandings();
+    return all.find((l) => normalizeLandingPath(l.urlPath) === clean) ?? null;
+  },
+);
 
 /** بلوک‌های محتوایی لندینگ به ترتیب؛ body_fa یا JSON {heading,content} است یا متن ساده قدیمی. */
 export async function getLandingBlocks(landingId: string): Promise<DbLandingBlock[]> {
