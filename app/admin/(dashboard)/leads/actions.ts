@@ -13,7 +13,26 @@ export async function getLeadStats() {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  const rows = await db.select().from(leadRequests).orderBy(desc(leadRequests.createdAt)).limit(200);
+  // فقط ستون‌هایی که صفحه مصرف می‌کند را می‌خوانیم؛ ستون ip (مایگریشن 0021)
+  // ممکن است روی دیتابیس اجرا نشده باشد و select همه‌ستونه خطا می‌داد.
+  const rows = await db
+    .select({
+      id: leadRequests.id,
+      fullName: leadRequests.fullName,
+      phone: leadRequests.phone,
+      sourcePath: leadRequests.sourcePath,
+      tourContext: leadRequests.tourContext,
+      destinationHint: leadRequests.destinationHint,
+      passengers: leadRequests.passengers,
+      notes: leadRequests.notes,
+      adminNotes: leadRequests.adminNotes,
+      status: leadRequests.status,
+      assignee: leadRequests.assignee,
+      createdAt: leadRequests.createdAt,
+    })
+    .from(leadRequests)
+    .orderBy(desc(leadRequests.createdAt))
+    .limit(200);
   const counts = await db
     .select({ status: leadRequests.status, n: count() })
     .from(leadRequests)
