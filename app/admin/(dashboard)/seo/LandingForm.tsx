@@ -110,7 +110,9 @@ export default function LandingForm({
       titleFa,
       metaDescriptionFa,
       h1Fa,
-      workflow,
+      // حالت ساخت همیشه پیش‌نویس است (سرور هم همین را تحمیل می‌کند)؛
+      // تغییر وضعیت فقط در ویرایش/فهرست و با گیت انتشار.
+      workflow: editing ? workflow : 'draft',
       indexStatus,
       nextReviewAt: nextReviewAt ? nextReviewAt.toISOString() : '',
     };
@@ -165,9 +167,21 @@ export default function LandingForm({
         <Field label="تیتر صفحه (H1)" htmlFor="h1" error={errors.h1Fa}>
           <Input id="h1" value={h1Fa} onChange={(e) => { setH1Fa(e.target.value); setErrors((prev) => ({ ...prev, h1Fa: undefined })); }} placeholder="تور استانبول" />
         </Field>
-        <Field label="وضعیت انتشار" htmlFor="wf">
-          <Select id="wf" value={workflow} onChange={(e) => setWorkflow(e.target.value as NonNullable<LandingInput['workflow']>)} options={WORKFLOW_OPTIONS} />
-        </Field>
+        {editing ? (
+          <Field label="وضعیت انتشار" htmlFor="wf">
+            <Select id="wf" value={workflow} onChange={(e) => setWorkflow(e.target.value as NonNullable<LandingInput['workflow']>)} options={WORKFLOW_OPTIONS} />
+          </Field>
+        ) : (
+          // ریشهٔ B-۹ (بخش ساخت): سرور createLanding همیشه پیش‌نویس می‌سازد و
+          // مقدار این سلکت را نادیده می‌گیرد؛ پس در حالت ساخت اصلاً انتخابی
+          // نشان نمی‌دهیم تا حرف رابط با رفتار سرور یکی باشد.
+          <Field label="وضعیت انتشار">
+            <p className="rounded-sm border border-border bg-accent/30 px-3 py-2.5 text-sm text-muted-foreground">
+              لندینگ تازه همیشه «پیش‌نویس» ساخته می‌شود. انتشارش بعد از پاس شدن
+              چک‌لیست انتشار، از ستون «وضعیت» همین فهرست است.
+            </p>
+          </Field>
+        )}
         <Field label="نمایش در گوگل" htmlFor="ix" hint="«نباشد» یعنی صفحه از نتایج جست‌وجو پنهان می‌ماند.">
           <Select id="ix" value={indexStatus} onChange={(e) => setIndexStatus(e.target.value as NonNullable<LandingInput['indexStatus']>)} options={[{ value: 'index', label: 'در نتایج گوگل باشد' }, { value: 'noindex', label: 'در نتایج گوگل نباشد' }]} />
         </Field>

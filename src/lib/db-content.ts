@@ -354,3 +354,167 @@ export async function getLiveContent(): Promise<{
   const exhibitions = await getExhibitions();
   return { tours, countries, cities, guides, exhibitions };
 }
+
+/* ------------------------------------------------------------------ */
+/* لندینگ‌های سئو                                                       */
+/* ------------------------------------------------------------------ */
+
+export interface DbSeoLanding {
+  id: string;
+  queryOwner: string;
+  urlPath: string;
+  canonicalPath: string;
+  pageType: string;
+  titleFa: string;
+  metaDescriptionFa: string;
+  h1Fa: string;
+  workflow: string;
+  indexStatus: 'index' | 'noindex';
+}
+
+export interface DbLandingBlock {
+  id: string;
+  blockKind: string;
+  heading: string;
+  content: string;
+  blockOrder: number;
+}
+
+export interface DbLandingLink {
+  id: string;
+  toPath: string;
+  anchorFa: string;
+}
+
+function restToLanding(r: Row): DbSeoLanding {
+  return {
+    id: str(r.id),
+    queryOwner: str(r.query_owner),
+    urlPath: str(r.url_path),
+    canonicalPath: str(r.canonical_path) || str(r.url_path),
+    pageType: str(r.page_type),
+    titleFa: str(r.title_fa),
+    metaDescriptionFa: str(r.meta_description_fa),
+    h1Fa: str(r.h1_fa),
+    workflow: str(r.workflow),
+    indexStatus: r.index_status === 'index' ? 'index' : 'noindex',
+  };
+}
+
+/** یکدست‌سازی مسیر برای مقایسه: اسلش پایانی و کوئری حذف، اسلش اول تضمین. */
+export function normalizeLandingPath(p: string): string {
+  const clean = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+  return clean.startsWith('/') ? clean : `/${clean}`;
+}
+
+/**
+ * لندینگ‌های منتشرشده از جدول seo_landings (منبع حقیقت).
+ * فقط workflow='published'؛ حذف منطقی (deleted_at) پنهان می‌ماند.
+ * خطا یا قطعی → آرایه خالی؛ صداکننده‌ها خودشان به فالبک استاتیک برمی‌گردند.
+ */
+export async function getSeoLandings(): Promise<DbSeoLanding[]> {
+  try {
+    const rest = getRest();
+    if (!rest) return [];
+    const { data, error } = await rest
+      .from('seo_landings')
+      .select(
+        'id, query_owner, url_path, canonical_path, page_type, title_fa, meta_description_fa, h1_fa, workflow, index_status',
+      )
+      .is('deleted_at', null)
+      .eq('workflow', 'published')
+      .order('updated_at', { ascending: false });
+    if (error) throw error;
+    if (!data) return [];
+    // فیلتر سمت کلاینت هم هست تا ردیف ناسازگار (مثلاً enum قدیمی) نشت نکند.
+    return (data as Row[]).map(restToLanding).filter((l) => l.workflow === 'published' && l.urlPath);
+  } catch (error) {
+    console.error('[db-content] seo landings read failed:', (error as Error).message);
+    return [];
+  }
+}
+
+/** لندینگ منتشرشده دقیقاً روی همین مسیر؛ نبود → null (صداکننده ۴۰۴ می‌دهد). */
+export async function getSeoLandingByPath(path: string): Promise<DbSeoLanding | null> {
+  const clean = normalizeLandingPath(path);
+  const all = await getSeoLandings();
+  return all.find((l) => normalizeLandingPath(l.urlPath) === clean) ?? null;
+}
+
+/** بلوک‌های محتوایی لندینگ به ترتیب؛ body_fa یا JSON {heading,content} است یا متن ساده قدیمی. */
+export async function getLandingBlocks(landingId: string): Promise<DbLandingBlock[]> {
+  try {
+    const rest = getRest();
+    if (!rest) return [];
+    const { data, error } = await rest
+      .from('content_blocks')
+      .select('id, block_kind, body_fa, block_order')
+      .eq('landing_id', landingId)
+      .is('deleted_at', null)
+      .order('block_order', { ascending: true });
+    if (error) throw error;
+    return ((data as Row[]) ?? []).map((r) => {
+      let heading = '';
+      let content = '';
+      const raw = str(r.body_fa);
+      try {
+        const parsed = JSON.parse(raw) as { heading?: unknown; content?: unknown };
+        if (parsed && typeof parsed === 'object') {
+          heading = str(parsed.heading);
+          content = str(parsed.content);
+        }
+      } catch {
+        content = raw; // بدنهٔ قدیمیِ متن ساده
+      }
+      return {
+        id: str(r.id),
+        blockKind: str(r.block_kind, 'section'),
+        heading,
+        content,
+        blockOrder: num(r.block_order, 1),
+      };
+    });
+  } catch (error) {
+    console.error('[db-content] landing blocks read failed:', (error as Error).message);
+    return [];
+  }
+}
+
+/** لینک‌های داخلی خروجی لندینگ (مقصد + متن لینک). */
+export async function getLandingLinks(landingId: string): Promise<DbLandingLink[]> {
+  try {
+    const rest = getRest();
+    if (!rest) return [];
+    const { data, error } = await rest
+      .from('seo_internal_links')
+      .select('id, to_path, anchor_fa')
+      .eq('from_landing_id', landingId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return ((data as Row[]) ?? [])
+      .map((r) => ({ id: str(r.id), toPath: str(r.to_path), anchorFa: str(r.anchor_fa) }))
+      .filter((l) => l.toPath && l.anchorFa);
+  } catch (error) {
+    console.error('[db-content] landing links read failed:', (error as Error).message);
+    return [];
+  }
+}
+
+/** نامک تورهای متصل به لندینگ (seo_landing_products). */
+export async function getLandingProductSlugs(landingId: string): Promise<string[]> {
+  try {
+    const rest = getRest();
+    if (!rest) return [];
+    const { data, error } = await rest
+      .from('seo_landing_products')
+      .select('product_slug')
+      .eq('landing_id', landingId)
+      .is('deleted_at', null);
+    if (error) throw error;
+    return ((data as Row[]) ?? []).map((r) => str(r.product_slug)).filter(Boolean);
+  } catch (error) {
+    console.error('[db-content] landing products read failed:', (error as Error).message);
+    return [];
+  }
+}

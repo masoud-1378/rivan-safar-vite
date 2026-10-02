@@ -1,17 +1,30 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/src/lib/siteConfig';
 import { getIndexableLandings, getDynamicIndexablePaths } from '@/src/data/seoLandings';
-import { getTours, getGuides, getExhibitions } from '@/src/lib/db-content';
+import { getTours, getGuides, getExhibitions, getSeoLandings, normalizeLandingPath } from '@/src/lib/db-content';
 
 /**
  * نقشه سایت داینامیک — لندینگ‌های published/index + مسیرهای داینامیک دارای داده واقعی.
  * ردیف ۱-۳: مسیرهای تور/راهنما/نمایشگاهِ منتشرشدهٔ DB هم به خروجی اضافه می‌شوند
  * (نه فقط دیتای استاتیک)؛ getTours/getGuides/getExhibitions خودشان فقط
  * رکوردهای منتشرشده را برمی‌گردانند (گیت انتشار ردیف ۱-۱).
+ * ایراد ۱: لندینگ‌های سئو از جدول seo_landings می‌آیند (منبع حقیقت)؛
+ * آرایهٔ استاتیک فقط فالبکِ قطعی DB است.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const landingPaths = getIndexableLandings().map((l) => l.urlPath);
+  const staticLandingPaths = getIndexableLandings().map((l) => l.urlPath);
   const staticDynamicPaths = getDynamicIndexablePaths();
+
+  // لندینگ‌های زنده از DB (منتشرشده + index)؛ خطا یا قطعی → همان استاتیک می‌ماند.
+  const dbLandingPaths: string[] = [];
+  try {
+    const landings = await getSeoLandings();
+    for (const l of landings) {
+      if (l.indexStatus === 'index') dbLandingPaths.push(normalizeLandingPath(l.urlPath));
+    }
+  } catch {
+    // getSeoLandings خودش خطا را می‌بلعد و [] برمی‌گرداند؛ این catch اطمینان مضاعف است.
+  }
 
   // مسیرهای زنده از DB؛ خطا یا قطعی → همان مسیرهای استاتیک می‌ماند.
   const dbPaths: string[] = [];
@@ -35,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   const paths = Array.from(
-    new Set([...landingPaths, ...staticDynamicPaths, ...dbPaths]),
+    new Set([...staticLandingPaths, ...dbLandingPaths, ...staticDynamicPaths, ...dbPaths]),
   );
 
   return paths.map((p) => ({

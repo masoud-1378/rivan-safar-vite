@@ -6,7 +6,7 @@ import { SAMPLE_TOURS, type TourItem } from '@/src/data/toursData';
 import { COUNTRIES, CITIES } from '@/src/data/destinationsData';
 import { GUIDES } from '@/src/data/guidesData';
 import { EXHIBITION_SERIES } from '@/src/data/exhibitionsData';
-import { getTour, getGuide, getExhibition } from '@/src/lib/db-content';
+import { getTour, getGuide, getExhibition, getSeoLandingByPath } from '@/src/lib/db-content';
 
 export interface ResolvedSeo {
   title: string;
@@ -104,6 +104,12 @@ export function resolveSeo(path: string): ResolvedSeo {
  * که صفحه‌ها استفاده می‌کنند) و تایتل/توضیحات را از فیلدهای رکورد می‌سازد؛
  * اگر در DB نبود، به رجیستری استاتیک (همان resolveSeo) برمی‌گردد.
  *
+ * لندینگ سئو (ایراد ۱ اتصال پنل به سایت): جدول seo_landings منبع حقیقت است
+ * و بر همه‌چیز مقدم است — اگر لندینگ «منتشرشده»ای دقیقاً روی همین مسیر بود،
+ * titleFa/metaDescriptionFa/canonical/robots از رکورد DB می‌آید؛ چه مسیر
+ * تازه‌ای باشد (روت [...landingPath] رندرش می‌کند) چه روی یک صفحهٔ موجود
+ * (متای همان صفحه بازنویسی می‌شود). نبودِ رکورد → همان fallback استاتیک.
+ *
  * قانون robots: «شناخته‌شده در DB یا استاتیک» — رکورد منتشرشده‌ای که در DB هست
  * دیگر noindex,nofollow نمی‌گیرد، حتی اگر در دیتای استاتیک نباشد.
  * (ریسک ۲ طرح: این رکوردهای تازه از محرومیت ایندکس خارج می‌شوند.)
@@ -118,6 +124,19 @@ export async function resolveSeoLive(path: string): Promise<ResolvedSeo> {
   };
 
   try {
+    // لندینگ DB اول: تصمیم پنل بر هر متای دیگری مقدم است.
+    const dbLanding = await getSeoLandingByPath(route.canonicalPath);
+    if (dbLanding) {
+      return {
+        ...fallback,
+        title: dbLanding.titleFa,
+        description: dbLanding.metaDescriptionFa || fallback.description,
+        canonicalPath: dbLanding.canonicalPath || route.canonicalPath,
+        robots:
+          dbLanding.indexStatus === 'index' ? 'index,follow' : 'noindex,nofollow',
+        breadcrumbs: [{ name: 'خانه', url: '/' }, { name: dbLanding.h1Fa }],
+      };
+    }
     if (route.type === 'tour_detail') {
       const tour = await getTour(route.params.tourSlug);
       if (tour) {

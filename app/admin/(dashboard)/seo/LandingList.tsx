@@ -78,12 +78,17 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
   };
 
   const handleWorkflow = (id: string, workflow: Workflow) => {
+    // ریشهٔ B-۹ (بخش کمبوباکس): تغییر اول در UI اعمال می‌شود تا اگر ذخیره
+    // شکست خورد، با برگشتِ مقدار + پیام خطا «دیده» شود — نه بی‌صدا.
+    const prev = data;
+    setData((rows) => rows.map((r) => (r.id === id ? { ...r, workflow } : r)));
     startTransition(async () => {
       try {
         if (workflow === 'published') {
           const check = await checkQualityGate(id);
           if (!check.canPublish) {
             setGateIssues(check.reasons);
+            setData(prev);
             return;
           }
         }
@@ -91,6 +96,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
         toast({ variant: 'success', title: `وضعیت به «${WORKFLOW_MAP[workflow].label}» تغییر کرد.` });
         refresh();
       } catch (e) {
+        setData(prev);
         toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در تغییر وضعیت.' });
       }
     });
