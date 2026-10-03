@@ -116,7 +116,16 @@ export async function deleteLeader(
   if (used.length > 0) {
     return { ok: false, error: 'این لیدر به توری وصل است؛ اول لیدر آن تور را عوض کنید.' };
   }
+  const photo = (await db.select({ photo: tourLeaders.photo }).from(tourLeaders).where(eq(tourLeaders.id, id)).limit(1))[0]?.photo;
   await db.delete(tourLeaders).where(eq(tourLeaders.id, id));
+  // عکس لیدر در استورج یتیم نماند (قانون پاک‌سازی دادهٔ تستی).
+  if (photo) {
+    try {
+      await deleteExperiencePhoto(photo);
+    } catch {
+      /* نادیده */
+    }
+  }
   return { ok: true };
 }
 
