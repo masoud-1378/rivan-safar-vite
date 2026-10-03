@@ -988,7 +988,7 @@ export default function Stage1Identity({
                   onClick={() => setShowBannerUrl(true)}
                   className="text-caption font-bold text-brand hover:underline"
                 >
-                  چسباندن لینک تصویر
+                  چسباندن لینک
                 </button>
               )}
             </div>

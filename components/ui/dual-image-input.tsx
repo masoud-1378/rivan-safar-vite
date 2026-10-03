@@ -58,7 +58,7 @@ export function DualImageInput({
       onChange(next);
       setShowLink(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'آپلود ناموفق بود؛ دوباره تلاش کنید.');
+      setError(e instanceof Error ? e.message : 'آپلود نشد؛ دوباره تلاش کنید.');
     } finally {
       setUploading(false);
     }
@@ -67,7 +67,7 @@ export function DualImageInput({
   function applyLink() {
     const next = link.trim();
     if (!next) {
-      setLinkError('اول لینک را بنویسید.');
+      setLinkError('لینک را وارد کنید.');
       return;
     }
     try {
@@ -112,7 +112,7 @@ export function DualImageInput({
               type="button"
               variant="outline"
               size="sm"
-              disabled={uploading}
+              aria-busy={uploading}
               onClick={() => fileRef.current?.click()}
               className="gap-1.5 text-xs"
             >
@@ -127,9 +127,9 @@ export function DualImageInput({
               <button
                 type="button"
                 onClick={() => setShowLink(true)}
-                className="cursor-pointer text-caption font-bold text-brand hover:underline"
+                className="inline-flex min-h-11 cursor-pointer items-center px-1 text-caption font-bold text-brand hover:underline"
               >
-                درج لینک دستی
+                چسباندن لینک
               </button>
             )}
             {url && (
@@ -175,7 +175,7 @@ export function DualImageInput({
               }}
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), applyLink())}
               placeholder="https://…"
-              aria-label="لینک دستی تصویر"
+              aria-label="لینک تصویر"
               className="text-start"
             />
             <div>
@@ -220,7 +220,7 @@ export function DualGalleryAdd({
   function applyLink() {
     const next = link.trim();
     if (!next) {
-      setLinkError('اول لینک را بنویسید.');
+      setLinkError('لینک را وارد کنید.');
       return;
     }
     try {
@@ -242,7 +242,7 @@ export function DualGalleryAdd({
           type="button"
           variant="outline"
           size="sm"
-          disabled={uploading}
+          aria-busy={uploading}
           onClick={() => fileRef.current?.click()}
           className="gap-1.5 text-xs"
         >
@@ -257,10 +257,10 @@ export function DualGalleryAdd({
           <button
             type="button"
             onClick={() => setShowLink(true)}
-            className="flex cursor-pointer items-center gap-1 text-caption font-bold text-brand hover:underline"
+            className="inline-flex min-h-11 cursor-pointer items-center gap-1 px-1 text-caption font-bold text-brand hover:underline"
           >
             <Link2 className="size-3.5" />
-            افزودن با لینک
+            چسباندن لینک
           </button>
         )}
         <input
@@ -272,8 +272,9 @@ export function DualGalleryAdd({
           aria-label="انتخاب فایل عکس"
           onChange={(e) => {
             const files = Array.from(e.target.files ?? []);
-            if (files.length > 0) onFiles(files);
             e.target.value = '';
+            if (files.length === 0 || uploading) return;
+            onFiles(files);
           }}
         />
       </div>
@@ -288,7 +289,7 @@ export function DualGalleryAdd({
             }}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), applyLink())}
             placeholder="https://…"
-            aria-label="لینک دستی تصویر"
+            aria-label="لینک تصویر"
             className="text-start"
           />
           <div>

@@ -36,11 +36,23 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
   const active = stages[activeIndex] ?? stages[0];
   const ActiveIcon = active.icon;
 
-  // در دسکتاپ باریک، مرحلهٔ فعال با اسکرول افقی به دید می‌آید.
+  // در دسکتاپ باریک، مرحلهٔ فعال با اسکرول افقی به دید می‌آید —
+  // فقط وقتی بیرون از دید افقی است، و هرگز در مانت اولیه.
+  const mountedRef = React.useRef(false);
   React.useEffect(() => {
-    desktopNavRef.current
-      ?.querySelector(`[data-step-btn="${activeStage}"]`)
-      ?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      return;
+    }
+    const nav = desktopNavRef.current;
+    const btn = nav?.querySelector<HTMLElement>(`[data-step-btn="${activeStage}"]`);
+    if (!nav || !btn) return;
+    const navRect = nav.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    if (btnRect.left < navRect.left || btnRect.right > navRect.right) {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      btn.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+    }
   }, [activeStage]);
 
   const go = (dir: 1 | -1) => {
@@ -63,7 +75,7 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
             onClick={() => go(-1)}
             disabled={activeIndex <= 0}
             aria-label="مرحلهٔ قبلی"
-            className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-sm border border-border text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+            className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-sm border border-border text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <ChevronRight className="size-5" />
           </button>
@@ -72,18 +84,9 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
             type="button"
             onClick={() => setSheetOpen(true)}
             aria-haspopup="dialog"
-            aria-label={`انتخاب مرحله — مرحلهٔ فعلی: ${active.label}`}
-            className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-sm px-3 py-2 text-start transition-colors hover:bg-accent"
+            aria-label={`انتخاب مرحله؛ مرحلهٔ فعلی: ${active.label}`}
+            className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-sm px-3 py-2 text-start transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
-            <span
-              className={cn(
-                'grid size-9 shrink-0 place-items-center rounded-full text-sm font-bold',
-                'bg-brand text-brand-foreground'
-              )}
-              aria-hidden
-            >
-              {fa(active.id)}
-            </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-bold text-foreground">
                 {active.label}
@@ -98,12 +101,23 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
                 aria-valuenow={activeIndex + 1}
                 aria-valuemin={1}
                 aria-valuemax={stages.length}
+                aria-valuetext={`مرحلهٔ ${fa(active.id)} از ${fa(stages.length)}`}
               >
                 <span
-                  className="block h-full rounded-full bg-brand transition-all"
-                  style={{ width: `${((activeIndex + 1) / stages.length) * 100}%` }}
+                  className="block h-full rounded-full bg-brand"
+                  style={{
+                    width: `${((activeIndex + 1) / stages.length) * 100}%`,
+                    transitionProperty: 'width',
+                    transitionDuration: '200ms',
+                  }}
                 />
               </span>
+            </span>
+            <span
+              className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-xs font-bold text-brand-foreground"
+              aria-hidden
+            >
+              {fa(active.id)}
             </span>
             <ChevronDown className="size-5 shrink-0 text-muted-foreground" aria-hidden />
           </button>
@@ -113,7 +127,7 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
             onClick={() => go(1)}
             disabled={activeIndex >= stages.length - 1}
             aria-label="مرحلهٔ بعدی"
-            className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-sm border border-border text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+            className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-sm border border-border text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <ChevronLeft className="size-5" />
           </button>
@@ -134,25 +148,12 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
                   onClick={() => pick(stage.id)}
                   aria-current={current ? 'step' : undefined}
                   className={cn(
-                    'flex min-h-[56px] w-full cursor-pointer items-center gap-3 rounded-sm border px-3 py-2.5 text-start transition-colors',
+                    'flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-sm border px-3 py-2.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                     current
                       ? 'border-brand bg-brand/10'
                       : 'border-transparent hover:bg-accent'
                   )}
                 >
-                  <span
-                    className={cn(
-                      'grid size-9 shrink-0 place-items-center rounded-full text-sm font-bold',
-                      current
-                        ? 'bg-brand text-brand-foreground'
-                        : passed
-                          ? 'bg-emerald-500/20 text-emerald-600'
-                          : 'bg-muted text-muted-foreground'
-                    )}
-                    aria-hidden
-                  >
-                    {passed && !current ? <Check className="size-4" /> : fa(stage.id)}
-                  </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-bold text-foreground">
                       {stage.label}
@@ -160,6 +161,19 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
                     <span className="block truncate text-caption text-muted-foreground">
                       {stage.description}
                     </span>
+                  </span>
+                  <span
+                    className={cn(
+                      'grid size-9 shrink-0 place-items-center rounded-full text-xs font-bold',
+                      current
+                        ? 'bg-brand text-brand-foreground'
+                        : passed
+                          ? 'bg-success/20 text-success'
+                          : 'bg-muted text-muted-foreground'
+                    )}
+                    aria-hidden
+                  >
+                    {passed && !current ? <Check className="size-4" /> : fa(stage.id)}
                   </span>
                   <Icon className="size-5 shrink-0 text-muted-foreground" aria-hidden />
                 </button>
@@ -188,8 +202,9 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
                   data-step-btn={stage.id}
                   onClick={() => onSelect(stage.id)}
                   aria-current={current ? 'step' : undefined}
+                  title={stage.label}
                   className={cn(
-                    'group flex w-36 cursor-pointer flex-col gap-2 rounded-sm border p-3 text-start transition-colors',
+                    'group flex w-28 cursor-pointer flex-col gap-2 rounded-sm border p-3 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                     current
                       ? 'border-brand bg-brand/10'
                       : passed
@@ -198,36 +213,31 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
                   )}
                 >
                   <span className="flex items-center justify-between">
+                    <Icon
+                      className={cn('size-4', current ? 'text-brand' : 'text-muted-foreground')}
+                      aria-hidden
+                    />
                     <span
                       className={cn(
                         'grid size-7 place-items-center rounded-full text-xs font-bold',
                         current
                           ? 'bg-brand text-brand-foreground'
                           : passed
-                            ? 'bg-emerald-500/20 text-emerald-600'
+                            ? 'bg-success/20 text-success'
                             : 'bg-muted text-muted-foreground'
                       )}
                       aria-hidden
                     >
                       {passed && !current ? <Check className="size-4" /> : fa(stage.id)}
                     </span>
-                    <Icon
-                      className={cn('size-4', current ? 'text-brand' : 'text-muted-foreground')}
-                      aria-hidden
-                    />
                   </span>
-                  <span className="min-w-0">
-                    <span
-                      className={cn(
-                        'block truncate text-xs font-bold leading-tight',
-                        current ? 'text-foreground' : 'text-foreground/80'
-                      )}
-                    >
-                      {stage.label}
-                    </span>
-                    <span className="mt-0.5 block truncate text-caption text-muted-foreground">
-                      {stage.description}
-                    </span>
+                  <span
+                    className={cn(
+                      'block truncate text-xs font-bold leading-tight',
+                      current ? 'text-foreground' : 'text-foreground/80'
+                    )}
+                  >
+                    {stage.label}
                   </span>
                 </button>
                 {!last && (
@@ -235,7 +245,7 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
                     aria-hidden
                     className={cn(
                       'mx-1 w-px self-stretch',
-                      passed ? 'bg-emerald-500/40' : 'bg-border'
+                      passed ? 'bg-success/40' : 'bg-border'
                     )}
                   />
                 )}

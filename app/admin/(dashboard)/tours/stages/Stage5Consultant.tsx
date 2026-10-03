@@ -92,7 +92,7 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
         return;
       }
       updateConsultant({ audioUrl: res.url });
-      toast({ title: 'فایل صوتی آپلود شد.' });
+      toast({ title: 'فایل صوتی آپلود شد' });
     } finally {
       setAudioUploading(false);
     }
@@ -131,7 +131,7 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
             <UserCheck className="size-4 text-purple-600" />
             <span>مشخصات کارشناس این تور</span>
           </h4>
-          <span className="text-caption text-muted-foreground">در پایین صفحهٔ تور نمایش داده می‌شود تا مسافر مستقیم با او تماس بگیرد</span>
+          <span className="text-caption text-muted-foreground">پایین صفحهٔ تور می‌آید تا مسافر مستقیم با او تماس بگیرد</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -202,7 +202,7 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
                       ) : (
                         <Upload className="size-4" />
                       )}
-                      {audioUploading ? 'در حال آپلود…' : 'جایگزینی با فایل'}
+                      {audioUploading ? 'در حال آپلود…' : 'تغییر فایل صوتی'}
                     </Button>
                     {!showAudioUrl && (
                       <button type="button" onClick={() => setShowAudioUrl(true)} className="text-caption font-bold text-brand hover:underline">

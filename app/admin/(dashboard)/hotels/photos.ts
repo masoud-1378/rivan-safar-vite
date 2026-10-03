@@ -57,17 +57,17 @@ function serviceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
-    throw new Error('کلید سرویس سوپابیس تنظیم نشده؛ آپلود عکس ممکن نیست.');
+    throw new Error('تنظیمات آپلود کامل نیست؛ موضوع را به تیم فنی بگویید.');
   }
   return createClient(url, key);
 }
 
 async function ensureBucket(sb: SupabaseClient) {
   const { data: buckets, error: listError } = await sb.storage.listBuckets();
-  if (listError) throw new Error('خطا در بررسی فضای ذخیره‌سازی.');
+  if (listError) throw new Error('مشکلی در آپلود پیش آمد؛ اگر تکرار شد به تیم فنی بگویید.');
   if (!buckets?.some((b) => b.name === BUCKET)) {
     const { error: createError } = await sb.storage.createBucket(BUCKET, { public: true });
-    if (createError) throw new Error('ساخت فضای ذخیرهٔ عکس هتل ناموفق بود.');
+    if (createError) throw new Error('مشکلی در آپلود پیش آمد؛ اگر تکرار شد به تیم فنی بگویید.');
   }
 }
 

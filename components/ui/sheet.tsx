@@ -15,10 +15,12 @@ export interface SheetProps {
 }
 
 /**
- * Panel spring ≈ Animate UI `{ type: "spring", stiffness: 150, damping: 22 }`.
- * Overlay fade ≈ Animate UI `{ duration: 0.2, ease: "easeInOut" }`.
+ * Panel slide ≈ 280ms in / 200ms out (vibefarsi: UI motion 150–300ms;
+ * exit is lighter because the user is done with the sheet).
+ * Overlay fade ≈ 200ms.
  */
-const PANEL_MS = 480;
+const PANEL_IN_MS = 280;
+const PANEL_OUT_MS = 200;
 const PANEL_EASE = "cubic-bezier(0.32, 0.72, 0, 1)";
 const OVERLAY_MS = 200;
 
@@ -38,6 +40,8 @@ export function Sheet({
   className,
 }: SheetProps) {
   const titleId = React.useId();
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  const triggerRef = React.useRef<HTMLElement | null>(null);
   const [present, setPresent] = React.useState(open);
   const [shown, setShown] = React.useState(false);
 
@@ -50,19 +54,46 @@ export function Sheet({
       return () => cancelAnimationFrame(id);
     }
     setShown(false);
-    const t = window.setTimeout(() => setPresent(false), PANEL_MS);
+    const t = window.setTimeout(() => setPresent(false), PANEL_OUT_MS);
     return () => window.clearTimeout(t);
   }, [open]);
 
   React.useEffect(() => {
     if (!present) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onOpenChange(false);
+    // فوکوس‌ترپ: ماشه را نگه دار، فوکوس را وارد دیالوگ کن، Tab را داخل بچرخان،
+    // و بعد از بسته شدن فوکوس را به ماشه برگردان.
+    triggerRef.current = document.activeElement as HTMLElement | null;
+    panelRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onOpenChange(false);
+        return;
+      }
+      if (e.key !== "Tab" || !panelRef.current) return;
+      const focusables = panelRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusables.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
+      triggerRef.current?.focus?.();
     };
   }, [present, onOpenChange]);
 
@@ -74,17 +105,19 @@ export function Sheet({
         aria-hidden
         onClick={() => onOpenChange(false)}
         className={cn(
-          "absolute inset-0 bg-black/50 transition-[opacity,filter] ease-in-out",
-          shown ? "opacity-100 blur-0" : "opacity-0 blur-sm",
+          "absolute inset-0 bg-black/50 transition-opacity ease-in-out",
+          shown ? "opacity-100" : "opacity-0",
         )}
         style={{ transitionDuration: `${OVERLAY_MS}ms` }}
       />
       <div
+        ref={panelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         className={cn(
-          "absolute flex flex-col bg-popover text-popover-foreground shadow-overlay will-change-transform",
+          "absolute flex flex-col bg-popover text-popover-foreground shadow-overlay outline-none will-change-transform",
           "transition-[transform,opacity]",
           side === "start" && "inset-y-0 start-0 w-full max-w-sm border-e border-border",
           side === "end" && "inset-y-0 end-0 w-full max-w-sm border-s border-border",
@@ -93,7 +126,7 @@ export function Sheet({
           className,
         )}
         style={{
-          transitionDuration: `${PANEL_MS}ms`,
+          transitionDuration: `${PANEL_IN_MS}ms`,
           transitionTimingFunction: PANEL_EASE,
         }}
       >
@@ -107,7 +140,7 @@ export function Sheet({
             type="button"
             aria-label="بستن"
             onClick={() => onOpenChange(false)}
-            className="ms-auto flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="ms-auto flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <X className="size-4" />
           </button>

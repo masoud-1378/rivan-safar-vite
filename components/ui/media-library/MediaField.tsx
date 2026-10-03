@@ -23,7 +23,7 @@ export interface MediaFieldProps {
 
 /**
  * فیلد تک‌عکس فرم‌ها: پیش‌نمایش + «انتخاب از کتابخانه / آپلود» +
- * ورودی‌های کپشن و متن جایگزین + حذف. درج لینک دستی هم به‌عنوان
+ * ورودی‌های کپشن و متن جایگزین + حذف. چسباندن لینک هم به‌عنوان
  * گزینهٔ فرعی مانده (دیگر تنها راه نیست).
  *
  * نکتهٔ ذخیره‌سازی: فرم‌ها فعلاً فقط `value.url` را ذخیره می‌کنند؛
@@ -51,7 +51,7 @@ export function MediaField({ label, hint, htmlFor, value, onChange, tag, tagLabe
   const applyLink = () => {
     const url = link.trim();
     if (!url) {
-      setLinkError('اول لینک را بنویسید.');
+      setLinkError('لینک را وارد کنید.');
       return;
     }
     try {
@@ -80,7 +80,7 @@ export function MediaField({ label, hint, htmlFor, value, onChange, tag, tagLabe
                 loading="lazy"
               />
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <Button
                 type="button"
                 variant="outline"
@@ -105,9 +105,9 @@ export function MediaField({ label, hint, htmlFor, value, onChange, tag, tagLabe
                 <button
                   type="button"
                   onClick={() => setShowLink(true)}
-                  className="cursor-pointer text-[11px] font-bold text-brand hover:underline"
+                  className="inline-flex min-h-11 cursor-pointer items-center px-1 text-caption font-bold text-brand hover:underline"
                 >
-                  درج لینک دستی
+                  چسباندن لینک
                 </button>
               )}
             </div>
@@ -123,7 +123,7 @@ export function MediaField({ label, hint, htmlFor, value, onChange, tag, tagLabe
                 }}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), applyLink())}
                 placeholder="https://…"
-                aria-label="لینک دستی تصویر"
+                aria-label="لینک تصویر"
                 className="text-start"
               />
               <div className="mt-1.5">
@@ -136,23 +136,25 @@ export function MediaField({ label, hint, htmlFor, value, onChange, tag, tagLabe
                   {linkError}
                 </p>
               )}
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                لینک Unsplash یا هر آدرسی که روی سایت نمایش داده می‌شود.
+              <p className="mt-1 text-caption text-muted-foreground">
+                لینک Unsplash یا هر آدرسی که روی سایت باز می‌شود.
               </p>
             </div>
           )}
-          <Input
-            value={value.caption ?? ''}
-            onChange={(e) => onChange({ ...value, caption: e.target.value })}
-            placeholder="کپشن (اختیاری) — زیر تصویر نمایش داده می‌شود"
-            aria-label="کپشن تصویر"
-          />
-          <Input
-            value={value.alt ?? ''}
-            onChange={(e) => onChange({ ...value, alt: e.target.value })}
-            placeholder="متن جایگزین (alt) — برای دسترس‌پذیری و سئو"
-            aria-label="متن جایگزین تصویر"
-          />
+          <Field label="کپشن" hint="زیر تصویر نمایش داده می‌شود (اختیاری)">
+            <Input
+              value={value.caption ?? ''}
+              onChange={(e) => onChange({ ...value, caption: e.target.value })}
+              aria-label="کپشن تصویر"
+            />
+          </Field>
+          <Field label="متن جایگزین (alt)" hint="برای دسترس‌پذیری و سئو">
+            <Input
+              value={value.alt ?? ''}
+              onChange={(e) => onChange({ ...value, alt: e.target.value })}
+              aria-label="متن جایگزین تصویر"
+            />
+          </Field>
         </div>
       ) : (
         <div className="space-y-2">
@@ -168,12 +170,12 @@ export function MediaField({ label, hint, htmlFor, value, onChange, tag, tagLabe
               انتخاب از کتابخانه / آپلود
             </Button>
             {!showLink && (
-              <button
+                <button
                 type="button"
                 onClick={() => setShowLink(true)}
-                className="cursor-pointer text-[11px] font-bold text-brand hover:underline"
+                className="inline-flex min-h-11 cursor-pointer items-center px-1 text-caption font-bold text-brand hover:underline"
               >
-                درج لینک دستی
+                چسباندن لینک
               </button>
             )}
           </div>
@@ -188,7 +190,7 @@ export function MediaField({ label, hint, htmlFor, value, onChange, tag, tagLabe
                 }}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), applyLink())}
                 placeholder="https://…"
-                aria-label="لینک دستی تصویر"
+                aria-label="لینک تصویر"
                 className="text-start"
               />
               <div className="mt-1.5">
@@ -201,8 +203,8 @@ export function MediaField({ label, hint, htmlFor, value, onChange, tag, tagLabe
                   {linkError}
                 </p>
               )}
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                لینک Unsplash یا هر آدرسی که روی سایت نمایش داده می‌شود.
+              <p className="mt-1 text-caption text-muted-foreground">
+                لینک Unsplash یا هر آدرسی که روی سایت باز می‌شود.
               </p>
             </div>
           )}

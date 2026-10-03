@@ -488,7 +488,7 @@ export default function Stage7Experience({ data, onChange }: Stage7ExperiencePro
           onFiles={(files) => void uploadGalleryFiles(files)}
           onLink={(url) => {
             onChange({ gallery: [...gallery, { url, caption: '' }].slice(0, 30) });
-            toast({ title: 'عکس با لینک به گالری اضافه شد.' });
+            toast({ title: 'عکس با لینک اضافه شد' });
           }}
         />
         <p className="text-caption text-text-secondary mt-2">

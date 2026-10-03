@@ -112,7 +112,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
       setPhotos((prev) => [photo, ...prev]);
       toast({ title: 'عکس با لینک اضافه شد.' });
     } catch (err) {
-      toast({ variant: 'error', title: safeErrorMessage(err, 'افزودن عکس ناموفق بود.') });
+      toast({ variant: 'error', title: safeErrorMessage(err, 'عکس اضافه نشد؛ دوباره تلاش کنید.') });
     } finally {
       setUploading(false);
     }
