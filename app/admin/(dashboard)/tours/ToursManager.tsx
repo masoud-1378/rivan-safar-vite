@@ -274,58 +274,93 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
   // موج ۲، تیم هاب: ترتیب از چشم مدیر مبتدی — پرتکرارها (ویرایش، کپی،
   // انتشار/بازگشت به پیش‌نویس، بایگانی) مستقیم؛ کم‌تکرار (نمایش در سایت)
   // در منوی «بیشتر». جداکنندهٔ بایگانی (مخرب) طبق قرارداد قلم ۳ می‌ماند.
-  const tourActions = (tour: TourRow, card = false) => {
+  // منوی «بیشتر» ردیف — در دسکتاپ داخل ردیف عملیات، در موبایل گوشهٔ کارت.
+  // ایراد ۱۵ موج ۶: همان اکشن ردیف، داخل منوی سه‌نقطه هم هست —
+  // یک فلو واحد از togglePublish (برگشت، با دیالوگ تأیید می‌آید).
+  const tourMenu = (tour: TourRow) => {
     const published = tour.publishStatus === 'published';
     return (
-      <div className={cn(card ? "flex gap-1.5" : "flex items-center gap-1")} onClick={(e) => e.stopPropagation()}>
-        <Button variant="ghost" size="sm" className={cn("max-md:min-h-11", card && "flex-1")} onClick={() => router.push(`/admin/tours/${tour.id}`)}>
+      <DropdownMenu
+        align="end"
+        trigger={
+          <Button variant="ghost" size="icon" title="بیشتر" aria-label={`عملیات بیشتر تور «${tour.title}»`}>
+            <Ellipsis />
+          </Button>
+        }
+        items={[
+          published
+            ? {
+                label: 'بازگشت به پیش‌نویس',
+                icon: Undo2,
+                onSelect: () => togglePublish(tour),
+              }
+            : {
+                label: 'انتشار',
+                icon: Megaphone,
+                onSelect: () => togglePublish(tour),
+              },
+          {
+            label: 'نمایش در سایت',
+            icon: Eye,
+            onSelect: () => window.open(`/tour/${tour.slug}`, '_blank', 'noopener,noreferrer'),
+          },
+        ]}
+      />
+    );
+  };
+
+  const tourActions = (tour: TourRow, card = false) => {
+    const published = tour.publishStatus === 'published';
+    // موبایل: گرید ۲ ستونه — دکمه‌ها دیگر با flex-1 در یک ردیف کشیده نمی‌شوند
+    // (متن «بازگشت به پیش‌نویس» ردیف را می‌شکست).
+    if (card) {
+      return (
+        <div className="grid grid-cols-2 gap-1.5" onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="sm" className="min-h-11 justify-center" onClick={() => router.push(`/admin/tours/${tour.id}`)}>
+            <Pencil />ویرایش
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="min-h-11 justify-center"
+            title={published ? 'بازگشت تور به پیش‌نویس' : 'انتشار تور'}
+            disabled={publishingId === tour.id}
+            onClick={() => void togglePublish(tour)}
+          >
+            {published ? <><Undo2 />بازگشت به پیش‌نویس</> : <><Megaphone />انتشار</>}
+          </Button>
+          <Button variant="ghost" size="sm" className="min-h-11 justify-center" onClick={() => setDuplicating(tour)}>
+            <Copy />کپی
+          </Button>
+          <Button variant="ghost" size="sm" className="min-h-11 justify-center text-destructive" onClick={() => setDeleting(tour)} disabled={pending}>
+            <Archive />بایگانی
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        <Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => router.push(`/admin/tours/${tour.id}`)}>
           <Pencil />ویرایش
         </Button>
-        <Button variant="ghost" size="sm" className={cn("max-md:min-h-11", card && "flex-1")} onClick={() => setDuplicating(tour)}>
+        <Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => setDuplicating(tour)}>
           <Copy />کپی
         </Button>
         <Button
           variant="ghost"
           size="sm"
-          className={cn("max-md:min-h-11", card && "flex-1")}
+          className="max-md:min-h-11"
           title={published ? 'بازگشت تور به پیش‌نویس' : 'انتشار تور'}
           disabled={publishingId === tour.id}
           onClick={() => void togglePublish(tour)}
         >
           {published ? <><Undo2 />بازگشت به پیش‌نویس</> : <><Megaphone />انتشار</>}
         </Button>
-        {!card && <span className="mx-1 h-5 w-px bg-border" aria-hidden="true" />}
-        <Button variant="ghost" size="sm" className={cn("text-destructive max-md:min-h-11", card && "flex-1")} onClick={() => setDeleting(tour)} disabled={pending}>
+        <span className="mx-1 h-5 w-px bg-border" aria-hidden="true" />
+        <Button variant="ghost" size="sm" className="text-destructive max-md:min-h-11" onClick={() => setDeleting(tour)} disabled={pending}>
           <Archive />بایگانی
         </Button>
-        <DropdownMenu
-          align="end"
-          trigger={
-            <Button variant="ghost" size="icon" title="بیشتر" aria-label={`عملیات بیشتر تور «${tour.title}»`} className={cn(card && "flex-none")}>
-              <Ellipsis />
-            </Button>
-          }
-          items={[
-            // ایراد ۱۵ موج ۶: همان اکشن ردیف، داخل منوی سه‌نقطه هم هست —
-            // یک فلو واحد از togglePublish (برگشت، با دیالوگ تأیید می‌آید).
-            published
-              ? {
-                  label: 'بازگشت به پیش‌نویس',
-                  icon: Undo2,
-                  onSelect: () => togglePublish(tour),
-                }
-              : {
-                  label: 'انتشار',
-                  icon: Megaphone,
-                  onSelect: () => togglePublish(tour),
-                },
-            {
-              label: 'نمایش در سایت',
-              icon: Eye,
-              onSelect: () => window.open(`/tour/${tour.slug}`, '_blank', 'noopener,noreferrer'),
-            },
-          ]}
-        />
+        {tourMenu(tour)}
       </div>
     );
   };
@@ -344,6 +379,9 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
             aria-label={`انتخاب تور ${tour.title}`}
           />
           <span className="truncate text-panel-label text-foreground">{tour.title}</span>
+        </span>
+        <span className="-me-2 -mt-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+          {tourMenu(tour as TourRow)}
         </span>
       </div>
       <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-panel-caption text-muted-foreground">
