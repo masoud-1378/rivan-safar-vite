@@ -143,15 +143,29 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         status: 'pending',
         statusLabel: 'در انتظار تأیید ظرفیت',
       });
+      // خطای قابل‌پیش‌بینی به‌صورت مقدار برمی‌گردد تا پیام واقعی‌اش در پروداکشن
+      // پشت #441 گم نشود (ریشهٔ مشترک bugfix-441).
+      // نکته: این پروژه strict:false است و narrow روی !result.ok کار نمی‌کند؛ پس === false صریح.
+      if (result.ok === false) {
+        toast({
+          title: 'تکثیر ناموفق بود',
+          description: result.error,
+          variant: 'error',
+        });
+        setBusy(false);
+        return;
+      }
       toast({
         title: 'تور تکثیر شد',
         description: `«${cleanTitle}» به‌صورت پیش‌نویس ساخته شد؛ مبدأ و ویزا از تور اصلی حفظ شدند.`,
       });
-      onDone(result?.id ?? null);
+      onDone(result.id);
     } catch (e) {
+      const digest = e instanceof Error ? (e as { digest?: string }).digest : undefined;
+      console.error('[tour-duplicate] unexpected error', digest ? { digest } : e);
       toast({
         title: 'تکثیر ناموفق بود',
-        description: e instanceof Error ? e.message : 'دوباره تلاش کنید.',
+        description: 'دوباره تلاش کنید.',
         variant: 'error',
       });
       setBusy(false);

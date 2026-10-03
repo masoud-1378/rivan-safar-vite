@@ -59,7 +59,9 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
     try {
       setData(await listLandings());
     } catch (e) {
-      toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در بارگذاری لندینگ‌ها.' });
+      // ریشهٔ #441: در پروداکشن e.message همان «Minified React error #441» است.
+      console.error('[seo] load landings failed', (e as { digest?: unknown })?.digest ?? e);
+      toast({ variant: 'error', title: 'خطا در بارگذاری لندینگ‌ها.' });
     }
   });
 
@@ -72,7 +74,9 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
         setDeleting(null);
         refresh();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'حذف انجام نشد؛ دوباره تلاش کنید.' });
+        // ریشهٔ #441: در پروداکشن e.message همان «Minified React error #441» است.
+        console.error('[seo] delete landing failed', (e as { digest?: unknown })?.digest ?? e);
+        toast({ variant: 'error', title: 'حذف انجام نشد؛ دوباره تلاش کنید.' });
       }
     });
   };
@@ -96,12 +100,22 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
             return;
           }
         }
-        await setLandingWorkflow(id, workflow);
+        // ریشهٔ #441: گیتِ ردشده به‌صورت مقدار می‌آید؛ همان پیام فارسی را نشان بده.
+        // (پروژه strict:false است؛ !wfResult.ok باریک‌سازی نمی‌کند، پس === false)
+        const wfResult = await setLandingWorkflow(id, workflow);
+        if (wfResult.ok === false) {
+          rollback();
+          toast({ variant: 'error', title: wfResult.error });
+          return;
+        }
         toast({ variant: 'success', title: `وضعیت به «${WORKFLOW_MAP[workflow].label}» تغییر کرد.` });
         refresh();
       } catch (e) {
+        // ریشهٔ #441: در پروداکشن e.message همان «Minified React error #441» است؛
+        // به کاربر نشانش نده. پیام عمومی + ثبت digest برای عیب‌یابی.
+        console.error('[seo] workflow change failed', (e as { digest?: unknown })?.digest ?? e);
         rollback();
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در تغییر وضعیت.' });
+        toast({ variant: 'error', title: 'خطا در تغییر وضعیت.' });
       }
     });
   };

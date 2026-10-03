@@ -44,11 +44,16 @@ export interface LandingNeedsConfirm {
 
 export type CreateLandingResult =
   | { id: string; finalPath: string }
-  | LandingNeedsConfirm;
+  | LandingNeedsConfirm
+  // ریشهٔ #441: خطای قابل‌پیش‌بینی به‌صورت مقدار برمی‌گردد، نه throw —
+  // در پروداکشن پیامِ throw به کلاینت نمی‌رسد و فقط «Minified React error #441» دیده می‌شود.
+  | { ok: false; error: string };
 
 export type UpdateLandingResult =
   | { ok: true; demotedToDraft: boolean; finalPath?: string }
-  | LandingNeedsConfirm;
+  | LandingNeedsConfirm
+  // ریشهٔ #441: خطای قابل‌پیش‌بینی (مثل گیت انتشار) به‌صورت مقدار برمی‌گردد، نه throw.
+  | { ok: false; error: string };
 
 /** سقف تلاش برای پیدا کردن آدرس آزاد / تلاش مجدد پس از race. */
 const MAX_PATH_ATTEMPTS = 50;
@@ -194,7 +199,8 @@ export async function createLanding(
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   if (!input.queryOwner.trim() || !input.urlPath.trim() || !input.titleFa.trim() || !input.h1Fa.trim()) {
-    throw new Error('فیلدهای ضروری: کد یکتای صفحه، مسیر URL، عنوان سئو، تیتر صفحه');
+    // ریشهٔ #441: این خطا قابل‌پیش‌بینی است؛ throw در پروداکشن پیامش را از دست می‌دهد.
+    return { ok: false, error: 'فیلدهای ضروری: کد یکتای صفحه، مسیر URL، عنوان سئو، تیتر صفحه' };
   }
   const requested = normalizeLandingPath(input.urlPath.trim());
 
@@ -236,12 +242,14 @@ export async function createLanding(
         continue;
       }
       if (uniquenessTarget(e) === 'query') {
-        throw new Error('این کد یکتای صفحه قبلاً ثبت شده است.');
+        // ریشهٔ #441: قابل‌پیش‌بینی است؛ به‌صورت مقدار برگردان، نه throw.
+        return { ok: false, error: 'این کد یکتای صفحه قبلاً ثبت شده است.' };
       }
       throw e;
     }
   }
-  throw new Error('آدرس آزادی نزدیک این آدرس پیدا نشد؛ آدرس دیگری بنویسید.');
+  // ریشهٔ #441: اتمام تلاش‌ها قابل‌پیش‌بینی است؛ به‌صورت مقدار برگردان، نه throw.
+  return { ok: false, error: 'آدرس آزادی نزدیک این آدرس پیدا نشد؛ آدرس دیگری بنویسید.' };
 }
 
 /**
@@ -258,8 +266,9 @@ export async function updateLanding(
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   // یافتهٔ ۱۲: شناسهٔ ناموجود دیگر بی‌صدا ok نمی‌گیرد.
+  // ریشهٔ #441: قابل‌پیش‌بینی است؛ به‌صورت مقدار برگردان، نه throw.
   const current = await db.select().from(seoLandings).where(eq(seoLandings.id, id)).limit(1);
-  if (!current[0]) throw new Error('لندینگ یافت نشد.');
+  if (!current[0]) return { ok: false, error: 'لندینگ یافت نشد.' };
   const wasPublished = current[0].workflow === 'published';
   // مقایسه با آدرس نرمال‌شده: «/foo/» و «/foo» تغییر مسیر حساب نمی‌شوند.
   const requestedPath = input.urlPath?.trim() ? normalizeLandingPath(input.urlPath.trim()) : null;
@@ -287,7 +296,8 @@ export async function updateLanding(
     // لندینگ از قبل published است (حذف گیت‌شکنِ بلوک/لینک خودش به draft برمی‌گرداند).
     if (input.workflow === 'published' && !wasPublished) {
       const gate = await checkQualityGate(id);
-      if (!gate.canPublish) throw new Error('شرایط انتشار کامل نیست: ' + gate.reasons.join(' '));
+      // ریشهٔ #441: رد گیت قابل‌پیش‌بینی است؛ به‌صورت مقدار برگردان، نه throw.
+      if (!gate.canPublish) return { ok: false, error: 'شرایط انتشار کامل نیست: ' + gate.reasons.join(' ') };
     }
     data.workflow = input.workflow;
   }
@@ -316,8 +326,9 @@ export async function updateLanding(
         continue;
       }
       // یافتهٔ ۵: خطای یکتایی مسیر/کد یکتا به پیام فارسی.
-      if (target === 'url') throw new Error('این مسیر URL قبلاً برای لندینگ دیگری ثبت شده است.');
-      if (target === 'query') throw new Error('این کد یکتای صفحه قبلاً ثبت شده است.');
+      // ریشهٔ #441: قابل‌پیش‌بینی است؛ به‌صورت مقدار برگردان، نه throw.
+      if (target === 'url') return { ok: false, error: 'این مسیر URL قبلاً برای لندینگ دیگری ثبت شده است.' };
+      if (target === 'query') return { ok: false, error: 'این کد یکتای صفحه قبلاً ثبت شده است.' };
       throw e;
     }
   }
@@ -593,11 +604,17 @@ export async function checkQualityGate(landingId: string): Promise<QualityCheck>
   };
 }
 
-export async function setLandingWorkflow(id: string, workflow: 'draft' | 'review' | 'published' | 'paused' | 'archived') {
+/** ریشهٔ #441: خطای قابل‌پیش‌بینی (گیت انتشار) به‌صورت مقدار برمی‌گردد، نه throw. */
+export type SetLandingWorkflowResult = { ok: true } | { ok: false; error: string };
+
+export async function setLandingWorkflow(
+  id: string,
+  workflow: 'draft' | 'review' | 'published' | 'paused' | 'archived',
+): Promise<SetLandingWorkflowResult> {
   await requireAdmin(['owner', 'editor']);
   if (workflow === 'published') {
     const gate = await checkQualityGate(id);
-    if (!gate.canPublish) throw new Error('Gate انتشار پاس نشد: ' + gate.reasons.join(' '));
+    if (!gate.canPublish) return { ok: false, error: 'شرایط انتشار کامل نیست: ' + gate.reasons.join(' ') };
   }
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');

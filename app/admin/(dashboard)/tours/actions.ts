@@ -317,18 +317,35 @@ export async function listOrigins(): Promise<OriginRow[]> {
     });
 }
 
-export async function saveTour(id: string | undefined | null, data: TourInput) {
+/**
+ * نتیجهٔ saveTour — خطاهای قابل‌پیش‌بینی (اعتبارسنجی، دیتابیس) به‌جای throw
+ * به‌صورت مقدار برمی‌گردند، چون در بیلد پروداکشن پیامِ throw به کلاینت نمی‌رسد
+ * و کاربر فقط «Minified React error #441» می‌بیند (ریشهٔ مشترک bugfix-441).
+ */
+export type SaveTourResult = { ok: true; id: string | null } | { ok: false; error: string };
+
+export async function saveTour(id: string | undefined | null, data: TourInput): Promise<SaveTourResult> {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
-  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  // ایراد D19: پیام فنی خام به کاربر نمی‌رسد؛ فارسیِ قابل‌فهم برمی‌گردد.
+  if (!db) return { ok: false, error: 'اتصال به دیتابیس برقرار نیست؛ چند دقیقه دیگر تلاش کنید.' };
   const slug = (data.slug || '').trim();
   const title = (data.title || '').trim();
-  if (!slug) throw new Error('نامک (slug) لازم است.');
+  if (!slug) return { ok: false, error: 'نامک (آدرس اینترنتی تور) لازم است.' };
   // میز ۳ — ایراد ۱۰: نامک فارسی روی روت‌های سایت ۴۰۴ِ زنده می‌دهد؛ این‌جا رد می‌شود.
-  assertLatinSlug(slug);
-  if (title.length < 2) throw new Error('عنوان تور لازم است.');
+  try {
+    assertLatinSlug(slug);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'نامک معتبر نیست.' };
+  }
+  if (title.length < 2) return { ok: false, error: 'عنوان تور لازم است.' };
   // بنر: آدرس دستی هم باید روی سایت باز شود، وگرنه پیش‌نمایش پنل دروغ می‌گوید.
-  assertRenderableImageUrl(data.image || '');
+  // پیام واقعی باید به کاربر برسد (نه #441) — پس throw این‌جا گرفته و به مقدار تبدیل می‌شود.
+  try {
+    assertRenderableImageUrl(data.image || '');
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'آدرس بنر معتبر نیست.' };
+  }
 
   const destSlugs = asStringArray(data.destinationSlugs);
   const [destRows, originRows] = await Promise.all([
@@ -366,13 +383,14 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
       .where(inArray(accommodations.id, hotelIds));
     // شناسه‌ای که به هیچ ردیفی نرسید بی‌صدا رد نمی‌شود.
     if (hotelStates.length !== hotelIds.length) {
-      throw new Error('هتل پیدا نشد.');
+      return { ok: false, error: 'هتل پیدا نشد.' };
     }
     const archived = hotelStates.find((r) => r.deletedAt != null);
     if (archived) {
-      throw new Error(
-        `هتل «${archived.nameFa}» بایگانی شده است؛ اول از صفحهٔ بایگانی بازیابیش کنید، بعد تور را ذخیره کنید.`,
-      );
+      return {
+        ok: false,
+        error: `هتل «${archived.nameFa}» بایگانی شده است؛ اول از صفحهٔ بایگانی بازیابیش کنید، بعد تور را ذخیره کنید.`,
+      };
     }
   }
   const hotelStars = hotelOptions.reduce((m, h) => Math.max(m, Number(h?.stars) || 0), 0);

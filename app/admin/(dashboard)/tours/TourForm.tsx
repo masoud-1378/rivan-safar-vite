@@ -296,6 +296,17 @@ export default function TourForm({
         const nextPublish: 'draft' | 'published' =
           intent === 'keep' ? formData.publishStatus : intent;
         const res = await saveTour(editingId ?? null, { ...formData, publishStatus: nextPublish });
+        // خطای قابل‌پیش‌بینی به‌صورت مقدار برمی‌گردد (نه throw) تا پیام واقعی‌اش
+        // در پروداکشن گم نشود — ریشهٔ bugfix-441.
+        // نکته: این پروژه strict:false است و narrow روی !res.ok کار نمی‌کند؛ پس === false صریح.
+        if (res.ok === false) {
+          toast({
+            title: 'خطا در ثبت تور',
+            description: res.error,
+            variant: 'error',
+          });
+          return;
+        }
         updateFormData({ publishStatus: nextPublish });
         // مبدأ استفاده‌شده را نگه دار تا تور بعدی همان را پیش‌فرض بگیرد (T5).
         if (formData.origin.trim()) {
@@ -325,10 +336,14 @@ export default function TourForm({
           });
         }
         onDone(res.id);
-      } catch (err: any) {
+      } catch (err: unknown) {
+        // خطای واقعاً غیرمنتظره: در پروداکشن err.message همان «Minified React error #441»
+        // است و به کاربر چیزی نمی‌گوید؛ پس پیام عمومی نشان بده و جزئیات را لاگ کن.
+        const digest = err instanceof Error ? (err as { digest?: string }).digest : undefined;
+        console.error('[tour-save] unexpected error', digest ? { digest } : err);
         toast({
           title: 'خطا در ثبت تور',
-          description: err.message || 'ذخیره انجام نشد؛ اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.',
+          description: 'ذخیره انجام نشد؛ اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.',
           variant: 'error',
         });
       }

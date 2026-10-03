@@ -125,6 +125,12 @@ export default function LandingForm({
             setConfirmState({ suggestedPath: result.suggestedPath, collision: result.collision });
             return;
           }
+          // ریشهٔ #441: خطای قابل‌پیش‌بینی (مثل رد گیت انتشار) به‌صورت مقدار
+          // می‌آید؛ همان پیام فارسی را نشان بده.
+          if ('error' in result) {
+            toast({ variant: 'error', title: result.error });
+            return;
+          }
           const typedPath = input.urlPath.replace(/\/+$/, '') || '/';
           if (result.finalPath && result.finalPath !== typedPath) {
             toast({ variant: 'success', title: `تغییرات با آدرس «${result.finalPath}» ذخیره شد.` });
@@ -142,6 +148,11 @@ export default function LandingForm({
             setConfirmState({ suggestedPath: result.suggestedPath, collision: result.collision });
             return;
           }
+          // ریشهٔ #441: خطای قابل‌پیش‌بینی به‌صورت مقدار می‌آید.
+          if ('error' in result) {
+            toast({ variant: 'error', title: result.error });
+            return;
+          }
           toast({
             variant: 'success',
             title: confirmed ? `لندینگ با آدرس «${result.finalPath}» ساخته شد.` : 'لندینگ ساخته شد.',
@@ -150,7 +161,10 @@ export default function LandingForm({
         if (onSaved) onSaved();
         window.location.reload();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ذخیره لندینگ.' });
+        // ریشهٔ #441: در پروداکشن e.message همان «Minified React error #441» است؛
+        // به کاربر نشانش نده. پیام عمومی + ثبت digest برای عیب‌یابی.
+        console.error('[seo] landing save failed', (e as { digest?: unknown })?.digest ?? e);
+        toast({ variant: 'error', title: 'خطا در ذخیره لندینگ.' });
       }
     });
   };
