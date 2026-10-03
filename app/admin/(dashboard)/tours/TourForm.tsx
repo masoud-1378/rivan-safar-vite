@@ -17,7 +17,8 @@ import {
   Send,
   EyeOff,
   ExternalLink,
-  Flag
+  Flag,
+  Wallet
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +48,8 @@ import Stage2Hotels from './stages/Stage2Hotels';
 import Stage3Itinerary from './stages/Stage3Itinerary';
 import Stage4TrustTerms from './stages/Stage4TrustTerms';
 import Stage5Consultant from './stages/Stage5Consultant';
+// بلوک مالی واقعی (موج ۳): مرحلهٔ ۶ «هزینه‌ها و شرایط».
+import Stage6Financial from './stages/Stage6Financial';
 // ایستگاه پایانی (موج ۱، قلم ۵): جمع‌بندی خودکار + انتشارِ گیت‌دار.
 import StageFinalStation from './stages/StageFinalStation';
 import SmartImage from '@/src/components/SmartImage';
@@ -68,7 +71,7 @@ export interface TourFormProps {
   hotels: HotelPickerItem[];
 }
 
-export type StageId = 1 | 2 | 3 | 4 | 5 | 6;
+export type StageId = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 const LAST_ORIGIN_KEY = 'rivan-last-origin';
 
@@ -101,13 +104,15 @@ const STAGES: StageTabConfig[] = [
   { id: 3, shortTitle: '۳. برنامه سفر', label: 'برنامه روزبه‌روز و خدمات', icon: Map, description: 'تایم‌لاین گشت‌ها و ترانسفر' },
   { id: 4, shortTitle: '۴. اعتماد و مدارک', label: 'اعتماد، مدارک و قوانین', icon: ShieldCheck, description: 'ویزا، هزینه‌های مقصد، بار مجاز' },
   { id: 5, shortTitle: '۵. کارشناس', label: 'کارشناس مسیر و راهنما', icon: UserCheck, description: 'مشاور مسیر، فایل صوتی، راهنمای فروش و انتشار' },
-  // ایستگاه پایانی (موج ۱، قلم ۵): فعلاً مرحلهٔ ۶ است تا شماره‌ها پیوسته باشند؛
-  // وقتی موج ۳ مرحلهٔ واقعی ۶ (هزینه‌ها و شرایط) را ساخت، ایستگاه پایانی ۷ می‌شود.
-  { id: 6, shortTitle: '۶. ایستگاه پایانی', label: 'ایستگاه پایانی', icon: Flag, description: 'جمع‌بندی و انتشار' },
+  // بلوک مالی واقعی (موج ۳): مرحلهٔ ۶ «هزینه‌ها و شرایط» — جدول کنسلی پلکانی،
+  // بند رد ویزا، پیش‌پرداخت و مهلت تسویه. ایستگاه پایانی شد مرحلهٔ ۷.
+  { id: 6, shortTitle: '۶. هزینه‌ها و شرایط', label: 'هزینه‌ها و شرایط', icon: Wallet, description: 'کنسلی پلکانی، رد ویزا، پیش‌پرداخت' },
+  // ایستگاه پایانی (موج ۱، قلم ۵): مرحلهٔ ۷ ویزارد — جمع‌بندی و انتشار.
+  { id: 7, shortTitle: '۷. ایستگاه پایانی', label: 'ایستگاه پایانی', icon: Flag, description: 'جمع‌بندی و انتشار' },
 ];
 
-/** ترتیب واقعی گام‌های ویزارد (۵ گام فعلی + ایستگاه پایانی). */
-const STAGE_ORDER: StageId[] = [1, 2, 3, 4, 5, 6];
+/** ترتیب واقعی گام‌های ویزارد (۶ گام + ایستگاه پایانی). */
+const STAGE_ORDER: StageId[] = [1, 2, 3, 4, 5, 6, 7];
 
 export default function TourForm({
   initial,
@@ -123,6 +128,15 @@ export default function TourForm({
   const [isPending, startTransition] = useTransition();
   const [showLivePreview, setShowLivePreview] = useState(false);
   const [touched, setTouched] = useState(false);
+
+  // موبایل درجه‌یک (موج ۳): تب‌های مرحله‌ها در موبایل چیدمان فشردهٔ دو ستونی‌اند
+  // و چیزی بیرون نمی‌زند؛ با عوض‌شدن مرحله، تب فعال همیشه به دید اسکرول می‌شود.
+  const stageNavRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    stageNavRef.current
+      ?.querySelector(`[data-stage-btn="${activeStage}"]`)
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  }, [activeStage]);
   // فاز B5 موج ۲: «مبنای قیمت» برای ایستگاه پایانی از تنظیم می‌آید، نه از ستون.
   const [priceNoteDefault, setPriceNoteDefault] = useState('');
   useEffect(() => {
@@ -555,19 +569,20 @@ export default function TourForm({
         )}
       </div>
 
-      {/* Step Navigation Header (۵ گام + ایستگاه پایانی) */}
-      <div className="rounded-sm border border-border bg-card p-2 sm:p-3">
-        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
+      {/* Step Navigation Header (۶ گام + ایستگاه پایانی) */}
+      <div ref={stageNavRef} className="rounded-sm border border-border bg-card p-2 sm:p-3">
+        <div className="grid grid-cols-2 sm:grid-cols-7 gap-2">
           {STAGES.map((stage) => {
             const Icon = stage.icon;
             const isActive = activeStage === stage.id;
             // تیک ایستگاه پایانی: وقتی همهٔ چک‌های گیت سبزند (همان readiness قلم ۲).
-            const isPassed = stage.id === 6 ? readiness.ready : stageDone[stage.id - 1];
+            const isPassed = stage.id === 7 ? readiness.ready : stageDone[stage.id - 1];
 
             return (
               <button
                 key={stage.id}
                 type="button"
+                data-stage-btn={stage.id}
                 onClick={() => setActiveStage(stage.id)}
                 className={cn(
                   "relative flex flex-col items-start gap-1 rounded-sm p-3 text-start transition-all border cursor-pointer",
@@ -663,6 +678,14 @@ export default function TourForm({
           )}
 
           {activeStage === 6 && (
+            <Stage6Financial
+              data={formData}
+              onChange={updateFormData}
+              excludeTourId={editingId ?? null}
+            />
+          )}
+
+          {activeStage === 7 && (
             <StageFinalStation
               data={formData}
               priceNoteDefault={priceNoteDefault}
@@ -699,7 +722,7 @@ export default function TourForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={activeStage === 6}
+                disabled={activeStage === 7}
                 onClick={() => {
                   const i = STAGE_ORDER.indexOf(activeStage);
                   setActiveStage(STAGE_ORDER[Math.min(STAGE_ORDER.length - 1, i + 1)]);

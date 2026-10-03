@@ -99,6 +99,12 @@ export const siteTours = pgTable(
     itineraryDays: jsonb('itinerary_days').default('[]').notNull(),
     trustSpecs: jsonb('trust_specs'),
     consultantSpec: jsonb('consultant_spec'),
+    // بلوک مالی واقعی (موج ۳، مایگریشن 0027): جدول کنسلی پلکانی، بند رد ویزا،
+    // پیش‌پرداخت و مهلت تسویه — nullable تا تورهای قدیمی و کد قدیمی main بی‌صدا رد شوند.
+    financialSpecs: jsonb('financial_specs'),
+    // مشخصات پرواز (موج ۳، مایگریشن 0028): فعلاً فقط در state فرم زنده است؛
+    // ستون آماده است تا وقتی ذخیره‌سازی در saveTour وصل شد جایش باشد.
+    flightDetails: jsonb('flight_details'),
     deletedAt: timestamp('deleted_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -204,6 +210,11 @@ export const carriers = pgTable('carriers', {
   id: uuid('id').primaryKey().defaultRandom(),
   slug: varchar('slug', { length: 120 }).notNull(),
   nameFa: varchar('name_fa', { length: 160 }).notNull(),
+  // موج ۳ (مایگریشن 0029_seed_carriers): نام انگلیسی، کد یاتا و کشور — همه
+  // nullable تا ردیف‌های قدیمی (اگر بودند) بی‌صدا رد شوند.
+  nameEn: varchar('name_en', { length: 160 }),
+  iataCode: varchar('iata_code', { length: 10 }),
+  country: varchar('country', { length: 80 }),
   kind: varchar('kind', { length: 40 }).notNull().default('airline'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });

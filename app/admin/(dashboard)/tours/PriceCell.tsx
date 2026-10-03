@@ -105,7 +105,7 @@ export function PriceCell({ id, price, onSaved }: PriceCellProps) {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) void commit();
       }}
     >
-      <AmountInput
+      <AmountInput inputClassName="max-md:text-base"
         value={value}
         onChange={(v) => {
           setValue(v);

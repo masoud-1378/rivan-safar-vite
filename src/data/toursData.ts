@@ -27,6 +27,25 @@ export interface TourConsultantSpec {
   emergencyPhone?: string;
 }
 
+/** یک پلهٔ جدول کنسلی پلکانی (آینهٔ ساختاری TourCancellationTier در پنل) */
+export interface TourCancellationTier {
+  fromDays?: number | null;
+  toDays?: number | null;
+  penaltyPercent?: number | null;
+}
+
+/**
+ * بلوک مالی واقعی تور (آینهٔ ساختاری TourFinancialSpecsItem در پنل — موج ۳).
+ * همه اختیاری‌اند؛ خالی = خالی. فقط پله‌های «کامل» (هر سه عدد واقعی) روی
+ * سایت نمایش داده می‌شوند — پلهٔ ناقص هرگز.
+ */
+export interface TourFinancialSpecs {
+  cancellationTiers?: TourCancellationTier[];
+  visaRejectionNote?: string;
+  depositAmount?: string;
+  depositDeadline?: string;
+}
+
 export interface TourItem {
   id: string;
   title: string;
@@ -59,6 +78,12 @@ export interface TourItem {
   trustSpecs?: TourTrustSpecs | null;
   /** مشخصات کارشناس تور (مایگریشن 0007)؛ خام از jsonb */
   consultantSpec?: TourConsultantSpec | null;
+  /**
+   * بلوک مالی واقعی (موج ۳، مایگریشن 0027)؛ خام از jsonb.
+   * ستون ممکن است هنوز روی دیتابیس واقعی نباشد؛ در این صورت undefined می‌ماند
+   * و هیچ‌چیز نمی‌شکند (دسترسی دفاعی در restToTour).
+   */
+  financialSpecs?: TourFinancialSpecs | null;
   updatedAt: string;
   image: string;
   badge?: string;

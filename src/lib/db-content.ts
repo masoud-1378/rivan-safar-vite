@@ -125,6 +125,9 @@ function restToTour(r: Row, priceNoteDefault?: string): TourItem {
     itineraryDays: arr<TourItineraryDay>(r.itinerary_days),
     trustSpecs: (r.trust_specs as TourItem['trustSpecs']) ?? undefined,
     consultantSpec: (r.consultant_spec as TourItem['consultantSpec']) ?? undefined,
+    // بلوک مالی واقعی (موج ۳، مایگریشن 0027)؛ الگوی transport_kind: ستون ممکن
+    // است هنوز روی دیتابیس نباشد — نبود کلید فقط undefined می‌دهد.
+    financialSpecs: (r.financial_specs as TourItem['financialSpecs']) ?? undefined,
   };
 }
 

@@ -102,7 +102,8 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
               key={tab.id}
               href={tab.href}
               className={cn(
-                "group relative flex items-center gap-2 rounded-sm px-3.5 py-2.5 text-xs font-semibold transition-all cursor-pointer",
+                // موبایل‌اول: تارگت لمسی ۴۴px.
+                "group relative flex min-h-11 items-center gap-2 rounded-sm px-3.5 py-2.5 text-xs font-semibold transition-all cursor-pointer",
                 isActive
                   ? "bg-brand text-brand-foreground"
                   : "bg-secondary/40 text-muted-foreground hover:bg-secondary hover:text-foreground border border-border/50"

@@ -86,9 +86,11 @@ interface HotelCardProps {
   onUpdate: (patch: Partial<TourHotelOptionItem>) => void;
   onRemove: () => void;
   onUnlink: () => void;
+  /** پیشنهادهای «شهر هتل» — فقط datalist؛ هیچ‌چیز خودکار پر نمی‌شود. */
+  citySuggestions: string[];
 }
 
-function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps) {
+function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }: HotelCardProps) {
   // پیش‌فرض هوشمند آکاردئون (T7): هتل بی‌نرخ باز، هتل بانرخ بسته.
   const [open, setOpen] = useState(() => !hotelHasRates(hotel));
 
@@ -162,7 +164,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
         <div className="md:col-span-5">
           <Field label="نام کامل هتل *" hint="مثال: Hilton Bosphorus Istanbul">
-            <Input
+            <Input className="max-md:text-base"
               value={hotel.name || ''}
               onChange={(e) => onUpdate({ name: e.target.value })}
               placeholder="نام هتل…"
@@ -200,7 +202,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
             <select
               value={hotel.board || 'BB'}
               onChange={(e) => onUpdate({ board: e.target.value })}
-              className="w-full rounded-sm border border-input bg-background px-3 py-2 text-xs font-medium"
+              className="w-full rounded-sm border border-input bg-background px-3 py-2 text-xs max-md:text-base max-md:min-h-11 font-medium"
             >
               {BOARD_OPTIONS.map((b) => (
                 <option key={b.value} value={b.value}>
@@ -208,6 +210,28 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
                 </option>
               ))}
             </select>
+          </Field>
+        </div>
+      </div>
+
+      {/* شهر هتل (موج ۳، فیلدهای دامنه‌ای): فقط پیشنهاد تایپی از مقصدهای همین
+          تور + فرزندهای مستقیمشان — هیچ‌چیز خودکار پر نمی‌شود. */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div className="md:col-span-5">
+          <Field label="شهر هتل" hint="شهری که این هتل در آن قرار دارد">
+            <Input className="max-md:text-base"
+              value={hotel.city || ''}
+              onChange={(e) => onUpdate({ city: e.target.value })}
+              placeholder="مثلاً: استانبول"
+              list={citySuggestions.length > 0 ? `hotel-city-${idx}` : undefined}
+            />
+            {citySuggestions.length > 0 && (
+              <datalist id={`hotel-city-${idx}`}>
+                {citySuggestions.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            )}
           </Field>
         </div>
       </div>
@@ -257,7 +281,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
               <select
                 value={hotel.bookingType ?? ''}
                 onChange={(e) => onUpdate({ bookingType: (e.target.value || undefined) as HotelBookingType | undefined })}
-                className="w-full max-w-60 rounded-sm border border-input bg-background px-3 py-2 text-xs font-medium"
+                className="w-full max-w-60 rounded-sm border border-input bg-background px-3 py-2 text-xs max-md:text-base max-md:min-h-11 font-medium"
                 aria-label="نوع رزرو هتل"
               >
                 <option value="">انتخاب کنید…</option>
@@ -291,7 +315,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
                   این عدد روی سایت نمایش داده می‌شود
                 </span>
               </div>
-              <AmountInput
+              <AmountInput inputClassName="max-md:text-base"
                 value={priceNumber(hotel.pricePerPerson) ?? priceNumber(hotel.priceDouble)}
                 onChange={(v) => onUpdate({ pricePerPerson: v == null ? '' : String(v), priceDouble: v == null ? '' : String(v) })}
                 placeholder="۰"
@@ -317,7 +341,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
                     <User className="size-3.5 text-muted-foreground" />
                     <span>اتاق یک‌تخته</span>
                   </div>
-                  <AmountInput
+                  <AmountInput inputClassName="max-md:text-base"
                     value={priceNumber(hotel.priceSingle)}
                     onChange={(v) => onUpdate({ priceSingle: v == null ? '' : String(v) })}
                     placeholder="۰"
@@ -330,7 +354,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
                     <Baby className="size-3.5 text-muted-foreground" />
                     <span>کودک با تخت (۶ تا ۱۲ سال)</span>
                   </div>
-                  <AmountInput
+                  <AmountInput inputClassName="max-md:text-base"
                     value={priceNumber(hotel.priceChildWithBed)}
                     onChange={(v) => onUpdate({ priceChildWithBed: v == null ? '' : String(v) })}
                     placeholder="۰"
@@ -343,7 +367,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
                     <Baby className="size-3.5 text-muted-foreground" />
                     <span>کودک بدون تخت (۲ تا ۶ سال)</span>
                   </div>
-                  <AmountInput
+                  <AmountInput inputClassName="max-md:text-base"
                     value={priceNumber(hotel.priceChildNoBed)}
                     onChange={(v) => onUpdate({ priceChildNoBed: v == null ? '' : String(v) })}
                     placeholder="۰"
@@ -400,6 +424,25 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels, tr
   }, [tree, destSlugs]);
   // پیش‌فرضِ دیده‌شونده: مقصد که ست باشد، فیلتر از اول روشن است.
   const [destOnly, setDestOnly] = useState(() => destSlugs.length > 0);
+
+  /**
+   * پیشنهادهای «شهر هتل» (موج ۳، فیلدهای دامنه‌ای): نام مقصدهای همین تور +
+   * فرزندهای مستقیمشان در درخت مقصدها — فقط پیشنهاد تایپی (datalist)؛
+   * هیچ‌چیز خودکار پر نمی‌شود (قانون طلایی: حدس ممنوع).
+   */
+  const citySuggestions = useMemo(() => {
+    const bySlug = new Map((tree?.all ?? []).map((a) => [a.slug, (a.name || '').trim()]));
+    const out: string[] = [];
+    const push = (slug: string) => {
+      const name = bySlug.get(slug) || '';
+      if (name && !out.includes(name)) out.push(name);
+    };
+    for (const s of destSlugs) {
+      push(s);
+      for (const a of tree?.all ?? []) if (a.parent === s) push(a.slug);
+    }
+    return out;
+  }, [tree, destSlugs]);
 
   // گشت (ایراد ۵): باز شدن پنل باید غیرقابل‌چشم‌پوشی باشد — دکمه حالت فعال می‌گیرد،
   // پنل به دید اسکرول می‌شود و جست‌وجو فوکوس می‌گیرد تا «هیچ اتفاقی نیفتاد» تکرار نشود.
@@ -570,7 +613,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels, tr
               value={hotelQuery}
               onChange={(e) => setHotelQuery(e.target.value)}
               placeholder="نام هتل را بنویسید…"
-              className="ps-9 text-xs"
+              className="ps-9 text-xs max-md:text-base"
             />
             <Search className="size-4 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
           </div>
@@ -657,6 +700,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels, tr
               onUpdate={(patch) => handleUpdateHotel(idx, patch)}
               onRemove={() => setConfirmRemoveHotel(idx)}
               onUnlink={() => handleUnlinkHotel(idx)}
+              citySuggestions={citySuggestions}
             />
           ))}
         </div>

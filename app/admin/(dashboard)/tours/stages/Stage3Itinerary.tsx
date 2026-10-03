@@ -9,14 +9,17 @@ import {
   Utensils,
   CheckCircle2,
   XCircle,
-  LayoutTemplate
+  LayoutTemplate,
+  Plane
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import CarrierSelect from './CarrierSelect';
 import { Button } from '@/components/ui/button';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/toast';
 import { fa, faNumber } from '@/lib/utils';
-import type { TourHotelOptionItem, TourItineraryDayItem, TourInput } from '../actions';
+import type { TourHotelOptionItem, TourItineraryDayItem, TourInput, TourFlightDetails } from '../actions';
 import { boardMealsText } from './Stage2Hotels';
 
 interface Stage3ItineraryProps {
@@ -58,6 +61,14 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
   const hotelOptions: TourHotelOptionItem[] = Array.isArray(data.hotelOptions) ? data.hotelOptions : [];
   const nights = Number(data.nights) || 0;
   const { toast } = useToast();
+
+  // مشخصات پرواز (موج ۳، فیلدهای دامنه‌ای): همه اختیاری‌اند، جزو گیت انتشار
+  // نیستند؛ خالی = خالی. در saveTour با نرمالایزر دفاعی در ستون flight_details
+  // (مایگریشن 0028) ذخیره می‌شود.
+  const fd: TourFlightDetails = data.flightDetails ?? {};
+  const updateFlight = (patch: Partial<TourFlightDetails>) => {
+    onChange({ flightDetails: { ...fd, ...patch } });
+  };
 
   const handleAddDay = () => {
     const nextDayNum = itinerary.length + 1;
@@ -252,6 +263,76 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
         </div>
       </div>
 
+      {/* مشخصات پرواز (موج ۳، فیلدهای دامنه‌ای): نوع چارتر/سیستمی، ساعت پرواز،
+          مستقیم/توقف‌دار + شهر توقف. همه اختیاری‌اند (تصمیم ۵ پلن) و جزو گیت
+          انتشار نیستند — نبودشان تور را ناقص نمی‌کند. */}
+      <div className="rounded-sm border border-border bg-card p-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <Plane className="size-4 shrink-0 text-brand" />
+          <h4 className="text-sm font-bold text-foreground">مشخصات پرواز</h4>
+          <span className="text-[11px] text-muted-foreground">(اختیاری)</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="ایرلاین" hint="همان که در قرارداد و کارت تور نمایش داده می‌شود">
+            <CarrierSelect
+              value={data.airline ?? ''}
+              onChange={(airline) => onChange({ airline, carrierName: airline })}
+            />
+          </Field>
+          <Field
+            label="نوع پرواز"
+            hint="اگر نمی‌دانید خالی بگذارید؛ خطا نیست"
+          >
+            <Select
+              aria-label="نوع پرواز"
+              value={fd.flightType ?? ''}
+              onChange={(e) => updateFlight({ flightType: e.target.value || undefined })}
+              options={[
+                { value: '', label: 'انتخاب کنید…' },
+                { value: 'charter', label: 'چارتر' },
+                { value: 'scheduled', label: 'سیستمی' },
+              ]}
+              className="max-md:text-base max-md:min-h-11"
+            />
+          </Field>
+          <Field label="ساعت پرواز">
+            <Input
+              className="max-md:text-base"
+              value={fd.flightTime ?? ''}
+              onChange={(e) => updateFlight({ flightTime: e.target.value })}
+              placeholder="مثلاً: ۰۸:۳۰ صبح"
+            />
+          </Field>
+          <Field label="مسیر پرواز">
+            <Select
+              aria-label="مسیر پرواز"
+              value={fd.directness ?? ''}
+              onChange={(e) => updateFlight({
+                directness: e.target.value || undefined,
+                // با مستقیم شدن، شهر توقف بی‌معنا می‌شود و پاک می‌شود.
+                ...(e.target.value === 'stopover' ? {} : { stopCity: undefined }),
+              })}
+              options={[
+                { value: '', label: 'انتخاب کنید…' },
+                { value: 'direct', label: 'مستقیم' },
+                { value: 'stopover', label: 'توقف‌دار' },
+              ]}
+              className="max-md:text-base max-md:min-h-11"
+            />
+          </Field>
+          {fd.directness === 'stopover' && (
+            <Field label="شهر توقف">
+              <Input
+                className="max-md:text-base"
+                value={fd.stopCity ?? ''}
+                onChange={(e) => updateFlight({ stopCity: e.target.value })}
+                placeholder="مثلاً: استانبول"
+              />
+            </Field>
+          )}
+        </div>
+      </div>
+
       {/* پیشنهاد وعده‌ها از هتل (موج ۱، قلم ۶): فقط پیشنهاد با تأیید صریح */}
       {showMealsSuggestion && (
         <div className="rounded-sm border border-brand/25 bg-brand/5 p-4 space-y-2.5">
@@ -357,7 +438,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
                       value={dayItem.title}
                       onChange={(e) => handleUpdateDay(idx, { title: e.target.value })}
                       placeholder="عنوان این روز…"
-                      className="text-xs font-medium"
+                      className="text-xs font-medium max-md:text-base"
                     />
                   </Field>
                 </div>
@@ -367,7 +448,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
                       value={dayItem.city}
                       onChange={(e) => handleUpdateDay(idx, { city: e.target.value })}
                       placeholder="مثلاً: استانبول"
-                      className="text-xs"
+                      className="text-xs max-md:text-base"
                     />
                   </Field>
                 </div>
@@ -379,7 +460,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
                   value={dayItem.meals || ''}
                   onChange={(e) => handleUpdateDay(idx, { meals: e.target.value })}
                   placeholder="صبحانه، ناهار یا شام…"
-                  className="text-xs"
+                  className="text-xs max-md:text-base"
                 />
               </Field>
 
@@ -390,7 +471,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
                   value={dayItem.description}
                   onChange={(e) => handleUpdateDay(idx, { description: e.target.value })}
                   placeholder="توضیح دهید مسافر در این روز چه کارهایی انجام می‌دهد، چه جاهایی را می‌بیند و چه ساعتی بازمی‌گردد…"
-                  className="w-full rounded-sm border border-input bg-background p-2.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="w-full rounded-sm border border-input bg-background p-2.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring max-md:text-base"
                 />
               </Field>
             </div>
@@ -433,7 +514,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
               onChange={(e) => setNewIncluded(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addIncluded())}
               placeholder="مثال: ترانسفر رفت و برگشت فرودگاهی"
-              className="text-xs grow"
+              className="text-xs grow max-md:text-base"
             />
             <Button type="button" size="sm" onClick={addIncluded} className="shrink-0 text-xs">
               افزودن
@@ -473,7 +554,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
               onChange={(e) => setNewExcluded(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addExcluded())}
               placeholder="مثال: ورودی موزه‌ها، گشت شبانه بالون"
-              className="text-xs grow"
+              className="text-xs grow max-md:text-base"
             />
             <Button type="button" size="sm" variant="secondary" onClick={addExcluded} className="shrink-0 text-xs">
               افزودن

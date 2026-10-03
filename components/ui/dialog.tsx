@@ -58,7 +58,9 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4"
+      // موبایل‌اول (موج ۳، موبایل درجه‌یک): دیالوگ روی صفحهٔ کوچک هم وسط‌چین
+      // و کامل دیده می‌شود (نه bottom-sheet)؛ سقف ۹۰dvh با اسکرول داخلی بدنه.
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
       onClick={() => role === "dialog" && onOpenChange(false)}
     >
       <div
@@ -69,9 +71,7 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
         aria-describedby={description ? descId : undefined}
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          // موبایل‌اول: bottom-sheet — چسبیده به پایین، تمام‌عرض، فقط گوشه‌های بالای
-          // گرد، سقف ۹۰dvh با اسکرول داخلی بدنه. از sm به بعد دیالوگ وسط‌چین دسکتاپ.
-          "max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-b-none rounded-t-2xl border-line border-border bg-popover p-5 text-popover-foreground shadow-overlay",
+          "max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl border-line border-border bg-popover p-5 text-popover-foreground shadow-overlay",
           "sm:rounded-overlay",
           "animate-fade-up [animation-duration:var(--motion)]",
           className,

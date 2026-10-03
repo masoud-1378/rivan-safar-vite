@@ -181,7 +181,7 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
           {/* Return Guarantee */}
           <div>
             <Field label="ضمانت‌نامه بازگشت از سفر" hint="مثال: ضمانت‌نامه بانکی یا چک صیادی به مبلغ ۱۰۰ میلیون تومان">
-              <Input
+              <Input className="max-md:text-base"
                 value={trust.returnGuarantee || ''}
                 onChange={(e) => updateTrust({ returnGuarantee: e.target.value })}
                 placeholder="بدون نیاز به ضمانت‌نامه، یا مبلغ ضمانت…"
@@ -201,7 +201,7 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <Field label="مالیات شهری هتل" hint="در برخی کشورها مسافر مستقیماً به هتل پرداخت می‌کند">
-              <Input
+              <Input className="max-md:text-base"
                 value={trust.cityTax || ''}
                 onChange={(e) => updateTrust({ cityTax: e.target.value })}
                 placeholder="مثلاً: شبی ۲ تا ۵ یورو"
@@ -211,7 +211,7 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
 
           <div>
             <Field label="انعام راننده و لیدر" hint="عرف پرداخت انعام در مقصد مورد نظر">
-              <Input
+              <Input className="max-md:text-base"
                 value={trust.tipsNote || ''}
                 onChange={(e) => updateTrust({ tipsNote: e.target.value })}
                 placeholder="مثلاً: روزانه ۵ دلار اختیاری"
@@ -224,11 +224,12 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
               <div className="relative">
                 <Input
                   type="number"
+                  inputMode="numeric"
                   min="0"
                   value={trust.luggageKg || ''}
                   onChange={(e) => updateTrust({ luggageKg: Number(e.target.value) || 0 })}
                   placeholder="مثلاً: ۳۰"
-                  className="ps-14"
+                  className="ps-14 max-md:text-base"
                 />
                 <span className="absolute left-3 top-2.5 text-xs text-muted-foreground">کیلوگرم</span>
               </div>
@@ -335,7 +336,7 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
             onChange={(e) => setCustomDoc(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addDoc(customDoc))}
             placeholder="مدرک سفارشی دیگر را تایپ کنید و Enter بزنید…"
-            className="text-xs grow"
+            className="text-xs grow max-md:text-base"
           />
           <Button type="button" size="sm" onClick={() => addDoc(customDoc)} className="shrink-0 text-xs">
             افزودن مدرک
