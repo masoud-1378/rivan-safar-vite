@@ -16,6 +16,7 @@ import {
   X,
   Send,
   EyeOff,
+  Loader2,
   ExternalLink,
   Flag,
   Wallet,
@@ -126,6 +127,50 @@ const STAGES: StageTabConfig[] = [
 
 /** ترتیب واقعی گام‌های ویزارد (۷ گام + ایستگاه پایانی). */
 const STAGE_ORDER: StageId[] = [1, 2, 3, 4, 5, 6, 7, 8];
+
+/**
+ * دکمهٔ آیکونی داک شناور پایین ویرایشگر — ۴۰px، با تول‌تیپ فارسی.
+ * primary یعنی اکشن اصلی (رنگ برند) و active یعنی حالت روشن (مثل پیش‌نمایش باز).
+ */
+function DockBtn({
+  title,
+  onClick,
+  disabled,
+  primary,
+  active,
+  danger,
+  children,
+}: {
+  title: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  primary?: boolean;
+  active?: boolean;
+  danger?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={title}
+      disabled={disabled}
+      onClick={onClick}
+      className={
+        primary
+          ? 'flex size-10 items-center justify-center rounded-xl bg-brand text-brand-foreground shadow-sm transition-all hover:bg-brand/90 active:scale-95 disabled:pointer-events-none disabled:opacity-50'
+          : danger
+            ? 'flex size-10 items-center justify-center rounded-xl text-destructive/80 transition-all hover:bg-destructive/10 hover:text-destructive active:scale-95 disabled:pointer-events-none disabled:opacity-35'
+            : 'flex size-10 items-center justify-center rounded-xl transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-35 ' +
+              (active
+                ? 'bg-brand/15 text-brand'
+                : 'text-muted-foreground hover:bg-accent hover:text-foreground')
+      }
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function TourForm({
   initial,
@@ -678,132 +723,102 @@ export default function TourForm({
             />
           )}
 
-          {/* نوار اکشن پایین — در موبایل با fixed واقعاً به کف ویوپورت می‌چسبد
-              (stickyِ bottom به‌عنوان آخرین فرزند کانتینر هیچ‌وقت مجال چسبیدن
-              پیدا نمی‌کرد)؛ در دسکتاپ همان نوار شناور قبلی. یافتهٔ ۲۴:
-              بدون سایه؛ جداسازی با border + bg-card/95 + backdrop-blur.
-              در موبایل هر گروه دکمه تمام‌عرض و دکمه‌ها ۴۴px. */}
-          <div className="fixed inset-x-0 bottom-0 z-40 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-card/95 p-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))] backdrop-blur md:sticky md:inset-x-auto md:bottom-4 md:z-20 md:rounded-sm md:border md:pb-3.5">
-            {/* Step navigation buttons */}
-            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
+          {/* داک شناور پایین ویرایشگر — آیکونی، جمع‌وجور، محکم چسبیده به کف
+              ویوپورت ولی با گردی و سایه کاملاً از صفحه جدا و شناور؛
+              در موبایل و دسکتاپ یکسان. */}
+          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:pb-5">
+            <div className="pointer-events-auto flex items-center gap-1 rounded-2xl border border-border/70 bg-card/95 p-1.5 shadow-[0_12px_40px_-8px_rgb(0_0_0/0.28)] backdrop-blur-md">
+              {/* ناوبری مرحله */}
+              <DockBtn
+                title="مرحله قبلی"
                 disabled={activeStage === 1}
                 onClick={() => {
                   const i = STAGE_ORDER.indexOf(activeStage);
                   setActiveStage(STAGE_ORDER[Math.max(0, i - 1)]);
                 }}
-                className="h-11 flex-1 gap-1.5 text-xs sm:h-8 sm:flex-none"
               >
-                <ChevronRight className="size-4" />
-                مرحله قبلی
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
+                <ChevronRight className="size-5" />
+              </DockBtn>
+              <DockBtn
+                title="مرحله بعدی"
                 disabled={activeStage === 8}
                 onClick={() => {
                   const i = STAGE_ORDER.indexOf(activeStage);
                   setActiveStage(STAGE_ORDER[Math.min(STAGE_ORDER.length - 1, i + 1)]);
                 }}
-                className="h-11 flex-1 gap-1.5 text-xs sm:h-8 sm:flex-none"
               >
-                مرحله بعدی
-                <ChevronLeft className="size-4" />
-              </Button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
+                <ChevronLeft className="size-5" />
+              </DockBtn>
+              <DockBtn
+                title={showLivePreview ? 'بستن پیش‌نمایش' : 'پیش‌نمایش تغییرات'}
+                active={showLivePreview}
                 onClick={() => setShowLivePreview(!showLivePreview)}
-                className="h-11 flex-1 gap-1.5 text-xs text-muted-foreground hover:text-foreground sm:h-8 sm:flex-none"
               >
-                <Eye className="size-4" />
-                {showLivePreview ? 'بستن پیش‌نمایش' : 'پیش‌نمایش تغییرات'}
-              </Button>
-            </div>
+                <Eye className="size-5" />
+              </DockBtn>
 
-            {/* Save / Cancel buttons — شرایط انتشار (مایگریشن 0011) */}
-            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
+              <span className="mx-1 h-6 w-px shrink-0 bg-border" aria-hidden="true" />
+
+              {/* اکشن‌ها */}
+              <DockBtn
+                title="انصراف"
                 onClick={() => {
                   if (dirty) setShowCancelConfirm(true);
                   else (onCancel ?? onDone)();
                 }}
-                className="h-11 flex-1 text-xs sm:h-8 sm:flex-none"
               >
-                انصراف
-              </Button>
+                <X className="size-5" />
+              </DockBtn>
 
               {(!editingId || formData.publishStatus === 'draft') ? (
                 <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
+                  <DockBtn
+                    title={editingId ? 'ذخیره پیش‌نویس' : 'ثبت پیش‌نویس'}
                     disabled={isPending}
                     onClick={() => handleSave('draft')}
-                    className="h-11 flex-1 gap-2 px-4 text-xs sm:h-8 sm:flex-none"
                   >
-                    <Save className="size-4" />
-                    {isPending ? 'در حال ثبت…' : editingId ? 'ذخیره پیش‌نویس' : 'ثبت پیش‌نویس'}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
+                    {isPending ? <Loader2 className="size-5 animate-spin" /> : <Save className="size-5" />}
+                  </DockBtn>
+                  <DockBtn
+                    primary
                     disabled={isPending || !readiness.ready}
                     // یافتهٔ ۳ مبتدی: دعوت زودهنگام به انتشار حس بدی می‌دهد؛ تا وقتی
                     // تور قابل‌انتشار نیست دکمه غیرفعالِ توضیح‌دار است (نه پنهان).
                     title={
                       readiness.ready
-                        ? undefined
+                        ? 'انتشار'
                         : `برای انتشار، اول این قلم‌ها را کامل کن: ${readiness.missing.map((c) => c.label).join('، ')}`
                     }
                     onClick={requestPublish}
-                    className="h-11 flex-1 gap-2 bg-brand px-4 text-xs text-brand-foreground hover:bg-brand/90 sm:h-8 sm:flex-none disabled:opacity-50"
                   >
-                    <Send className="size-4" />
-                    {isPending ? 'در حال انتشار…' : 'انتشار'}
-                  </Button>
+                    {isPending ? <Loader2 className="size-5 animate-spin" /> : <Send className="size-5" />}
+                  </DockBtn>
                 </>
               ) : (
                 <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
+                  <DockBtn
+                    danger
+                    title="لغو انتشار"
                     disabled={isPending}
                     onClick={() => handleSave('draft')}
-                    className="h-11 flex-1 gap-2 px-4 text-xs text-destructive hover:text-destructive sm:h-8 sm:flex-none"
                   >
-                    <EyeOff className="size-4" />
-                    {isPending ? 'در حال لغو…' : 'لغو انتشار'}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
+                    {isPending ? <Loader2 className="size-5 animate-spin" /> : <EyeOff className="size-5" />}
+                  </DockBtn>
+                  <DockBtn
+                    primary
+                    title="ذخیره تغییرات"
                     disabled={isPending}
                     onClick={() => handleSave('keep')}
-                    className="h-11 flex-1 gap-2 bg-brand px-4 text-xs text-brand-foreground hover:bg-brand/90 sm:h-8 sm:flex-none"
                   >
-                    <Save className="size-4" />
-                    {isPending ? 'در حال ثبت…' : 'ذخیره تغییرات'}
-                  </Button>
+                    {isPending ? <Loader2 className="size-5 animate-spin" /> : <Save className="size-5" />}
+                  </DockBtn>
                 </>
               )}
             </div>
           </div>
-          {/* فاصلهٔ نگه‌دارنده در موبایل: نوار اکشن fixed است و نباید محتوای
+          {/* فاصلهٔ نگه‌دارنده: داک شناور fixed است و نباید محتوای
               پایانی فرم زیر آن برود */}
-          <div aria-hidden="true" className="h-40 md:hidden" />
+          <div aria-hidden="true" className="h-28" />
         </div>
 
         {/* Live Preview Panel */}
