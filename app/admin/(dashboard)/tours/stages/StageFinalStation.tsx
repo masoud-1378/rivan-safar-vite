@@ -27,7 +27,7 @@ export interface StageFinalStationProps {
   /** فاز B5 موج ۲: «مبنای قیمت» دیگر ستون نیست — از تنظیم tours.default_price_note می‌آید. */
   priceNoteDefault?: string;
   tree: DestinationTree;
-  onGoToStage: (stage: 1 | 2 | 3 | 4 | 5) => void;
+  onGoToStage: (stage: 1 | 2 | 3 | 4 | 5 | 6) => void;
   /**
    * انتشارِ گیت‌دار (موج ۱، قلم ۲): خودِ TourForm گیت checkPublishReadiness را
    * صدا می‌زند و همان دیالوگ فهرست ناقصی‌ها (MissingChecksDialog) یا دیالوگ
@@ -54,15 +54,14 @@ interface SummaryRow {
   key: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  stage: 1 | 2 | 3 | 4 | 5;
+  stage: 1 | 2 | 3 | 4 | 5 | 6;
   body: ReactNode;
 }
 
 /**
  * ایستگاه پایانی (موج ۱، قلم ۵): کارت جمع‌بندی خودکار از همهٔ مرحله‌ها —
  * هر ردیف لینک «ویرایش» به مرحلهٔ مربوط دارد — + دکمهٔ انتشارِ گیت‌دار.
- * فعلاً مرحلهٔ ۶ ویزارد است (باگ شماره‌گذاری موج ۱، ۱۴۰۵/۰۷/۱۱)؛ وقتی موج ۳
- * مرحلهٔ واقعی ۶ (هزینه‌ها و شرایط) را ساخت، همین کامپوننت می‌شود مرحلهٔ ۷.
+ * از موج ۳، مرحلهٔ ۷ ویزارد است (قبلش به‌خاطر باگ شماره‌گذاری موج ۱، ۶ بود).
  */
 export default function StageFinalStation({
   data,
@@ -244,6 +243,44 @@ export default function StageFinalStation({
         ) : (
           <Empty>کارشناس ثبت نشده است.</Empty>
         ),
+      },
+      {
+        key: 'financial',
+        label: 'هزینه‌ها و شرایط',
+        icon: Wallet,
+        stage: 6,
+        body: (() => {
+          const fin = data.financialSpecs || {};
+          const tiers = Array.isArray(fin.cancellationTiers) ? fin.cancellationTiers : [];
+          const completeTiers = tiers.filter((t) => {
+            // typeof چک می‌شود چون Number(null) برابر ۰ است (باگ ۱۴۰۵/۰۷/۱۱).
+            const from = t?.fromDays;
+            const to = t?.toDays;
+            const p = t?.penaltyPercent;
+            return (
+              typeof from === 'number' && Number.isFinite(from) && from >= 0 &&
+              typeof to === 'number' && Number.isFinite(to) && to >= 0 &&
+              typeof p === 'number' && Number.isFinite(p) && p >= 0 && p <= 100
+            );
+          });
+          const visaNote = (fin.visaRejectionNote || '').trim();
+          const deposit = (fin.depositAmount || '').trim();
+          if (completeTiers.length === 0 && !visaNote && !deposit) {
+            return <Empty>بلوک مالی هنوز خالی است.</Empty>;
+          }
+          const parts: string[] = [];
+          if (completeTiers.length > 0) {
+            const maxPenalty = Math.max(...completeTiers.map((t) => Number(t.penaltyPercent)));
+            parts.push(
+              `${fa(completeTiers.length)} پلهٔ کنسلی (سقف جریمه ${fa(maxPenalty)}٪)`
+            );
+          } else {
+            parts.push('جدول کنسلی ناقص است');
+          }
+          parts.push(visaNote ? 'بند رد ویزا ثبت شده' : 'بند رد ویزا خالی است');
+          parts.push(deposit ? `پیش‌پرداخت: ${deposit}` : 'پیش‌پرداخت خالی است');
+          return <span>{parts.join(' · ')}</span>;
+        })(),
       },
     ];
   }, [data, tree]);

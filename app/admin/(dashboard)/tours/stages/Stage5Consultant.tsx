@@ -113,7 +113,7 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Field label="نام و نام خانوادگی کارشناس" hint="مثال: سحر راد، میلاد محمدی">
-              <Input
+              <Input className="max-md:text-base"
                 value={consultant.name || ''}
                 onChange={(e) => updateConsultant({ name: e.target.value })}
                 placeholder="نام کارشناس…"
@@ -122,7 +122,7 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
           </div>
           <div>
             <Field label="عنوان شغلی یا سمت" hint="مثال: سرپرست تورهای اروپا">
-              <Input
+              <Input className="max-md:text-base"
                 value={consultant.title || ''}
                 onChange={(e) => updateConsultant({ title: e.target.value })}
                 placeholder="عنوان کارشناس…"
@@ -132,7 +132,7 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
 
           <div>
             <Field label="شماره تلفن مستقیم یا شماره داخلی" hint="مثال: ۰۲۱-۹۱۰۰۰۰۰۰ داخلی ۲۰۴">
-              <Input
+              <Input className="max-md:text-base"
                 dir="ltr"
                 value={consultant.phone || ''}
                 onChange={(e) => updateConsultant({ phone: e.target.value })}
@@ -145,7 +145,7 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
           <div>
             <Field label="شماره تماس اضطراری در سفر" hint="شماره همراه پشتیبان در کشور مقصد">
-              <Input
+              <Input className="max-md:text-base"
                 dir="ltr"
                 value={consultant.emergencyPhone || ''}
                 onChange={(e) => updateConsultant({ emergencyPhone: e.target.value })}
@@ -172,7 +172,7 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
                     )}
                   </div>
                   {showAudioUrl && (
-                    <Input
+                    <Input className="max-md:text-base"
                       dir="ltr"
                       value={consultant.audioUrl || ''}
                       onChange={(e) => updateConsultant({ audioUrl: e.target.value })}
@@ -188,7 +188,7 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
                     value={consultant.audioUrl || ''}
                     onChange={(e) => updateConsultant({ audioUrl: e.target.value })}
                     placeholder="https://rivansafar.com/audio/..."
-                    className="ps-9"
+                    className="ps-9 max-md:text-base"
                   />
                   <Mic className="size-4 text-purple-500 absolute left-3 top-2.5" />
                 </div>

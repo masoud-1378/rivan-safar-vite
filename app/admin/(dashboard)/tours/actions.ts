@@ -30,6 +30,11 @@ export type HotelBookingType = 'guarantee' | 'semi_charter' | 'on_request';
 export interface TourHotelOptionItem {
   name?: string;
   stars?: number;
+  /**
+   * شهر هتل (موج ۳، فیلدهای دامنه‌ای): متن آزاد؛ در فرم از شهرهای مقصد فقط
+   * پیشنهاد تایپی می‌آید، نه مقدار خودکار. خالی = خالی.
+   */
+  city?: string;
   board?: string;
   /**
    * نوع رزرو هتل در این تور (کتابچه §۳، فاز ۲): راهنمای ترتیبِ فیلدهای نرخ.
@@ -81,6 +86,53 @@ export interface TourTrustSpecsItem {
   requiredDocs?: string[];
 }
 
+/**
+ * یک پله از جدول کنسلی پلکانی (بلوک مالی، موج ۳): «از X روز مانده تا Y روز
+ * مانده، جریمه P درصد». همهٔ عددها را مدیر تایپ می‌کند؛ هیچ مقداری حدس زده
+ * یا پیش‌فرض نمی‌شود. پله‌ای که هر سه عددش کامل نباشد، «پلهٔ کامل» نیست.
+ */
+export interface TourCancellationTier {
+  /** چند روز مانده به حرکت (شامل) از این پله شروع می‌شود */
+  fromDays?: number | null;
+  /** تا چند روز مانده (شامل)؛ معمولاً آخرین پله تا روز صفر است */
+  toDays?: number | null;
+  /** درصد جریمهٔ کنسلی در این پله (۰ تا ۱۰۰) */
+  penaltyPercent?: number | null;
+}
+
+/**
+ * بلوک مالی واقعی (موج ۳): هزینه‌ها و شرایط. همه فیلدها اختیاری‌اند و خالی =
+ * خالی (قانون طلایی مالی: هیچ عددی حدس زده نمی‌شود، هیچ پیش‌فرض پنهانی در
+ * ذخیره یا نمایش نیست). برای انتشار، دست‌کم یک پلهٔ کنسلیِ کامل + بند رد
+ * ویزا + مبلغ/درصد پیش‌پرداخت لازم است (گیت انتشار در publish-gate.ts).
+ */
+export interface TourFinancialSpecsItem {
+  cancellationTiers?: TourCancellationTier[];
+  /** تکلیف پول در صورت رد ویزا — متن آزاد مدیر */
+  visaRejectionNote?: string;
+  /** مبلغ یا درصد پیش‌پرداخت — متن آزاد («۲۰٪» یا «۵٬۰۰۰٬۰۰۰ تومان») */
+  depositAmount?: string;
+  /** مهلت تسویه — متن آزاد («۷ روز قبل از حرکت» یا تاریخ) */
+  depositDeadline?: string;
+}
+
+/**
+ * مشخصات پرواز (موج ۳، فیلدهای دامنه‌ای): مدل فعلی تک‌پرواز است و همین غنی شده.
+ * همه اختیاری‌اند و جزو گیت انتشار نیستند (غنی‌سازی‌اند)؛ هیچ مقداری خودکار پر
+ * نمی‌شود. ستون jsonb در دیتابیس (مایگریشن 0028)؛ saveTour با نرمالایزر دفاعی
+ * می‌نویسد و toTourRow دفاعی می‌خواند (نبود ستون/ null → undefined).
+ */
+export interface TourFlightDetails {
+  /** نوع پرواز: 'charter' | 'scheduled' — پرسیده می‌شود ولی اجباری نیست. */
+  flightType?: 'charter' | 'scheduled' | string;
+  /** ساعت پرواز؛ متن ساده. */
+  flightTime?: string;
+  /** مستقیم یا توقف‌دار. */
+  directness?: 'direct' | 'stopover' | string;
+  /** شهر توقف — فقط وقتی directness برابر 'stopover' باشد معنا دارد. */
+  stopCity?: string;
+}
+
 export interface TourConsultantSpecItem {
   name?: string;
   title?: string;
@@ -119,6 +171,12 @@ export interface TourInput {
    */
   visaRequiredManual?: boolean;
   airline: string;
+  /**
+   * مشخصات غنی‌شدهٔ پرواز (موج ۳، فیلدهای دامنه‌ای). در فرم state نگه داشته
+   * می‌شود و saveTour آن را با نرمالایزر دفاعی در ستون flight_details
+   * (مایگریشن 0028) ذخیره می‌کند؛ خالیِ کامل → ستون null می‌ماند.
+   */
+  flightDetails?: TourFlightDetails;
   includedServices: string[];
   excludedServices: string[];
   hotelOptions: TourHotelOptionItem[];
@@ -146,6 +204,8 @@ export interface TourInput {
   itineraryDays?: TourItineraryDayItem[];
   trustSpecs?: TourTrustSpecsItem;
   consultantSpec?: TourConsultantSpecItem;
+  /** بلوک مالی واقعی (موج ۳، مرحلهٔ ۶ ویزارد): ستون jsonb روی site_tours (مایگریشن 0027) */
+  financialSpecs?: TourFinancialSpecsItem;
 }
 
 export interface DestinationTreeCity {
@@ -209,6 +269,59 @@ function isDomesticSlug(slug: string, bySlug: Map<string, DestRecord>): boolean 
 
 type SiteTourRow = typeof siteTours.$inferSelect;
 
+/** فهرست‌های مجاز مشخصات پرواز — همان مقادیری که UI (Stage3Itinerary) می‌فرستد. */
+const FLIGHT_TYPE_ALLOWLIST = ['charter', 'scheduled'] as const;
+const DIRECTNESS_ALLOWLIST = ['direct', 'stopover'] as const;
+
+/**
+ * نرمالایزر دفاعی مشخصات پرواز (موج ۳ — اتصال persistence).
+ *
+ * - ورودی غیرآبجکت/undefined/null → null.
+ * - نوع پرواز و مسیر فقط از فهرست مجاز می‌مانند؛ مقدار نامعتبر → حذف فیلد.
+ * - ساعت/شهرها: رشتهٔ تمیز (trim)؛ غیررشته → خالی.
+ * - شهر توقف فقط وقتی مستقیمِ «توقف‌دار» است نگه داشته می‌شود.
+ * - کاملاً خالی → null (ستون jsonb باید null بماند، نه {}).
+ *
+ * نکتهٔ بیلد: این فایل 'use server' است و هر تابع exportشده باید async باشد؛
+ * پس این نرمالایزرِ خالص هم async است (در saveTour با await صدا زده می‌شود).
+ */
+export async function normalizeFlightDetails(input: unknown): Promise<TourFlightDetails | null> {
+  if (!input || typeof input !== 'object') return null;
+  const raw = input as Partial<TourFlightDetails>;
+  const cleanStr = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
+
+  const flightType = cleanStr(raw.flightType);
+  const validFlightType = (FLIGHT_TYPE_ALLOWLIST as readonly string[]).includes(flightType)
+    ? flightType
+    : null;
+  const directness = cleanStr(raw.directness);
+  const validDirectness = (DIRECTNESS_ALLOWLIST as readonly string[]).includes(directness)
+    ? directness
+    : null;
+  const flightTime = cleanStr(raw.flightTime);
+  const stopCity = validDirectness === 'stopover' ? cleanStr(raw.stopCity) : '';
+
+  if (!validFlightType && !validDirectness && !flightTime && !stopCity) return null;
+  const out: TourFlightDetails = {};
+  if (validFlightType) out.flightType = validFlightType;
+  if (validDirectness) out.directness = validDirectness;
+  if (flightTime) out.flightTime = flightTime;
+  if (stopCity) out.stopCity = stopCity;
+  return out;
+}
+
+/**
+ * خواندن دفاعی مشخصات پرواز — الگوی transport_kind.
+ * ستون flight_details (مایگریشن 0028) اگر هنوز نباشد (پیش از اجرای 0028)، یا
+ * مقدارش null باشد، یا چیز غیرآبجکتی در دیتابیس بنشیند، undefined برمی‌گردد و
+ * هیچ‌چیز (فرم، گیت انتشار، کارت) نمی‌شکند.
+ */
+function readFlightDetails(r: SiteTourRow): TourFlightDetails | undefined {
+  const raw = (r as { flightDetails?: unknown }).flightDetails;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  return raw as TourFlightDetails;
+}
+
 function toTourRow(r: SiteTourRow) {
   return {
     id: r.id,
@@ -246,6 +359,13 @@ function toTourRow(r: SiteTourRow) {
       : [],
     trustSpecs: (r.trustSpecs as TourTrustSpecsItem | null) ?? null,
     consultantSpec: (r.consultantSpec as TourConsultantSpecItem | null) ?? null,
+    // بلوک مالی واقعی (موج ۳، مایگریشن 0027): ستون nullable است؛ نبودش (پیش از
+    // اجرای 0027 یا تور قدیمی) یعنی null، نه خطا.
+    financialSpecs: (r.financialSpecs as TourFinancialSpecsItem | null) ?? null,
+    // مشخصات پرواز (موج ۳، مایگریشن 0028): خواندن دفاعی به الگوی
+    // transport_kind — ستون نباشد (پیش از اجرای 0028) یا null باشد،
+    // undefined برمی‌گردد و هیچ‌چیز نمی‌شکند. nullِ دیتابیسی هم → undefined.
+    flightDetails: readFlightDetails(r),
     // گشت: برای اینکه فرم ویرایش بعد از ذخیره حتماً مقادیر تازهٔ دیتابیس را نشان بدهد
     // (کلید ریمونت در EditTourClient)، مهر زمانی به‌روزرسانی هم برمی‌گردد.
     updatedAt: r.updatedAt ? r.updatedAt.toISOString() : null,
@@ -894,6 +1014,8 @@ export async function saveTour(
     return {
       hotelId: h.hotelId ?? null,
       name: h.name ?? '',
+      // شهر هتل (موج ۳، فیلدهای دامنه‌ای): متن آزاد؛ خالی می‌ماند اگر مدیر چیزی ننوشت.
+      city: String(h.city ?? '').trim(),
       ...(validStars !== undefined ? { stars: validStars } : {}),
       board: h.board ?? 'BB',
     bookingType: h.bookingType === 'guarantee' || h.bookingType === 'semi_charter' || h.bookingType === 'on_request' ? h.bookingType : undefined,
@@ -944,6 +1066,44 @@ export async function saveTour(
     emergencyPhone: String(rawConsultant.emergencyPhone ?? ''),
   };
 
+  // بلوک مالی واقعی (موج ۳): نرمالایز دفاعی — ردیف‌های نیمه‌کارهٔ جدول کنسلی
+  // همان‌طور که مدیر تایپ کرده می‌مانند (ناقص‌اند، ولی داده‌اش گم نمی‌شود)؛
+  // عددهای نامعتبر null می‌شوند تا در گیت و نمایش «کامل» حساب نشوند.
+  const rawFinancial = (data.financialSpecs ?? {}) as Partial<TourFinancialSpecsItem>;
+  const clampNum = (v: unknown): number | null => {
+    // خالیِ واقعی (null/undefined/رشتهٔ خالی) → null می‌ماند تا در گیت و نمایش
+    // «کامل» حساب نشود. (باگ ۱۴۰۵/۰۷/۱۱: Number(null) برابر ۰ است و پلهٔ خالیِ
+    // دست‌نخورده را «کامل» نشان می‌داد.)
+    if (v === null || v === undefined || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  const normalizedTiers = Array.isArray(rawFinancial.cancellationTiers)
+    ? rawFinancial.cancellationTiers.map((t) => {
+        const o = (t ?? {}) as Partial<TourCancellationTier>;
+        const from = clampNum(o.fromDays);
+        const to = clampNum(o.toDays);
+        const p = clampNum(o.penaltyPercent);
+        return {
+          fromDays: from,
+          toDays: to,
+          penaltyPercent: p === null ? null : Math.min(100, Math.max(0, p)),
+        };
+      })
+    : [];
+  const normalizedFinancial: TourFinancialSpecsItem = {
+    cancellationTiers: normalizedTiers,
+    visaRejectionNote: String(rawFinancial.visaRejectionNote ?? ''),
+    depositAmount: String(rawFinancial.depositAmount ?? ''),
+    depositDeadline: String(rawFinancial.depositDeadline ?? ''),
+  };
+
+  // مشخصات پرواز (موج ۳، فیلدهای دامنه‌ای — مایگریشن 0028، ستون jsonb):
+  // نرمالایزر دفاعی. نوع پرواز فقط از فهرست مجاز می‌ماند (نامعتبر → حذف می‌شود،
+  // نه ذخیرهٔ خطا)؛ ساعت/شهرها رشتهٔ تمیز (trim)؛ شهر توقف فقط وقتی که مسیر
+  // «توقف‌دار» است معنا دارد. کاملاً خالی → null تا ستون null بماند، نه {}.
+  const normalizedFlight: TourFlightDetails | null = await normalizeFlightDetails(data.flightDetails);
+
   // گیت سرورِ انتشار (موج ۱، قلم ۲ — رفع ایراد QA سایه): فقط وقتی که نیتِ این
   // صدا واقعاً «انتشار» است. ذخیرهٔ ساده (keep) یا پیش‌نویس (draft) — حتی روی
   // تورِ منتشرشده — گیت نمی‌خورد؛ وگرنه مدیر نمی‌توانست ویرایشی را ذخیره کند که
@@ -960,6 +1120,7 @@ export async function saveTour(
       itineraryDays: normalizedItinerary,
       trustSpecs: normalizedTrust,
       consultantSpec: normalizedConsultant,
+      financialSpecs: normalizedFinancial,
     };
     const gate = checkPublishReadiness(gateInput);
     if (!gate.ready) {
@@ -970,6 +1131,8 @@ export async function saveTour(
     }
   }
 
+  // مشخصات پرواز (موج ۳، مایگریشن 0028): در ستون jsonb ذخیره می‌شود؛ کاملاً
+  // خالی → null (ستون null می‌ماند).
   const values = {
     slug,
     title,
@@ -1006,6 +1169,8 @@ export async function saveTour(
     itineraryDays: normalizedItinerary,
     trustSpecs: normalizedTrust,
     consultantSpec: normalizedConsultant,
+    financialSpecs: normalizedFinancial,
+    flightDetails: normalizedFlight,
     updatedAt: new Date(),
   };
 

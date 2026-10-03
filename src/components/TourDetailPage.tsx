@@ -86,26 +86,6 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
   // فقط چیزی که مدیر واقعاً وارد کرده نمایش داده می‌شود؛ پلهٔ ناقص (یکی از سه
   // عددش خالی) هرگز به مسافر نشان داده نمی‌شود.
   const trust = extras.trustSpecs || null;
-  const fin = extras.financialSpecs || null;
-  const cancelTiers = ((fin?.cancellationTiers || []) as Array<{
-    fromDays?: number | null;
-    toDays?: number | null;
-    penaltyPercent?: number | null;
-  }>).filter((t) => {
-    const from = Number(t?.fromDays);
-    const to = Number(t?.toDays);
-    const p = Number(t?.penaltyPercent);
-    return (
-      Number.isFinite(from) && from >= 0 &&
-      Number.isFinite(to) && to >= 0 &&
-      Number.isFinite(p) && p >= 0 && p <= 100
-    );
-  });
-  const visaRejectionNote = (fin?.visaRejectionNote || '').trim();
-  const depositAmount = (fin?.depositAmount || '').trim();
-  const depositDeadline = (fin?.depositDeadline || '').trim();
-  const hasFinancial =
-    cancelTiers.length > 0 || !!visaRejectionNote || !!depositAmount || !!depositDeadline;
   const hasTrust =
     !!trust &&
     !!(
@@ -691,61 +671,56 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
             </div>
           )}
 
-          {/* موج ۳ — کارت «شرایط کنسلی و پیش‌پرداخت»: جای خالی‌ای که موج ۰ برای
-              دادهٔ واقعی گذاشته بود. فقط با دادهٔ واقعیِ همین تور پر می‌شود —
-              هیچ متن ثابت کلیشه‌ای این‌جا نیست. */}
-          {hasFinancial && (
-            <div className="bg-surface-primary border border-border-default rounded-card p-6">
-              <h3 className="text-h4 font-bold text-text-heading mb-1.5">شرایط کنسلی و پیش‌پرداخت</h3>
-              <p className="text-caption text-text-muted mb-4">
-                جریمهٔ کنسلی همین تور؛ روزشمار نسبت به تاریخ حرکت است.
-              </p>
-              {cancelTiers.length > 0 && (
-                <div className="overflow-x-auto mb-4">
-                  <table className="w-full text-caption border-collapse">
-                    <thead>
-                      <tr className="text-text-muted border-b border-border-default">
-                        <th className="text-start font-bold py-2 pe-2">از چند روز مانده</th>
-                        <th className="text-start font-bold py-2 pe-2">تا چند روز مانده</th>
-                        <th className="text-start font-bold py-2">جریمه</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cancelTiers.map((t, i) => (
-                        <tr key={i} className="border-b border-border-default/60 last:border-0">
-                          <td className="py-2 pe-2 text-text-secondary">{fa(Number(t.fromDays))} روز</td>
-                          <td className="py-2 pe-2 text-text-secondary">{fa(Number(t.toDays))} روز</td>
-                          <td className="py-2 font-bold text-text-heading">{fa(Number(t.penaltyPercent))}٪</td>
-                        </tr>
+          {/* بلوک مالی واقعی (موج ۳): کارت «شرایط کنسلی و پیش‌پرداخت» — فقط دادهٔ
+              واقعی‌ای که مدیر در مرحلهٔ ۶ وارد کرده. پلهٔ ناقص هرگز نمایش داده
+              نمی‌شود؛ خالی بودن همه‌چیز یعنی کارت اصلاً رندر نمی‌شود. */}
+          {(() => {
+            const fin = tour.financialSpecs;
+            const tiers = (Array.isArray(fin?.cancellationTiers) ? fin!.cancellationTiers! : []).filter(
+              (t) =>
+                typeof t?.fromDays === 'number' && Number.isFinite(t.fromDays) &&
+                typeof t?.toDays === 'number' && Number.isFinite(t.toDays) &&
+                typeof t?.penaltyPercent === 'number' && Number.isFinite(t.penaltyPercent)
+            );
+            const visaNote = fin?.visaRejectionNote?.trim();
+            const deposit = fin?.depositAmount?.trim();
+            const deadline = fin?.depositDeadline?.trim();
+            if (tiers.length === 0 && !visaNote && !deposit) return null;
+            return (
+              <div className="bg-surface-primary border border-border-default rounded-card p-6">
+                <h3 className="text-h4 font-bold text-text-heading mb-4">شرایط کنسلی و پیش‌پرداخت</h3>
+                {tiers.length > 0 && (
+                  <>
+                    <p className="text-caption font-bold text-text-heading mb-2">جریمهٔ کنسلی پلکانی</p>
+                    <ul className="space-y-2 mb-4">
+                      {tiers.map((t, i) => (
+                        <li key={i} className="flex items-center justify-between gap-3 text-body-sm border-b border-border-default/60 pb-2 last:border-0 last:pb-0">
+                          <span className="text-text-secondary">از {fa(t.fromDays!)} تا {fa(t.toDays!)} روز مانده به حرکت</span>
+                          <span className="font-bold text-text-heading shrink-0">{fa(t.penaltyPercent!)}٪ جریمه</span>
+                        </li>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              {visaRejectionNote && (
-                <div className="mb-3">
-                  <p className="text-caption text-text-muted font-bold mb-0.5">در صورت رد ویزا</p>
-                  <p className="text-body-sm text-text-secondary leading-relaxed">{visaRejectionNote}</p>
-                </div>
-              )}
-              {(depositAmount || depositDeadline) && (
-                <dl className="space-y-2 text-caption">
-                  {depositAmount && (
+                    </ul>
+                  </>
+                )}
+                <dl className="space-y-2.5 text-caption">
+                  {visaNote && (
                     <div className="flex items-start gap-2">
-                      <dt className="text-text-muted font-bold shrink-0">پیش‌پرداخت:</dt>
-                      <dd className="text-text-secondary">{depositAmount}</dd>
+                      <dt className="text-text-muted font-bold shrink-0">در صورت رد ویزا:</dt>
+                      <dd className="text-text-secondary leading-relaxed">{visaNote}</dd>
                     </div>
                   )}
-                  {depositDeadline && (
+                  {deposit && (
                     <div className="flex items-start gap-2">
-                      <dt className="text-text-muted font-bold shrink-0">مهلت تسویه:</dt>
-                      <dd className="text-text-secondary">{depositDeadline}</dd>
+                      <dt className="text-text-muted font-bold shrink-0">پیش‌پرداخت:</dt>
+                      <dd className="text-text-secondary leading-relaxed">
+                        {deposit}{deadline ? ` — مهلت تسویه: ${deadline}` : ''}
+                      </dd>
                     </div>
                   )}
                 </dl>
-              )}
-            </div>
-          )}
+              </div>
+            );
+          })()}
 
         </div>
       </section>

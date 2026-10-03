@@ -9,8 +9,8 @@
  * قاعدهٔ صداقت داده (اصل ۵ پلن): قیمت/تاریخ/ظرفیت هرگز حدس زده نمی‌شوند؛
  * هرچه نیست، «ناقص» است.
  *
- * برای «ایستگاه پایانی» (فعلاً مرحلهٔ ۶؛ در معماری ۷مرحله‌ایِ موج ۳ می‌شود ۷): همین
- * `checkPublishReadiness` را صدا بزنید؛ نیازی به گیت دوم نیست.
+ * برای «ایستگاه پایانی» (مرحلهٔ ۷ ویزارد): همین `checkPublishReadiness` را
+ * صدا بزنید؛ نیازی به گیت دوم نیست.
  */
 
 export type PublishCheckKey =
@@ -20,7 +20,8 @@ export type PublishCheckKey =
   | 'hotel'
   | 'itinerary'
   | 'visaDocs'
-  | 'consultant';
+  | 'consultant'
+  | 'financial';
 
 /** ورودی گیت — TourRow و TourInput هر دو ساختاری به این می‌خورند. */
 export interface PublishGateInput {
@@ -43,6 +44,20 @@ export interface PublishGateInput {
   consultantSpec?: {
     name?: string | null;
   } | null;
+  /**
+   * بلوک مالی واقعی (موج ۳): جریمهٔ پلکانی کنسلی، تکلیف پول در صورت رد ویزا،
+   * پیش‌پرداخت و مهلت تسویه.
+   */
+  financialSpecs?: {
+    cancellationTiers?: Array<{
+      fromDays?: number | null;
+      toDays?: number | null;
+      penaltyPercent?: number | null;
+    }> | null;
+    visaRejectionNote?: string | null;
+    depositAmount?: string | null;
+    depositDeadline?: string | null;
+  } | null;
 }
 
 export interface PublishCheck {
@@ -52,7 +67,7 @@ export interface PublishCheck {
   label: string;
   /** پیام فارسی وضعیت (کامل یا ناقص). */
   message: string;
-  /** شمارهٔ مرحله‌ای که این قلم در آن کامل می‌شود (ویزارد فعلی: ۵ مرحله). */
+  /** شمارهٔ مرحله‌ای که این قلم در آن کامل می‌شود (ویزارد فعلی: ۷ مرحله). */
   stageId: number;
 }
 
@@ -153,6 +168,45 @@ export function checkPublishReadiness(tour: PublishGateInput): PublishReadinessR
     stageId: 5,
   });
 
+  // بلوک مالی واقعی (موج ۳) — مرحلهٔ ۶. قانون طلایی مالی: هیچ عددی حدس زده
+  // نمی‌شود؛ فقط چیزی که مدیر تایپ کرده «کامل» است. شرط انتشار: دست‌کم یک پلهٔ
+  // کنسلیِ کامل (هر سه عددِ از/تا/درصد جریمه) + بند رد ویزا + مبلغ/درصد
+  // پیش‌پرداخت. مهلت تسویه ناقصِ انتشار نیست (خوب است باشد، ولی شرط نیست).
+  // خالی بودن همه‌چیز = ناقص؛ هیچ «پیش‌فرض پنهان» ذخیره یا حساب نمی‌شود.
+  const tiers = Array.isArray(t.financialSpecs?.cancellationTiers)
+    ? t.financialSpecs!.cancellationTiers!
+    : [];
+  const completeTierCount = tiers.filter((tier) => {
+    // typeof چک می‌شود چون Number(null) برابر ۰ است و پلهٔ خالیِ دست‌نخورده
+    // (fromDays: null) را «کامل» حساب می‌کرد (باگ ۱۴۰۵/۰۷/۱۱).
+    const from = tier?.fromDays;
+    const to = tier?.toDays;
+    const p = tier?.penaltyPercent;
+    return (
+      typeof from === 'number' && Number.isFinite(from) && from >= 0 &&
+      typeof to === 'number' && Number.isFinite(to) && to >= 0 &&
+      typeof p === 'number' && Number.isFinite(p) && p >= 0 && p <= 100
+    );
+  }).length;
+  const visaRejectionOk = nonEmpty(t.financialSpecs?.visaRejectionNote);
+  const depositOk = nonEmpty(t.financialSpecs?.depositAmount);
+  const financialOk = completeTierCount >= 1 && visaRejectionOk && depositOk;
+  checks.push({
+    key: 'financial',
+    ok: financialOk,
+    label: 'شرایط مالی',
+    message: financialOk
+      ? 'بلوک مالی کامل است (جدول کنسلی، بند رد ویزا، پیش‌پرداخت).'
+      : `بلوک مالی ناقص است: ${[
+          completeTierCount === 0 ? 'جدول کنسلی پلهٔ کاملی ندارد' : null,
+          !visaRejectionOk ? 'بند «تکلیف پول در صورت رد ویزا» خالی است' : null,
+          !depositOk ? 'مبلغ/درصد پیش‌پرداخت ثبت نشده است' : null,
+        ]
+          .filter(Boolean)
+          .join('؛ ')}.`,
+    stageId: 6,
+  });
+
   return {
     ready: checks.every((c) => c.ok),
     checks,
@@ -162,14 +216,17 @@ export function checkPublishReadiness(tour: PublishGateInput): PublishReadinessR
 
 /**
  * تیک‌های واقعی مرحله‌های ویزارد — از همین چک‌های گیت، نه از محاسبه‌ای جدا.
- * نگاشت قلم → مرحله برای ویزارد ۵مرحله‌ای فعلی:
+ * نگاشت قلم → مرحله برای ویزارد ۷مرحله‌ای موج ۳:
  *   ۱ (هویت و نرخ): بنر، قیمت پایه، مقصد
  *   ۲ (هتل و اتاق): هتل
  *   ۳ (برنامه سفر): برنامهٔ روزبه‌روز
- *   ۴ (ویزا و مدارک): مدارک ویزا
+ *   ۴ (اعتماد و مدارک): مدارک ویزا
  *   ۵ (کارشناس): کارشناس پاسخ‌گو
+ *   ۶ (هزینه‌ها و شرایط): بلوک مالی (جدول کنسلی، بند رد ویزا، پیش‌پرداخت)
+ *   ۷ (ایستگاه پایانی): هیچ قلم تازه‌ای — تیکی ندارد و با `readiness.ready` کامل می‌شود.
  *
- * با بازنویسی ویزارد به ۷ مرحله (موج ۲)، فقط همین نگاشت عوض می‌شود.
+ * ایستگاه پایانی قلمی برای خودش ندارد: در TourForm به‌جای این نگاشت،
+ * همان `readiness.ready` تیکش می‌زند.
  */
 export const CHECKS_BY_STAGE: Record<number, PublishCheckKey[]> = {
   1: ['banner', 'price', 'destination'],
@@ -177,6 +234,7 @@ export const CHECKS_BY_STAGE: Record<number, PublishCheckKey[]> = {
   3: ['itinerary'],
   4: ['visaDocs'],
   5: ['consultant'],
+  6: ['financial'],
 };
 
 /** عنوان کوتاه مرحله‌ها — برای ارجاع «رفتن به مرحله» در دیالوگ ناقصی‌ها. */
@@ -186,6 +244,8 @@ export const STAGE_SHORT_TITLES: Record<number, string> = {
   3: 'برنامه سفر',
   4: 'ویزا و مدارک',
   5: 'کارشناس',
+  6: 'هزینه‌ها و شرایط',
+  7: 'ایستگاه پایانی',
 };
 
 /**

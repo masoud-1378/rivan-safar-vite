@@ -405,7 +405,7 @@ export default function Stage1Identity({
                 onChange({ status: val, statusLabel: opt?.label || val });
               }}
               options={CAPACITY_OPTIONS}
-              className="h-10 w-auto text-xs max-md:min-h-11"
+              className="h-10 w-auto text-xs max-md:min-h-11 max-md:text-base"
             />
           </label>
         </div>
@@ -424,7 +424,7 @@ export default function Stage1Identity({
               error={errors.title}
               onChange={(e) => handleTitleChange(e.target.value)}
               placeholder="عنوان تور را شفاف بنویسید…"
-              className="font-medium"
+              className="font-medium max-md:text-base"
             />
           </Field>
         </div>
@@ -449,7 +449,7 @@ export default function Stage1Identity({
       >
         <div className="max-w-xl">
           <Field label="آدرس اینترنتی تور *" hint="همان آدرسی که تور در سایت با آن باز می‌شود؛ از روی عنوان خودکار ساخته می‌شود و فقط حروف انگلیسی، عدد، خط تیره و آندرلاین می‌پذیرد">
-            <Input
+            <Input className="max-md:text-base"
               dir="ltr"
               value={data.slug}
               error={errors.slug}
@@ -472,7 +472,7 @@ export default function Stage1Identity({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Field label="دسته‌بندی تور">
-            <Select
+            <Select className="max-md:text-base max-md:min-h-11"
               value={data.type}
               onChange={(e) => {
                 const val = e.target.value;
@@ -536,7 +536,7 @@ export default function Stage1Identity({
                 : 'برای نوشتن متن، اول «حرکت تضمین‌شده» را روشن کنید.'
             }
           >
-            <Input
+            <Input className="max-md:text-base"
               value={data.badge === 'حرکت تضمین‌شده' ? '' : (data.badge || '')}
               disabled={!data.guaranteedDeparture}
               onChange={(e) => {
@@ -571,7 +571,7 @@ export default function Stage1Identity({
             value={destQuery}
             onChange={(e) => setDestQuery(e.target.value)}
             placeholder="نام شهر یا کشور را بنویسید… مثلاً: استانبول"
-            className="ps-9 text-xs"
+            className="ps-9 text-xs max-md:text-base"
           />
           <Search className="size-4 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
         </div>
@@ -761,7 +761,7 @@ export default function Stage1Identity({
           }
           hint="در قرارداد رسمی و کارت تور به مسافر نمایش داده می‌شود"
         >
-          <Input
+          <Input className="max-md:text-base"
             value={data.airline}
             onChange={(e) => onChange({ airline: e.target.value, carrierName: e.target.value })}
             placeholder={
@@ -791,7 +791,7 @@ export default function Stage1Identity({
               hint="شهر یا پایانه‌ای که تور از آن شروع می‌شود"
               error={errors.origin}
             >
-              <Select
+              <Select className="max-md:text-base max-md:min-h-11"
                 value={originSlugByName.get(data.origin) ?? ''}
                 onChange={(e) => {
                   const found = origins.find((o) => o.slug === e.target.value);
@@ -809,8 +809,9 @@ export default function Stage1Identity({
           <Field label="مدت اقامت و تعداد شب‌ها *" hint="مدت اقامت خودکار از تعداد شب‌ها ساخته می‌شود.">
             <div className="flex gap-2">
               <div className="w-28 shrink-0">
-                <Input
+                <Input className="max-md:text-base"
                   type="number"
+                  inputMode="numeric"
                   min="0"
                   value={data.nights || ''}
                   onChange={(e) => {
@@ -856,7 +857,7 @@ export default function Stage1Identity({
               hint="این عدد روی کارت تور نمایش داده می‌شود؛ نرخ هر هتل (مرحلهٔ ۲) جداگانه و همان‌جا روی سایت نمایش داده می‌شود."
               error={errors.price}
             >
-              <AmountInput
+              <AmountInput inputClassName="max-md:text-base"
                 value={Number(data.price) || 0}
                 onChange={(val) => onChange({ price: val || 0 })}
                 placeholder="۰"
@@ -891,7 +892,7 @@ export default function Stage1Identity({
                   value={capacity}
                   onChange={(e) => setCapacity(e.target.value)}
                   placeholder="مثلاً: ۴۰"
-                  className="text-xs h-9"
+                  className="text-xs h-9 max-md:text-base max-md:min-h-11"
                 />
               </Field>
             </div>
@@ -984,7 +985,7 @@ export default function Stage1Identity({
           )}
           {showBannerUrl && !data.image.trim() && (
             <div className="mt-2">
-              <Input
+              <Input className="max-md:text-base"
                 dir="ltr"
                 value={data.image}
                 onChange={(e) => onChange({ image: e.target.value })}

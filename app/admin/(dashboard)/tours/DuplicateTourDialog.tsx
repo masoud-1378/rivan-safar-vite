@@ -275,7 +275,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
     >
       <div className="space-y-4">
         <Field label="عنوان تور جدید" htmlFor="dup-title" error={titleError}>
-          <Input
+          <Input className="max-md:text-base"
             id="dup-title"
             ref={titleRef}
             defaultValue={`${tour.title}${COPY_SUFFIX}`}
@@ -302,7 +302,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
                 setSlugError('');
               }}
               placeholder="tour-slug"
-              className="font-mono"
+              className="font-mono max-md:text-base"
             />
           </Field>
           <button
@@ -388,7 +388,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
           {priceMode === 'custom' && (
             <div className="mt-3">
               <Field label="قیمت نسخهٔ تازه" error={priceError}>
-                <AmountInput
+                <AmountInput inputClassName="max-md:text-base"
                   value={customPrice}
                   onChange={(v) => { setCustomPrice(v); setPriceError(''); }}
                   placeholder="۰"
