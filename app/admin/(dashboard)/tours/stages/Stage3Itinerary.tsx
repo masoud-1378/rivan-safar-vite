@@ -92,9 +92,11 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
   const removeDayTarget = confirmRemoveDay === null ? undefined : itinerary[confirmRemoveDay];
 
   /**
-   * ساخت N روز خالی (موج ۱، قلم ۶ — فرصت ۳-۱ ممیزی): به تعداد شب‌های تور،
-   * کارتِ خالیِ قابل‌ویرایش می‌سازد (قالب خالی، نه محتوای حدسی). روزهایی که
-   * از قبل ساخته شده‌اند دست نمی‌خورند؛ فقط شماره‌های جاافتاده ساخته می‌شوند.
+   * ساخت N روز خالی (موج ۱، قلم ۶ — فرصت ۳-۱ ممیزی): به تعداد روزهای تور
+   * (شب‌ها + ۱: روز رفت و روز برگشت)، کارتِ خالیِ قابل‌ویرایش می‌سازد
+   * (قالب خالی، نه محتوای حدسی). روزهایی که از قبل ساخته شده‌اند دست
+   * نمی‌خورند؛ فقط شماره‌های جاافتاده ساخته می‌شوند.
+   * یافتهٔ ۱۳ مبتدی: قبلاً nights روز می‌ساخت و روز آخر جا می‌ماند.
    */
   const [confirmBuildDays, setConfirmBuildDays] = React.useState<number[] | null>(null);
   const buildEmptyDays = (missing: number[]) => {
@@ -118,9 +120,10 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
   };
   const handleBuildEmptyDays = () => {
     if (nights <= 0) return;
+    const dayCount = nights + 1;
     const existing = new Set(itinerary.map((d) => d.day));
     const missing: number[] = [];
-    for (let d = 1; d <= nights; d++) {
+    for (let d = 1; d <= dayCount; d++) {
       if (!existing.has(d)) missing.push(d);
     }
     if (missing.length === 0) {
@@ -234,7 +237,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
               className="w-full gap-2 text-xs sm:w-auto"
             >
               <CalendarDays className="size-4" />
-              ساخت {fa(nights)} روز خالی
+              ساخت {fa(nights + 1)} روز خالی
             </Button>
           )}
           <Button

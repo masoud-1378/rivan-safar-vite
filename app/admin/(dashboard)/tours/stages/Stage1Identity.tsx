@@ -256,7 +256,11 @@ export default function Stage1Identity({
   const destSearchQuery = normalizeFaSearch(destQuery);
   const destSearchResults = destSearchQuery
     ? tree.all
-        .filter((a) => (a.type === 'city' || a.type === 'country') && normalizeFaSearch(a.name).includes(destSearchQuery))
+        .filter((a) => {
+          const t = String(a.type || '').trim().toLowerCase();
+          if (t !== 'city' && t !== 'country' && t !== 'region') return false;
+          return normalizeFaSearch(a.name).includes(destSearchQuery);
+        })
         .slice(0, 30)
     : [];
 
@@ -302,6 +306,10 @@ export default function Stage1Identity({
             />
           </label>
         </div>
+        {/* یافتهٔ ۱/۱۲ مبتدی: توضیح «ظرفیت» در مرحلهٔ ۵ بود ولی انتخابش اینجاست — توضیح به همان‌جا آمد. */}
+        <p className="text-[11px] text-muted-foreground">
+          «ظرفیت» فقط وضعیت ظرفیت است و روی سایت به‌صورت برچسب دیده می‌شود؛ این‌که تور روی سایت دیده شود یا نه با «انتشار» است.
+        </p>
       </div>
 
       {/* Row 1: Title & Slug */}
@@ -451,7 +459,7 @@ export default function Stage1Identity({
                     <span className="flex items-center gap-2 text-foreground">
                       <MapPin className="size-3.5 text-brand shrink-0" />
                       <span className="font-medium">{r.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{r.type === 'city' ? 'شهر' : 'کشور'}</span>
+                      <span className="text-[10px] text-muted-foreground">{r.type === 'city' ? 'شهر' : r.type === 'region' ? 'منطقه' : 'کشور'}</span>
                     </span>
                     {selected
                       ? <CheckIcon className="size-4 text-emerald-600 shrink-0" />

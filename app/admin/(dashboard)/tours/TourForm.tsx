@@ -136,6 +136,22 @@ export default function TourForm({
   // انصراف با فرم کثیف (T11): قبل از خروج، دیالوگ «تغییرات ذخیره‌نشده از دست می‌رود».
   const [dirty, setDirty] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  // یافتهٔ ۱۴ مبتدی: خروج از ویزارد از هر مسیری (سایدبار/بستن تب/رفرش) با دادهٔ
+  // ذخیره‌نشده باید هشدار بدهد — نه فقط دکمهٔ «انصراف». سایدبار لینک معمولی است
+  // پس beforeunload آن را هم می‌گیرد؛ برای ناوبری SPA (پالت فرمان) پرچم سراسری.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    (window as unknown as { __tourFormDirty?: boolean }).__tourFormDirty = dirty;
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => {
+      window.removeEventListener('beforeunload', handler);
+      (window as unknown as { __tourFormDirty?: boolean }).__tourFormDirty = false;
+    };
+  }, [dirty]);
   // گیت انتشار (موج ۱، قلم ۲): دیالوگ ناقصی‌ها / دیالوگ تأیید انتشار.
   const [missingChecks, setMissingChecks] = useState<PublishCheck[] | null>(null);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
@@ -395,6 +411,8 @@ export default function TourForm({
             }
           }
         }
+        // ذخیره موفق شد — دیگر «تغییر ذخیره‌نشده» نیست (هشدار خروج بی‌مورد ندهد).
+        setDirty(false);
         onDone(res.id);
       } catch (err: unknown) {
         // خطای واقعاً غیرمنتظره: در پروداکشن err.message همان «Minified React error #441»
@@ -412,7 +430,7 @@ export default function TourForm({
 
   return (
     <div className="space-y-6">
-      {/* نوار وضعیت انتشار + پیش‌نمایش در سایت (شرایط انتشار، مایگریشن 0011) */}
+      {/* نوار وضعیت انتشار + مشاهده در سایت (شرایط انتشار، مایگریشن 0011) */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-border bg-card px-4 py-3">
         <div className="flex items-center gap-2">
           <Badge variant={formData.publishStatus === 'published' ? 'success' : 'warning'}>
@@ -429,21 +447,21 @@ export default function TourForm({
             <a href={`/tour/${formData.slug.trim()}`} target="_blank" rel="noopener noreferrer">
               <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs">
                 <ExternalLink className="size-4" />
-                پیش‌نمایش در سایت
+                مشاهده در سایت
               </Button>
             </a>
           ) : (
             <span className="flex items-center gap-2">
-              <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs" disabled title="پیش‌نمایش پس از انتشار فعال می‌شود">
+              <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs" disabled title="مشاهده در سایت پس از انتشار فعال می‌شود">
                 <ExternalLink className="size-4" />
-                پیش‌نمایش در سایت
+                مشاهده در سایت
               </Button>
               <span className="text-[11px] text-muted-foreground">پس از انتشار فعال می‌شود.</span>
             </span>
           )
         ) : (
           <span className="text-[11px] text-muted-foreground">
-            برای پیش‌نمایش، اول آدرس اینترنتی (مرحلهٔ ۱) را وارد کنید.
+            برای مشاهده در سایت، اول آدرس اینترنتی (مرحلهٔ ۱) را وارد کنید.
           </span>
         )}
       </div>
@@ -509,7 +527,9 @@ export default function TourForm({
       {/* Main Content Area */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* Active Stage Body */}
-        <div className={cn(showLivePreview ? "xl:col-span-8" : "xl:col-span-12", "space-y-6")}>
+        {/* یافتهٔ ۲ مبتدی (ریشه‌ای): نوار چسبان پایین وسط اسکرول روی محتوا می‌ایستاد؛
+            حاشیهٔ پایین به‌اندازهٔ ارتفاع نوار تا هیچ کنترلی زیر آن گیر نکند. */}
+        <div className={cn(showLivePreview ? "xl:col-span-8" : "xl:col-span-12", "space-y-6", "pb-28")}>
           {activeStage === 1 && (
             <Stage1Identity
               data={formData}
@@ -606,7 +626,7 @@ export default function TourForm({
                 className="h-11 flex-1 gap-1.5 text-xs text-muted-foreground hover:text-foreground sm:h-8 sm:flex-none"
               >
                 <Eye className="size-4" />
-                {showLivePreview ? 'بستن پیش‌نمایش' : 'پیش‌نمایش زنده'}
+                {showLivePreview ? 'بستن پیش‌نمایش' : 'پیش‌نمایش تغییرات'}
               </Button>
             </div>
 
@@ -641,9 +661,16 @@ export default function TourForm({
                   <Button
                     type="button"
                     size="sm"
-                    disabled={isPending}
+                    disabled={isPending || !readiness.ready}
+                    // یافتهٔ ۳ مبتدی: دعوت زودهنگام به انتشار حس بدی می‌دهد؛ تا وقتی
+                    // تور قابل‌انتشار نیست دکمه غیرفعالِ توضیح‌دار است (نه پنهان).
+                    title={
+                      readiness.ready
+                        ? undefined
+                        : `برای انتشار، اول این قلم‌ها را کامل کن: ${readiness.missing.map((c) => c.label).join('، ')}`
+                    }
                     onClick={requestPublish}
-                    className="h-11 flex-1 gap-2 bg-brand px-4 text-xs text-brand-foreground hover:bg-brand/90 sm:h-8 sm:flex-none"
+                    className="h-11 flex-1 gap-2 bg-brand px-4 text-xs text-brand-foreground hover:bg-brand/90 sm:h-8 sm:flex-none disabled:opacity-50"
                   >
                     <Send className="size-4" />
                     {isPending ? 'در حال انتشار…' : 'انتشار'}

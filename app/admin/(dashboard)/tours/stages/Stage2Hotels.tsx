@@ -61,10 +61,10 @@ export function boardMealsText(board?: string | null): string {
 
 // کتابچه §۳ (فاز ۲، قلم ۷): سه نوع رزرو — هر کدام زیرفیلد نرخ خودش را نشان می‌دهد.
 // مقدار ذخیره‌شده کد لاتین است؛ برچسب فارسی در UI.
-const BOOKING_TYPE_OPTIONS: Array<{ value: HotelBookingType; label: string }> = [
-  { value: 'guarantee', label: 'گارانتی' },
-  { value: 'semi_charter', label: 'نیم‌چارتر' },
-  { value: 'on_request', label: 'درخواستی' },
+const BOOKING_TYPE_OPTIONS: Array<{ value: HotelBookingType; label: string; desc: string }> = [
+  { value: 'guarantee', label: 'گارانتی', desc: 'اتاق‌ها از قبل خریداری شده؛ نرخ تا پایان قرارداد ثابت می‌ماند.' },
+  { value: 'semi_charter', label: 'نیم‌چارتر', desc: 'بخشی از ظرفیت رزرو شده؛ با پر شدن ممکن است نرخ تغییر کند.' },
+  { value: 'on_request', label: 'درخواستی', desc: 'رزرو موقع درخواست مسافر استعلام می‌شود؛ قیمت نهایی آن‌موقع مشخص می‌شود.' },
 ];
 
 /** آیا هتل دست‌کم یک نرخ دارد؟ (برای حالت پیش‌فرض آکاردئون، T7) */
@@ -257,6 +257,15 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
               {bookingGuide && (
                 <p className="mt-1.5 text-[11px] text-muted-foreground">{bookingGuide}</p>
               )}
+              {/* یافتهٔ ۸ مبتدی: توضیح هر سه گزینه، همیشه دیده می‌شود — نه فقط بعد از انتخاب. */}
+              <ul className="mt-2 space-y-1 text-[11px] text-muted-foreground">
+                {BOOKING_TYPE_OPTIONS.map((o) => (
+                  <li key={o.value} className="flex gap-1.5">
+                    <span className="shrink-0 font-bold text-foreground">{o.label}:</span>
+                    <span>{o.desc}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             {/* نرخ هر نفر — تک‌ورودی (موج ۲، تیم تکراری‌ها): همان یک عدد برای هر دو
@@ -285,6 +294,10 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
             {/* تفکیک نرخ اتاق‌ها */}
             <div className="space-y-1.5 pt-1">
               <span className="text-[11px] text-muted-foreground">تفکیک نرخ اتاق‌ها (اختیاری)</span>
+              {/* یافتهٔ ۵ مبتدی: هر ورودی قیمت بگوید کجا دیده می‌شود. */}
+              <p className="text-[11px] text-muted-foreground">
+                هر کدام را پر کنید، در جدول قیمت همین هتل در صفحهٔ تور نمایش داده می‌شود؛ خالی بماند چیزی نشان داده نمی‌شود.
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div className="rounded-sm bg-card p-3 border border-border/60 space-y-1.5">
                   <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground">

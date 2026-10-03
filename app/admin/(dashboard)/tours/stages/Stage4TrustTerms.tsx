@@ -239,7 +239,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
               onClick={() => setConfirmResetDocs(true)}
               className="text-[11px] font-bold text-brand hover:underline"
             >
-              بازنشانی مدارک بر اساس ویزا
+              برگرداندن به پیش‌فرض ویزا (نوشته‌های شما پاک می‌شود)
             </button>
           </div>
           <div className="flex flex-wrap gap-1.5">
