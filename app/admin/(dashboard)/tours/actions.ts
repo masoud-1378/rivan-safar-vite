@@ -3,12 +3,14 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db/client';
 import { accommodations, auditLogs, originCities, siteDestinations, siteTours } from '@/db/schema';
-import { asc, desc, eq, isNull } from 'drizzle-orm';
+import { asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 import { assertRenderableImageUrl } from '@/src/lib/site-image-hosts';
 import { DOMESTIC_SLUGS, DOMESTIC_NAME_RE } from '@/src/lib/domestic';
 import { getSettingsMap } from '../settings/actions';
+import { assertLatinSlug } from '@/src/lib/slug-format';
+import { cleanupReplacedBanner } from './banner-upload';
 
 export type HotelBookingType = 'guarantee' | 'semi_charter' | 'on_request';
 
@@ -314,6 +316,8 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
   const slug = (data.slug || '').trim();
   const title = (data.title || '').trim();
   if (!slug) throw new Error('نامک (slug) لازم است.');
+  // میز ۳ — ایراد ۱۰: نامک فارسی روی روت‌های سایت ۴۰۴ِ زنده می‌دهد؛ این‌جا رد می‌شود.
+  assertLatinSlug(slug);
   if (title.length < 2) throw new Error('عنوان تور لازم است.');
   // بنر: آدرس دستی هم باید روی سایت باز شود، وگرنه پیش‌نمایش پنل دروغ می‌گوید.
   assertRenderableImageUrl(data.image || '');
@@ -337,6 +341,28 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
 
   const price = Math.max(0, Number(data.price) || 0);
   const hotelOptions = Array.isArray(data.hotelOptions) ? data.hotelOptions : [];
+
+  // میز ۳ — ایراد ۱۲: هتل بایگانی‌شده را نمی‌شود به تور اضافه کرد؛
+  // وگرنه روی سایت می‌ماند چون سایت snapshot را مستقیم رندر می‌کند.
+  const hotelIds = [
+    ...new Set(
+      hotelOptions
+        .map((h) => h?.hotelId)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0),
+    ),
+  ];
+  if (hotelIds.length > 0) {
+    const hotelStates = await db
+      .select({ nameFa: accommodations.nameFa, deletedAt: accommodations.deletedAt })
+      .from(accommodations)
+      .where(inArray(accommodations.id, hotelIds));
+    const archived = hotelStates.find((r) => r.deletedAt != null);
+    if (archived) {
+      throw new Error(
+        `هتل «${archived.nameFa}» بایگانی شده است؛ هتل بایگانی‌شده را نمی‌توان به تور اضافه کرد. اول از صفحهٔ بایگانی بازیابیش کنید.`,
+      );
+    }
+  }
   const hotelStars = hotelOptions.reduce((m, h) => Math.max(m, Number(h?.stars) || 0), 0);
 
   let visaRequired = Boolean(data.visaRequired);
@@ -444,11 +470,28 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
     updatedAt: new Date(),
   };
 
+  // میز ۳ — ایراد ۲۶: بنر قبلیِ تور را فقط وقتی از باکت پاک می‌کنیم که رکورد
+  // دیگر به آن اشاره نکند (یعنی همین ذخیره، image را عوض کرده باشد).
+  let previousImage: string | null = null;
+  if (id) {
+    const [prev] = await db
+      .select({ image: siteTours.image })
+      .from(siteTours)
+      .where(eq(siteTours.id, id))
+      .limit(1);
+    previousImage = prev?.image ?? null;
+  }
   if (id) {
     await db.update(siteTours).set(values).where(eq(siteTours.id, id));
   } else {
     const inserted = await db.insert(siteTours).values(values).returning({ id: siteTours.id });
     id = inserted[0]?.id ?? id;
+  }
+  const oldImage = (previousImage || '').trim();
+  const newImage = (values.image || '').trim();
+  if (oldImage && newImage && oldImage !== newImage) {
+    // فقط همین باکت و همین پیشوند (tours/)؛ بقیهٔ آدرس‌ها دست نمی‌خورند.
+    await cleanupReplacedBanner(oldImage);
   }
   revalidatePath('/admin/tours');
   if (id) revalidatePath(`/admin/tours/${id}`);

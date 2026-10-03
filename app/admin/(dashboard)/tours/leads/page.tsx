@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
-import { getLeadStats } from '../../leads/actions';
+import { getLeadsPage, type LeadStatus, type LeadsPage } from '../../leads/actions';
 import { getSettingsMap } from '../../settings/actions';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { LeadBoard } from '../../leads/LeadBoard';
 import SectionSettingsDialog from '../../SectionSettingsDialog';
+import { LEAD_STATUSES } from '../../leads/lead-status';
 import TourHubNav from '../TourHubNav';
 
 export const metadata: Metadata = {
@@ -11,34 +12,54 @@ export const metadata: Metadata = {
   robots: 'noindex,nofollow',
 };
 
-export default async function TourLeadsPage() {
+function toLeadRow(r: LeadsPage['rows'][number]) {
+  return {
+    id: r.id,
+    fullName: r.fullName,
+    phone: r.phone,
+    sourcePath: r.sourcePath,
+    tourContext: r.tourContext,
+    destinationHint: r.destinationHint,
+    passengers: r.passengers,
+    notes: r.notes,
+    adminNotes: r.adminNotes,
+    status: r.status,
+    assignee: r.assignee,
+    createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+  };
+}
+
+export default async function TourLeadsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; status?: string; q?: string }>;
+}) {
   // احراز هویت بیرون از try می‌ماند تا خطای دسترسی قورت داده نشود.
   await requireAdmin(['owner', 'editor']);
+  const sp = await searchParams;
+  const rawStatus = sp.status ?? 'all';
+  const status: LeadStatus | 'all' = (
+    rawStatus === 'all' || (LEAD_STATUSES as string[]).includes(rawStatus) ? rawStatus : 'all'
+  ) as LeadStatus | 'all';
+  const query = (sp.q ?? '').trim();
 
   // الگوی dbDown داشبورد: اگر دیتابیس در دسترس نبود، به‌جای باندری خطا پیام روشن.
-  let rows: Awaited<ReturnType<typeof getLeadStats>>['rows'] = [];
+  let pageData: LeadsPage = { rows: [], total: 0, page: 1, pageSize: 20, pageCount: 1 };
   let settings: Record<string, string> = {};
   let dbDown = false;
   try {
-    const [stats, s] = await Promise.all([getLeadStats(), getSettingsMap()]);
-    rows = stats.rows;
+    const s = await getSettingsMap();
     settings = s;
+    // ۴-۱۱: اندازهٔ صفحهٔ برد از کلید leads.page_size؛ بازهٔ مجاز رجیستری ۵ تا ۱۰۰.
+    const rawPageSize = Number(s['leads.page_size']);
+    const pageSize = Number.isFinite(rawPageSize)
+      ? Math.min(100, Math.max(5, Math.floor(rawPageSize)))
+      : 20;
+    // L2: فیلتر «توری بودن» سمت سرور (زمینهٔ تور یا مسیر /tour) تا شمارش کل هم درست باشد.
+    pageData = await getLeadsPage({ page: Number(sp.page), pageSize, status, q: query, tourOnly: true });
   } catch {
     dbDown = true;
   }
-
-  // ۴-۱۱: اندازهٔ صفحهٔ برد از کلید leads.page_size؛ بازهٔ مجاز رجیستری ۵ تا ۱۰۰.
-  const rawPageSize = Number(settings['leads.page_size']);
-  const pageSize = Number.isFinite(rawPageSize)
-    ? Math.min(100, Math.max(5, Math.floor(rawPageSize)))
-    : 20;
-
-  // Filter leads that have tour context or originated from tour pages.
-  // L2: بدون فالبک بی‌صدا؛ وقتی لید توری نیست، خود برد empty state آموزشی نشان می‌دهد.
-  const tourRows = rows.filter((r) =>
-    Boolean(r.tourContext) ||
-    (r.sourcePath && r.sourcePath.includes('/tour'))
-  );
 
   return (
     <div className="admin-enter space-y-6">
@@ -47,7 +68,7 @@ export default async function TourLeadsPage() {
           اتصال به دیتابیس در این لحظه برقرار نشد؛ فهرست درخواست‌ها بارگذاری نشد. چند لحظه بعد صفحه را تازه کنید.
         </div>
       ) : null}
-      <TourHubNav counts={{ leads: tourRows.length }} />
+      <TourHubNav counts={{ leads: pageData.total }} />
 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -66,21 +87,13 @@ export default async function TourLeadsPage() {
 
       <LeadBoard
         variant="tour"
-        pageSize={pageSize}
-        initial={tourRows.map((r) => ({
-          id: r.id,
-          fullName: r.fullName,
-          phone: r.phone,
-          sourcePath: r.sourcePath,
-          tourContext: r.tourContext,
-          destinationHint: r.destinationHint,
-          passengers: r.passengers,
-          notes: r.notes,
-          adminNotes: r.adminNotes,
-          status: r.status as 'new' | 'contacted' | 'qualified' | 'won' | 'lost' | 'invalid',
-          assignee: r.assignee,
-          createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
-        }))}
+        pageSize={pageData.pageSize}
+        initial={pageData.rows.map(toLeadRow)}
+        total={pageData.total}
+        page={pageData.page}
+        pageCount={pageData.pageCount}
+        status={status}
+        query={query}
       />
     </div>
   );

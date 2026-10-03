@@ -8,6 +8,7 @@ import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 import { fa } from '@/lib/utils';
 import { assertRenderableImageUrl } from '@/src/lib/site-image-hosts';
+import { assertLatinSlug } from '@/src/lib/slug-format';
 
 export type GuideStatus = 'draft' | 'review' | 'published' | 'paused' | 'archived';
 
@@ -105,6 +106,8 @@ export async function saveGuide(id: string | null | undefined, data: GuideInput)
   const slug = (data.slug || '').trim();
   const titleFa = (data.titleFa || '').trim();
   if (!slug) throw new Error('نامک (slug) لازم است.');
+  // میز ۳ — ایراد ۱۰: نامک فارسی روی روت‌های سایت ۴۰۴ِ زنده می‌دهد؛ این‌جا رد می‌شود.
+  assertLatinSlug(slug);
   if (titleFa.length < 2) throw new Error('عنوان راهنما لازم است.');
   // تصویر اصلی راهنما آدرس دستی است؛ باید همان هاست‌هایی باشد که سایت می‌تواند رندر کند.
   assertRenderableImageUrl(data.heroImage || '');
