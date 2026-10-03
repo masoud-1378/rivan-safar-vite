@@ -7,6 +7,8 @@ import { asc, desc, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 import { assertRenderableImageUrl } from '@/src/lib/site-image-hosts';
+import { DOMESTIC_SLUGS, DOMESTIC_NAME_RE } from '@/src/lib/domestic';
+import { getSettingsMap } from '../settings/actions';
 
 export type HotelBookingType = 'guarantee' | 'semi_charter' | 'on_request';
 
@@ -77,8 +79,13 @@ export interface TourInput {
   publishStatus: 'draft' | 'published';
   image: string;
   badge: string;
-  features: string[];
   visaRequired: boolean;
+  /**
+   * ایراد ۹: مدیر تیک «نیاز به دریافت ویزا» را دستی عوض کرده؟
+   * اگر true باشد، حدس خودکارِ داخلی/خارجی بودن مقصد اعمال نمی‌شود و انتخاب مدیر می‌ماند.
+   * در دیتابیس ذخیره نمی‌شود؛ فقط پرچم همین فرم است.
+   */
+  visaRequiredManual?: boolean;
   hotelStars: number;
   airline: string;
   includedServices: string[];
@@ -134,25 +141,6 @@ function faPrice(n: unknown): string {
   return grouped.replace(/\d/g, (d) => FA_DIGITS[Number(d)]).replace(/,/g, '٬');
 }
 
-const DOMESTIC_SLUGS = [
-  'iran',
-  'kish',
-  'mashhad',
-  'qeshm',
-  'qeshm-island',
-  'shiraz',
-  'isfahan',
-  'yazd',
-  'tabriz',
-  'chabahar',
-  'kerman',
-  'ahvaz',
-  'rasht',
-  'hamedan',
-];
-
-const DOMESTIC_NAME_RE = /کیش|مشهد|قشم|شیراز|اصفهان|یزد|تبریز|چابهار|کرمان|اهواز|رشت|همدان|ایران/;
-
 type DestRecord = typeof siteDestinations.$inferSelect;
 
 function isDomesticSlug(slug: string, bySlug: Map<string, DestRecord>): boolean {
@@ -196,7 +184,6 @@ function toTourRow(r: SiteTourRow) {
     publishStatus: (r.publishStatus ?? 'draft') as 'draft' | 'published',
     image: r.image,
     badge: r.badge ?? '',
-    features: asStringArray(r.features),
     visaRequired: r.visaRequired,
     hotelStars: r.hotelStars,
     airline: r.airline,
@@ -353,9 +340,17 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
   const hotelStars = hotelOptions.reduce((m, h) => Math.max(m, Number(h?.stars) || 0), 0);
 
   let visaRequired = Boolean(data.visaRequired);
-  if (destSlugs.length > 0) {
+  // ایراد ۹: حدس خودکار (داخلی/خارجی بودن مقصد) فقط وقتی اعمال می‌شود که مدیر
+  // تیک «نیاز به دریافت ویزا» را دستی لمس نکرده باشد؛ انتخاب دستی مدیر همیشه می‌ماند.
+  // تورساز همین حدس را هنگام تغییر مقصد روی فرم اعمال می‌کند؛ این‌جا تورِ امنِ سمت سرور است.
+  if (!data.visaRequiredManual && destSlugs.length > 0) {
     visaRequired = !destSlugs.every((s) => isDomesticSlug(s, destBySlug));
   }
+
+  // ایراد ۲۸: یادداشت پیش‌فرض قیمت از تنظیمات می‌آید، نه هاردکد.
+  const defaultPriceNote =
+    (await getSettingsMap().catch(() => null))?.['tours.default_price_note'] ||
+    'برای هر بزرگسال در اتاق دو تخته';
 
   const carrier = (data.carrierName || data.airline || '').trim();
   const badge = data.badge || (data.guaranteedDeparture ? 'حرکت تضمین‌شده' : null);
@@ -429,14 +424,13 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
     closestDeparture: data.closestDeparture || '',
     price: String(price),
     formattedPrice: faPrice(price),
-    priceNote: 'برای هر بزرگسال در اتاق دو تخته',
+    priceNote: defaultPriceNote,
     status: data.status || 'pending',
     statusLabel: data.statusLabel || '',
     // شرایط انتشار (مایگریشن 0011): تور تازه همیشه پیش‌نویس است، مگر این‌که صراحتاً «انتشار» زده شود.
     publishStatus: (data.publishStatus === 'published' ? 'published' : 'draft') as 'draft' | 'published',
     image: data.image || '',
     badge,
-    features: data.features ?? [],
     visaRequired,
     hotelStars,
     airline: carrier,

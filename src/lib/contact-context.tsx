@@ -15,7 +15,6 @@ const FALLBACK: ContactInfo = {
   workingHours: 'شنبه تا پنجشنبه، ۹ تا ۲۱',
   showHeaderPhone: true,
   showFooterPhone: true,
-  ctaLabel: 'درخواست تماس',
   brand: 'ریوان سفر',
   tagline: 'سفر خوب، از انتخاب روشن شروع می‌شود',
   announcementText: 'ثبت‌نام تورهای نوروزی آغاز شد.',

@@ -115,12 +115,12 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
               <input
                 type="checkbox"
                 checked={data.visaRequired}
-                onChange={(e) => onChange({ visaRequired: e.target.checked })}
+                onChange={(e) => onChange({ visaRequired: e.target.checked, visaRequiredManual: true })}
                 className="size-4 accent-brand rounded cursor-pointer"
               />
               <div>
                 <span className="text-xs font-bold text-foreground block">نیاز به دریافت ویزا</span>
-                <span className="text-[11px] text-muted-foreground">مسافر برای این سفر ویزا می‌خواهد؟</span>
+                <span className="text-[11px] text-muted-foreground">مسافر برای این سفر ویزا می‌خواهد؟ اگر تیک را عوض نکنید، بر اساس داخلی یا خارجی بودن مقصد خودکار تنظیم می‌شود.</span>
               </div>
             </label>
           </div>

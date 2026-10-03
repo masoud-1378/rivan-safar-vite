@@ -1,5 +1,6 @@
 import { getRest } from './supabase-rest';
 import { withDefaults } from './settings';
+import { SITE_URL } from './siteConfig';
 
 export interface ContactInfo {
   phone: string;
@@ -11,7 +12,6 @@ export interface ContactInfo {
   workingHours: string;
   showHeaderPhone: boolean;
   showFooterPhone: boolean;
-  ctaLabel: string;
   brand: string;
   tagline: string;
   announcementText: string;
@@ -33,7 +33,6 @@ const FALLBACK: ContactInfo = {
   workingHours: 'شنبه تا پنجشنبه، ۹ تا ۲۱',
   showHeaderPhone: true,
   showFooterPhone: true,
-  ctaLabel: 'درخواست تماس',
   brand: 'ریوان سفر',
   tagline: 'سفر خوب، از انتخاب روشن شروع می‌شود',
   announcementText: 'ثبت‌نام تورهای نوروزی آغاز شد.',
@@ -64,7 +63,6 @@ export async function getContactInfo(): Promise<ContactInfo> {
       workingHours: s['business.working_hours'] || FALLBACK.workingHours,
       showHeaderPhone: (s['contact.show_header_phone'] ?? 'true') === 'true',
       showFooterPhone: (s['contact.show_footer_phone'] ?? 'true') === 'true',
-      ctaLabel: s['contact.cta_label'] || FALLBACK.ctaLabel,
       brand: s['site.brand'] || FALLBACK.brand,
       tagline: s['site.tagline'] || FALLBACK.tagline,
       announcementText: s['site.announcement_text'] || FALLBACK.announcementText,
@@ -112,5 +110,97 @@ export async function getGaId(): Promise<string | undefined> {
     return data?.setting_value || process.env.NEXT_PUBLIC_GA_ID || undefined;
   } catch {
     return process.env.NEXT_PUBLIC_GA_ID;
+  }
+}
+
+export interface SiteMeta {
+  /** دامنهٔ اصلی سایت — اول از تنظیم site.url، وگرنه SITE_URL (env/پیش‌فرض). */
+  siteUrl: string;
+  brand: string;
+  defaultTitle: string;
+  defaultDescription: string;
+}
+
+const META_FALLBACK: SiteMeta = {
+  siteUrl: SITE_URL,
+  brand: 'ریوان سفر',
+  defaultTitle: 'تورهای داخلی، خارجی و نمایشگاهی با مسیر شفاف · ریوان سفر',
+  defaultDescription:
+    'تورهای داخلی، خارجی و نمایشگاهی را با تاریخ، خدمات و قیمت پایه بررسی کنید و برای تأیید مسیر و ظرفیت با کارشناس در تماس باشید.',
+};
+
+/**
+ * ایراد ۲۸: خوانش یک‌جای site.url و متاهای پیش‌فرض سئو برای layout/sitemap/robots.
+ * مقدار نامعتبرِ ذخیره‌شده در دیتابیس، بی‌سروصدا با مقدار امن جایگزین می‌شود.
+ */
+export async function getSiteMeta(): Promise<SiteMeta> {
+  try {
+    const rest = getRest();
+    if (!rest) return { ...META_FALLBACK, siteUrl: SITE_URL };
+    const { data, error } = await rest
+      .from('site_settings')
+      .select('setting_key,setting_value')
+      .in('setting_key', ['site.url', 'site.brand', 'seo.default_title', 'seo.default_description']);
+    if (error) throw error;
+    const s = withDefaults(
+      ((data ?? []) as Array<{ setting_key: string; setting_value: string }>).map((r) => ({
+        settingKey: r.setting_key,
+        settingValue: r.setting_value,
+      })),
+    );
+    const rawUrl = (s['site.url'] || '').trim().replace(/\/+$/, '');
+    const siteUrl = /^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(rawUrl) ? rawUrl : SITE_URL;
+    return {
+      siteUrl,
+      brand: s['site.brand'] || META_FALLBACK.brand,
+      defaultTitle: s['seo.default_title'] || META_FALLBACK.defaultTitle,
+      defaultDescription: s['seo.default_description'] || META_FALLBACK.defaultDescription,
+    };
+  } catch {
+    return { ...META_FALLBACK, siteUrl: SITE_URL };
+  }
+}
+
+/** دامنهٔ اصلی سایت برای canonical/sitemap/robots — همان getSiteMeta ولی فقط URL. */
+export async function getSiteUrl(): Promise<string> {
+  return (await getSiteMeta()).siteUrl;
+}
+
+export interface TourListSettings {
+  /** تعداد تورِ اولِ فهرست (دکمهٔ «نمایش بیشتر» بقیه را می‌آورد). */
+  pageSize: number;
+  /** مرتب‌سازی اولیهٔ فهرست تورها. */
+  defaultSort: 'default' | 'price-low' | 'price-high';
+}
+
+/**
+ * ایراد ۲۸: tours.page_size و tours.default_sort از این‌جا به صفحهٔ تورها می‌رسند.
+ * مقادیر تنظیمات (default/price_asc/price_desc) به کلیدهای مرتب‌سازی کامپوننت نگاشت می‌شوند.
+ */
+export async function getTourListSettings(): Promise<TourListSettings> {
+  const fallback: TourListSettings = { pageSize: 12, defaultSort: 'default' };
+  try {
+    const rest = getRest();
+    if (!rest) return fallback;
+    const { data, error } = await rest
+      .from('site_settings')
+      .select('setting_key,setting_value')
+      .in('setting_key', ['tours.page_size', 'tours.default_sort']);
+    if (error) throw error;
+    const s = withDefaults(
+      ((data ?? []) as Array<{ setting_key: string; setting_value: string }>).map((r) => ({
+        settingKey: r.setting_key,
+        settingValue: r.setting_value,
+      })),
+    );
+    const rawSize = Number(s['tours.page_size']);
+    const pageSize =
+      Number.isFinite(rawSize) ? Math.min(48, Math.max(4, Math.round(rawSize))) : fallback.pageSize;
+    const rawSort = s['tours.default_sort'];
+    const defaultSort =
+      rawSort === 'price_asc' ? 'price-low' : rawSort === 'price_desc' ? 'price-high' : 'default';
+    return { pageSize, defaultSort };
+  } catch {
+    return fallback;
   }
 }

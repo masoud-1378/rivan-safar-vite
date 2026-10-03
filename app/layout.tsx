@@ -1,33 +1,35 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { SITE_URL } from '@/src/lib/siteConfig';
 import { organizationJsonLd } from './seo-helpers';
 import ClientChrome from './ClientChrome';
-import { getGaId } from '@/src/lib/site-contact';
+import { getGaId, getSiteMeta } from '@/src/lib/site-contact';
 import '../src/index.css';
 import { pinar, vazirmatn } from "./fonts";
 
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: 'تورهای داخلی، خارجی و نمایشگاهی با مسیر شفاف · ریوان سفر',
-    template: '%s',
-  },
-  description:
-    'تورهای داخلی، خارجی و نمایشگاهی را با تاریخ، خدمات و قیمت پایه بررسی کنید و برای تأیید مسیر و ظرفیت با کارشناس در تماس باشید.',
-  // تا عبور از Launch Gate ایندکس عمومی بسته است
-  robots: 'noindex,nofollow',
-  icons: {
-    icon: '/images/favicon-64.png',
-    apple: '/images/apple-touch-icon.png',
-  },
-  openGraph: {
-    siteName: 'ریوان سفر',
-    locale: 'fa_IR',
-    type: 'website',
-  },
-};
+/** ایراد ۲۸: عنوان/توضیح پیش‌فرض و دامنهٔ اصلی از تنظیمات پنل می‌آیند. */
+export async function generateMetadata(): Promise<Metadata> {
+  const meta = await getSiteMeta();
+  return {
+    metadataBase: new URL(meta.siteUrl),
+    title: {
+      default: meta.defaultTitle,
+      template: '%s',
+    },
+    description: meta.defaultDescription,
+    // تا عبور از Launch Gate ایندکس عمومی بسته است
+    robots: 'noindex,nofollow',
+    icons: {
+      icon: '/images/favicon-64.png',
+      apple: '/images/apple-touch-icon.png',
+    },
+    openGraph: {
+      siteName: meta.brand,
+      locale: 'fa_IR',
+      type: 'website',
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: 'device-width',

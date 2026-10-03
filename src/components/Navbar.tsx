@@ -288,7 +288,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                 <Plane className="w-4 h-4 md:w-5 md:h-5 absolute -top-1 -right-3 md:-right-5 transform rotate-45 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               </div>
               <div className="flex flex-col border-r-2 border-border-default pr-2 md:pr-3">
-                <span className="text-base md:text-price-lg text-text-heading leading-tight">ریوان سفر</span>
+                <span className="text-base md:text-price-lg text-text-heading leading-tight">{contact.brand}</span>
               </div>
             </div>
           </a>
@@ -557,7 +557,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                 <div className="flex items-center gap-2 relative text-brand-orange">
                   <span className="text-3xl font-black font-sans tracking-tighter">R</span>
                   <Plane className="w-4 h-4 absolute -top-1 -right-3 transform rotate-45" />
-                  <span className="text-lg font-black text-text-heading mr-2 border-r-2 border-border-default pr-2">ریوان سفر</span>
+                  <span className="text-lg font-black text-text-heading mr-2 border-r-2 border-border-default pr-2">{contact.brand}</span>
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}

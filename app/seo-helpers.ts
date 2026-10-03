@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { SITE_URL } from '@/src/lib/siteConfig';
+import { getSiteUrl } from '@/src/lib/site-contact';
 import { resolveRoute, type BreadcrumbItem } from '@/src/data/siteRegistry';
 import { findLandingByPath } from '@/src/data/seoLandings';
 import { SAMPLE_TOURS, type TourItem } from '@/src/data/toursData';
@@ -180,11 +181,13 @@ export async function resolveSeoLive(path: string): Promise<ResolvedSeo> {
   return fallback;
 }
 
-export function toMetadata(seo: ResolvedSeo): Metadata {
+export async function toMetadata(seo: ResolvedSeo): Promise<Metadata> {
+  // ایراد ۲۸: دامنهٔ canonical از تنظیم site.url می‌آید.
+  const siteUrl = await getSiteUrl();
   const canonical =
     seo.canonicalPath === '/'
-      ? SITE_URL
-      : `${SITE_URL}${seo.canonicalPath}`;
+      ? siteUrl
+      : `${siteUrl}${seo.canonicalPath}`;
   return {
     title: seo.title,
     description: seo.description,
@@ -207,6 +210,8 @@ export function toMetadata(seo: ResolvedSeo): Metadata {
 }
 
 export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
+  // نکته: URLهای JSON-LD عمداً روی SITE_URL (env) می‌مانند؛
+  // تنظیم site.url فقط canonical، نقشهٔ سایت و متادیتای پایه را می‌گرداند (ایراد ۲۸).
   if (!items || items.length === 0) return null;
   return {
     '@context': 'https://schema.org',
