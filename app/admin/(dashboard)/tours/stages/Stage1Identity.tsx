@@ -623,7 +623,9 @@ export default function Stage1Identity({
         {/* پیکر مقصد: یک دکمه که یک پنل واحد را باز می‌کند؛
             بالای پنل جست‌وجو، پایینش مرور دسته‌بندی‌شده (قاره ← کشور ← شهر).
             تیک قارهٔ قبلی (که دیالوگ تأیید B-15 می‌خواست) حذف شد؛ افزودن دسته‌ای
-            فقط در سطح کشور است که همان رفتار toggleMany قبلی است. */}
+            فقط در سطح کشور است که همان رفتار toggleMany قبلی است.
+            گشت موج ۶: پنل در max-w-xl محدود شد تا روی دسکتاپ تمام عرض را نگیرد. */}
+        <div className="max-w-xl">
         <button
           type="button"
           onClick={() => setPickerOpen((v) => !v)}
@@ -762,6 +764,7 @@ export default function Stage1Identity({
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* Row 3: Transport Kind Selector (Air vs Rail vs Land) */}
@@ -795,7 +798,7 @@ export default function Stage1Identity({
                 <div className="min-w-0">
                   <div className="text-xs font-bold leading-tight">{opt.label}</div>
                   <div className="text-caption text-muted-foreground truncate mt-0.5">
-                    {opt.id === 'air' ? 'پرواز داخلی یا خارجی' : opt.id === 'rail' ? 'قطار ۴ یا ۶ تخته و ۵ ستاره' : 'اتوبوس VIP تخت‌شو'}
+                    {opt.id === 'air' ? 'پرواز داخلی یا خارجی' : opt.id === 'rail' ? 'قطار ۴ یا ۶ تخته و ۵ ستاره' : opt.id === 'sea' ? 'کشتی و خط کشتیرانی' : opt.id === 'mixed' ? 'ترکیب چند شیوهٔ سفر' : 'اتوبوس VIP تخت‌شو'}
                   </div>
                 </div>
               </button>

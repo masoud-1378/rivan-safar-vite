@@ -619,15 +619,32 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels, tr
    * تایپی است؛ هیچ‌چیز خودکار پر نمی‌شود (قانون طلایی: حدس ممنوع).
    */
   const citySections = useMemo(() => {
-    const bySlug = new Map((tree?.all ?? []).map((a) => [a.slug, (a.name || '').trim()]));
+    const bySlug = new Map((tree?.all ?? []).map((a) => [a.slug, a]));
     const tour: string[] = [];
-    const push = (slug: string) => {
-      const name = bySlug.get(slug) || '';
-      if (name && !tour.includes(name)) tour.push(name);
+    const pushName = (name: string) => {
+      const n = (name || '').trim();
+      if (n && !tour.includes(n)) tour.push(n);
+    };
+    // فقط «شهر» واقعی پیشنهاد می‌شود — نه قاره، نه کشور.
+    // اگر مقصد تور خودش شهر است همان؛ اگر کشور/قاره است، شهرهای زیرمجموعه‌اش
+    // (در هر عمقی) پیشنهاد می‌شوند.
+    const cityNamesUnder = (slug: string): string[] => {
+      const out: string[] = [];
+      for (const a of tree?.all ?? []) {
+        if (a.parent !== slug) continue;
+        if (a.type === 'city') {
+          const n = (a.name || '').trim();
+          if (n) out.push(n);
+        } else {
+          out.push(...cityNamesUnder(a.slug));
+        }
+      }
+      return out;
     };
     for (const s of destSlugs) {
-      push(s);
-      for (const a of tree?.all ?? []) if (a.parent === s) push(a.slug);
+      const a = bySlug.get(s);
+      if (a?.type === 'city') pushName(a.name);
+      else for (const n of cityNamesUnder(s)) pushName(n);
     }
     // شهرهای پرتکرار: تعداد هتل‌های ثبت‌شده به‌ازای هر شهر (بی‌شهرها خط می‌خورند؛
     // شهرهای مقصد همین تور تکرار نمی‌شوند) — سقف ۱۲ شهر.
