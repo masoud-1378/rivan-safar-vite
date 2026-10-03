@@ -92,7 +92,6 @@ export const siteTours = pgTable(
     publishStatus: publishStatusEnum('publish_status').notNull().default('draft'),
     image: text('image').notNull(),
     badge: varchar('badge', { length: 120 }),
-    features: jsonb('features').default('[]').notNull(), // string[]
     visaRequired: boolean('visa_required').default(false).notNull(),
     hotelStars: integer('hotel_stars').notNull(),
     airline: varchar('airline', { length: 120 }).notNull(),

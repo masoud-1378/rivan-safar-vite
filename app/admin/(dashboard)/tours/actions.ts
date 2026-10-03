@@ -63,11 +63,6 @@ export interface TourConsultantSpecItem {
 
 /**
  * ورودی ذخیرهٔ تور.
- *
- * نکتهٔ آگاهانه (ایراد ۸، میز ۱): فیلد `features` عمداً این‌جا نیست — در هیچ
- * مرحلهٔ ویزارد ورودی نداشت و هیچ‌جای سایت رندر نمی‌شد. ستون دیتابیس
- * (`site_tours.features`) و نگاشت `db-content` دست‌نخورده ماندند تا داده‌های
- * قدیمی حفظ شوند؛ پس اگر دنبالش گشتی، حذفش اشتباه نیست، تصمیم است.
  */
 export interface TourInput {
   slug: string;
@@ -351,7 +346,18 @@ export type SaveTourResult =
   | { ok: true; id: string | null; publishedRemaining: number }
   | { ok: false; error: string };
 
-export async function saveTour(id: string | undefined | null, data: TourInput): Promise<SaveTourResult> {
+export async function saveTour(
+  id: string | undefined | null,
+  data: TourInput,
+  /**
+   * نیت صداکننده — گیت انتشار فقط روی همین قفل می‌شود، نه روی وضعیت ذخیره‌شده.
+   * (رفع باگ بحرانی موج ۱، ۱۴۰۵/۰۷/۱۱: قبلاً گیت با `data.publishStatus==='published'`
+   * سنجیده می‌شد؛ پس «ذخیره تغییرات» روی تورِ منتشرشده هم گیت می‌خورد و هر ویرایشی
+   * که تور را موقتاً ناقص می‌کرد — مثل حذف هتل — کل ذخیره را رد می‌کرد و بعد از
+   * ریلود تغییرات گم می‌شد. گیت مالِ «کنشِ انتشار» است، نه «ذخیره».)
+   */
+  intent: 'draft' | 'published' | 'keep' = 'keep',
+): Promise<SaveTourResult> {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   // ایراد D19: پیام فنی خام به کاربر نمی‌رسد؛ فارسیِ قابل‌فهم برمی‌گردد.
@@ -491,12 +497,13 @@ export async function saveTour(id: string | undefined | null, data: TourInput): 
     emergencyPhone: String(rawConsultant.emergencyPhone ?? ''),
   };
 
-  // گیت سرورِ انتشار (موج ۱، قلم ۲ — رفع ایراد QA سایه): مسیر تکیِ اصلی
-  // (requestPublish → تأیید → handleSave('published') → saveTour) قبلاً روی
-  // سرور راستی‌آزمایی نمی‌شد. همان منطق خالص `checkPublishReadiness` این‌جا
-  // هم اجرا می‌شود تا منبع حقیقت یکی بماند. خطای قابل‌پیش‌بینی throw نمی‌شود
-  // (قرارداد bugfix-441) — به‌صورت مقدار برمی‌گردد.
-  if (data.publishStatus === 'published') {
+  // گیت سرورِ انتشار (موج ۱، قلم ۲ — رفع ایراد QA سایه): فقط وقتی که نیتِ این
+  // صدا واقعاً «انتشار» است. ذخیرهٔ ساده (keep) یا پیش‌نویس (draft) — حتی روی
+  // تورِ منتشرشده — گیت نمی‌خورد؛ وگرنه مدیر نمی‌توانست ویرایشی را ذخیره کند که
+  // تور را موقتاً ناقص می‌کند (باگ بحرانی موج ۱، ۱۴۰۵/۰۷/۱۱).
+  // همان منطق خالص `checkPublishReadiness` این‌جا هم اجرا می‌شود تا منبع حقیقت
+  // یکی بماند. خطای قابل‌پیش‌بینی throw نمی‌شود (قرارداد bugfix-441).
+  if (intent === 'published') {
     const gateInput: PublishGateInput = {
       title,
       price,

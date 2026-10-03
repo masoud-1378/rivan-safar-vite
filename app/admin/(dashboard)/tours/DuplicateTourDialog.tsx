@@ -157,7 +157,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         title: cleanTitle,
         slug: cleanSlug,
         closestDeparture: departure.trim(),
-        // شرایط انتشار (فاز ۲، مایگریشن 0011): کپی همیشه پیش‌نویس است، حتی اگر تور اصلی منتشرشده باشد.
+        // تکثیر همیشه پیش‌نویس است — نیت 'draft' تا گیت انتشار درگیر نشود.
         publishStatus: 'draft',
         // ظرفیت کپی نامشخص است — نه «تأییدشده».
         status: 'pending',
@@ -166,7 +166,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         // قلم ۳ موج ۰: نشان «حرکت تضمین‌شده» قول حقوقی است؛ چون ظرفیت نسخهٔ
         // تازه «در انتظار تأیید» است، خاموش می‌ماند و منتقل نمی‌شود.
         badge: tour.badge === 'حرکت تضمین‌شده' ? '' : tour.badge,
-      });
+      }, 'draft');
       // خطای قابل‌پیش‌بینی به‌صورت مقدار برمی‌گردد تا پیام واقعی‌اش در پروداکشن
       // پشت #441 گم نشود (ریشهٔ مشترک bugfix-441).
       // نکته: این پروژه strict:false است و narrow روی !result.ok کار نمی‌کند؛ پس === false صریح.

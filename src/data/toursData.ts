@@ -62,7 +62,8 @@ export interface TourItem {
   updatedAt: string;
   image: string;
   badge?: string;
-  features: string[];
+  /** ستون دیتابیس در مایگریشن 0024 حذف شد (بی‌خواننده بود)؛ فقط دادهٔ استاتیک قدیمی */
+  features?: string[];
   visaRequired: boolean;
   hotelStars: number;
   airline: string;

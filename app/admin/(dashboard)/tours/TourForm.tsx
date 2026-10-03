@@ -40,7 +40,7 @@ import { checkPublishReadiness, stageTicksFromGate, type PublishCheck } from './
 import { MissingChecksDialog, PublishConfirmDialog } from './PublishGateDialog';
 import { DOMESTIC_SLUGS, DOMESTIC_NAME_RE, guessVisaRequired } from '@/src/lib/domestic';
 
-// 5 Modular Stage Components
+// 5 Modular Stage Components + ایستگاه پایانی (فعلاً مرحلهٔ ۶)
 import Stage1Identity from './stages/Stage1Identity';
 import Stage2Hotels from './stages/Stage2Hotels';
 import Stage3Itinerary from './stages/Stage3Itinerary';
@@ -67,7 +67,7 @@ export interface TourFormProps {
   hotels: HotelPickerItem[];
 }
 
-export type StageId = 1 | 2 | 3 | 4 | 5 | 7;
+export type StageId = 1 | 2 | 3 | 4 | 5 | 6;
 
 const LAST_ORIGIN_KEY = 'rivan-last-origin';
 
@@ -100,13 +100,13 @@ const STAGES: StageTabConfig[] = [
   { id: 3, shortTitle: '۳. برنامه سفر', label: 'برنامه روزبه‌روز و خدمات', icon: Map, description: 'تایم‌لاین گشت‌ها و ترانسفر' },
   { id: 4, shortTitle: '۴. سپر اعتماد', label: 'سپر اعتماد و مدارک', icon: ShieldCheck, description: 'ویزا، عوارض شهری، بار مجاز' },
   { id: 5, shortTitle: '۵. کارشناس', label: 'کارشناس و انتشار', icon: UserCheck, description: 'پادکست، مشاور مسیر، تأیید' },
-  // ایستگاه پایانی (موج ۱، قلم ۵): در معماری ۷مرحله‌ایِ موج ۲ می‌شود مرحلهٔ ۷؛
-  // فعلاً آخرین گام ویزاردِ ۵مرحله‌ای است.
-  { id: 7, shortTitle: '۷. ایستگاه پایانی', label: 'ایستگاه پایانی', icon: Flag, description: 'جمع‌بندی و انتشار' },
+  // ایستگاه پایانی (موج ۱، قلم ۵): فعلاً مرحلهٔ ۶ است تا شماره‌ها پیوسته باشند؛
+  // وقتی موج ۳ مرحلهٔ واقعی ۶ (هزینه‌ها و شرایط) را ساخت، ایستگاه پایانی ۷ می‌شود.
+  { id: 6, shortTitle: '۶. ایستگاه پایانی', label: 'ایستگاه پایانی', icon: Flag, description: 'جمع‌بندی و انتشار' },
 ];
 
 /** ترتیب واقعی گام‌های ویزارد (۵ گام فعلی + ایستگاه پایانی). */
-const STAGE_ORDER: StageId[] = [1, 2, 3, 4, 5, 7];
+const STAGE_ORDER: StageId[] = [1, 2, 3, 4, 5, 6];
 
 export default function TourForm({
   initial,
@@ -323,7 +323,9 @@ export default function TourForm({
 
         const nextPublish: 'draft' | 'published' =
           intent === 'keep' ? formData.publishStatus : intent;
-        const res = await saveTour(editingId ?? null, { ...formData, publishStatus: nextPublish });
+        // نیت صریح به saveTour می‌رسد تا گیت انتشار فقط روی «انتشار» قفل شود،
+        // نه روی ذخیرهٔ سادهٔ تورِ منتشرشده (باگ بحرانی موج ۱، ۱۴۰۵/۰۷/۱۱).
+        const res = await saveTour(editingId ?? null, { ...formData, publishStatus: nextPublish }, intent);
         // خطای قابل‌پیش‌بینی به‌صورت مقدار برمی‌گردد (نه throw) تا پیام واقعی‌اش
         // در پروداکشن گم نشود — ریشهٔ bugfix-441.
         // نکته: این پروژه strict:false است و narrow روی !res.ok کار نمی‌کند؛ پس === false صریح.
@@ -372,6 +374,19 @@ export default function TourForm({
             title: editingId ? 'تور به‌روزرسانی شد.' : 'تور تازه ساخته شد.',
             description: `تور «${tourTitle}» ذخیره شد.`,
           });
+          // صداقت بعد از رفع باگ موج ۱ (۱۴۰۵/۰۷/۱۱): ذخیرهٔ سادهٔ تورِ منتشرشده
+          // دیگر گیت نمی‌خورد؛ اگر ویرایش تور را ناقص کرده، مدیر باید بداند —
+          // بی‌صدا نمی‌ماند.
+          if (intent === 'keep' && nextPublish === 'published') {
+            const gateNow = checkPublishReadiness(formData);
+            if (!gateNow.ready) {
+              toast({
+                title: 'توجه: تور منتشرشده ناقص است',
+                description: `تغییرات ذخیره شد، ولی این قلم‌ها ناقص‌اند: ${gateNow.missing.map((c) => c.label).join('، ')}.`,
+                variant: 'warning',
+              });
+            }
+          }
         }
         onDone(res.id);
       } catch (err: unknown) {
@@ -433,7 +448,7 @@ export default function TourForm({
             const Icon = stage.icon;
             const isActive = activeStage === stage.id;
             // تیک ایستگاه پایانی: وقتی همهٔ چک‌های گیت سبزند (همان readiness قلم ۲).
-            const isPassed = stage.id === 7 ? readiness.ready : stageDone[stage.id - 1];
+            const isPassed = stage.id === 6 ? readiness.ready : stageDone[stage.id - 1];
 
             return (
               <button
@@ -528,7 +543,7 @@ export default function TourForm({
             />
           )}
 
-          {activeStage === 7 && (
+          {activeStage === 6 && (
             <StageFinalStation
               data={formData}
               tree={tree}
@@ -564,7 +579,7 @@ export default function TourForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={activeStage === 7}
+                disabled={activeStage === 6}
                 onClick={() => {
                   const i = STAGE_ORDER.indexOf(activeStage);
                   setActiveStage(STAGE_ORDER[Math.min(STAGE_ORDER.length - 1, i + 1)]);

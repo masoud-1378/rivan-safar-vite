@@ -45,8 +45,6 @@ export const SETTINGS_REGISTRY: SettingDef[] = [
   { key: 'seo.default_title', label: 'عنوان پیش‌فرض', hint: 'برای صفحه‌هایی که عنوان اختصاصی ندارند.', kind: 'text', tab: 'seo', defaultValue: 'ریوان سفر | تورهای داخلی، خارجی و نمایشگاهی با مسیر شفاف' },
   { key: 'seo.default_description', label: 'توضیح پیش‌فرض', hint: 'متای پیش‌فرض صفحه‌ها.', kind: 'textarea', tab: 'seo', defaultValue: 'تورهای داخلی، خارجی و نمایشگاهی را با تاریخ، خدمات و قیمت پایه بررسی کنید.' },
   { key: 'seo.ga_id', label: 'شناسه گوگل آنالیتیکس', hint: 'مثل G-XXXXXXXXXX؛ خالی یعنی غیرفعال.', kind: 'text', tab: 'seo', defaultValue: '', ltr: true },
-  { key: 'seo.min_meta_length', label: 'حداقل طول متا', hint: 'حداقل نویسه توضیح متا برای پاس گیت انتشار.', kind: 'number', tab: 'seo', defaultValue: '120', min: 50, max: 300 },
-  { key: 'tours.default_currency', label: 'واحد پول تورها', hint: 'واحد نمایشی قیمت‌ها.', kind: 'select', tab: 'general', defaultValue: 'toman', options: [{ value: 'toman', label: 'تومان' }] },
   { key: 'tours.default_price_note', label: 'یادداشت پیش‌فرض قیمت', hint: 'زیر قیمت هر تور نمایش داده می‌شود.', kind: 'text', tab: 'general', defaultValue: 'برای هر بزرگسال در اتاق دو تخته' },
   { key: 'tours.page_size', label: 'تعداد تور در هر صفحه', hint: 'بین ۴ تا ۴۸', kind: 'number', tab: 'general', defaultValue: '12', min: 4, max: 48 },
   { key: 'tours.default_sort', label: 'مرتب‌سازی پیش‌فرض', hint: 'ترتیب نمایش فهرست تورها.', kind: 'select', tab: 'general', defaultValue: 'default', options: [{ value: 'default', label: 'پیش‌فرض' }, { value: 'price_asc', label: 'ارزان‌ترین' }, { value: 'price_desc', label: 'گران‌ترین' }] },

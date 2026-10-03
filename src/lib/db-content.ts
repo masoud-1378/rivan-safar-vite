@@ -51,7 +51,41 @@ const iso = (v: unknown): string => {
 /* تورها                                                               */
 /* ------------------------------------------------------------------ */
 
-function restToTour(r: Row): TourItem {
+/**
+ * فاز B3 موج ۲: منبع کانونی قیمت نمایشی — همان منطق faPrice در
+ * app/admin/(dashboard)/tours/actions.ts (جداکنندهٔ هزارگان + ارقام فارسی).
+ * این‌جا تکرار شده چون آن فایل 'use server' اکشن‌هاست و این ماژول نباید به آن
+ * وابسته شود؛ هر تغییری در فرمت باید در هر دو جا اعمال شود.
+ */
+const FA_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+const faPrice = (n: unknown): string => {
+  const grouped = Math.max(0, Math.round(Number(n) || 0)).toLocaleString('en-US');
+  return grouped.replace(/\d/g, (d) => FA_DIGITS[Number(d)]).replace(/,/g, '٬');
+};
+
+/** فاز B5 موج ۲: یادداشت پیش‌فرض قیمت از تنظیمات (خوانش عمومی، بدون نیاز به ادمین). */
+const DEFAULT_PRICE_NOTE_FALLBACK = 'برای هر بزرگسال در اتاق دو تخته';
+async function getPublicPriceNoteDefault(): Promise<string> {
+  try {
+    const rest = getRest();
+    if (!rest) return DEFAULT_PRICE_NOTE_FALLBACK;
+    const { data, error } = await rest
+      .from('site_settings')
+      .select('setting_value')
+      .eq('setting_key', 'tours.default_price_note')
+      .maybeSingle();
+    if (error) throw error;
+    const v = (data as { setting_value?: unknown } | null)?.setting_value;
+    return typeof v === 'string' && v.trim() ? v : DEFAULT_PRICE_NOTE_FALLBACK;
+  } catch {
+    return DEFAULT_PRICE_NOTE_FALLBACK;
+  }
+}
+
+function restToTour(r: Row, priceNoteDefault?: string): TourItem {
+  // فاز B4 موج ۲: گزینه‌های هتل یک‌بار این‌جا پارس می‌شوند تا درجهٔ نمایشی
+  // از همان snapshot حساب شود (max ستاره‌ها) — دیگر از ستون خوانده نمی‌شود.
+  const hotelOptions = arrParsed<TourItem['hotelOptions'][number]>(r.hotel_options);
   return {
     id: str(r.slug),
     title: str(r.title),
@@ -64,8 +98,10 @@ function restToTour(r: Row): TourItem {
     nights: num(r.nights),
     closestDeparture: str(r.closest_departure),
     price: num(r.price),
-    formattedPrice: str(r.formatted_price),
-    priceNote: str(r.price_note),
+    // فاز B3: محاسبه از price — ستون formatted_price دیگر خوانده نمی‌شود.
+    formattedPrice: faPrice(num(r.price)),
+    // فاز B5: از تنظیم tours.default_price_note — ستون price_note دیگر خوانده نمی‌شود.
+    priceNote: priceNoteDefault ?? str(r.price_note),
     status: r.status as TourItem['status'],
     statusLabel: str(r.status_label),
     // گیت انتشار تور (مایگریشن 0011)؛ ستون ممکن است هنوز روی دیتابیس نباشد.
@@ -73,13 +109,13 @@ function restToTour(r: Row): TourItem {
     updatedAt: iso(r.updated_at),
     image: str(r.image),
     badge: (r.badge as string) ?? undefined,
-    features: arr<string>(r.features),
     visaRequired: Boolean(r.visa_required),
-    hotelStars: num(r.hotel_stars),
+    // فاز B4: max ستاره‌های گزینه‌های هتل.
+    hotelStars: hotelOptions.reduce((m, o) => Math.max(m, Number((o as { stars?: unknown })?.stars) || 0), 0),
     airline: str(r.airline),
     includedServices: arr<string>(r.included_services),
     excludedServices: arr<string>(r.excluded_services),
-    hotelOptions: arrParsed<TourItem['hotelOptions'][number]>(r.hotel_options),
+    hotelOptions,
     description: str(r.description),
     // پنج ستون جاافتاده (ردیف ۲-۱)؛ jsonbها خام عبور می‌کنند، نرمالایز با کامپوننت.
     destinationSlugs: arr<string>(r.destination_slugs),
@@ -180,7 +216,9 @@ export const getTours = cache(async (): Promise<TourItem[]> => {
       return (await getToursFallbackMode()) === 'empty' ? [] : SAMPLE_TOURS;
     }
     const hotelMeta = await getHotelMeta();
-    const tours = (data as Row[]).map(restToTour);
+    // فاز B5 موج ۲: یادداشت قیمت از تنظیم می‌آید، نه از ستون price_note.
+    const priceNoteDefault = await getPublicPriceNoteDefault();
+    const tours = (data as Row[]).map((r) => restToTour(r, priceNoteDefault));
     // میز ۳ — ایراد ۱۲: گزینه‌ای که به هتل بایگانی‌شده اشاره می‌کند روی سایت
     // دیده نمی‌شود (snapshot لحظهٔ افزودن، ولی بایگانی تصمیمِ تازهٔ مدیر است).
     // هتل دستیِ آزاد (hotelId خالی) دست نمی‌خورد.
@@ -253,7 +291,9 @@ function restToPlace(r: Row): Place {
     startingPrice: str(r.starting_price),
     startingPriceNote: str(r.starting_price_note),
     lastVerifiedAt: str(r.last_verified_at),
-    activeToursCount: num(r.active_tours_count),
+    // فاز B6 موج ۲: شمارش خودکار «تور فعال» چند خط پایین‌تر بازنویسی‌اش می‌کند؛
+    // ستون active_tours_count دیگر خوانده نمی‌شود (۰ = پیش از بازنویسی).
+    activeToursCount: 0,
     popularDistricts: arr<string>(r.popular_districts),
     keyHighlights: arr<string>(r.key_highlights),
     travelTips: arrParsed<string>(r.travel_tips),
