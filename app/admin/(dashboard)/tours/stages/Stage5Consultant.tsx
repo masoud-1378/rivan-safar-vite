@@ -11,15 +11,19 @@ import {
   LifeBuoy,
   Link2,
   Loader2,
-  Upload
+  Upload,
+  Check,
+  ChevronDown,
+  UserPlus
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
 import { uploadConsultantAudio } from '../audio-upload';
-import { fa } from '@/lib/utils';
+import { cn, fa } from '@/lib/utils';
 import type { TourConsultantSpecItem, TourInput, TourConsultantSuggestion } from '../actions';
 import { getTourConsultantSuggestion } from '../actions';
+import { listTourConsultants, type TourConsultantOption } from '../consultants';
 import { SmartSuggestion } from '../SmartSuggestion';
 
 interface Stage5ConsultantProps {
@@ -27,6 +31,214 @@ interface Stage5ConsultantProps {
   onChange: (fields: Partial<TourInput>) => void;
   /** شناسهٔ تور در حال ویرایش؛ پیشنهادها خودش را منبع حساب نمی‌کنند. */
   excludeTourId?: string | null;
+}
+
+/**
+ * ایراد ۹ مسعود (موج ۶): انتخابگر کارشناس‌های قبلی، بالای فرم.
+ *
+ * کمبوباکس جست‌وجوپذیر روی نام/عنوان/تلفن. با انتخاب، نام، عنوان، تلفن و
+ * تلفن اضطراری در همان رکوردِ فرم می‌نشیند — رکورد تازهٔ پنهانی ساخته
+ * نمی‌شود و ویرایش دستیِ بعدی همان فیلدهای فرم را عوض می‌کند.
+ * «کارشناس تازه» فیلدهای هویتی را خالی می‌کند (رفتار دستیِ فعلی).
+ * لینک صوتی مال تور است نه مال کارشناس؛ دست نخورده می‌ماند.
+ */
+function ConsultantPicker({
+  options,
+  loading,
+  currentName,
+  onPick,
+  onFresh,
+}: {
+  options: TourConsultantOption[];
+  loading: boolean;
+  currentName: string;
+  onPick: (opt: TourConsultantOption) => void;
+  onFresh: () => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [typing, setTyping] = React.useState(false);
+  const [query, setQuery] = React.useState('');
+  const [highlight, setHighlight] = React.useState(0);
+  const wrapRef = React.useRef<HTMLDivElement>(null);
+
+  const q = (typing ? query : '').trim();
+  const matched = options.find((o) => o.name === currentName.trim());
+
+  const filtered = React.useMemo(() => {
+    if (!q) return options;
+    return options.filter(
+      (o) => o.name.includes(q) || o.title.includes(q) || o.phone.includes(q),
+    );
+  }, [options, q]);
+
+  // «کارشناس تازه» همیشه ردیف اول فهرست است.
+  const total = 1 + filtered.length;
+
+  React.useEffect(() => {
+    setHighlight(0);
+  }, [q, open]);
+
+  React.useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setTyping(false);
+      }
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
+  const pickFresh = () => {
+    onFresh();
+    setQuery('');
+    setTyping(false);
+    setOpen(false);
+  };
+  const pick = (o: TourConsultantOption) => {
+    onPick(o);
+    setTyping(false);
+    setOpen(false);
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setOpen(false);
+      setTyping(false);
+      return;
+    }
+    if (!open) {
+      if (e.key === 'ArrowDown' && !loading) setOpen(true);
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlight((h) => (h + 1) % total);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlight((h) => (h - 1 + total) % total);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (highlight === 0) pickFresh();
+      else {
+        const o = filtered[highlight - 1];
+        if (o) pick(o);
+      }
+    }
+  };
+
+  const inputValue = typing ? query : (matched?.name ?? '');
+
+  return (
+    <Field
+      label="کارشناس‌های قبلی"
+      hint={
+        loading
+          ? 'در حال بارگذاری فهرست…'
+          : 'کارشناسِ قبلاً واردشده را از فهرست انتخاب کنید تا مشخصاتش در فرم بیاید.'
+      }
+    >
+      <div ref={wrapRef} className="relative">
+        <div className="relative">
+          <Input
+            value={inputValue}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setTyping(true);
+              setOpen(true);
+            }}
+            onFocus={() => {
+              if (!loading) setOpen(true);
+            }}
+            onKeyDown={onKeyDown}
+            placeholder="جست‌وجوی نام، عنوان یا تلفن…"
+            disabled={loading}
+            className="pe-10 max-md:text-base"
+            role="combobox"
+            aria-expanded={open}
+            aria-autocomplete="list"
+          />
+          <div className="absolute end-1 top-1/2 flex -translate-y-1/2 items-center">
+            {loading && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+            <button
+              type="button"
+              onClick={() => {
+                if (!loading) setOpen((o) => !o);
+              }}
+              aria-label={open ? 'بستن فهرست' : 'باز کردن فهرست'}
+              className="rounded-sm p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <ChevronDown className={cn('size-3.5 transition-transform', open && 'rotate-180')} />
+            </button>
+          </div>
+        </div>
+
+        {open && (
+          <div
+            role="listbox"
+            className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-sm border border-border bg-popover shadow-lg"
+          >
+            <button
+              type="button"
+              role="option"
+              aria-selected={highlight === 0}
+              onMouseEnter={() => setHighlight(0)}
+              onClick={pickFresh}
+              className={cn(
+                'flex w-full items-center gap-2.5 px-3 py-2.5 text-start',
+                highlight === 0 ? 'bg-muted' : 'bg-transparent',
+              )}
+            >
+              <UserPlus className="size-4 shrink-0 text-brand" />
+              <span className="min-w-0">
+                <span className="block text-panel-label text-foreground">کارشناس تازه</span>
+                <span className="block text-panel-caption text-muted-foreground">ورود دستی مشخصات</span>
+              </span>
+            </button>
+            {filtered.length > 0 && <div className="mx-3 border-t border-border" aria-hidden />}
+            {filtered.map((o, i) => {
+              const idx = i + 1;
+              const selected = matched?.name === o.name;
+              return (
+                <button
+                  key={o.name}
+                  type="button"
+                  role="option"
+                  aria-selected={idx === highlight}
+                  onMouseEnter={() => setHighlight(idx)}
+                  onClick={() => pick(o)}
+                  className={cn(
+                    'flex w-full items-center justify-between gap-2 px-3 py-2.5 text-start',
+                    idx === highlight ? 'bg-muted' : 'bg-transparent',
+                  )}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-panel-label text-foreground">{o.name}</span>
+                    {o.title ? (
+                      <span className="block truncate text-panel-caption text-muted-foreground">{o.title}</span>
+                    ) : null}
+                  </span>
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    {o.phone ? (
+                      <span dir="ltr" className="text-panel-caption text-muted-foreground">
+                        {o.phone}
+                      </span>
+                    ) : null}
+                    {selected && <Check className="size-3.5 text-brand" />}
+                  </span>
+                </button>
+              );
+            })}
+            {filtered.length === 0 && q !== '' && (
+              <p className="px-3 py-2.5 text-panel-caption text-muted-foreground">
+                کارشناسی با این مشخصات در فهرست نیست.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </Field>
+  );
 }
 
 export default function Stage5Consultant({ data, onChange, excludeTourId }: Stage5ConsultantProps) {
@@ -65,6 +277,42 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
   }, [singleDestSlug, excludeTourId]);
   const consultantKey = consultantSuggestion ? `${singleDestSlug}:${consultantSuggestion.name}` : null;
   const consultantNameEmpty = !(consultant.name || '').trim();
+
+  /**
+   * ایراد ۹ مسعود (موج ۶): فهرست کارشناس‌های قبلی از روی تورهای موجود.
+   * null یعنی هنوز بارگذاری نشده؛ [] یعنی فهرستی نیست و انتخابگر نشان داده نمی‌شود.
+   */
+  const [prevConsultants, setPrevConsultants] = React.useState<TourConsultantOption[] | null>(null);
+  React.useEffect(() => {
+    let alive = true;
+    listTourConsultants(excludeTourId ?? null)
+      .then((rows) => {
+        if (alive) setPrevConsultants(rows);
+      })
+      .catch(() => {
+        if (alive) setPrevConsultants([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [excludeTourId]);
+
+  const pickPrevConsultant = (opt: TourConsultantOption) => {
+    updateConsultant({
+      name: opt.name,
+      title: opt.title || '',
+      phone: opt.phone || '',
+      emergencyPhone: opt.emergencyPhone || '',
+    });
+    toast({ title: `مشخصات «${opt.name}» در فرم نشست` });
+  };
+
+  const freshConsultant = () => {
+    onChange({
+      consultantSpec: { ...consultant, name: '', title: '', phone: '', emergencyPhone: '' },
+    });
+    toast({ title: 'فیلدها برای کارشناس تازه خالی شد' });
+  };
 
   const copyAudioLink = async () => {
     const url = (consultant.audioUrl || '').trim();
@@ -133,6 +381,17 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
           </h4>
           <span className="text-caption text-muted-foreground">پایین صفحهٔ تور می‌آید تا مسافر مستقیم با او تماس بگیرد</span>
         </div>
+
+        {/* ایراد ۹ مسعود (موج ۶): انتخاب از کارشناس‌های قبلی — فقط وقتی فهرستی هست یا در حال بارگذاری است. */}
+        {(prevConsultants === null || prevConsultants.length > 0) && (
+          <ConsultantPicker
+            options={prevConsultants ?? []}
+            loading={prevConsultants === null}
+            currentName={consultant.name || ''}
+            onPick={pickPrevConsultant}
+            onFresh={freshConsultant}
+          />
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>

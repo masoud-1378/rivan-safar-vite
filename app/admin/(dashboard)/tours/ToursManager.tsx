@@ -95,6 +95,9 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
   const [pending, startTransition] = useTransition();
   // موج ۲، تیم هاب: انتشار/بازگشتِ تک‌توریِ ردیف (همان گیت انتشار گروهی، برای یک تور).
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  // ایراد ۱۵ موج ۶: برگشتِ تک‌توری به پیش‌نویس با دیالوگ تأیید می‌آید
+  // (الگوی حذف/بایگانی)؛ تورِ در انتظارِ تأییدِ بازگشت این‌جا نگه داشته می‌شود.
+  const [unpublishing, setUnpublishing] = useState<TourRow | null>(null);
   // یافتهٔ ۱ گشت موج ۲: رد انتشار باید «دیده» شود — تاست ۴ثانیه‌ای کافی نیست؛
   // دیالوگ ماندگار با فهرست ناقصی‌ها + دکمهٔ رفتن به ویرایش.
   const [blockedPublish, setBlockedPublish] = useState<{ id: string; title: string; missing: string[] } | null>(null);
@@ -178,11 +181,11 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
           }
         } else {
           toast({
-            title: `انتشار ${fa(selected.size)} تور لغو شد`,
+            title: `${fa(selected.size)} تور به پیش‌نویس برگشت`,
             description: 'از سایت پنهان شدند.',
           });
         }
-        // قلم ۴ موج ۱: اگر لغو انتشار گروهی به صفر تور منتشرشده رسید، همان لحظه بپرس.
+        // قلم ۴ موج ۱: اگر بازگشت گروهی به پیش‌نویس به صفر تور منتشرشده رسید، همان لحظه بپرس.
         await maybeAskAllDraftFallback(res.publishedRemaining);
       }
       setSelected(new Set());
@@ -197,7 +200,18 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
   // موج ۲، تیم هاب: انتشار/بازگشتِ تک‌توری از خودِ ردیف — اکشن پرتکرار مدیر.
   // از همان اکشن گروهی استفاده می‌کند تا گیت انتشار (تور ناقص منتشر نشود)
   // و سؤال «همه پیش‌نویس» دقیقاً مثل مسیر گروهی رفتار کنند.
-  const togglePublish = async (tour: TourRow) => {
+  // ایراد ۱۵ موج ۶: برگشت به پیش‌نویس (چه از دکمهٔ ردیفی، چه از آیتم منو)
+  // با دیالوگ تأییدِ نام‌دار می‌آید؛ انتشار بدون تأیید است. یک فلو واحد.
+  const togglePublish = (tour: TourRow) => {
+    if (publishingId) return;
+    if (tour.publishStatus === 'published') {
+      setUnpublishing(tour);
+      return;
+    }
+    void doTogglePublish(tour);
+  };
+
+  const doTogglePublish = async (tour: TourRow) => {
     if (publishingId) return;
     const next = tour.publishStatus === 'published' ? 'draft' : 'published';
     setPublishingId(tour.id);
@@ -292,6 +306,19 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
             </Button>
           }
           items={[
+            // ایراد ۱۵ موج ۶: همان اکشن ردیف، داخل منوی سه‌نقطه هم هست —
+            // یک فلو واحد از togglePublish (برگشت، با دیالوگ تأیید می‌آید).
+            published
+              ? {
+                  label: 'بازگشت به پیش‌نویس',
+                  icon: Undo2,
+                  onSelect: () => togglePublish(tour),
+                }
+              : {
+                  label: 'انتشار',
+                  icon: Megaphone,
+                  onSelect: () => togglePublish(tour),
+                },
             {
               label: 'نمایش در سایت',
               icon: Eye,
@@ -457,7 +484,7 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
             انتشار
           </Button>
           <Button size="sm" variant="outline" onClick={() => setBulkAction('unpublish')} className="text-panel-caption">
-            لغو انتشار
+            بازگشت به پیش‌نویس
           </Button>
           <Button size="sm" variant="outline" onClick={() => setBulkAction('archive')} className="text-panel-caption text-destructive hover:text-destructive">
             بایگانی
@@ -482,7 +509,7 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
           onOpenChange={(open) => !open && setBulkAction(null)}
           title={
             bulkAction === 'publish' ? 'انتشار گروهی'
-            : bulkAction === 'unpublish' ? 'لغو انتشار گروهی'
+            : bulkAction === 'unpublish' ? 'بازگشت گروهی به پیش‌نویس'
             : 'بایگانی گروهی'
           }
           description={
@@ -506,7 +533,7 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
           }
           confirmText={
             bulkAction === 'publish' ? 'انتشار تورها'
-            : bulkAction === 'unpublish' ? 'لغو انتشار تورها'
+            : bulkAction === 'unpublish' ? 'بازگشت تورها به پیش‌نویس'
             : 'بایگانی تورها'
           }
           destructive={bulkAction === 'archive'}
@@ -514,6 +541,16 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
         />
       )}
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی تور" description={deleting ? `تور «${deleting.title}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌شود؛ بعداً از صفحهٔ بایگانی می‌توانید آن را بازیابی کنید.` : ''} confirmText="بایگانی تور" destructive onConfirm={onDelete} />
+      {/* ایراد ۱۵ موج ۶: تأیید برگشت تک‌توری به پیش‌نویس — با نام تور؛
+          دکمهٔ ردیفی و آیتم منو هر دو همین دیالوگ را باز می‌کنند (togglePublish). */}
+      <AlertDialog
+        open={Boolean(unpublishing)}
+        onOpenChange={(open) => { if (!open) setUnpublishing(null); }}
+        title="بازگشت به پیش‌نویس"
+        description={unpublishing ? `تور «${unpublishing.title}» از سایت پنهان می‌شود و به پیش‌نویس برمی‌گردد؛ هر وقت خواستید دوباره منتشرش کنید.` : ''}
+        confirmText="بازگشت به پیش‌نویس"
+        onConfirm={async () => { const target = unpublishing; if (target) await doTogglePublish(target); }}
+      />
       {/* یافتهٔ ۱ گشت موج ۲: رد انتشار تک‌توری — دیالوگ ماندگار با فهرست ناقصی‌ها
           و رفتن به ویرایش، به‌جای تاست گذرایی که دیده نشد. */}
       <Dialog

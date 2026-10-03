@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useId, useMemo, useRef, useState } from 'react';
 import { 
   Building2, 
   Plus, 
@@ -24,6 +24,7 @@ import { AmountInput } from '@/components/ui/amount-input';
 import { Button } from '@/components/ui/button';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Collapsible } from '@/components/ui/collapsible';
+import { FloatPortal, useFloat } from '@/lib/float';
 import { cn, en, fa, faNumber } from '@/lib/utils';
 import { normalizeFaSearch } from '@/lib/persian';
 import type { HotelBookingType, TourHotelOptionItem, TourInput, DestinationTree } from '../actions';
@@ -86,11 +87,188 @@ interface HotelCardProps {
   onUpdate: (patch: Partial<TourHotelOptionItem>) => void;
   onRemove: () => void;
   onUnlink: () => void;
-  /** پیشنهادهای «شهر هتل» — فقط datalist؛ هیچ‌چیز خودکار پر نمی‌شود. */
-  citySuggestions: string[];
+  /**
+   * بخش‌های پیشنهاد «شهر هتل» (ایراد ۶ مسعود، موج ۶): اول شهرهای مقصد همین
+   * تور، بعد شهرهای پرتکرار هتل‌های قبلی. هیچ‌چیز خودکار پر نمی‌شود.
+   */
+  citySections: { tour: string[]; frequent: string[] };
 }
 
-function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }: HotelCardProps) {
+/**
+ * کامبوباکس «شهر هتل» (ایراد ۶ مسعود، موج ۶): ورودی متن با فهرست پیشنهاد
+ * زنده در دو بخش — اول شهرهای مقصد همین تور، بعد شهرهای پرتکرار هتل‌های
+ * قبلی — و امکان تایپ آزاد: هر متنی که تایپ شود همان ثبت می‌شود
+ * (قانون طلایی: حدس ممنوع؛ پس Enter متنِ تایپ‌شده را نگه می‌دارد و فقط
+ * وقتی گزینه‌ای با جهت‌نماها هایلایت شده باشد همان را برمی‌دارد).
+ */
+function CityCombobox({
+  value,
+  onChange,
+  tour,
+  frequent,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  tour: string[];
+  frequent: string[];
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  // ‎-۱ یعنی هیچ گزینه‌ای هایلایت نیست؛ Enter در این حالت متن تایپ‌شده را نگه می‌دارد.
+  const [index, setIndex] = useState(-1);
+  const listId = useId();
+  const root = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { mounted, style, theme, panel } = useFloat(open, root, { matchWidth: true, gap: 4 });
+
+  const query = normalizeFaSearch(value || '');
+  const sections = useMemo(() => {
+    const q = query;
+    // اول «شروع‌شونده با»، بعد «شامل» — مثل کامبوباکس سراسری پروژه.
+    const rank = (items: string[]) => {
+      if (!q) return items;
+      const starts: string[] = [];
+      const contains: string[] = [];
+      for (const c of items) {
+        const n = normalizeFaSearch(c);
+        if (n.startsWith(q)) starts.push(c);
+        else if (n.includes(q)) contains.push(c);
+      }
+      return [...starts, ...contains];
+    };
+    return [
+      { title: 'شهرهای مقصد این تور', items: rank(tour) },
+      { title: 'شهرهای پرتکرار هتل‌ها', items: rank(frequent) },
+    ].filter((s) => s.items.length > 0);
+  }, [tour, frequent, query]);
+
+  const flat = useMemo(() => sections.flatMap((s) => s.items), [sections]);
+  const active = index >= 0 && index < flat.length ? index : -1;
+
+  const openNow = () => {
+    if (blurTimer.current) {
+      clearTimeout(blurTimer.current);
+      blurTimer.current = null;
+    }
+    setOpen(true);
+  };
+  const closeSoon = () => {
+    if (blurTimer.current) clearTimeout(blurTimer.current);
+    blurTimer.current = setTimeout(() => setOpen(false), 150);
+  };
+  const pick = (v: string) => {
+    onChange(v);
+    setOpen(false);
+    inputRef.current?.focus({ preventScroll: true });
+  };
+
+  return (
+    <div ref={root} className="relative">
+      <div className="flex h-10 w-full items-center rounded-field border-0 border-b border-input bg-transparent transition-colors focus-within:border-brand max-md:min-h-11">
+        <input
+          ref={inputRef}
+          role="combobox"
+          aria-expanded={open}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setIndex(-1);
+            setOpen(true);
+          }}
+          onFocus={openNow}
+          onBlur={closeSoon}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              openNow();
+              setIndex((i) => Math.min(flat.length - 1, i + 1));
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              setIndex((i) => Math.max(0, i - 1));
+            } else if (e.key === 'Enter') {
+              if (open && active >= 0) {
+                e.preventDefault();
+                pick(flat[active]);
+              } else {
+                setOpen(false);
+              }
+            } else if (e.key === 'Escape') {
+              setOpen(false);
+            }
+          }}
+          className="h-full min-w-0 flex-1 bg-transparent px-3 text-panel-body text-foreground outline-none placeholder:text-muted-foreground/70 max-md:text-base"
+        />
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-hidden="true"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            inputRef.current?.focus();
+            setOpen(true);
+          }}
+          className="flex shrink-0 items-center self-stretch px-2 text-muted-foreground"
+        >
+          <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} />
+        </button>
+      </div>
+      <FloatPortal open={open} mounted={mounted} style={style} theme={theme} panelRef={panel} className="fixed z-50">
+        <ul
+          id={listId}
+          role="listbox"
+          className="max-h-60 overflow-auto rounded-overlay border-line border-border bg-popover p-1 text-panel-body shadow-overlay"
+        >
+          {flat.length === 0 ? (
+            <li className="px-3 py-2.5 text-panel-caption text-muted-foreground">
+              {query
+                ? 'چنین شهری در فهرست نیست؛ همین متن ثبت می‌شود.'
+                : 'فهرست پیشنهاد خالی است؛ نام شهر را خودتان بنویسید.'}
+            </li>
+          ) : (
+            sections.map((s) => (
+              <React.Fragment key={s.title}>
+                <li
+                  aria-hidden="true"
+                  className="sticky top-0 bg-popover px-3 py-1.5 text-panel-caption font-bold text-muted-foreground"
+                >
+                  {s.title}
+                </li>
+                {s.items.map((c) => {
+                  const i = flat.indexOf(c);
+                  return (
+                    <li
+                      key={c}
+                      role="option"
+                      aria-selected={i === active}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        pick(c);
+                      }}
+                      className={cn(
+                        'flex min-h-11 cursor-pointer items-center justify-between rounded-sm px-3 py-2 text-foreground',
+                        i === active && 'bg-accent'
+                      )}
+                    >
+                      <span>{c}</span>
+                      {c === value && <Check className="size-3.5 shrink-0 text-muted-foreground" />}
+                    </li>
+                  );
+                })}
+              </React.Fragment>
+            ))
+          )}
+        </ul>
+      </FloatPortal>
+    </div>
+  );
+}
+
+function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySections }: HotelCardProps) {
   // پیش‌فرض هوشمند آکاردئون (T7): هتل بی‌نرخ باز، هتل بانرخ بسته.
   const [open, setOpen] = useState(() => !hotelHasRates(hotel));
 
@@ -214,24 +392,19 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }
         </div>
       </div>
 
-      {/* شهر هتل (موج ۳، فیلدهای دامنه‌ای): فقط پیشنهاد تایپی از مقصدهای همین
-          تور + فرزندهای مستقیمشان — هیچ‌چیز خودکار پر نمی‌شود. */}
+      {/* شهر هتل (ایراد ۶ مسعود، موج ۶): کامبوباکس جست‌وجو — اول شهرهای مقصد
+          همین تور، بعد شهرهای پرتکرار هتل‌های قبلی — با امکان تایپ آزاد؛
+          هیچ‌چیز خودکار پر نمی‌شود. */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
         <div className="md:col-span-5">
-          <Field label="شهر هتل" hint="شهری که این هتل در آن قرار دارد">
-            <Input className="max-md:text-base"
+          <Field label="شهر هتل" hint="شهری که این هتل در آن قرار دارد. از فهرست انتخاب کنید یا خودتان بنویسید.">
+            <CityCombobox
               value={hotel.city || ''}
-              onChange={(e) => onUpdate({ city: e.target.value })}
+              onChange={(v) => onUpdate({ city: v })}
+              tour={citySections.tour}
+              frequent={citySections.frequent}
               placeholder="مثلاً: استانبول"
-              list={citySuggestions.length > 0 ? `hotel-city-${idx}` : undefined}
             />
-            {citySuggestions.length > 0 && (
-              <datalist id={`hotel-city-${idx}`}>
-                {citySuggestions.map((c) => (
-                  <option key={c} value={c} />
-                ))}
-              </datalist>
-            )}
           </Field>
         </div>
       </div>
@@ -315,6 +488,10 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }
                   این عدد روی سایت نمایش داده می‌شود
                 </span>
               </div>
+              {/* ایراد ۶ مسعود: «این یعنی چی؟» — توضیح یک‌خطی هر نرخ. */}
+              <p className="mb-1.5 text-panel-caption text-muted-foreground">
+                سهم هر نفر از قیمت اتاق دوتخته.
+              </p>
               <AmountInput inputClassName="max-md:text-base"
                 value={priceNumber(hotel.pricePerPerson) ?? priceNumber(hotel.priceDouble)}
                 onChange={(v) => onUpdate({ pricePerPerson: v == null ? '' : String(v), priceDouble: v == null ? '' : String(v) })}
@@ -341,6 +518,9 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }
                     <User className="size-3.5 text-muted-foreground" />
                     <span>اتاق یک‌تخته</span>
                   </div>
+                  <p className="text-panel-caption text-muted-foreground">
+                    اتاقی که یک نفر به‌تنهایی می‌گیرد؛ معمولاً از دوتخته گران‌تر است.
+                  </p>
                   <AmountInput inputClassName="max-md:text-base"
                     value={priceNumber(hotel.priceSingle)}
                     onChange={(v) => onUpdate({ priceSingle: v == null ? '' : String(v) })}
@@ -354,6 +534,9 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }
                     <Baby className="size-3.5 text-muted-foreground" />
                     <span>کودک با تخت (۶ تا ۱۲ سال)</span>
                   </div>
+                  <p className="text-panel-caption text-muted-foreground">
+                    کودک ۶ تا ۱۲ ساله که تخت جدا می‌خواهد.
+                  </p>
                   <AmountInput inputClassName="max-md:text-base"
                     value={priceNumber(hotel.priceChildWithBed)}
                     onChange={(v) => onUpdate({ priceChildWithBed: v == null ? '' : String(v) })}
@@ -367,6 +550,9 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }
                     <Baby className="size-3.5 text-muted-foreground" />
                     <span>کودک بدون تخت (۲ تا ۶ سال)</span>
                   </div>
+                  <p className="text-panel-caption text-muted-foreground">
+                    کودک ۲ تا ۶ ساله که بدون تخت جدا کنار والدین می‌ماند.
+                  </p>
                   <AmountInput inputClassName="max-md:text-base"
                     value={priceNumber(hotel.priceChildNoBed)}
                     onChange={(v) => onUpdate({ priceChildNoBed: v == null ? '' : String(v) })}
@@ -426,23 +612,37 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels, tr
   const [destOnly, setDestOnly] = useState(() => destSlugs.length > 0);
 
   /**
-   * پیشنهادهای «شهر هتل» (موج ۳، فیلدهای دامنه‌ای): نام مقصدهای همین تور +
-   * فرزندهای مستقیمشان در درخت مقصدها — فقط پیشنهاد تایپی (datalist)؛
-   * هیچ‌چیز خودکار پر نمی‌شود (قانون طلایی: حدس ممنوع).
+   * پیشنهادهای «شهر هتل» (ایراد ۶ مسعود، موج ۶): اول نام مقصدهای همین تور +
+   * فرزندهای مستقیمشان در درخت مقصدها، بعد شهرهای پرتکرار هتل‌های ثبت‌شدهٔ
+   * قبلی — شمارش از همان کاتالوگِ هتل‌ها که از دیتابیس خوانده شده
+   * (فقط‌خواندنی؛ بدون کوئری تازه و بدون هیچ تغییری در داده). فقط پیشنهاد
+   * تایپی است؛ هیچ‌چیز خودکار پر نمی‌شود (قانون طلایی: حدس ممنوع).
    */
-  const citySuggestions = useMemo(() => {
+  const citySections = useMemo(() => {
     const bySlug = new Map((tree?.all ?? []).map((a) => [a.slug, (a.name || '').trim()]));
-    const out: string[] = [];
+    const tour: string[] = [];
     const push = (slug: string) => {
       const name = bySlug.get(slug) || '';
-      if (name && !out.includes(name)) out.push(name);
+      if (name && !tour.includes(name)) tour.push(name);
     };
     for (const s of destSlugs) {
       push(s);
       for (const a of tree?.all ?? []) if (a.parent === s) push(a.slug);
     }
-    return out;
-  }, [tree, destSlugs]);
+    // شهرهای پرتکرار: تعداد هتل‌های ثبت‌شده به‌ازای هر شهر (بی‌شهرها خط می‌خورند؛
+    // شهرهای مقصد همین تور تکرار نمی‌شوند) — سقف ۱۲ شهر.
+    const counts = new Map<string, number>();
+    for (const h of catalogHotels) {
+      const c = (h.cityName || '').trim();
+      if (!c || tour.includes(c)) continue;
+      counts.set(c, (counts.get(c) ?? 0) + 1);
+    }
+    const frequent = [...counts.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'fa'))
+      .slice(0, 12)
+      .map(([c]) => c);
+    return { tour, frequent };
+  }, [tree, destSlugs, catalogHotels]);
 
   // گشت (ایراد ۵): باز شدن پنل باید غیرقابل‌چشم‌پوشی باشد — دکمه حالت فعال می‌گیرد،
   // پنل به دید اسکرول می‌شود و جست‌وجو فوکوس می‌گیرد تا «هیچ اتفاقی نیفتاد» تکرار نشود.
@@ -700,7 +900,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels, tr
               onUpdate={(patch) => handleUpdateHotel(idx, patch)}
               onRemove={() => setConfirmRemoveHotel(idx)}
               onUnlink={() => handleUnlinkHotel(idx)}
-              citySuggestions={citySuggestions}
+              citySections={citySections}
             />
           ))}
         </div>

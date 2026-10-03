@@ -21,7 +21,7 @@ export default function CatalogManager({ initial, tourCounts = {} }: { initial: 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<DestinationRow | null>(null);
   const [deleting, setDeleting] = useState<DestinationRow | null>(null);
-  // گیت انتشار مقصد (قلم ۳ موج ۱): دیالوگ‌های جدا برای انتشار و لغو انتشار، هر دو با نام مقصد.
+  // گیت انتشار مقصد (قلم ۳ موج ۱): دیالوگ‌های جدا برای انتشار و بازگشت به پیش‌نویس، هر دو با نام مقصد.
   const [publishing, setPublishing] = useState<DestinationRow | null>(null);
   const [unpublishing, setUnpublishing] = useState<DestinationRow | null>(null);
   const [usage, setUsage] = useState<number | null>(null);
@@ -69,8 +69,8 @@ export default function CatalogManager({ initial, tourCounts = {} }: { initial: 
       }));
       setDestinations((ds) => ds.map((d) => (d.id === target.id ? { ...d, publishStatus: 'draft' as const } : d)));
       setUnpublishing(null);
-      toast({ title: `انتشار «${target.name}» لغو شد.`, description: 'از سایت پنهان شد ولی در فهرست می‌ماند.' });
-    } catch (error) { toast({ variant: 'error', title: error instanceof Error ? error.message : 'لغو انتشار انجام نشد؛ دوباره تلاش کنید.' }); }
+      toast({ title: `«${target.name}» به پیش‌نویس برگشت.`, description: 'از سایت پنهان شد ولی در فهرست می‌ماند.' });
+    } catch (error) { toast({ variant: 'error', title: error instanceof Error ? error.message : 'بازگشت به پیش‌نویس انجام نشد؛ دوباره تلاش کنید.' }); }
   };
   const edit = (destination: DestinationRow) => { setEditing(destination); setShowForm(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   // برچسب‌های فارسی نوع و دسته‌بندی — همان مقادیر کانونی فرم (یافتهٔ گشت: مقادیر خام انگلیسی نمایش داده می‌شد).
@@ -94,7 +94,7 @@ export default function CatalogManager({ initial, tourCounts = {} }: { initial: 
     } },
     { key: 'id', header: 'عملیات', className: 'w-56', cell: (destination) => <div className="flex flex-wrap gap-1">
       {destination.publishStatus === 'published'
-        ? <Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => setUnpublishing(destination)} disabled={pending}><MegaphoneOff />لغو انتشار</Button>
+        ? <Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => setUnpublishing(destination)} disabled={pending}><MegaphoneOff />بازگشت به پیش‌نویس</Button>
         : <Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => setPublishing(destination)} disabled={pending}><Megaphone />انتشار</Button>}
       <Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => edit(destination)}><Pencil />ویرایش</Button>
       <Link href={`/admin/catalog?tab=hotels&city=${encodeURIComponent(destination.slug)}`} title={`افزودن هتل در ${destination.name}`} className={buttonClasses('ghost', 'sm', 'max-md:min-h-11')}><Building2 />هتل</Link>
@@ -108,7 +108,7 @@ export default function CatalogManager({ initial, tourCounts = {} }: { initial: 
       {showForm || editing ? <DestinationForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onDone={reload} countries={countries} /> : null}
       {/* گیت انتشار جدا برای مقصد (قلم ۳ موج ۱، تصمیم ۶): فقط «منتشرشده»ها روی سایت دیده می‌شوند. */}
       <p className="rounded-sm border border-border bg-muted/30 px-4 py-3 text-panel-caption leading-relaxed text-muted-foreground">
-        گیت انتشار مقصد: فقط مقصدهای «منتشرشده» روی سایت دیده می‌شوند. انتشار نیازمند نام، کشور/ناحیه و دست‌کم توضیح یا تصویر است؛ «لغو انتشار» مقصد را از سایت پنهان می‌کند ولی از فهرست حذف نمی‌کند.
+        گیت انتشار مقصد: فقط مقصدهای «منتشرشده» روی سایت دیده می‌شوند. انتشار نیازمند نام، کشور/ناحیه و دست‌کم توضیح یا تصویر است؛ «بازگشت به پیش‌نویس» مقصد را از سایت پنهان می‌کند ولی از فهرست حذف نمی‌کند.
       </p>
       <Card><CardContent className="p-5"><h2 className="mb-4 text-panel-heading">مقصدها ({fa(destinations.length)})</h2><DataTable rows={destinations} columns={columns} rowKey={(destination) => destination.id} searchKeys={['name', 'nameEn', 'type', 'category']} searchPlaceholder="جست‌وجوی نام، نوع یا دسته‌بندی…" emptyTitle="مقصدی ثبت نشده است" emptyDescription="برای شروع، مقصد جدیدی اضافه کنید." emptyAction={destinations.length === 0 ? { label: 'افزودن اولین مقصد', onClick: () => { setEditing(null); setShowForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); } } : undefined} /></CardContent></Card>
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => { if (!open) { setDeleting(null); setUsage(null); setUsageFailed(false); } }} title="بایگانی مقصد" description={deleting ? (<span className="block space-y-2"><span className="block">مقصد «{deleting.name}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.</span>{usageFailed ? <span className="block font-medium text-destructive">شمارش ارجاع‌ها ناموفق بود؛ با احتیاط بایگانی کنید.</span> : null}{usage !== null && usage > 0 ? <span className="block font-medium text-amber-600 dark:text-amber-400">این مقصد در {fa(usage)} تور استفاده شده است؛ آن تورها سر جایشان می‌مانند و فقط این مقصد از دسترس خارج می‌شود.</span> : null}</span>) : ''} confirmText="بایگانی مقصد" destructive onConfirm={onDelete} />
@@ -123,9 +123,9 @@ export default function CatalogManager({ initial, tourCounts = {} }: { initial: 
       <AlertDialog
         open={Boolean(unpublishing)}
         onOpenChange={(open) => { if (!open) setUnpublishing(null); }}
-        title="لغو انتشار مقصد"
+        title="بازگشت مقصد به پیش‌نویس"
         description={unpublishing ? `مقصد «${unpublishing.name}» از سایت پنهان می‌شود ولی در فهرست می‌ماند؛ هر وقت خواستید دوباره منتشرش کنید.` : ''}
-        confirmText="لغو انتشار"
+        confirmText="بازگشت به پیش‌نویس"
         onConfirm={onUnpublish}
       />
     </div>
