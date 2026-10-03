@@ -84,8 +84,6 @@ export const siteTours = pgTable(
     nights: integer('nights').notNull(),
     closestDeparture: varchar('closest_departure', { length: 120 }).notNull(),
     price: numeric('price', { precision: 15, scale: 0 }).notNull(),
-    formattedPrice: varchar('formatted_price', { length: 60 }).notNull(),
-    priceNote: varchar('price_note', { length: 260 }).notNull(),
     status: varchar('status', { length: 60 }).notNull(), // 'confirmed' | 'pending' | 'updating' | 'full' — وضعیت ظرفیت، نه انتشار
     statusLabel: varchar('status_label', { length: 120 }).notNull(),
     // گیت انتشار تور (مایگریشن 0011): 'draft' = پیش‌نویس (پنهان از سایت)، 'published' = منتشرشده (زنده روی سایت)
@@ -93,7 +91,6 @@ export const siteTours = pgTable(
     image: text('image').notNull(),
     badge: varchar('badge', { length: 120 }),
     visaRequired: boolean('visa_required').default(false).notNull(),
-    hotelStars: integer('hotel_stars').notNull(),
     airline: varchar('airline', { length: 120 }).notNull(),
     includedServices: jsonb('included_services').default('[]').notNull(), // string[]
     excludedServices: jsonb('excluded_services').default('[]').notNull(), // string[]
@@ -134,7 +131,6 @@ export const siteDestinations = pgTable(
     startingPrice: varchar('starting_price', { length: 160 }).notNull(),
     startingPriceNote: varchar('starting_price_note', { length: 300 }).notNull(),
     lastVerifiedAt: varchar('last_verified_at', { length: 160 }).notNull(),
-    activeToursCount: integer('active_tours_count').default(0).notNull(),
     popularDistricts: jsonb('popular_districts').default('[]').notNull(), // string[]
     keyHighlights: jsonb('key_highlights').default('[]').notNull(), // string[]
     travelTips: jsonb('travel_tips').default('[]').notNull(), // string[]

@@ -24,6 +24,8 @@ import type { DestinationTree, TourInput } from '../actions';
 
 export interface StageFinalStationProps {
   data: TourInput;
+  /** فاز B5 موج ۲: «مبنای قیمت» دیگر ستون نیست — از تنظیم tours.default_price_note می‌آید. */
+  priceNoteDefault?: string;
   tree: DestinationTree;
   onGoToStage: (stage: 1 | 2 | 3 | 4 | 5) => void;
   /**
@@ -64,6 +66,7 @@ interface SummaryRow {
  */
 export default function StageFinalStation({
   data,
+  priceNoteDefault,
   tree,
   onGoToStage,
   onRequestPublish,
@@ -149,8 +152,8 @@ export default function StageFinalStation({
           data.price > 0 ? (
             <span>
               <span className="font-bold">{formatToman(data.price)}</span>
-              {data.priceNote.trim() && (
-                <span className="text-muted-foreground"> — {data.priceNote.trim()}</span>
+              {(priceNoteDefault || '').trim() && (
+                <span className="text-muted-foreground"> — {(priceNoteDefault || '').trim()}</span>
               )}
             </span>
           ) : (

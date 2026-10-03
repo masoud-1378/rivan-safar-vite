@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useTransition } from 'react';
+import React, { useState, useMemo, useTransition, useEffect } from 'react';
 import { 
   Compass, 
   Building2, 
@@ -32,7 +32,7 @@ import type {
   TourItineraryDayItem,
 } from './actions';
 import { saveTour, checkSlugUnique } from './actions';
-import { getAllDraftFallbackAnswer } from '../settings/actions';
+import { getAllDraftFallbackAnswer, getSettingsMap } from '../settings/actions';
 import { AllDraftFallbackDialog } from './AllDraftFallbackDialog';
 import type { HotelPickerItem } from '../hotels/actions';
 import { validateDraft } from './tour-helpers';
@@ -122,6 +122,13 @@ export default function TourForm({
   const [isPending, startTransition] = useTransition();
   const [showLivePreview, setShowLivePreview] = useState(false);
   const [touched, setTouched] = useState(false);
+  // فاز B5 موج ۲: «مبنای قیمت» برای ایستگاه پایانی از تنظیم می‌آید، نه از ستون.
+  const [priceNoteDefault, setPriceNoteDefault] = useState('');
+  useEffect(() => {
+    getSettingsMap()
+      .then((m) => setPriceNoteDefault(m['tours.default_price_note'] || ''))
+      .catch(() => {});
+  }, []);
   // گشت (ایراد ۱): تداخل نامک (مثلاً «t»های به‌جامانده از ایراد ۳) ذخیره را بی‌صدا می‌بست؛
   // حالا علاوه بر پیام، خود فیلد نامک هم قرمز می‌شود تا علت گم نشود.
   const [slugConflict, setSlugConflict] = useState(false);
@@ -153,8 +160,6 @@ export default function TourForm({
       nights: Number(initial?.nights) || 0,
       closestDeparture: initial?.closestDeparture || '',
       price: Number(initial?.price) || 0,
-      formattedPrice: initial?.formattedPrice || '',
-      priceNote: initial?.priceNote || 'برای هر بزرگسال در اتاق دوتخته',
       status: initial?.status || 'pending',
       statusLabel: initial?.statusLabel || 'در انتظار تأیید ظرفیت',
       // شرایط انتشار (مایگریشن 0011): پیش‌فرض همیشه پیش‌نویس؛ «انتشار» فقط با دکمهٔ خودش.
@@ -162,7 +167,6 @@ export default function TourForm({
       image: initial?.image || '',
       badge: initial?.badge || '',
       visaRequired: Boolean(initial?.visaRequired),
-      hotelStars: Number(initial?.hotelStars) || 4,
       airline: initial?.airline || '',
       includedServices: Array.isArray(initial?.includedServices) ? (initial.includedServices as string[]) : [],
       excludedServices: Array.isArray(initial?.excludedServices) ? (initial.excludedServices as string[]) : [],
@@ -546,6 +550,7 @@ export default function TourForm({
           {activeStage === 6 && (
             <StageFinalStation
               data={formData}
+              priceNoteDefault={priceNoteDefault}
               tree={tree}
               onGoToStage={(s) => setActiveStage(s)}
               // انتشارِ گیت‌دار: همان مسیر دکمهٔ «انتشار» نوار چسبان (قلم ۲).

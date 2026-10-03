@@ -77,8 +77,6 @@ export interface TourInput {
   nights: number;
   closestDeparture: string;
   price: number;
-  formattedPrice: string;
-  priceNote: string;
   status: string;
   statusLabel: string;
   /** شرایط انتشار (مایگریشن 0011): 'draft' پیش‌نویس، 'published' منتشرشده */
@@ -92,7 +90,6 @@ export interface TourInput {
    * در دیتابیس ذخیره نمی‌شود؛ فقط پرچم همین فرم است.
    */
   visaRequiredManual?: boolean;
-  hotelStars: number;
   airline: string;
   includedServices: string[];
   excludedServices: string[];
@@ -183,15 +180,12 @@ function toTourRow(r: SiteTourRow) {
     nights: r.nights,
     closestDeparture: r.closestDeparture,
     price: Number(r.price),
-    formattedPrice: r.formattedPrice,
-    priceNote: r.priceNote,
     status: r.status,
     statusLabel: r.statusLabel,
     publishStatus: (r.publishStatus ?? 'draft') as 'draft' | 'published',
     image: r.image,
     badge: r.badge ?? '',
     visaRequired: r.visaRequired,
-    hotelStars: r.hotelStars,
     airline: r.airline,
     includedServices: asStringArray(r.includedServices),
     excludedServices: asStringArray(r.excludedServices),
@@ -426,8 +420,6 @@ export async function saveTour(
       };
     }
   }
-  const hotelStars = hotelOptions.reduce((m, h) => Math.max(m, Number(h?.stars) || 0), 0);
-
   let visaRequired = Boolean(data.visaRequired);
   // ایراد ۹: حدس خودکار (داخلی/خارجی بودن مقصد) فقط وقتی اعمال می‌شود که مدیر
   // تیک «نیاز به دریافت ویزا» را دستی لمس نکرده باشد؛ انتخاب دستی مدیر همیشه می‌ماند.
@@ -435,11 +427,6 @@ export async function saveTour(
   if (!data.visaRequiredManual && destSlugs.length > 0) {
     visaRequired = !destSlugs.every((s) => isDomesticSlug(s, destBySlug));
   }
-
-  // ایراد ۲۸: یادداشت پیش‌فرض قیمت از تنظیمات می‌آید، نه هاردکد.
-  const defaultPriceNote =
-    (await getSettingsMap().catch(() => null))?.['tours.default_price_note'] ||
-    'برای هر بزرگسال در اتاق دو تخته';
 
   const carrier = (data.carrierName || data.airline || '').trim();
   const badge = data.badge || (data.guaranteedDeparture ? 'حرکت تضمین‌شده' : null);
@@ -538,8 +525,6 @@ export async function saveTour(
     nights: Math.max(0, Number(data.nights) || 0),
     closestDeparture: data.closestDeparture || '',
     price: String(price),
-    formattedPrice: faPrice(price),
-    priceNote: defaultPriceNote,
     status: data.status || 'pending',
     statusLabel: data.statusLabel || '',
     // شرایط انتشار (مایگریشن 0011): تور تازه همیشه پیش‌نویس است، مگر این‌که صراحتاً «انتشار» زده شود.
@@ -547,7 +532,6 @@ export async function saveTour(
     image: data.image || '',
     badge,
     visaRequired,
-    hotelStars,
     airline: carrier,
     includedServices: data.includedServices ?? [],
     excludedServices: data.excludedServices ?? [],
@@ -627,7 +611,7 @@ export async function updateTourPrice(id: string, price: number) {
   const formatted = faPrice(amount);
   await db
     .update(siteTours)
-    .set({ price: String(amount), formattedPrice: formatted, updatedAt: new Date() })
+    .set({ price: String(amount), updatedAt: new Date() })
     .where(eq(siteTours.id, cleanId));
   revalidatePath('/admin/tours');
   return { ok: true, price: amount, formattedPrice: formatted };

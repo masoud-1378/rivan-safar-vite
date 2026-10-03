@@ -65,6 +65,24 @@ export async function listDestinations() {
   // قلم ۳ کتابچه: ترتیب و سقف یکسان با listDestinationTree (توی tours/actions.ts)
   // تا هیچ مقصدی در یکی از دو فهرست دیده شود و در دیگری نه.
   const rows = await db.select().from(siteDestinations).where(isNull(siteDestinations.deletedAt)).orderBy(asc(siteDestinations.name)).limit(1000);
+  // فاز B6 موج ۲: «تور فعال» از ستون خوانده نمی‌شود (حذف شد، مایگریشن 0026)؛
+  // از روی تورهای منتشرشده حساب می‌شود — همان منطق سمت سایت (db-content.ts).
+  let slugCounts = new Map<string, number>();
+  try {
+    const tours = await db
+      .select({ slugs: siteTours.destinationSlugs, publishStatus: siteTours.publishStatus })
+      .from(siteTours)
+      .where(and(isNull(siteTours.deletedAt), eq(siteTours.publishStatus, 'published')));
+    for (const t of tours) {
+      const slugs = Array.isArray(t.slugs) ? t.slugs : [];
+      for (const s of slugs) {
+        const key = String(s || '').trim();
+        if (key) slugCounts.set(key, (slugCounts.get(key) ?? 0) + 1);
+      }
+    }
+  } catch {
+    // خطا در شمارش → صفر می‌ماند؛ ستون «وضعیت سایت» خالی نشان می‌دهد نه عدد دروغ.
+  }
   return rows.map((r) => ({
     id: r.id,
     slug: r.slug,
@@ -84,7 +102,7 @@ export async function listDestinations() {
     startingPrice: r.startingPrice,
     startingPriceNote: r.startingPriceNote,
     lastVerifiedAt: r.lastVerifiedAt,
-    activeToursCount: r.activeToursCount,
+    activeToursCount: slugCounts.get(r.slug) ?? 0,
     // گیت انتشار مقصد (مایگریشن 0023، قلم ۳ موج ۱): ردیف‌های قدیمی‌تر از
     // ستون هم draft حساب می‌شوند (پیش‌فرض DB).
     publishStatus: (r.publishStatus ?? 'draft') as 'draft' | 'published',
