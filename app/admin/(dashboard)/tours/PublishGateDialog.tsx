@@ -24,7 +24,7 @@ export function MissingChecksDialog({ open, onOpenChange, missing, onGoToStage }
       open={open}
       onOpenChange={onOpenChange}
       title="اول این‌ها را کامل کن"
-      description="برای انتشار، این قلم‌ها ناقص‌اند:"
+      description="برای انتشار، این‌ها ناقص‌اند:"
       footer={
         <Button variant="outline" onClick={() => onOpenChange(false)} data-autofocus>
           بستن

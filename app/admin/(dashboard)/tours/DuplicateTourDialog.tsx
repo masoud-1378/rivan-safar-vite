@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Copy, RefreshCw } from 'lucide-react';
 import { Dialog } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/input';
 import { AmountInput } from '@/components/ui/amount-input';
-import { faSlug, formatToman } from '@/lib/utils';
+import { faSlug, formatToman, en } from '@/lib/utils';
+import { JALALI_MONTHS, toJalali, formatJalali } from '@/lib/jalali';
 import { checkSlugUnique, saveTour, type TourRow } from './actions';
 import { useToast } from '@/components/ui/toast';
 import { DepartureDateField } from './DepartureDateField';
+import { SmartSuggestion } from './SmartSuggestion';
 
 interface DuplicateTourDialogProps {
   tour: TourRow;
@@ -66,6 +68,43 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
   // نباید نامکِ نویسهٔ آخر را بازنویسی کنند.
   const slugReq = useRef(0);
   const slugTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /**
+   * قلم ۵ موج ۲: تاریخ تکثیرِ امن — تاریخ حرکتِ پیشنهادی که نه در گذشته است،
+   * نه با تاریخ تور اصلی یکی؛ فقط پیشنهاد با «پذیرفتن»/«رد»، نه اعمال بی‌صدا.
+   * توجه: closestDeparture متن آزاد شمسیِ بی‌سال است («۲۴ شهریور»)، پس «گذشته»
+   * نسبت به همین سال شمسیِ جاری سنجیده می‌شود.
+   */
+  const parseDeparture = (text: string): { day: number; month: number } | null => {
+    const m = en((text || '').trim()).match(/(\d{1,2})\s*(.+)/);
+    if (!m) return null;
+    const day = Number(m[1]);
+    const token = m[2].replace(/[‌\s]/g, '');
+    const month =
+      JALALI_MONTHS.findIndex((n) => n === token || n.startsWith(token) || token.startsWith(n)) + 1;
+    if (!day || day < 1 || day > 31 || month < 1) return null;
+    return { day, month };
+  };
+  const origDeparture = (tour.closestDeparture || '').trim();
+  const parsedOrig = parseDeparture(origDeparture);
+  const todayJ = toJalali(new Date());
+  const origIsPast =
+    parsedOrig !== null &&
+    (parsedOrig.month < todayJ.jm || (parsedOrig.month === todayJ.jm && parsedOrig.day < todayJ.jd));
+  const safeCandidate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 21);
+    let c = formatJalali(d, { weekday: false, year: false });
+    // پیشنهاد نباید با تاریخ تور اصلی یکی باشد.
+    if (c === origDeparture) {
+      d.setDate(d.getDate() + 1);
+      c = formatJalali(d, { weekday: false, year: false });
+    }
+    return c;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [origDeparture]);
+  const [dismissedSafeDate, setDismissedSafeDate] = useState(false);
+  const showSafeDate = !dismissedSafeDate && (!parsedOrig || origIsPast);
 
   useEffect(() => {
     return () => {
@@ -172,7 +211,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
       // نکته: این پروژه strict:false است و narrow روی !result.ok کار نمی‌کند؛ پس === false صریح.
       if (result.ok === false) {
         toast({
-          title: 'تکثیر ناموفق بود',
+          title: 'کپی ناموفق بود',
           description: result.error,
           variant: 'error',
         });
@@ -180,7 +219,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         return;
       }
       toast({
-        title: 'تور تکثیر شد',
+        title: 'تور کپی شد',
         description: `«${cleanTitle}» به‌صورت پیش‌نویس ساخته شد؛ مبدأ و ویزا از تور اصلی حفظ شدند.`,
       });
       onDone(result.id);
@@ -188,7 +227,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
       const digest = e instanceof Error ? (e as { digest?: string }).digest : undefined;
       console.error('[tour-duplicate] unexpected error', digest ? { digest } : e);
       toast({
-        title: 'تکثیر ناموفق بود',
+        title: 'کپی ناموفق بود',
         description: 'دوباره تلاش کنید.',
         variant: 'error',
       });
@@ -202,13 +241,13 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
-      title="تکثیر تور"
-      description={`از «${tour.title}» یک نسخهٔ تازه می‌سازید. مبدأ و ویزا از تور اصلی حفظ می‌شوند؛ قیمت را همین‌جا انتخاب می‌کنید و نشان «حرکت تضمین‌شده» به نسخهٔ تازه منتقل نمی‌شود. نسخهٔ تازه به‌صورت پیش‌نویس ساخته می‌شود.`}
+      title="کپی تور"
+      description={`از «${tour.title}» یک کپی می‌گیرید. مبدأ و ویزا از تور اصلی حفظ می‌شوند؛ قیمت را همین‌جا انتخاب می‌کنید و نشان «حرکت تضمین‌شده» به کپی منتقل نمی‌شود. کپی به‌صورت پیش‌نویس ساخته می‌شود.`}
       footer={
         <>
           <Button size="md" disabled={busy} onClick={() => void submit()} className="gap-2">
             <Copy className="size-4" />
-            {busy ? 'در حال تکثیر…' : 'تکثیر تور'}
+            {busy ? 'در حال کپی…' : 'کپی تور'}
           </Button>
           <Button size="md" variant="outline" onClick={onClose} disabled={busy}>
             انصراف
@@ -231,7 +270,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
           <Field
             label="آدرس اینترنتی"
             htmlFor="dup-slug"
-            hint="خودکار از عنوان ساخته می‌شود؛ اگر خواستید دستی عوضش کنید"
+            hint="آدرس صفحهٔ همین تور در سایت؛ خودکار از عنوان ساخته می‌شود و اگر خواستید می‌توانید دستی عوضش کنید"
             error={slugError}
           >
             <Input
@@ -262,6 +301,23 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
           value={departure}
           onChange={setDeparture}
         />
+        {/* قلم ۵ موج ۲: اگر تاریخ تور اصلی گذشته یا خوانا نیست، تاریخ امن پیشنهاد می‌شود. */}
+        {showSafeDate && (
+          <SmartSuggestion
+            title={`تاریخ امن پیشنهادی: ${safeCandidate}`}
+            description={
+              origIsPast
+                ? `تاریخ حرکت تور اصلی («${origDeparture}») گذشته است. این تاریخ نه در گذشته است و نه با تاریخ تور اصلی یکی.`
+                : `تاریخ حرکت تور اصلی${origDeparture ? ` («${origDeparture}») ` : ' '}خوانا نیست. این پیشنهاد در آینده است و با تاریخ تور اصلی یکی نیست.`
+            }
+            onAccept={() => {
+              setDeparture(safeCandidate);
+              setDismissedSafeDate(true);
+              toast({ title: 'تاریخ امن گذاشته شد' });
+            }}
+            onReject={() => setDismissedSafeDate(true)}
+          />
+        )}
         <dl className="space-y-1.5 rounded-sm border border-border/70 bg-muted/40 p-3 text-xs">
           <div className="flex items-center justify-between gap-2">
             <dt className="text-muted-foreground">مبدأ (حفظ می‌شود)</dt>
@@ -279,7 +335,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
           </div>
           <div className="flex items-center justify-between gap-2">
             <dt className="text-muted-foreground">نشان «حرکت تضمین‌شده»</dt>
-            <dd className="font-medium text-foreground">به نسخهٔ تازه منتقل نمی‌شود</dd>
+            <dd className="font-medium text-foreground">به کپی منتقل نمی‌شود</dd>
           </div>
           <div className="flex items-center justify-between gap-2">
             <dt className="text-muted-foreground">وضعیت کپی</dt>
@@ -288,7 +344,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         </dl>
         {/* قلم ۳ موج ۰: انتخاب صریح قیمت نسخهٔ تازه — دیگر کپیِ بی‌صدا نیست. */}
         <fieldset>
-          <legend className="text-xs font-bold text-foreground">قیمت نسخهٔ تازه</legend>
+          <legend className="text-xs font-bold text-foreground">قیمت کپی</legend>
           <div className="mt-2 space-y-2">
             <label className="flex cursor-pointer items-center gap-2.5 rounded-sm border border-border/70 bg-card p-3 text-xs transition-colors hover:border-foreground/30">
               <input

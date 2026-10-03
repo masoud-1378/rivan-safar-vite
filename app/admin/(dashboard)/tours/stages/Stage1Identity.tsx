@@ -37,8 +37,9 @@ import { faToSlugFa, CAPACITY_OPTIONS } from '../tour-helpers';
 import { DepartureDateField } from '../DepartureDateField';
 import { uploadTourBanner } from '../banner-upload';
 import SmartImage from '@/src/components/SmartImage';
-import type { DestinationTree, OriginRow, TourInput } from '../actions';
-import { getDestinationContent } from '../actions';
+import type { DestinationTree, OriginRow, TourInput, TourCategorySuggestion, TourPriceSuggestion } from '../actions';
+import { getDestinationContent, getTourCategorySuggestion, getTourPriceSuggestion } from '../actions';
+import { SmartSuggestion } from '../SmartSuggestion';
 import type { TourDraftErrors } from '../tour-helpers';
 
 interface Stage1IdentityProps {
@@ -47,6 +48,8 @@ interface Stage1IdentityProps {
   errors: TourDraftErrors;
   tree: DestinationTree;
   origins: OriginRow[];
+  /** شناسهٔ تور در حال ویرایش؛ پیشنهادها خودش را منبع حساب نمی‌کنند. */
+  excludeTourId?: string | null;
 }
 
 const TYPE_OPTIONS = [
@@ -104,6 +107,7 @@ export default function Stage1Identity({
   errors,
   tree,
   origins,
+  excludeTourId,
 }: Stage1IdentityProps) {
   // قلم ۳ موج ۰: شیوهٔ حمل‌ونقل انتخاب صریح مدیر است — نه حدس regex از روی
   // نام شرکت مجری، نه هیچ پیش‌فرض دیده‌شونده. تا انتخاب نشود هیچ دکمه‌ای فعال نیست.
@@ -164,12 +168,72 @@ export default function Stage1Identity({
     };
   }, [singleDestSlug, needBanner, needDesc]);
 
+  /**
+   * پیشنهادهای هوشمند موج ۲ — قانون طلایی: فقط پیشنهاد با «پذیرفتن»/«رد»؛
+   * تا مدیر تأیید نکند هیچ فیلدی عوض نمی‌شود. اگر داده‌ای نباشد، چیزی نشان داده نمی‌شود.
+   */
+
+  // قلم ۱: دسته‌بندی تور از روی category مقصد — فقط وقتی دقیقاً یک مقصد انتخاب شده.
+  const [catSuggestion, setCatSuggestion] = useState<TourCategorySuggestion | null>(null);
+  const [dismissedCatFor, setDismissedCatFor] = useState<string | null>(null);
+  useEffect(() => {
+    if (!singleDestSlug) {
+      setCatSuggestion(null);
+      return;
+    }
+    let alive = true;
+    getTourCategorySuggestion(singleDestSlug)
+      .then((s) => {
+        if (alive) setCatSuggestion(s);
+      })
+      .catch(() => {
+        if (alive) setCatSuggestion(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [singleDestSlug]);
+  const catLabel = TYPE_OPTIONS.find((t) => t.value === catSuggestion?.suggestedType)?.label
+    ?? catSuggestion?.suggestedType
+    ?? '';
+  const catDesc =
+    catSuggestion?.suggestedType === 'domestic' ? 'داخلی'
+    : catSuggestion?.suggestedType === 'exhibition' ? 'نمایشگاهی'
+    : 'خارجی';
+
+  // قلم ۲: آخرین نرخ ثبت‌شده برای همان مقصد — فقط نقطهٔ شروع، وقتی قیمت هنوز خالی است.
+  const [priceSuggestion, setPriceSuggestion] = useState<TourPriceSuggestion | null>(null);
+  const [dismissedPriceKey, setDismissedPriceKey] = useState<string | null>(null);
+  const priceUnset = (Number(data.price) || 0) <= 0;
+  useEffect(() => {
+    if (!singleDestSlug) {
+      setPriceSuggestion(null);
+      return;
+    }
+    let alive = true;
+    getTourPriceSuggestion(singleDestSlug, excludeTourId ?? null)
+      .then((s) => {
+        if (alive) setPriceSuggestion(s);
+      })
+      .catch(() => {
+        if (alive) setPriceSuggestion(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [singleDestSlug, excludeTourId]);
+  const priceKey = priceSuggestion ? `${singleDestSlug}:${priceSuggestion.price}` : null;
+
   // آپلود بنر تور (T6): همان باکت عکس هتل‌ها، کنار فیلد URL.
   const [uploading, setUploading] = useState(false);
   const uploadingRef = useRef(false);
   const bannerFileRef = useRef<HTMLInputElement | null>(null);
   // پولیش موج ۲: لینک دستی بنر پشت تاگل مخفی است، نه عنصر اصلی فرم.
   const [showBannerUrl, setShowBannerUrl] = useState(false);
+  // پولیش موج ۲ (تیم پیشرفتهٔ تاشو): «آدرس اینترنتی» فیلد فنی است و مدیر روزمره
+  // لازمش ندارد؛ پشت «پیشرفته» و به‌صورت پیش‌فرض بسته می‌ماند. اگر خطای
+  // اعتبارسنجی روی آن باشد، بخش خودش باز می‌شود تا خطا دیده شود.
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // کپی لینک بنر (پولیش موج ۲): لینک خام به کاربر نشان داده نمی‌شود؛ فقط کپی.
   const copyBannerLink = async () => {
@@ -230,7 +294,7 @@ export default function Stage1Identity({
       fd.append('photo', file);
       const res = await uploadTourBanner(data.slug || 'tour', data.title, fd);
       onChange({ image: res.url });
-      toast({ title: 'بنر آپلود شد', description: 'بنر آپلود شد؛ پیش‌نمایشش را پایین می‌بینید.' });
+      toast({ title: 'بنر آپلود شد', description: 'پیش‌نمایشش را پایین می‌بینید.' });
     } catch (e) {
       toast({
         variant: 'error',
@@ -292,9 +356,9 @@ export default function Stage1Identity({
             </Badge>
           </span>
           <label className="flex items-center gap-1.5">
-            <span className="text-[11px] text-muted-foreground">ظرفیت:</span>
+            <span className="text-[11px] text-muted-foreground">وضعیت فروش:</span>
             <Select
-              aria-label="وضعیت ظرفیت"
+              aria-label="وضعیت فروش"
               value={CAPACITY_OPTIONS.some((o) => o.value === data.status) ? data.status : 'pending'}
               onChange={(e) => {
                 const val = e.target.value;
@@ -306,27 +370,46 @@ export default function Stage1Identity({
             />
           </label>
         </div>
-        {/* یافتهٔ ۱/۱۲ مبتدی: توضیح «ظرفیت» در مرحلهٔ ۵ بود ولی انتخابش اینجاست — توضیح به همان‌جا آمد. */}
+        {/* یافتهٔ ۱/۱۲ مبتدی: توضیح «وضعیت فروش» در مرحلهٔ ۵ بود ولی انتخابش اینجاست — توضیح به همان‌جا آمد. */}
         <p className="text-[11px] text-muted-foreground">
-          «ظرفیت» فقط وضعیت ظرفیت است و روی سایت به‌صورت برچسب دیده می‌شود؛ این‌که تور روی سایت دیده شود یا نه با «انتشار» است.
+          انتشار یعنی تور روی سایت دیده شود؛ «وضعیت فروش» یعنی ثبت‌نام باز است یا بسته، و همین به‌صورت برچسب روی سایت نشان داده می‌شود.
         </p>
       </div>
 
-      {/* Row 1: Title & Slug */}
+      {/* Row 1: Title */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-        <div className="md:col-span-8">
+        <div className="md:col-span-12">
           <Field label="عنوان کامل تور *" hint="مثال: تور ۸ روزه روسیه (مسکو + سن‌پترزبورگ) با قطار سریع‌السیر ساپسان">
             <Input
               value={data.title}
               error={errors.title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="عنوان تور را شفاف و گیرا بنویسید…"
+              placeholder="عنوان تور را شفاف بنویسید…"
               className="font-medium"
             />
           </Field>
         </div>
-        <div className="md:col-span-4">
-          <Field label="آدرس اینترنتی تور *" hint="از روی عنوان خودکار ساخته می‌شود؛ فقط حروف انگلیسی، عدد، خط تیره و آندرلاین">
+      </div>
+
+      {/* آدرس اینترنتی (پولیش موج ۲، تیم پیشرفتهٔ تاشو): فیلد فنی است و مدیر
+          روزمره لازمش ندارد — پشت «پیشرفته» و به‌صورت پیش‌فرض بسته. نامک از روی
+          عنوان خودکار ساخته می‌شود، پس داده و اعتبارسنجی هیچ فرقی نمی‌کند؛ اگر
+          خطای اعتبارسنجی روی آن باشد، بخش خودش باز می‌شود تا خطا دیده شود. */}
+      <Collapsible
+        trigger={
+          <span className="flex flex-col items-start gap-1 text-start">
+            <span className="text-xs font-bold text-foreground">تنظیمات پیشرفته</span>
+            <span className="text-[11px] font-normal text-muted-foreground">
+              آدرس اینترنتی تور (همان لینکی که تور با آن در سایت باز می‌شود) این‌جاست؛ خودکار از روی عنوان ساخته می‌شود و در کار روزمره نیازی به آن نیست.
+            </span>
+          </span>
+        }
+        open={advancedOpen || Boolean(errors.slug)}
+        onOpenChange={setAdvancedOpen}
+        className="rounded-sm border border-border/70 bg-card px-4 py-3"
+      >
+        <div className="max-w-xl">
+          <Field label="آدرس اینترنتی تور *" hint="همان آدرسی که تور در سایت با آن باز می‌شود؛ از روی عنوان خودکار ساخته می‌شود و فقط حروف انگلیسی، عدد، خط تیره و آندرلاین می‌پذیرد">
             <Input
               dir="ltr"
               value={data.slug}
@@ -344,7 +427,7 @@ export default function Stage1Identity({
             بازسازی خودکار از عنوان
           </button>
         </div>
-      </div>
+      </Collapsible>
 
       {/* Row 2: Tour Category & Guaranteed Departure */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -360,6 +443,20 @@ export default function Stage1Identity({
               options={TYPE_OPTIONS}
             />
           </Field>
+          {/* قلم ۱ موج ۲: دسته‌بندی پیشنهادی از روی مقصد — فقط پیشنهاد، با پذیرفتن/رد. */}
+          {catSuggestion && catSuggestion.suggestedType !== data.type && dismissedCatFor !== singleDestSlug && (
+            <div className="mt-2">
+              <SmartSuggestion
+                title={`دسته‌بندی پیشنهادی: «${catLabel}»`}
+                description={`مقصد «${catSuggestion.destName}» ${catDesc} است؛ اگر درست است، دسته‌بندی تور همین شود.`}
+                onAccept={() => {
+                  onChange({ type: catSuggestion.suggestedType, typeLabel: catLabel });
+                  toast({ title: 'دسته‌بندی پیشنهادی گذاشته شد' });
+                }}
+                onReject={() => setDismissedCatFor(singleDestSlug)}
+              />
+            </div>
+          )}
         </div>
 
         {/* نشان تور — یک کنترل واحد (موج ۲، تیم تکراری‌ها):
@@ -397,7 +494,7 @@ export default function Stage1Identity({
             hint={
               data.guaranteedDeparture
                 ? 'اگر خالی بماند، «حرکت تضمین‌شده» روی کارت می‌آید.'
-                : 'برای نوشتن متن، اول تیک «حرکت تضمین‌شده» را بزنید.'
+                : 'برای نوشتن متن، اول «حرکت تضمین‌شده» را روشن کنید.'
             }
           >
             <Input
@@ -726,6 +823,20 @@ export default function Stage1Identity({
                 placeholder="۰"
               />
             </Field>
+            {/* قلم ۲ موج ۲: آخرین نرخ ثبت‌شده برای همین مقصد — فقط نقطهٔ شروع، با منبع. */}
+            {priceSuggestion && priceUnset && priceKey !== dismissedPriceKey && (
+              <div className="mt-2">
+                <SmartSuggestion
+                  title={`آخرین نرخ ثبت‌شده برای این مقصد: ${formatToman(priceSuggestion.price)}`}
+                  description={`از تور «${priceSuggestion.title}»${priceSuggestion.departure ? ` (حرکت: ${priceSuggestion.departure})` : ''}. فقط نقطهٔ شروع است؛ با پذیرفتن، قیمت فرم همین می‌شود.`}
+                  onAccept={() => {
+                    onChange({ price: priceSuggestion.price });
+                    toast({ title: 'قیمت پیشنهادی گذاشته شد' });
+                  }}
+                  onReject={() => setDismissedPriceKey(priceKey)}
+                />
+              </div>
+            )}
           </div>
         </div>
 

@@ -259,7 +259,7 @@ export default function StageFinalStation({
           <div>
             <h3 className="text-sm font-bold text-foreground">ایستگاه پایانی: جمع‌بندی و انتشار</h3>
             <p className="text-xs text-muted-foreground">
-              آخرین نگاه پیش از انتشار؛ هر ردیف را می‌توانی همان‌جا ویرایش کنی.
+              آخرین نگاه پیش از انتشار؛ هر ردیف را همان‌جا می‌توانید ویرایش کنید.
             </p>
           </div>
         </div>

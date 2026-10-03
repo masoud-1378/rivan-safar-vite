@@ -223,7 +223,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
           <div className="min-w-0">
             <h3 className="text-sm font-bold text-foreground">مرحله سوم: برنامه سفر روزبه‌روز و خدمات</h3>
             <p className="text-xs text-muted-foreground">
-              تدوین شفاف زمان‌بندی روزانه (روز ۱ تا N)، گشت‌های گروهی، گشت‌های اختیاری و وعده‌های غذایی گنجانده‌شده
+              برنامهٔ شفاف هر روز سفر (از روز اول تا آخر)، گشت‌های گروهی، گشت‌های اختیاری و وعده‌های غذایی
             </p>
           </div>
         </div>
@@ -309,9 +309,9 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
       {itinerary.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-sm border-2 border-dashed border-border/80 p-8 text-center">
           <CalendarDays className="size-10 text-muted-foreground/40 mb-3" />
-          <h4 className="text-sm font-bold text-foreground mb-1">هنوز برنامه روزانه‌ای تنظیم نشده است</h4>
+          <h4 className="text-sm font-bold text-foreground mb-1">هنوز برنامهٔ روزانه‌ای ثبت نشده است</h4>
           <p className="text-xs text-muted-foreground max-w-sm mb-4">
-            برای شفافیت برنامه سفر و ایجاد آرامش در مسافر، فعالیت‌های هر روز را تفکیک کنید.
+            برای این‌که مسافر بداند هر روز چه می‌کند، فعالیت‌ها را روزبه‌روز بنویسید.
           </p>
           <Button
             type="button"
@@ -516,7 +516,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
         open={removeDayTarget !== undefined}
         onOpenChange={(open) => { if (!open) setConfirmRemoveDay(null); }}
         title={removeDayTarget ? `روز ${fa(removeDayTarget.day)}${removeDayTarget.title ? ` «${removeDayTarget.title}»` : ''} حذف شود؟` : ''}
-        description="این روز برای همیشه حذف می‌شود و روز‌های بعدی یک شماره جلو کشیده می‌شوند؛ این کار قابل بازگشت نیست."
+        description="این روز برای همیشه حذف می‌شود و روزهای بعدی یک شماره جلو کشیده می‌شوند؛ این کار قابل بازگشت نیست."
         confirmText="حذف روز"
         destructive
         onConfirm={() => { if (confirmRemoveDay !== null) handleRemoveDay(confirmRemoveDay); }}

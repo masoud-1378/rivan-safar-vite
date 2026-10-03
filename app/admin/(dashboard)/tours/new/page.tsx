@@ -38,15 +38,15 @@ export default async function AdminTourNewPage({ searchParams }: Props) {
       <AdminBreadcrumb
         items={[
           { label: 'تورها', href: '/admin/tours' },
-          { label: duplicateTitle ? `تکثیر «${duplicateTitle}»` : 'تور تازه' },
+          { label: duplicateTitle ? `کپی «${duplicateTitle}»` : 'تور تازه' },
         ]}
       />
       <div>
         <h1 className="text-2xl font-bold text-foreground">
-          {duplicateTitle ? `تکثیر تور «${duplicateTitle}»` : 'تور تازه'}
+          {duplicateTitle ? `کپی تور «${duplicateTitle}»` : 'تور تازه'}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          تور تازه همیشه به‌صورت پیش‌نویس ثبت می‌شود؛ وقتی آماده شد، دکمهٔ «انتشار» را بزن.
+          تور تازه همیشه به‌صورت پیش‌نویس ثبت می‌شود؛ وقتی آماده شد، دکمهٔ «انتشار» را بزنید.
         </p>
       </div>
       <NewTourClient duplicateSource={duplicateSource} tree={tree} origins={origins} hotels={hotels} />

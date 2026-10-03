@@ -17,18 +17,21 @@ import { Field, Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/toast';
-import { cn } from '@/lib/utils';
-import type { TourTrustSpecsItem, TourInput } from '../actions';
+import { cn, fa } from '@/lib/utils';
+import type { TourTrustSpecsItem, TourInput, TourDocsSuggestion } from '../actions';
+import { getTourDocsSuggestion } from '../actions';
 
 interface Stage4TrustTermsProps {
   data: TourInput;
   onChange: (fields: Partial<TourInput>) => void;
+  /** شناسهٔ تور در حال ویرایش؛ پیشنهادها خودش را منبع حساب نمی‌کنند. */
+  excludeTourId?: string | null;
 }
 
 const COMMON_DOCS = [
   'پاسپورت با حداقل ۶ ماه اعتبار از تاریخ سفر',
   'کارت ملی و شناسنامه همهٔ مسافران',
-  'دو قطعه عکس ۴*۳ زمینه سفید جدید',
+  'دو قطعه عکس ۴×۳ زمینه سفید جدید',
   'پرینت حساب بانکی و تمکن مالی ۶ ماهه',
   'ضمانت‌نامه بانکی بازگشت از سفر',
   'گواهی اشتغال به کار یا جواز کسب معتبر',
@@ -37,11 +40,11 @@ const COMMON_DOCS = [
 
 const ACTIVITY_LEVELS = [
   { id: 'easy', label: 'سبک و استراحتی', desc: 'مناسب تمام سنین و بدون پیاده‌روی سنگین' },
-  { id: 'moderate', label: 'متوسط (پیاده‌روی معمول شهری)', desc: 'روزانه ۱ الی ۳ ساعت گشت و پیاده‌روی' },
+  { id: 'moderate', label: 'متوسط (پیاده‌روی معمول شهری)', desc: 'روزانه ۱ تا ۳ ساعت گشت و پیاده‌روی' },
   { id: 'demanding', label: 'پرتحرک و ماجراجویانه', desc: 'نیازمند آمادگی جسمانی، کوهپیمایی یا پله' },
 ];
 
-export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsProps) {
+export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stage4TrustTermsProps) {
   const trust = data.trustSpecs || {};
   // مدارک پیش‌فرض بر اساس نیاز به ویزا (X12): منبع یگانه‌ای که هم fallback و هم «بازنشانی» از آن می‌خواند.
   const defaultDocsForVisa = (visaRequired: boolean): string[] =>
@@ -79,11 +82,58 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
   // بازنشانی مدارک بر اساس ویزا (X12): فهرست را به همان پیش‌فرض‌های ویزایی برمی‌گرداند.
   // دیالوگ تأیید (C4-3): مدارک دستیِ تایپ‌شده با یک کلیک پاک می‌شود و راه برگشتی نیست.
   const [confirmResetDocs, setConfirmResetDocs] = React.useState(false);
+
+  /**
+   * قلم ۳ موج ۲: مدارک تور قبلی همین مقصد — قانون طلایی: دکمه می‌آوردشان و
+   * مدیر در دیالوگ تیک می‌زند کدام‌ها بیایند؛ هیچ‌چیز بی‌صدا اضافه نمی‌شود.
+   * اگر تور قبلی‌ای مدرکی نداشته باشد، دکمه اصلاً دیده نمی‌شود (دادهٔ فعلی:
+   * هیچ توری مدرک ثبت‌شده ندارد، پس این قلم فعلاً خفته است).
+   */
+  const singleDestSlug = Array.isArray(data.destinationSlugs) && data.destinationSlugs.length === 1
+    ? data.destinationSlugs[0]
+    : null;
+  const [docsSuggestion, setDocsSuggestion] = React.useState<TourDocsSuggestion | null>(null);
+  const [showDocsPicker, setShowDocsPicker] = React.useState(false);
+  const [pickedDocs, setPickedDocs] = React.useState<string[]>([]);
+  React.useEffect(() => {
+    if (!singleDestSlug) {
+      setDocsSuggestion(null);
+      return;
+    }
+    let alive = true;
+    getTourDocsSuggestion(singleDestSlug, excludeTourId ?? null)
+      .then((s) => {
+        if (alive) setDocsSuggestion(s);
+      })
+      .catch(() => {
+        if (alive) setDocsSuggestion(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [singleDestSlug, excludeTourId]);
+
+  const openDocsPicker = () => {
+    setPickedDocs(docsSuggestion?.docs ?? []);
+    setShowDocsPicker(true);
+  };
+  const applyPickedDocs = () => {
+    if (pickedDocs.length === 0) {
+      setShowDocsPicker(false);
+      return;
+    }
+    const fresh = pickedDocs.filter((d) => !currentDocs.includes(d));
+    if (fresh.length > 0) {
+      updateTrust({ requiredDocs: [...currentDocs, ...fresh] });
+      toast({ title: `${fa(fresh.length)} مدرک اضافه شد` });
+    }
+    setShowDocsPicker(false);
+  };
   const resetDocsToVisaDefaults = () => {
     const defaults = defaultDocsForVisa(!!data.visaRequired);
     updateTrust({ requiredDocs: defaults });
     toast({
-      title: `مدارک به حالت پیش‌فرض برگشت (${data.visaRequired ? 'سفر نیازمند ویزا' : 'سفر بدون نیاز به ویزا'})`,
+      title: `مدارک به پیش‌فرض برگشت (${data.visaRequired ? 'سفر با ویزا' : 'سفر بدون ویزا'})`,
     });
   };
 
@@ -96,9 +146,9 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
             <ShieldCheck className="size-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-foreground">مرحله چهارم: سپر اعتماد، مدارک و شفاف‌سازی قوانین</h3>
+            <h3 className="text-sm font-bold text-foreground">مرحله چهارم: مدارک، قوانین و اعتماد مسافر</h3>
             <p className="text-xs text-muted-foreground">
-              افزایش امنیت خاطر مسافر با اعلام صریح مدارک، وضعیت ویزا، هزینه‌های احتمالی در مقصد (مالیات شهری، انعام) و بار مجاز
+              تا مسافر با خیال راحت ثبت‌نام کند: مدارک لازم، وضعیت ویزا، هزینه‌هایی که خودش در مقصد می‌پردازد (مالیات شهری، انعام) و بار مجاز
             </p>
           </div>
         </div>
@@ -123,7 +173,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
               />
               <div>
                 <span className="text-xs font-bold text-foreground block">نیاز به دریافت ویزا</span>
-                <span className="text-[11px] text-muted-foreground">مسافر برای این سفر ویزا می‌خواهد؟ اگر تیک را عوض نکنید، بر اساس داخلی یا خارجی بودن مقصد خودکار تنظیم می‌شود.</span>
+                <span className="text-[11px] text-muted-foreground">این سفر به ویزا نیاز دارد؟ اگر دست نزنید، بر اساس داخلی یا خارجی بودن مقصد خودش تنظیم می‌شود.</span>
               </div>
             </label>
           </div>
@@ -150,7 +200,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <Field label="مالیات شهری هتل (City Tax)" hint="در برخی کشورها مسافر مستقیماً به هتل پرداخت می‌کند">
+            <Field label="مالیات شهری هتل" hint="در برخی کشورها مسافر مستقیماً به هتل پرداخت می‌کند">
               <Input
                 value={trust.cityTax || ''}
                 onChange={(e) => updateTrust({ cityTax: e.target.value })}
@@ -160,7 +210,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
           </div>
 
           <div>
-            <Field label="انعام راننده و لیدر (Tips)" hint="عرف پرداخت انعام در مقصد مورد نظر">
+            <Field label="انعام راننده و لیدر" hint="عرف پرداخت انعام در مقصد مورد نظر">
               <Input
                 value={trust.tipsNote || ''}
                 onChange={(e) => updateTrust({ tipsNote: e.target.value })}
@@ -229,6 +279,19 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
           </h4>
           <span className="text-[11px] text-muted-foreground">روی صفحه تور به عنوان چک‌لیست نمایش داده می‌شود</span>
         </div>
+
+        {/* قلم ۳ موج ۲: اگر تور قبلی همین مقصد مدرکی ثبت کرده باشد، مدیر می‌تواند
+            انتخاب کند کدام‌ها به این تور بیایند — هیچ‌چیز بی‌صدا اضافه نمی‌شود. */}
+        {docsSuggestion && (
+          <button
+            type="button"
+            onClick={openDocsPicker}
+            className="inline-flex items-center gap-1.5 text-[11px] font-bold text-brand hover:underline"
+          >
+            <FileText className="size-3.5" />
+            {`افزودن مدارک تور قبلی («${docsSuggestion.title}»)`}
+          </button>
+        )}
 
         {/* Quick presets */}
         <div>
@@ -309,9 +372,42 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
         onOpenChange={setConfirmResetDocs}
         title="مدارک به حالت پیش‌فرض برگردد؟"
         description="مدارک سفارشی که خودتان نوشته‌اید همه پاک می‌شود و فهرست به پیش‌فرض برمی‌گردد؛ این کار قابل بازگشت نیست."
-        confirmText="بازنشانی مدارک"
+        confirmText="برگرداندن مدارک"
         destructive
         onConfirm={resetDocsToVisaDefaults}
+      />
+
+      {/* قلم ۳ موج ۲: انتخاب مدارک تور قبلی — مدیر تیک می‌زند کدام‌ها بیایند. */}
+      <AlertDialog
+        open={showDocsPicker}
+        onOpenChange={setShowDocsPicker}
+        title="کدام مدارک اضافه شوند؟"
+        description={docsSuggestion ? (
+          <span className="block space-y-1.5 text-start">
+            <span className="block text-[11px] text-muted-foreground">{`از تور «${docsSuggestion.title}»:`}</span>
+            {docsSuggestion.docs.map((d) => (
+              <label
+                key={d}
+                className="flex cursor-pointer items-start gap-2 rounded-sm border border-border/60 p-2 text-xs text-foreground"
+              >
+                <input
+                  type="checkbox"
+                  checked={pickedDocs.includes(d)}
+                  onChange={() => {
+                    setPickedDocs((p) =>
+                      p.includes(d) ? p.filter((x) => x !== d) : [...p, d]
+                    );
+                  }}
+                  className="mt-0.5 size-4 shrink-0 cursor-pointer accent-brand"
+                />
+                <span>{d}</span>
+              </label>
+            ))}
+          </span>
+        ) : ''}
+        confirmText="افزودن مدارک انتخاب‌شده"
+        cancelText="انصراف"
+        onConfirm={applyPickedDocs}
       />
     </div>
   );

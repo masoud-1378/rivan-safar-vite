@@ -308,6 +308,205 @@ export async function getDestinationContent(
   };
 }
 
+/**
+ * پیشنهادهای هوشمند موج ۲ — همه فقط-خواندنی‌اند؛ هیچ‌کدام خودشان چیزی را در
+ * فرم عوض نمی‌کنند. قانون طلایی: پیشنهاد با دکمه‌های «پذیرفتن»/«رد» دیده
+ * می‌شود و تا مدیر تأیید نکند هیچ فیلدی دست نمی‌خورد.
+ */
+
+/** نگاشت category مقصد (اسلاگ تمیز دیتابیس) به type فرم تور. */
+const DEST_CATEGORY_TO_TOUR_TYPE: Record<string, string> = {
+  domestic: 'domestic',
+  exhibition: 'exhibition',
+};
+
+export interface TourCategorySuggestion {
+  destName: string;
+  category: string;
+  suggestedType: string;
+}
+
+/**
+ * قلم ۱ موج ۲: دسته‌بندی تور از روی category مقصد.
+ * توجه: ستون category دیتابیس اسلاگ تمیز دارد (asia/domestic/exhibition/…) و
+ * مقدار قدیمی مثل «پکیج آماده» در آن نیست — آن مقدارها فقط در type_label
+ * تورهای قدیمی دیده می‌شود که منبع این قلم نیست. اگر category خوانا/قابل‌نگاشت
+ * نباشد (مثلاً 'region' یا مقصد ناشناس)، null برمی‌گردد و پیشنهادی داده نمی‌شود.
+ */
+export async function getTourCategorySuggestion(
+  destSlug: string
+): Promise<TourCategorySuggestion | null> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const s = (destSlug || '').trim();
+  if (!s) return null;
+  const rows = await db.select().from(siteDestinations).where(eq(siteDestinations.slug, s)).limit(1);
+  const r = rows[0];
+  if (!r || r.deletedAt) return null;
+  const category = (r.category || '').trim().toLowerCase();
+  if (!category || category === 'region') return null;
+  const suggestedType = DEST_CATEGORY_TO_TOUR_TYPE[category] ?? 'foreign';
+  return { destName: r.name, category, suggestedType };
+}
+
+/** خواندنِ تحمل‌پذیر destination_slugs (گاهی ردیف‌های قدیمی رشتهٔ JSONِ دوباره‌کدشده‌اند). */
+function destSlugsOf(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map((x) => String(x)).filter((x) => x.trim() !== '');
+  if (typeof v === 'string') {
+    try {
+      const p = JSON.parse(v);
+      return Array.isArray(p) ? p.map((x) => String(x)).filter((x) => String(x).trim() !== '') : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+/** خواندنِ تحمل‌پذیر ستون‌های jsonb که گاهی رشته‌اند (trust_specs/consultant_spec). */
+function jsonObjectOf(v: unknown): Record<string, unknown> {
+  if (v && typeof v === 'object' && !Array.isArray(v)) return v as Record<string, unknown>;
+  if (typeof v === 'string') {
+    try {
+      return jsonObjectOf(JSON.parse(v));
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+interface DestTourRow {
+  id: string;
+  title: string;
+  price: number;
+  departure: string;
+  trustDocs: string[];
+  consultantName: string;
+  consultantTitle: string;
+  consultantPhone: string;
+}
+
+/** تورهای زنده‌ای که مقصد داده‌شده را دارند؛ تازه‌ترین‌ها اول. فقط خواندن. */
+async function liveToursForDest(destSlug: string, excludeId?: string | null): Promise<DestTourRow[]> {
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const s = (destSlug || '').trim();
+  if (!s) return [];
+  const rows = await db
+    .select({
+      id: siteTours.id,
+      title: siteTours.title,
+      price: siteTours.price,
+      destinationSlugs: siteTours.destinationSlugs,
+      closestDeparture: siteTours.closestDeparture,
+      trustSpecs: siteTours.trustSpecs,
+      consultantSpec: siteTours.consultantSpec,
+    })
+    .from(siteTours)
+    .where(isNull(siteTours.deletedAt))
+    .orderBy(desc(siteTours.createdAt))
+    .limit(300);
+  return rows
+    .filter((r) => r.id !== excludeId && destSlugsOf(r.destinationSlugs).includes(s))
+    .map((r) => {
+      const trust = jsonObjectOf(r.trustSpecs);
+      const consultant = jsonObjectOf(r.consultantSpec);
+      const docsRaw = trust.requiredDocs;
+      return {
+        id: r.id,
+        title: r.title,
+        price: Number(r.price) || 0,
+        departure: r.closestDeparture || '',
+        trustDocs: Array.isArray(docsRaw)
+          ? docsRaw.map((d) => String(d).trim()).filter(Boolean)
+          : [],
+        consultantName: String(consultant.name || '').trim(),
+        consultantTitle: String(consultant.title || '').trim(),
+        consultantPhone: String(consultant.phone || '').trim(),
+      };
+    });
+}
+
+export interface TourPriceSuggestion {
+  price: number;
+  title: string;
+  departure: string;
+}
+
+/**
+ * قلم ۲ موج ۲: آخرین نرخ ثبت‌شده برای همان مقصد (نقطهٔ شروع قیمت).
+ * منبع با عنوان تور ذکر می‌شود. نرخ هتلی جدا نداریم چون hotelId در داده‌های
+ * فعلی همیشه خالی است و نام هتل‌ها متن آزاد است — پس سطح مقصد.
+ */
+export async function getTourPriceSuggestion(
+  destSlug: string,
+  excludeId?: string | null
+): Promise<TourPriceSuggestion | null> {
+  await requireAdmin(['owner', 'editor']);
+  const withPrice = (await liveToursForDest(destSlug, excludeId)).filter((t) => t.price > 0);
+  const latest = withPrice[0];
+  if (!latest) return null;
+  return { price: latest.price, title: latest.title, departure: latest.departure };
+}
+
+export interface TourDocsSuggestion {
+  docs: string[];
+  title: string;
+}
+
+/** قلم ۳ موج ۲: مدارک تور قبلی همین مقصد — مدیر انتخاب می‌کند کدام‌ها بیایند. */
+export async function getTourDocsSuggestion(
+  destSlug: string,
+  excludeId?: string | null
+): Promise<TourDocsSuggestion | null> {
+  await requireAdmin(['owner', 'editor']);
+  const withDocs = (await liveToursForDest(destSlug, excludeId)).filter((t) => t.trustDocs.length > 0);
+  const latest = withDocs[0];
+  if (!latest) return null;
+  return { docs: latest.trustDocs, title: latest.title };
+}
+
+export interface TourConsultantSuggestion {
+  name: string;
+  title: string;
+  phone: string;
+  tourCount: number;
+}
+
+/**
+ * قلم ۴ موج ۲: کارشناسی که در تورهای قبلی همین مقصد بیشتر تکرار شده.
+ * اگر هیچ تور قبلی‌ای نام کارشناس نداشته باشد، null (پیشنهادی نمی‌دهیم).
+ */
+export async function getTourConsultantSuggestion(
+  destSlug: string,
+  excludeId?: string | null
+): Promise<TourConsultantSuggestion | null> {
+  await requireAdmin(['owner', 'editor']);
+  const tours = await liveToursForDest(destSlug, excludeId);
+  const byName = new Map<string, DestTourRow[]>();
+  for (const t of tours) {
+    if (!t.consultantName) continue;
+    const list = byName.get(t.consultantName) ?? [];
+    list.push(t);
+    byName.set(t.consultantName, list);
+  }
+  let best: DestTourRow[] | null = null;
+  for (const list of byName.values()) {
+    if (!best || list.length > best.length) best = list;
+  }
+  if (!best) return null;
+  // تازه‌ترین رکورد همان کارشناس، کامل‌ترین مشخصات را دارد.
+  const freshest = best[0];
+  return {
+    name: freshest.consultantName,
+    title: freshest.consultantTitle,
+    phone: freshest.consultantPhone,
+    tourCount: best.length,
+  };
+}
+
 export async function listOrigins(): Promise<OriginRow[]> {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();

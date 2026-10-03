@@ -97,10 +97,10 @@ interface StageTabConfig {
 
 const STAGES: StageTabConfig[] = [
   { id: 1, shortTitle: '۱. هویت و نرخ', label: 'هویت، ترابری و نرخ پایه', icon: Compass, description: 'مقصد، نحوه حرکت، کف قیمت' },
-  { id: 2, shortTitle: '۲. هتل و اتاق', label: 'هتل‌ها و اتاق‌ها', icon: Building2, description: 'ماتریس ستاره، تخت و وعده‌ها' },
+  { id: 2, shortTitle: '۲. هتل و اتاق', label: 'هتل‌ها و اتاق‌ها', icon: Building2, description: 'هتل‌ها، ستاره و وعده‌ها' },
   { id: 3, shortTitle: '۳. برنامه سفر', label: 'برنامه روزبه‌روز و خدمات', icon: Map, description: 'تایم‌لاین گشت‌ها و ترانسفر' },
-  { id: 4, shortTitle: '۴. سپر اعتماد', label: 'سپر اعتماد و مدارک', icon: ShieldCheck, description: 'ویزا، عوارض شهری، بار مجاز' },
-  { id: 5, shortTitle: '۵. کارشناس', label: 'کارشناس و انتشار', icon: UserCheck, description: 'پادکست، مشاور مسیر، تأیید' },
+  { id: 4, shortTitle: '۴. اعتماد و مدارک', label: 'اعتماد، مدارک و قوانین', icon: ShieldCheck, description: 'ویزا، هزینه‌های مقصد، بار مجاز' },
+  { id: 5, shortTitle: '۵. کارشناس', label: 'کارشناس مسیر و راهنما', icon: UserCheck, description: 'مشاور مسیر، فایل صوتی، راهنمای فروش و انتشار' },
   // ایستگاه پایانی (موج ۱، قلم ۵): فعلاً مرحلهٔ ۶ است تا شماره‌ها پیوسته باشند؛
   // وقتی موج ۳ مرحلهٔ واقعی ۶ (هزینه‌ها و شرایط) را ساخت، ایستگاه پایانی ۷ می‌شود.
   { id: 6, shortTitle: '۶. ایستگاه پایانی', label: 'ایستگاه پایانی', icon: Flag, description: 'جمع‌بندی و انتشار' },
@@ -626,6 +626,7 @@ export default function TourForm({
               errors={slugConflict ? { ...errors, slug: 'این آدرس اینترنتی قبلاً برای تور دیگری استفاده شده است.' } : errors}
               tree={tree}
               origins={origins}
+              excludeTourId={editingId ?? null}
             />
           )}
 
@@ -649,6 +650,7 @@ export default function TourForm({
             <Stage4TrustTerms
               data={formData}
               onChange={updateFormData}
+              excludeTourId={editingId ?? null}
             />
           )}
 
@@ -656,6 +658,7 @@ export default function TourForm({
             <Stage5Consultant
               data={formData}
               onChange={updateFormData}
+              excludeTourId={editingId ?? null}
             />
           )}
 

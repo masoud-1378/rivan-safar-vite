@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Copy, Pencil, Plus, Archive, Plane, Train, Bus, Ship, Route, ShieldCheck, Eye } from 'lucide-react';
+import { Copy, Pencil, Plus, Archive, Plane, Train, Bus, Ship, Route, ShieldCheck, Eye, Megaphone, Undo2, Ellipsis } from 'lucide-react';
 import { deleteTour, setToursPublishStatusBulk, archiveToursBulk, type TourRow } from './actions';
 import { getAllDraftFallbackAnswer } from '../settings/actions';
 import { AllDraftFallbackDialog } from './AllDraftFallbackDialog';
@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, type Column } from '@/components/ui/data-table';
+import { DropdownMenu } from '@/components/ui/dropdown-menu';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { cn, fa } from '@/lib/utils';
@@ -24,6 +25,11 @@ import { DuplicateTourDialog } from './DuplicateTourDialog';
 interface ToursManagerProps {
   initial: TourRow[];
   sectionSettings: Record<string, string>;
+  /**
+   * موج ۲، تیم هاب: اگر خواندن تورها از دیتابیس شکست خورده باشد، به‌جای جدولِ
+   * خالیِ گمراه‌کننده پیام صادقانه نشان داده می‌شود. رفتار موفق هیچ فرقی نمی‌کند.
+   */
+  loadError?: boolean;
 }
 
 /**
@@ -80,11 +86,13 @@ function transportBadge(tour: TourRow) {
  * - مخربِ برگشت‌پذیر (بایگانی): دیالوگ با نام تور + توضیح برگشت‌پذیری.
  * - مخربِ برگشت‌ناپذیر (حذف دائمی در صفحهٔ بایگانی): دیالوگ با نام تور + هشدار صریح برگشت‌ناپذیری.
  */
-export default function ToursManager({ initial, sectionSettings }: ToursManagerProps) {
+export default function ToursManager({ initial, sectionSettings, loadError = false }: ToursManagerProps) {
   const [tours, setTours] = useState(initial);
   const [deleting, setDeleting] = useState<TourRow | null>(null);
   const [duplicating, setDuplicating] = useState<TourRow | null>(null);
   const [pending, startTransition] = useTransition();
+  // موج ۲، تیم هاب: انتشار/بازگشتِ تک‌توریِ ردیف (همان گیت انتشار گروهی، برای یک تور).
+  const [publishingId, setPublishingId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [publishFilter, setPublishFilter] = useState<'all' | 'draft' | 'published'>('all');
   // عملیات گروهی (T15)
@@ -181,6 +189,38 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
     }
   };
 
+  // موج ۲، تیم هاب: انتشار/بازگشتِ تک‌توری از خودِ ردیف — اکشن پرتکرار مدیر.
+  // از همان اکشن گروهی استفاده می‌کند تا گیت انتشار (تور ناقص منتشر نشود)
+  // و سؤال «همه پیش‌نویس» دقیقاً مثل مسیر گروهی رفتار کنند.
+  const togglePublish = async (tour: TourRow) => {
+    if (publishingId) return;
+    const next = tour.publishStatus === 'published' ? 'draft' : 'published';
+    setPublishingId(tour.id);
+    try {
+      const res = await setToursPublishStatusBulk([tour.id], next);
+      const skipped = res.skipped[0];
+      if (skipped) {
+        toast({
+          variant: 'error',
+          title: 'انتشار ممکن نیست',
+          description: `تور «${skipped.title}» ناقص است: ${skipped.missing.join('، ')}`,
+        });
+      } else {
+        setTours((ts) => ts.map((t) => (t.id === tour.id ? { ...t, publishStatus: next } : t)));
+        toast({
+          title: next === 'published' ? 'تور منتشر شد' : 'تور به پیش‌نویس برگشت',
+          description: next === 'published' ? 'روی سایت دیده می‌شود.' : 'از سایت پنهان شد.',
+        });
+        // قلم ۴ موج ۱: اگر با همین یک تور شمار منتشرشده‌ها صفر شد، همان لحظه بپرس.
+        await maybeAskAllDraftFallback(res.publishedRemaining);
+      }
+    } catch (error) {
+      toast({ variant: 'error', title: error instanceof Error ? error.message : 'انجام نشد؛ دوباره تلاش کنید.' });
+    } finally {
+      setPublishingId(null);
+    }
+  };
+
   // قلم ۴ (میز T1): فیلتر وضعیت — گزینه‌ها از همان ثابت مشترک مرحلهٔ ۱ می‌آیند (X7).
   const statusOptions = useMemo(() => CAPACITY_OPTIONS, []);
 
@@ -211,23 +251,51 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
 
   // میز ۲: دکمه‌های عملیات ردیف — یک تعریف برای جدول دسکتاپ و کارت موبایل؛
   // در موبایل تارگت لمسی ۴۴px (max-md:min-h-11) و در کارت تمام‌عرض.
-  const tourActions = (tour: TourRow, card = false) => (
-    <div className={cn(card ? "flex gap-1.5" : "flex items-center gap-1")} onClick={(e) => e.stopPropagation()}>
-      <Button variant="ghost" size="icon" title="نمایش در سایت" aria-label={`نمایش تور «${tour.title}» در سایت (تب تازه)`} onClick={() => window.open(`/tour/${tour.slug}`, '_blank', 'noopener,noreferrer')} className={cn(card && "flex-none")}>
-        <Eye />
-      </Button>
-      <Button variant="ghost" size="sm" className={cn("max-md:min-h-11", card && "flex-1")} onClick={() => router.push(`/admin/tours/${tour.id}`)}>
-        <Pencil />ویرایش
-      </Button>
-      <Button variant="ghost" size="sm" className={cn("max-md:min-h-11", card && "flex-1")} onClick={() => setDuplicating(tour)}>
-        <Copy />تکثیر
-      </Button>
-      {!card && <span className="mx-1 h-5 w-px bg-border" aria-hidden="true" />}
-      <Button variant="ghost" size="sm" className={cn("text-destructive max-md:min-h-11", card && "flex-1")} onClick={() => setDeleting(tour)} disabled={pending}>
-        <Archive />بایگانی
-      </Button>
-    </div>
-  );
+  // موج ۲، تیم هاب: ترتیب از چشم مدیر مبتدی — پرتکرارها (ویرایش، کپی،
+  // انتشار/بازگشت به پیش‌نویس، بایگانی) مستقیم؛ کم‌تکرار (نمایش در سایت)
+  // در منوی «بیشتر». جداکنندهٔ بایگانی (مخرب) طبق قرارداد قلم ۳ می‌ماند.
+  const tourActions = (tour: TourRow, card = false) => {
+    const published = tour.publishStatus === 'published';
+    return (
+      <div className={cn(card ? "flex gap-1.5" : "flex items-center gap-1")} onClick={(e) => e.stopPropagation()}>
+        <Button variant="ghost" size="sm" className={cn("max-md:min-h-11", card && "flex-1")} onClick={() => router.push(`/admin/tours/${tour.id}`)}>
+          <Pencil />ویرایش
+        </Button>
+        <Button variant="ghost" size="sm" className={cn("max-md:min-h-11", card && "flex-1")} onClick={() => setDuplicating(tour)}>
+          <Copy />کپی
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn("max-md:min-h-11", card && "flex-1")}
+          title={published ? 'بازگشت تور به پیش‌نویس' : 'انتشار تور'}
+          disabled={publishingId === tour.id}
+          onClick={() => void togglePublish(tour)}
+        >
+          {published ? <><Undo2 />بازگشت به پیش‌نویس</> : <><Megaphone />انتشار</>}
+        </Button>
+        {!card && <span className="mx-1 h-5 w-px bg-border" aria-hidden="true" />}
+        <Button variant="ghost" size="sm" className={cn("text-destructive max-md:min-h-11", card && "flex-1")} onClick={() => setDeleting(tour)} disabled={pending}>
+          <Archive />بایگانی
+        </Button>
+        <DropdownMenu
+          align="end"
+          trigger={
+            <Button variant="ghost" size="icon" title="بیشتر" aria-label={`عملیات بیشتر تور «${tour.title}»`} className={cn(card && "flex-none")}>
+              <Ellipsis />
+            </Button>
+          }
+          items={[
+            {
+              label: 'نمایش در سایت',
+              icon: Eye,
+              onSelect: () => window.open(`/tour/${tour.slug}`, '_blank', 'noopener,noreferrer'),
+            },
+          ]}
+        />
+      </div>
+    );
+  };
 
   const onPriceSaved = (id: string) => (price: number, formattedPrice: string) =>
     setTours((ts) => ts.map((t) => (t.id === id ? { ...t, price, formattedPrice } : t)));
@@ -256,13 +324,15 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
       <p className="mt-2 text-xs text-muted-foreground">
         <span className="font-medium text-foreground">{tour.destination || '—'}</span>
         <span className="block">از مبدأ: {tour.origin || '—'} · {tour.typeLabel || '—'}</span>
+        <span className="block">تاریخ حرکت: {(tour.closestDeparture as string) || '—'}</span>
       </p>
+      {/* موج ۲، تیم هاب: همان ترتیب ستون‌های جدول — انتشار اول، بعد وضعیت فروش. */}
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <Badge variant={tour.status === 'confirmed' ? 'success' : tour.status === 'pending' ? 'warning' : 'secondary'}>
-          {(tour.statusLabel as string) || (tour.status as string)}
-        </Badge>
         <Badge variant={tour.publishStatus === 'published' ? 'success' : 'warning'}>
           {tour.publishStatus === 'published' ? 'منتشرشده' : 'پیش‌نویس'}
+        </Badge>
+        <Badge variant={tour.status === 'confirmed' ? 'success' : tour.status === 'pending' ? 'warning' : 'secondary'}>
+          {(tour.statusLabel as string) || (tour.status as string)}
         </Badge>
       </div>
       <div className="mt-1" onClick={(e) => e.stopPropagation()}>
@@ -314,7 +384,12 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
         </div>
       )
     },
-    { key: 'typeLabel', header: 'نوع', cell: (tour) => tour.typeLabel || '—' },
+    // موج ۲، تیم هاب: ترتیب ستون‌ها از چشم مدیر مبتدی —
+    // عنوان، مقصد، انتشار، وضعیت فروش، قیمت، تاریخ حرکت؛ بعد «نوع» و عملیات.
+    // شرایط انتشار (میز T2، مایگریشن 0011): پیش‌نویس روی سایت دیده نمی‌شود.
+    { key: 'publishStatus', header: 'انتشار', cell: (tour) => <Badge variant={tour.publishStatus === 'published' ? 'success' : 'warning'}>{tour.publishStatus === 'published' ? 'منتشرشده' : 'پیش‌نویس'}</Badge> },
+    // وضعیت فروش (میز T2: جدا از وضعیت انتشار؛ confirmed/pending/… فقط فروش‌اند).
+    { key: 'status', header: 'وضعیت فروش', cell: (tour) => <Badge variant={tour.status === 'confirmed' ? 'success' : tour.status === 'pending' ? 'warning' : 'secondary'}>{tour.statusLabel || tour.status}</Badge> },
     {
       key: 'price',
       header: 'قیمت پایه',
@@ -329,10 +404,20 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
         />
       ),
     },
-    // وضعیت ظرفیت (میز T2: جدا از وضعیت انتشار؛ confirmed/pending/… فقط ظرفیت‌اند).
-    { key: 'status', header: 'ظرفیت', cell: (tour) => <Badge variant={tour.status === 'confirmed' ? 'success' : tour.status === 'pending' ? 'warning' : 'secondary'}>{tour.statusLabel || tour.status}</Badge> },
-    // شرایط انتشار (میز T2، مایگریشن 0011): پیش‌نویس روی سایت دیده نمی‌شود.
-    { key: 'publishStatus', header: 'انتشار', cell: (tour) => <Badge variant={tour.publishStatus === 'published' ? 'success' : 'warning'}>{tour.publishStatus === 'published' ? 'منتشرشده' : 'پیش‌نویس'}</Badge> },
+    // تاریخ حرکت بعدی — همان متنی که روی کارت تور در سایت نمایش داده می‌شود
+    // (متن آزاد مثل «۱۵ آبان» است، پس مرتب‌سازی ندارد تا گمراه‌کننده نشود).
+    {
+      key: 'closestDeparture',
+      header: 'تاریخ حرکت',
+      cell: (tour) => (
+        <span className={cn(tour.closestDeparture ? 'text-foreground' : 'text-muted-foreground')}>
+          {tour.closestDeparture || '—'}
+        </span>
+      ),
+    },
+    // «نوع» کم‌ارزش‌ترین ستونِ جدول است (داخلی/خارجی بودن از مقصد هم تا حدی پیداست)
+    // ولی بُعدِ اسکنِ مستقلی می‌دهد؛ حذف نشد، فقط آخرِ ستون‌های داده رفت.
+    { key: 'typeLabel', header: 'نوع', cell: (tour) => tour.typeLabel || '—' },
     // قلم ۲ و ۳ (میز T1): تکثیر با دیالوگ تنظیمات و دور از بایگانی؛ ویرایش به مسیر جدا می‌رود (میز T2).
     { key: 'id', header: 'عملیات', cell: (tour) => tourActions(tour) },
   ];
@@ -340,7 +425,23 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
   return (
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-foreground">تورها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول تورها — قیمت پایه را می‌توانید مستقیم از جدول ویرایش کنید</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="tours" title="تنظیمات تورها" tabs={['general']} values={sectionSettings} /><Link href="/admin/tours/new"><Button className="h-11 lg:h-10"><Plus />افزودن تور جدید</Button></Link></div></div>
-      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">تورها ({fa(tours.length)})</h2><DataTable rows={visible} columns={columns} rowKey={(tour) => tour.id} searchKeys={['title', 'destination', 'typeLabel']} searchPlaceholder="جست‌وجوی عنوان، مقصد یا نوع تور…" selection={{ selected, onToggle: toggleSelected, onTogglePage: togglePageSelected }} mobileCard={tourCard} toolbar={<><Select aria-label="فیلتر وضعیت ظرفیت" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} options={[{ value: 'all', label: 'همه ظرفیت‌ها' }, ...statusOptions]} className="h-9 w-40 max-md:min-h-11" /><Select aria-label="فیلتر انتشار" value={publishFilter} onChange={(e) => setPublishFilter(e.target.value as 'all' | 'draft' | 'published')} options={[{ value: 'all', label: 'همه' }, { value: 'draft', label: 'پیش‌نویس' }, { value: 'published', label: 'منتشرشده' }]} className="h-9 w-40 max-md:min-h-11" /></>} emptyTitle={statusFilter === 'all' && publishFilter === 'all' ? 'توری ثبت نشده است' : 'توری با این فیلتر پیدا نشد'} emptyDescription={statusFilter === 'all' && publishFilter === 'all' ? 'برای شروع، تور جدیدی اضافه کنید.' : 'فیلترها را عوض کنید یا جست‌وجو را پاک کنید.'} emptyAction={statusFilter === 'all' && publishFilter === 'all' ? { label: 'ساخت اولین تور', onClick: () => { window.location.href = '/admin/tours/new'; } } : undefined} /></CardContent></Card>
+      {/* موج ۲، تیم هاب: خطای خواندن دیتابیس با «فهرست خالی» نقاب نمی‌شود —
+          پیام صادقانه + دکمهٔ تلاش دوباره. رفتار موفق هیچ فرقی نمی‌کند. */}
+      {loadError ? (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 p-10 text-center">
+            <p className="text-base font-bold text-foreground">نتوانستیم تورها را بخوانیم</p>
+            <p className="max-w-md text-sm text-muted-foreground">
+              خطایی در خواندن از دیتابیس رخ داد؛ این فهرست خالی نیست، فقط نتوانستیم نمایشش بدهیم.
+            </p>
+            <Button onClick={() => window.location.reload()} className="max-md:min-h-11">
+              تلاش دوباره
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">تورها ({fa(tours.length)})</h2><DataTable rows={visible} columns={columns} rowKey={(tour) => tour.id} searchKeys={['title', 'destination', 'typeLabel']} searchPlaceholder="جست‌وجوی عنوان، مقصد یا نوع تور…" selection={{ selected, onToggle: toggleSelected, onTogglePage: togglePageSelected }} mobileCard={tourCard} toolbar={<><Select aria-label="فیلتر وضعیت فروش" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} options={[{ value: 'all', label: 'همه وضعیت‌ها' }, ...statusOptions]} className="h-9 w-40 max-md:min-h-11" /><Select aria-label="فیلتر انتشار" value={publishFilter} onChange={(e) => setPublishFilter(e.target.value as 'all' | 'draft' | 'published')} options={[{ value: 'all', label: 'همه' }, { value: 'draft', label: 'پیش‌نویس' }, { value: 'published', label: 'منتشرشده' }]} className="h-9 w-40 max-md:min-h-11" /></>} emptyTitle={statusFilter === 'all' && publishFilter === 'all' ? 'توری ثبت نشده است' : 'توری با این فیلتر پیدا نشد'} emptyDescription={statusFilter === 'all' && publishFilter === 'all' ? 'برای شروع، تور جدیدی اضافه کنید.' : 'فیلترها را عوض کنید یا جست‌وجو را پاک کنید.'} emptyAction={statusFilter === 'all' && publishFilter === 'all' ? { label: 'ساخت اولین تور', onClick: () => { window.location.href = '/admin/tours/new'; } } : undefined} /></CardContent></Card>
+      )}
       {/* نوار عملیات گروهی (T15): فقط وقتی انتخابی هست دیده می‌شود */}
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-sm border border-brand/20 bg-brand/5 p-3">
@@ -390,7 +491,7 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
               )}
               <p className="pt-1 text-xs font-bold text-foreground">
                 {bulkAction === 'publish'
-                  ? 'تورهایی که گیت انتشار را پاس کنند منتشر می‌شوند و روی سایت دیده می‌شوند؛ تورهای ناقص منتشر نمی‌شوند.'
+                  ? 'تورهایی که کامل‌اند منتشر می‌شوند و روی سایت دیده می‌شوند؛ تورهای ناقص منتشر نمی‌شوند.'
                   : bulkAction === 'unpublish'
                     ? 'این تورها از سایت پنهان می‌شوند.'
                     : 'این تورها بایگانی می‌شوند و از سایت پنهان می‌شوند؛ بعداً از صفحهٔ بایگانی می‌توانید بازیابی‌شان کنید.'}

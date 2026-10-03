@@ -119,7 +119,7 @@ export function PriceCell({ id, price, onSaved }: PriceCellProps) {
           {error}
         </p>
       ) : (
-        <p className="text-[11px] text-muted-foreground">Enter برای ذخیره، Esc برای انصراف</p>
+        <p className="text-[11px] text-muted-foreground">اینتر برای ذخیره، Esc برای انصراف</p>
       )}
     </div>
   );

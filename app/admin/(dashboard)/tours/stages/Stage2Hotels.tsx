@@ -23,6 +23,7 @@ import { Field, Input } from '@/components/ui/input';
 import { AmountInput } from '@/components/ui/amount-input';
 import { Button } from '@/components/ui/button';
 import { AlertDialog } from '@/components/ui/alert-dialog';
+import { Collapsible } from '@/components/ui/collapsible';
 import { cn, en, fa, faNumber } from '@/lib/utils';
 import { normalizeFaSearch } from '@/lib/persian';
 import type { HotelBookingType, TourHotelOptionItem, TourInput, DestinationTree } from '../actions';
@@ -234,7 +235,19 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
 
         {open && (
           <div className="rounded-sm border border-border/60 bg-secondary/20 p-4 space-y-4">
-            <div>
+            {/* نوع رزرو — فیلد فنی (پولیش موج ۲، تیم پیشرفتهٔ تاشو): پشت «پیشرفته»
+                و به‌صورت پیش‌فرض بسته. داده (bookingType) و برچسب/راهنمای نرخ‌ها
+                سر جایشان می‌مانند؛ فقط دیده‌شدن جابه‌جا شده است. */}
+            <Collapsible
+              trigger={
+                <span className="flex flex-col items-start gap-1 text-start">
+                  <span className="text-xs font-bold text-foreground">تنظیمات پیشرفته</span>
+                  <span className="text-[11px] font-normal text-muted-foreground">
+                    نوع رزرو هتل (گارانتی، نیم‌چارتر یا درخواستی) این‌جاست؛ فقط وقتی لازم است که نوع قراردادتان با هتل را بدانید. نرخ‌هایی که وارد کرده‌اید سر جایشان می‌مانند.
+                  </span>
+                </span>
+              }
+            >
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-bold text-foreground">نوع رزرو</span>
                 {hotel.hotelId && (
@@ -266,7 +279,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
                   </li>
                 ))}
               </ul>
-            </div>
+            </Collapsible>
 
             {/* نرخ هر نفر — تک‌ورودی (موج ۲، تیم تکراری‌ها): همان یک عدد برای هر دو
                 کلید pricePerPerson و priceDouble نوشته می‌شود؛ خوانندهٔ سایت به هر دو تکیه می‌کند. */}
@@ -505,7 +518,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels, tr
             <Building2 className="size-5" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm font-bold text-foreground">مرحله دوم: ماتریس هتل‌ها و ظرفیت اتاق‌ها</h3>
+            <h3 className="text-sm font-bold text-foreground">مرحله دوم: هتل‌ها و قیمت اتاق‌ها</h3>
             <p className="text-xs text-muted-foreground">
               تعریف بسته‌های اقامتی، ستاره هتل، نوع پذیرایی (صبحانه بوفه، همه‌چیز شامل و…) و تفکیک شفاف قیمت اتاق ۲تخته، ۱تخته و کودکان
             </p>
