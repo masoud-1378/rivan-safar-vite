@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, type Column } from '@/components/ui/data-table';
+import { Dialog } from '@/components/ui/dialog';
 import { DropdownMenu } from '@/components/ui/dropdown-menu';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
@@ -93,6 +94,9 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
   const [pending, startTransition] = useTransition();
   // موج ۲، تیم هاب: انتشار/بازگشتِ تک‌توریِ ردیف (همان گیت انتشار گروهی، برای یک تور).
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  // یافتهٔ ۱ گشت موج ۲: رد انتشار باید «دیده» شود — تاست ۴ثانیه‌ای کافی نیست؛
+  // دیالوگ ماندگار با فهرست ناقصی‌ها + دکمهٔ رفتن به ویرایش.
+  const [blockedPublish, setBlockedPublish] = useState<{ id: string; title: string; missing: string[] } | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [publishFilter, setPublishFilter] = useState<'all' | 'draft' | 'published'>('all');
   // عملیات گروهی (T15)
@@ -200,11 +204,12 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
       const res = await setToursPublishStatusBulk([tour.id], next);
       const skipped = res.skipped[0];
       if (skipped) {
-        toast({
-          variant: 'error',
-          title: 'انتشار ممکن نیست',
-          description: `تور «${skipped.title}» ناقص است: ${skipped.missing.join('، ')}`,
-        });
+        // رد انتشار با دیالوگ ماندگار (یافتهٔ ۱ گشت موج ۲) — نه فقط تاست گذرا.
+        setBlockedPublish({ id: skipped.id, title: skipped.title, missing: skipped.missing });
+      } else if (res.count === 0) {
+        // نباید اتفاق بیفتد: تور در فهرست هست ولی سرور پیدایش نکرد — پیام
+        // صادقانه، نه تاست موفقیت دروغین.
+        toast({ variant: 'error', title: 'تور پیدا نشد', description: 'فهرست را تازه‌سازی کنید و دوباره تلاش کنید.' });
       } else {
         setTours((ts) => ts.map((t) => (t.id === tour.id ? { ...t, publishStatus: next } : t)));
         toast({
@@ -508,6 +513,34 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
         />
       )}
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی تور" description={deleting ? `تور «${deleting.title}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌شود؛ بعداً از صفحهٔ بایگانی می‌توانید آن را بازیابی کنید.` : ''} confirmText="بایگانی تور" destructive onConfirm={onDelete} />
+      {/* یافتهٔ ۱ گشت موج ۲: رد انتشار تک‌توری — دیالوگ ماندگار با فهرست ناقصی‌ها
+          و رفتن به ویرایش، به‌جای تاست گذرایی که دیده نشد. */}
+      <Dialog
+        open={blockedPublish !== null}
+        onOpenChange={(open) => { if (!open) setBlockedPublish(null); }}
+        title="انتشار ممکن نیست"
+        description={blockedPublish ? `تور «${blockedPublish.title}» ناقص است؛ اول این‌ها را کامل کن:` : ''}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setBlockedPublish(null)}>بستن</Button>
+            <Button
+              onClick={() => {
+                const id = blockedPublish?.id;
+                setBlockedPublish(null);
+                if (id) router.push(`/admin/tours/${id}`);
+              }}
+            >
+              ویرایش تور
+            </Button>
+          </>
+        }
+      >
+        <ul className="list-disc space-y-1 ps-5 text-sm text-foreground">
+          {(blockedPublish?.missing ?? []).map((m) => (
+            <li key={m}>{m}</li>
+          ))}
+        </ul>
+      </Dialog>
       {/* قلم ۴ موج ۱: دیالوگ سؤال «همه پیش‌نویس». بستن بدون انتخاب → رفرش تا بنر سرور سؤال را یادآوری کند. */}
       <AllDraftFallbackDialog
         open={askFallbackOpen}
