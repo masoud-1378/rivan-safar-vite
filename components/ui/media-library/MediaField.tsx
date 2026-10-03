@@ -101,8 +101,46 @@ export function MediaField({ label, hint, htmlFor, value, onChange, tag, tagLabe
                 <Trash2 className="size-4" />
                 حذف
               </Button>
+              {!showLink && (
+                <button
+                  type="button"
+                  onClick={() => setShowLink(true)}
+                  className="cursor-pointer text-[11px] font-bold text-brand hover:underline"
+                >
+                  درج لینک دستی
+                </button>
+              )}
             </div>
           </div>
+          {showLink && (
+            <div>
+              <Input
+                dir="ltr"
+                value={link}
+                onChange={(e) => {
+                  setLink(e.target.value);
+                  setLinkError(null);
+                }}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), applyLink())}
+                placeholder="https://…"
+                aria-label="لینک دستی تصویر"
+                className="text-start"
+              />
+              <div className="mt-1.5">
+                <Button type="button" size="sm" onClick={applyLink}>
+                  ثبت لینک
+                </Button>
+              </div>
+              {linkError && (
+                <p role="alert" className="mt-1 text-xs text-destructive">
+                  {linkError}
+                </p>
+              )}
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                لینک Unsplash یا هر آدرسی که روی سایت نمایش داده می‌شود.
+              </p>
+            </div>
+          )}
           <Input
             value={value.caption ?? ''}
             onChange={(e) => onChange({ ...value, caption: e.target.value })}

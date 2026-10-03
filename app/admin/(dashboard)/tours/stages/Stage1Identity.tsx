@@ -958,6 +958,15 @@ export default function Stage1Identity({
                   <Trash2 className="size-4" />
                   حذف بنر
                 </Button>
+                {!showBannerUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setShowBannerUrl(true)}
+                    className="text-caption font-bold text-brand hover:underline"
+                  >
+                    چسباندن لینک
+                  </button>
+                )}
               </div>
             </div>
           ) : (
@@ -984,7 +993,7 @@ export default function Stage1Identity({
               )}
             </div>
           )}
-          {showBannerUrl && !data.image.trim() && (
+          {showBannerUrl && (
             <div className="mt-2">
               <Input className="max-md:text-base"
                 dir="ltr"

@@ -189,6 +189,21 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
                       <Link2 className="size-4" />
                       کپی لینک
                     </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={audioUploading}
+                      onClick={() => audioFileRef.current?.click()}
+                      className="gap-1.5 text-xs"
+                    >
+                      {audioUploading ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Upload className="size-4" />
+                      )}
+                      {audioUploading ? 'در حال آپلود…' : 'جایگزینی با فایل'}
+                    </Button>
                     {!showAudioUrl && (
                       <button type="button" onClick={() => setShowAudioUrl(true)} className="text-caption font-bold text-brand hover:underline">
                         ویرایش لینک
@@ -235,19 +250,19 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
                     </Button>
                     <span className="text-caption text-muted-foreground">یا لینک را بالا بچسبانید</span>
                   </div>
-                  <input
-                    ref={audioFileRef}
-                    type="file"
-                    accept="audio/*"
-                    className="hidden"
-                    aria-label="انتخاب فایل صوتی"
-                    onChange={(e) => {
-                      void uploadAudioFile(e.target.files?.[0]);
-                      e.target.value = '';
-                    }}
-                  />
                 </div>
               )}
+              <input
+                ref={audioFileRef}
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                aria-label="انتخاب فایل صوتی"
+                onChange={(e) => {
+                  void uploadAudioFile(e.target.files?.[0]);
+                  e.target.value = '';
+                }}
+              />
             </Field>
           </div>
         </div>
