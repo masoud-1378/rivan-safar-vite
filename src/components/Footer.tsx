@@ -115,10 +115,10 @@ export default function Footer({ onNavigate }: FooterProps) {
               </div>
               <div className="flex flex-col">
                 <span className="text-[22px] font-extrabold text-white leading-none">
-                  ریوان سفر
+                  {contact.brand}
                 </span>
                 <span className="text-caption text-brand-orange font-medium mt-1">
-                  آژانس مسافرتی و گردشگری
+                  {contact.tagline}
                 </span>
               </div>
             </div>

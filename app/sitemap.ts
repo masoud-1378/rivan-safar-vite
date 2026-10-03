@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { SITE_URL } from '@/src/lib/siteConfig';
+import { getSiteUrl } from '@/src/lib/site-contact';
 import { getIndexableLandings, getDynamicIndexablePaths } from '@/src/data/seoLandings';
 import { getTours, getGuides, getExhibitions, getSeoLandings, normalizeLandingPath } from '@/src/lib/db-content';
 
@@ -12,6 +12,8 @@ import { getTours, getGuides, getExhibitions, getSeoLandings, normalizeLandingPa
  * آرایهٔ استاتیک فقط فالبکِ قطعی DB است.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // ایراد ۲۸: دامنهٔ پایهٔ نقشهٔ سایت از تنظیم site.url می‌آید.
+  const siteUrl = await getSiteUrl();
   // مسیرهای استاتیک هم نرمالایز می‌شوند تا /x و /x/ هر دو نیایند.
   const staticLandingPaths = getIndexableLandings().map((l) =>
     normalizeLandingPath(l.urlPath),
@@ -55,7 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   return paths.map((p) => ({
-    url: p === '/' ? `${SITE_URL}/` : `${SITE_URL}${p}`,
+    url: p === '/' ? `${siteUrl}/` : `${siteUrl}${p}`,
     changeFrequency: 'weekly',
     priority: p === '/' ? 1 : p.split('/').filter(Boolean).length <= 1 ? 0.8 : 0.6,
   }));

@@ -33,6 +33,7 @@ import type {
 import { saveTour, checkSlugUnique } from './actions';
 import type { HotelPickerItem } from '../hotels/actions';
 import { validateDraft, getStageCompletion } from './tour-helpers';
+import { DOMESTIC_SLUGS, DOMESTIC_NAME_RE, guessVisaRequired } from '@/src/lib/domestic';
 
 // 5 Modular Stage Components
 import Stage1Identity from './stages/Stage1Identity';
@@ -133,7 +134,6 @@ export default function TourForm({
       publishStatus: initial?.publishStatus === 'published' ? 'published' : 'draft',
       image: initial?.image || '',
       badge: initial?.badge || '',
-      features: Array.isArray(initial?.features) ? (initial.features as string[]) : [],
       visaRequired: Boolean(initial?.visaRequired),
       hotelStars: Number(initial?.hotelStars) || 4,
       airline: initial?.airline || '',
@@ -174,12 +174,45 @@ export default function TourForm({
     };
   });
 
+  // ایراد ۹: نسخهٔ کلاینتیِ تشخیص «داخلی بودن» مقصد از روی درخت مقصدها؛
+  // همان منطق سمت سرور (tours/actions.ts) با منبع یگانهٔ src/lib/domestic.
+  const isDomesticSlugClient = useMemo(() => {
+    // نکته: نام Mapِ لوسیید (آیکون) روی Map سراسری سایه انداخته؛ پس آبجکت ساده.
+    const bySlug: Record<string, { slug: string; name: string; parent: string }> = {};
+    for (const d of tree?.all ?? []) bySlug[d.slug] = { slug: d.slug, name: d.name, parent: d.parent };
+    return (slug: string): boolean => {
+      if (DOMESTIC_SLUGS.includes(slug)) return true;
+      let cur = bySlug[slug];
+      if (!cur) return false;
+      if (DOMESTIC_NAME_RE.test(cur.name)) return true;
+      for (let i = 0; i < 10 && cur; i++) {
+        if (cur.slug === 'iran') return true;
+        const p = cur.parent ?? '';
+        if (!p) return false;
+        if (p === 'iran' || DOMESTIC_SLUGS.includes(p)) return true;
+        cur = bySlug[p];
+        if (cur && DOMESTIC_NAME_RE.test(cur.name)) return true;
+      }
+      return false;
+    };
+  }, [tree]);
+
   const updateFormData = (fields: Partial<TourInput>) => {
     // نامک که عوض شد، پرچم تداخل قبلی بی‌اعتبار است.
     if (fields.slug !== undefined) setSlugConflict(false);
     // هر تغییری فرم را کثیف می‌کند (برای دیالوگ انصراف، T11).
     setDirty(true);
-    setFormData((prev) => ({ ...prev, ...fields }));
+    setFormData((prev) => {
+      const next = { ...prev, ...fields };
+      // ایراد ۹: با تغییر مقصدها، تیک «نیاز به ویزا» خودکار به‌روز می‌شود،
+      // مگر این‌که مدیر خودش تیک را زده یا برداشته باشد (visaRequiredManual).
+      // این‌طوری چیزی که مدیر در مرحله ۴ می‌بیند همان چیزی است که ذخیره می‌شود
+      // و مدارک پیش‌فرض هم همیشه با همان مقدار ساخته می‌شوند.
+      if (fields.destinationSlugs !== undefined && !prev.visaRequiredManual) {
+        next.visaRequired = guessVisaRequired(fields.destinationSlugs ?? [], isDomesticSlugClient);
+      }
+      return next;
+    });
   };
 
   // تیک واقعی تکمیل هر مرحله: بر اساس پر بودن فیلدهای الزامی همان مرحله، نه موقعیت در ویزارد

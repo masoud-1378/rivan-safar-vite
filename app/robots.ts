@@ -1,7 +1,6 @@
 import type { MetadataRoute } from 'next';
-import { SITE_URL } from '@/src/lib/siteConfig';
 
-import { isIndexingEnabled } from '@/src/lib/site-contact';
+import { isIndexingEnabled, getSiteUrl } from '@/src/lib/site-contact';
 
 /**
  * تا عبور از Launch Gate ایندکس عمومی بسته می‌ماند.
@@ -10,14 +9,16 @@ import { isIndexingEnabled } from '@/src/lib/site-contact';
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
   const LAUNCH_GATE_OPEN = await isIndexingEnabled();
+  // ایراد ۲۸: آدرس نقشهٔ سایت از تنظیم site.url می‌آید.
+  const siteUrl = await getSiteUrl();
   if (!LAUNCH_GATE_OPEN) {
     return {
       rules: [{ userAgent: '*', disallow: '/' }],
-      sitemap: `${SITE_URL}/sitemap.xml`,
+      sitemap: `${siteUrl}/sitemap.xml`,
     };
   }
   return {
     rules: [{ userAgent: '*', allow: '/' }],
-    sitemap: `${SITE_URL}/sitemap.xml`,
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

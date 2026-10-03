@@ -19,9 +19,13 @@ import TourListItem from './TourListItem';
 
 interface ToursPageProps {
   onGoHome?: () => void;
+  /** ایراد ۲۸: از تنظیمات پنل (tours.page_size)؛ پیش‌فرض ۱۲. */
+  initialPageSize?: number;
+  /** ایراد ۲۸: از تنظیمات پنل (tours.default_sort)؛ پیش‌فرض 'default'. */
+  initialSort?: string;
 }
 
-export default function ToursPage({ onGoHome }: ToursPageProps) {
+export default function ToursPage({ onGoHome, initialPageSize, initialSort }: ToursPageProps) {
   const contact = useContact();
   const { tours, countries, cities, guides, exhibitions } = useContent();
   const router = useRouter();
@@ -44,8 +48,8 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
   const [airlineFilter, setAirlineFilter] = useState<string>('all');
   const [showMoreFilters, setShowMoreFilters] = useState<boolean>(false);
 
-  // Sorting
-  const [sortBy, setSortBy] = useState<string>('default');
+  // Sorting — مقدار اولیه از تنظیمات پنل (tours.default_sort) می‌آید.
+  const [sortBy, setSortBy] = useState<string>(initialSort ?? 'default');
 
   // Comparison
   const [comparedTourIds, setComparedTourIds] = useState<string[]>([]);
@@ -87,8 +91,8 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
   // FAQ Accordion
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  // Pagination / Load More
-  const [visibleCount, setVisibleCount] = useState<number>(12);
+  // Pagination / Load More — تعداد اولیه از تنظیمات پنل (tours.page_size) می‌آید.
+  const [visibleCount, setVisibleCount] = useState<number>(initialPageSize ?? 12);
 
   // Destination Search Dropdown
   const [showDestDropdown, setShowDestDropdown] = useState<boolean>(false);

@@ -29,16 +29,19 @@ import NotFoundPage from '@/src/components/NotFoundPage';
 import type { PageType } from '@/src/data/siteRegistry';
 import { ContentProvider, type ContentValue } from '@/src/lib/content-context';
 import { ContactProvider, type ContactInfo } from '@/src/lib/contact-context';
+import type { TourListSettings } from '@/src/lib/site-contact';
 
 export interface RouteViewProps {
   type: PageType;
   params: Record<string, string>;
   data?: Partial<ContentValue>;
   contact?: Partial<ContactInfo>;
+  /** ایراد ۲۸: تنظیمات فهرست تورها (فقط برای type=tours_all مصرف می‌شود). */
+  tourList?: TourListSettings;
 }
 
 /** بدنه هر صفحه — جایگزین renderCurrentView در App قبلی؛ ناوبری با Next router */
-export default function RouteView({ type, params, data, contact }: RouteViewProps) {
+export default function RouteView({ type, params, data, contact, tourList }: RouteViewProps) {
   const router = useRouter();
   const navigateTo = (path: string) => {
     router.push(path);
@@ -61,7 +64,13 @@ export default function RouteView({ type, params, data, contact }: RouteViewProp
         </>
       );
     case 'tours_all':
-      return <ToursPage onGoHome={goHome} />;
+      return (
+        <ToursPage
+          onGoHome={goHome}
+          initialPageSize={tourList?.pageSize}
+          initialSort={tourList?.defaultSort}
+        />
+      );
     case 'tours_foreign':
       return <HubPage type="foreign" onNavigate={navigateTo} />;
     case 'tours_domestic':
