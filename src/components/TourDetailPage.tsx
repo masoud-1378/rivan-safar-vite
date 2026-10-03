@@ -211,6 +211,27 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
     !!consultant && !!(consultant.name || consultant.phone || consultant.audioUrl);
   const transportKind = extras.transportKind;
 
+  /**
+   * تیم ۶ (موج ۶، ایراد ۱۰): «وضعیت فروش» رفتار واقعی دارد — نشان و دکمه‌های
+   * رزرو با هم عوض می‌شوند. لیبل‌ها همان CAPACITY_OPTIONS است و دست نخورده:
+   * - pending «در انتظار تأیید ظرفیت»: نشان کهربایی؛ دکمهٔ اصلی «تماس و استعلام ظرفیت»
+   * - confirmed «تأیید شده»: نشان سبز؛ دکمهٔ اصلی «تماس برای رزرو»
+   * - full «تکمیل ظرفیت»: نشان قرمز؛ دکمهٔ اصلی غیرفعال؛ فقط «درخواست تماس» برای حرکت‌های بعدی
+   * - updating «در حال به‌روزرسانی»: نشان کهربایی؛ دکمه‌ها فعال با لحن استعلام
+   * فرم «درخواست تماس» همیشه همان است و هرگز «رزرو» نامیده نمی‌شود (قانون صفحه).
+   */
+  const saleStatus = tour.status ?? 'pending';
+  const isSaleConfirmed = saleStatus === 'confirmed';
+  const isSaleFull = saleStatus === 'full';
+  const saleBadgeClass = isSaleConfirmed
+    ? 'bg-brand-success/15 text-brand-success'
+    : isSaleFull
+      ? 'bg-destructive/15 text-destructive'
+      : 'bg-brand-warning/15 text-brand-warning';
+  const saleCtaLabel = isSaleConfirmed
+    ? `تماس برای رزرو: ${contact.phoneDisplay}`
+    : `تماس و استعلام ظرفیت: ${contact.phoneDisplay}`;
+
   const validateForm = () => {
     const errs = { name: '', phone: '' };
     if (formData.name.trim().length < 3) errs.name = 'نام و نام خانوادگی را کامل وارد کنید.';
@@ -361,9 +382,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   </div>
 
                   <div className="text-end">
-                    <span className={`inline-flex px-2.5 py-1 rounded-md text-caption font-bold ${
-                      tour.status === 'confirmed' ? 'bg-brand-success/15 text-brand-success' : 'bg-brand-warning/15 text-brand-warning'
-                    }`}>
+                    <span className={`inline-flex px-2.5 py-1 rounded-md text-caption font-bold ${saleBadgeClass}`}>
                       {tour.statusLabel}
                     </span>
                     <div className="text-caption text-text-secondary mt-1">{faDateTime(tour.updatedAt) ?? '—'}</div>
@@ -375,15 +394,28 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 </p>
               </div>
 
-              {/* Call to Action Buttons */}
+              {/* Call to Action Buttons — رفتار واقعیِ «وضعیت فروش» (ایراد ۱۰):
+                  «تکمیل ظرفیت» دکمهٔ اصلی را غیرفعال می‌کند و فقط راه «درخواست
+                  تماس» برای حرکت‌های بعدی می‌ماند. */}
               <div className="flex flex-wrap items-center gap-3">
-                <a
-                  href={contact.phoneHref}
-                  className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2.5 font-bold shadow-subtle"
-                >
-                  <Phone className="w-4 h-4" />
-                  <span>تماس و استعلام ظرفیت: {contact.phoneDisplay}</span>
-                </a>
+                {isSaleFull ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="btn btn-medium inline-flex items-center gap-2.5 font-bold"
+                  >
+                    <Phone className="w-4 h-4" />
+                    <span>تکمیل ظرفیت</span>
+                  </button>
+                ) : (
+                  <a
+                    href={contact.phoneHref}
+                    className="btn btn-medium btn-primary text-btn inline-flex items-center gap-2.5 font-bold shadow-subtle"
+                  >
+                    <Phone className="w-4 h-4" />
+                    <span>{saleCtaLabel}</span>
+                  </a>
+                )}
                 <a
                   href="#booking-form"
                   className="btn btn-medium btn-secondary text-btn inline-flex items-center gap-2"
@@ -391,6 +423,11 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   <span>ثبت فرم درخواست تماس</span>
                 </a>
               </div>
+              {isSaleFull && (
+                <p className="text-caption text-text-secondary mt-3">
+                  ظرفیت این تور پر شده است؛ برای اطلاع از حرکت‌های بعدی درخواست تماس ثبت کنید.
+                </p>
+              )}
             </div>
 
             {/* Right Column: Hero Image (5 cols) */}

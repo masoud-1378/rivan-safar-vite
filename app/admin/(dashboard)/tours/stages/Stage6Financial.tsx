@@ -138,30 +138,40 @@ export default function Stage6Financial({ data, onChange, excludeTourId }: Stage
   return (
     <div className="space-y-6">
       {/* Header (T16: الگوی تک‌رنگ با لهجهٔ برند) */}
-      <div className="flex items-center justify-between rounded-sm border border-brand/20 bg-brand/5 p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-sm bg-brand text-brand-foreground">
-            <Wallet className="size-5" />
+      {/* تیم ۶ (موج ۶، ایراد ۱۱): به‌جای حکم کلیِ «هنوز کامل نیست»، معیار دقیق
+          همان گیت انتشار — دقیقاً کدام قلم کم است — همین‌جا نوشته می‌شود؛
+          منبع یگانه است، نه محاسبهٔ جدا. فونت هم از text-panel-* است. */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between rounded-sm border border-brand/20 bg-brand/5 p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-sm bg-brand text-brand-foreground">
+              <Wallet className="size-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-foreground">مرحله ششم: هزینه‌ها و شرایط</h3>
+              <p className="text-xs text-muted-foreground">
+                جدول کنسلی پلکانی، تکلیف پول در صورت رد ویزا، و پیش‌پرداخت — همان چیزی که روی صفحهٔ تور به مسافر نمایش داده می‌شود
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-foreground">مرحله ششم: هزینه‌ها و شرایط</h3>
-            <p className="text-xs text-muted-foreground">
-              جدول کنسلی پلکانی، تکلیف پول در صورت رد ویزا، و پیش‌پرداخت — همان چیزی که روی صفحهٔ تور به مسافر نمایش داده می‌شود
-            </p>
-          </div>
+          {financialCheck && (
+            <span
+              className={cn(
+                'hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-sm border px-2.5 py-1.5 text-panel-caption font-bold',
+                financialCheck.ok
+                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600'
+                  : 'border-amber-500/40 bg-amber-500/10 text-amber-600'
+              )}
+            >
+              {financialCheck.ok ? <Check className="size-3.5" /> : <AlertTriangle className="size-3.5" />}
+              {financialCheck.ok ? 'بلوک مالی کامل است' : 'بلوک مالی ناقص است'}
+            </span>
+          )}
         </div>
-        {financialCheck && (
-          <span
-            className={cn(
-              'hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-sm border px-2.5 py-1.5 text-caption font-bold',
-              financialCheck.ok
-                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600'
-                : 'border-amber-500/40 bg-amber-500/10 text-amber-600'
-            )}
-          >
-            {financialCheck.ok ? <Check className="size-3.5" /> : <AlertTriangle className="size-3.5" />}
-            {financialCheck.ok ? 'بلوک مالی کامل است' : 'بلوک مالی هنوز کامل نیست'}
-          </span>
+        {financialCheck && !financialCheck.ok && (
+          <p className="px-1 text-panel-caption leading-5 text-amber-600">
+            {financialCheck.message}
+          </p>
         )}
       </div>
 

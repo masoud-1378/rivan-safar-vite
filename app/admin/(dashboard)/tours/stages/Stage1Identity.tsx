@@ -6,6 +6,8 @@ import {
   Plane, 
   Train, 
   Bus, 
+  Ship,
+  Shuffle,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -78,6 +80,8 @@ const TRANSPORT_OPTIONS: Array<{ id: 'air' | 'land' | 'rail' | 'sea' | 'mixed'; 
   { id: 'air', label: 'هوایی (پرواز)', icon: Plane, placeholder: 'نام ایرلاین (مثلاً: ماهان، ایران‌ایر، ترکیش)' },
   { id: 'rail', label: 'ریلی (قطار)', icon: Train, placeholder: 'نام قطار و شرکت ریلی (مثلاً: ۵ ستاره فدک، بن‌ریل، رجاء)' },
   { id: 'land', label: 'زمینی (اتوبوس)', icon: Bus, placeholder: 'نوع اتوبوس (مثلاً: اتوبوس VIP ۲۵ نفره تخت‌شو)' },
+  { id: 'sea', label: 'دریایی (کشتی)', icon: Ship, placeholder: 'نام کشتی و شرکت کشتیرانی' },
+  { id: 'mixed', label: 'ترکیبی', icon: Shuffle, placeholder: 'شرکت‌های حمل‌ونقل (مثلاً: هوایی ماهان + زمینی)' },
 ];
 
 function countryDescendants(regionSlug: string, countrySlug: string, tree: DestinationTree): string[] {
@@ -385,9 +389,10 @@ export default function Stage1Identity({
             />
           </label>
         </div>
-        {/* یافتهٔ ۱/۱۲ مبتدی: توضیح «وضعیت فروش» در مرحلهٔ ۵ بود ولی انتخابش اینجاست — توضیح به همان‌جا آمد. */}
+        {/* تیم ۶ (موج ۶، ایراد ۱۰): «وضعیت فروش» فقط توضیح نیست — هم برچسب روی
+            سایت را عوض می‌کند هم دکمه‌ها را؛ پس توضیحش دقیق شد. */}
         <p className="text-caption text-muted-foreground">
-          انتشار یعنی تور روی سایت دیده شود؛ «وضعیت فروش» یعنی ثبت‌نام باز است یا بسته، و همین به‌صورت برچسب روی سایت نشان داده می‌شود.
+          انتشار یعنی تور روی سایت دیده شود. «وضعیت فروش» هم برچسب روی سایت را عوض می‌کند هم دکمه‌ها را: «تأیید شده» یعنی رزرو باز است و دکمهٔ «تماس برای رزرو» می‌آید؛ «تکمیل ظرفیت» دکمهٔ رزرو را غیرفعال می‌کند.
         </p>
       </div>
 
@@ -804,6 +809,8 @@ export default function Stage1Identity({
             currentTransport === 'air' ? 'نام ایرلاین یا خط هوایی' :
             currentTransport === 'rail' ? 'نام قطار و شرکت ریلی' :
             currentTransport === 'land' ? 'نوع اتوبوس و شرکت حمل‌ونقل زمینی' :
+            currentTransport === 'sea' ? 'نام کشتی و شرکت کشتیرانی' :
+            currentTransport === 'mixed' ? 'نام شرکت‌های حمل‌ونقل' :
             'نام شرکت مجری'
           }
           hint="در قرارداد رسمی و کارت تور به مسافر نمایش داده می‌شود"

@@ -10,7 +10,10 @@ import {
   CheckCircle2,
   XCircle,
   LayoutTemplate,
-  Plane
+  Plane,
+  Train,
+  Bus,
+  Ship
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -39,30 +42,44 @@ interface Stage3ItineraryProps {
 
 // قالب‌های پیش‌فرض خدمات همراه تور (T12): فقط «خدمات همراه» را پر می‌کنند؛
 // «خدمات خارج از تور» را نه.
-const SERVICE_TEMPLATES: Array<{ label: string; items: string[] }> = [
-  {
-    label: 'پکیج استاندارد خارجی',
-    items: [
-      'بلیت رفت و برگشت هواپیما',
-      'اقامت در هتل با صبحانه',
-      'ترانسفر فرودگاهی',
-      'بیمه مسافرتی',
-      'لیدر فارسی‌زبان',
-      'گشت شهری با ناهار',
-    ],
-  },
-  {
-    label: 'پکیج استاندارد داخلی',
-    items: [
-      'بلیت رفت و برگشت',
-      'اقامت در هتل',
-      'ترانسفر',
-      'بیمه مسافرتی',
-      'لیدر فارسی‌زبان',
-      'گشت‌های روزانه',
-    ],
-  },
-];
+// تیم ۶ (موج ۶، ایراد ۷): آیتم‌های حمل‌ونقلیِ قالب‌ها با شیوهٔ حمل‌ونقل تور جور
+// می‌شوند — تور ریلی «بلیت هواپیما» و «ترانسفر فرودگاهی» پیشنهاد نمی‌گیرد.
+function serviceTemplatesFor(transportKind: string | undefined): Array<{ label: string; items: string[] }> {
+  const ticket =
+    transportKind === 'rail' ? 'بلیت رفت و برگشت قطار'
+    : transportKind === 'land' ? 'بلیت رفت و برگشت اتوبوس'
+    : transportKind === 'sea' ? 'بلیت رفت و برگشت کشتی'
+    : 'بلیت رفت و برگشت هواپیما';
+  const transfer =
+    transportKind === 'rail' ? 'ترانسفر ایستگاه راه‌آهن'
+    : transportKind === 'land' ? 'ترانسفر ترمینال مسافربری'
+    : transportKind === 'sea' ? 'ترانسفر بندر'
+    : 'ترانسفر فرودگاهی';
+  return [
+    {
+      label: 'پکیج استاندارد خارجی',
+      items: [
+        ticket,
+        'اقامت در هتل با صبحانه',
+        transfer,
+        'بیمه مسافرتی',
+        'لیدر فارسی‌زبان',
+        'گشت شهری با ناهار',
+      ],
+    },
+    {
+      label: 'پکیج استاندارد داخلی',
+      items: [
+        'بلیت رفت و برگشت',
+        'اقامت در هتل',
+        'ترانسفر',
+        'بیمه مسافرتی',
+        'لیدر فارسی‌زبان',
+        'گشت‌های روزانه',
+      ],
+    },
+  ];
+}
 
 export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps) {
   const itinerary: TourItineraryDayItem[] = Array.isArray(data.itineraryDays) ? data.itineraryDays : [];
@@ -79,6 +96,30 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
   const updateFlight = (patch: Partial<TourFlightDetails>) => {
     onChange({ flightDetails: { ...fd, ...patch } });
   };
+
+  // تیم ۶ (موج ۶، ایراد ۷): شیوهٔ حمل‌ونقل از مرحلهٔ اول می‌آید. «مشخصات پرواز»
+  // فقط برای هوایی (و ترکیبیِ پروازدار) معنا دارد؛ برای ریلی/زمینی/دریایی
+  // معادل درستش — «مشخصات قطار/اتوبوس/کشتی» با همان ستون «ساعت حرکت» — نشان
+  // داده می‌شود. پیش‌فرض ذخیره‌سازی 'air' است، پس خالی هم هوایی حساب می‌شود.
+  const transportKind = data.transportKind ?? 'air';
+  const isAirLike = transportKind === 'air' || transportKind === 'mixed';
+  const transportNoun =
+    transportKind === 'rail' ? 'قطار'
+    : transportKind === 'land' ? 'اتوبوس'
+    : transportKind === 'sea' ? 'کشتی'
+    : 'پرواز';
+  // همان لیبل فیلد مرحلهٔ ۱ تا هینت با آن یکدست بماند
+  const carrierLabel =
+    transportKind === 'rail' ? 'نام قطار و شرکت ریلی'
+    : transportKind === 'land' ? 'نوع اتوبوس و شرکت حمل‌ونقل زمینی'
+    : transportKind === 'sea' ? 'نام کشتی و شرکت کشتیرانی'
+    : 'نام شرکت مجری';
+  const TransportIcon =
+    transportKind === 'rail' ? Train
+    : transportKind === 'land' ? Bus
+    : transportKind === 'sea' ? Ship
+    : Plane;
+  const serviceTemplates = serviceTemplatesFor(data.transportKind);
 
   const handleAddDay = () => {
     const nextDayNum = itinerary.length + 1;
@@ -273,75 +314,101 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
         </div>
       </div>
 
-      {/* مشخصات پرواز (موج ۳، فیلدهای دامنه‌ای): نوع چارتر/سیستمی، ساعت پرواز،
-          مستقیم/توقف‌دار + شهر توقف. همه اختیاری‌اند (تصمیم ۵ پلن) و جزو گیت
-          انتشار نیستند — نبودشان تور را ناقص نمی‌کند. */}
-      <div className="rounded-sm border border-border bg-card p-4 space-y-4">
-        <div className="flex items-center gap-2">
-          <Plane className="size-4 shrink-0 text-brand" />
-          <h4 className="text-sm font-bold text-foreground">مشخصات پرواز</h4>
-          <span className="text-caption text-muted-foreground">(اختیاری)</span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="ایرلاین" hint="همان که در قرارداد و کارت تور نمایش داده می‌شود">
-            <CarrierSelect
-              value={data.airline ?? ''}
-              onChange={(airline) => onChange({ airline, carrierName: airline })}
-            />
-          </Field>
-          <Field
-            label="نوع پرواز"
-            hint="اگر نمی‌دانید خالی بگذارید؛ خطا نیست"
-          >
-            <Select
-              aria-label="نوع پرواز"
-              value={fd.flightType ?? ''}
-              onChange={(e) => updateFlight({ flightType: e.target.value || undefined })}
-              options={[
-                { value: '', label: 'انتخاب کنید…' },
-                { value: 'charter', label: 'چارتر' },
-                { value: 'scheduled', label: 'سیستمی' },
-              ]}
-              className="max-md:text-base max-md:min-h-11"
-            />
-          </Field>
-          <Field label="ساعت پرواز">
-            <Input
-              className="max-md:text-base"
-              value={fd.flightTime ?? ''}
-              onChange={(e) => updateFlight({ flightTime: e.target.value })}
-              placeholder="مثلاً: ۰۸:۳۰ صبح"
-            />
-          </Field>
-          <Field label="مسیر پرواز">
-            <Select
-              aria-label="مسیر پرواز"
-              value={fd.directness ?? ''}
-              onChange={(e) => updateFlight({
-                directness: e.target.value || undefined,
-                // با مستقیم شدن، شهر توقف بی‌معنا می‌شود و پاک می‌شود.
-                ...(e.target.value === 'stopover' ? {} : { stopCity: undefined }),
-              })}
-              options={[
-                { value: '', label: 'انتخاب کنید…' },
-                { value: 'direct', label: 'مستقیم' },
-                { value: 'stopover', label: 'توقف‌دار' },
-              ]}
-              className="max-md:text-base max-md:min-h-11"
-            />
-          </Field>
-          {fd.directness === 'stopover' && (
-            <Field label="شهر توقف">
-              <Input
-                className="max-md:text-base"
-                value={fd.stopCity ?? ''}
-                onChange={(e) => updateFlight({ stopCity: e.target.value })}
-                placeholder="مثلاً: استانبول"
+      {/* تیم ۶ (موج ۶، ایراد ۷): بخش پروازی فقط وقتی می‌آید که حمل‌ونقل هوایی
+          (یا ترکیبیِ پروازدار) باشد. برای ریلی/زمینی/دریایی معادل درستش —
+          «مشخصات قطار/اتوبوس/کشتی» با همان «ساعت حرکت» — نشان داده می‌شود؛
+          «چارتر/سیستمی» و «مسیر پرواز» مفهوم پروازی‌اند و برای بقیه پنهان
+          می‌مانند. همه اختیاری‌اند (تصمیم ۵ پلن) و جزو گیت انتشار نیستند —
+          نبودشان تور را ناقص نمی‌کند. */}
+      {isAirLike ? (
+          <div className="rounded-sm border border-border bg-card p-4 space-y-4">
+            <div className="flex items-center gap-2">
+              <Plane className="size-4 shrink-0 text-brand" />
+              <h4 className="text-sm font-bold text-foreground">مشخصات پرواز</h4>
+              <span className="text-caption text-muted-foreground">(اختیاری)</span>
+            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field label="ایرلاین" hint="همان که در قرارداد و کارت تور نمایش داده می‌شود">
+              <CarrierSelect
+                value={data.airline ?? ''}
+                onChange={(airline) => onChange({ airline, carrierName: airline })}
               />
             </Field>
-          )}
+            <Field
+              label="نوع پرواز"
+              hint="اگر نمی‌دانید خالی بگذارید؛ خطا نیست"
+            >
+              <Select
+                aria-label="نوع پرواز"
+                value={fd.flightType ?? ''}
+                onChange={(e) => updateFlight({ flightType: e.target.value || undefined })}
+                options={[
+                  { value: '', label: 'انتخاب کنید…' },
+                  { value: 'charter', label: 'چارتر' },
+                  { value: 'scheduled', label: 'سیستمی' },
+                ]}
+                className="max-md:text-base max-md:min-h-11"
+              />
+            </Field>
+            <Field label="ساعت پرواز">
+              <Input
+                className="max-md:text-base"
+                value={fd.flightTime ?? ''}
+                onChange={(e) => updateFlight({ flightTime: e.target.value })}
+                placeholder="مثلاً: ۰۸:۳۰ صبح"
+              />
+            </Field>
+            <Field label="مسیر پرواز">
+              <Select
+                aria-label="مسیر پرواز"
+                value={fd.directness ?? ''}
+                onChange={(e) => updateFlight({
+                  directness: e.target.value || undefined,
+                  // با مستقیم شدن، شهر توقف بی‌معنا می‌شود و پاک می‌شود.
+                  ...(e.target.value === 'stopover' ? {} : { stopCity: undefined }),
+                })}
+                options={[
+                  { value: '', label: 'انتخاب کنید…' },
+                  { value: 'direct', label: 'مستقیم' },
+                  { value: 'stopover', label: 'توقف‌دار' },
+                ]}
+                className="max-md:text-base max-md:min-h-11"
+              />
+            </Field>
+            {fd.directness === 'stopover' && (
+              <Field label="شهر توقف">
+                <Input
+                  className="max-md:text-base"
+                  value={fd.stopCity ?? ''}
+                  onChange={(e) => updateFlight({ stopCity: e.target.value })}
+                  placeholder="مثلاً: استانبول"
+                />
+              </Field>
+            )}
+          </div>
         </div>
-      </div>
+        ) : (
+        <div className="rounded-sm border border-border bg-card p-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <TransportIcon className="size-4 shrink-0 text-brand" />
+            <h4 className="text-sm font-bold text-foreground">مشخصات {transportNoun}</h4>
+            <span className="text-caption text-muted-foreground">(اختیاری)</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field label={`ساعت حرکت ${transportNoun}`}>
+              <Input
+                className="max-md:text-base"
+                value={fd.flightTime ?? ''}
+                onChange={(e) => updateFlight({ flightTime: e.target.value })}
+                placeholder="مثلاً: ۰۸:۳۰ صبح"
+              />
+            </Field>
+          </div>
+          <p className="text-caption text-muted-foreground leading-5">
+            {carrierLabel} در مرحلهٔ اول («شیوه حمل‌ونقل») ثبت می‌شود؛ این‌جا فقط ساعت حرکت را بنویسید.
+          </p>
+        </div>
+      )}
 
       {/* پیشنهاد وعده‌ها از هتل (موج ۱، قلم ۶): فقط پیشنهاد با تأیید صریح */}
       {showMealsSuggestion && (
@@ -519,7 +586,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
               <LayoutTemplate className="size-4 text-muted-foreground" />
               شروع سریع با قالب آماده:
             </span>
-            {SERVICE_TEMPLATES.map((tpl) => (
+            {serviceTemplates.map((tpl) => (
               <Button
                 key={tpl.label}
                 type="button"
