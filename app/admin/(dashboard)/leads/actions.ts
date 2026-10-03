@@ -125,8 +125,8 @@ export async function getLeadsPage(params: LeadsPageParams): Promise<LeadsPage> 
 }
 
 export async function updateLeadStatus(id: string, status: LeadStatus, assignee?: string) {
-  const session = await requireAdmin(['owner', 'editor']);
   assertValidLeadStatus(status);
+  const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   await db
@@ -177,6 +177,7 @@ export async function updateLeadAdminNotes(id: string, adminNotes: string) {
  * دست‌کم یکی از status یا assignee باید داده شود.
  */
 export async function bulkUpdateLeads(ids: string[], patch: { status?: LeadStatus; assignee?: string }) {
+  if (patch.status !== undefined) assertValidLeadStatus(patch.status);
   const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
@@ -185,7 +186,6 @@ export async function bulkUpdateLeads(ids: string[], patch: { status?: LeadStatu
   if (patch.status === undefined && patch.assignee === undefined) {
     throw new Error('چیزی برای اعمال انتخاب نکرده‌اید.');
   }
-  if (patch.status !== undefined) assertValidLeadStatus(patch.status);
   await db
     .update(leadRequests)
     .set({
