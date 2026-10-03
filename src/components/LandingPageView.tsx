@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { ChevronLeft, Phone } from 'lucide-react';
 import TourCard from './TourCard';
+import { RichText } from '@/components/ui/rich-editor/RichText';
+import { isRichEmpty, normalizeRichValue, richFallback } from '@/lib/rich-text';
 import type {
   DbSeoLanding,
   DbLandingBlock,
@@ -46,8 +48,9 @@ export default function LandingPageView({
   tours,
   contact,
 }: LandingPageViewProps) {
+  // بلوک دیده می‌شود اگر تیتر، متن تخت، یا متن غنیِ خوانا داشته باشد.
   const visibleBlocks = blocks.filter(
-    (b) => b.heading.trim() || b.content.trim(),
+    (b) => b.heading.trim() || b.content.trim() || !isRichEmpty(normalizeRichValue(b.bodyFaRich)),
   );
 
   return (
@@ -90,11 +93,11 @@ export default function LandingPageView({
                     {b.heading}
                   </h2>
                 ) : null}
-                {b.content.trim() ? (
-                  <p className="text-body text-text-primary leading-loose whitespace-pre-line">
-                    {b.content}
-                  </p>
-                ) : null}
+                {/* اول متن غنی (body_fa_rich)، اگر نبود متن تخت قدیمی — قرارداد تیم داده. */}
+                <RichText
+                  value={richFallback(b.bodyFaRich, b.content)}
+                  className="text-body text-text-primary leading-loose"
+                />
               </article>
             ))}
           </div>

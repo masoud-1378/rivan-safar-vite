@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import TourForm from '../TourForm';
 import { DuplicateTourDialog } from '../DuplicateTourDialog';
-import type { TourRow, DestinationTree, OriginRow } from '../actions';
+import type { TourRow, TourRichFields, DestinationTree, OriginRow } from '../actions';
 import type { HotelPickerItem } from '../../hotels/actions';
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
    * دیالوگ صریح DuplicateTourDialog باز می‌شود — تا قیمت بی‌صدا منتقل نشود و
    * نشان «حرکت تضمین‌شده» به نسخهٔ تازه نرود.
    */
-  duplicateSource: TourRow | null;
+  duplicateSource: (TourRow & Partial<TourRichFields>) | null;
 }
 
 /** پوستهٔ کلاینتی صفحهٔ تور تازه: بعد از ذخیره به صفحهٔ ویرایش همان تور می‌رود. */

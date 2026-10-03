@@ -38,9 +38,24 @@ import { DepartureDateField } from '../DepartureDateField';
 import { uploadTourBanner } from '../banner-upload';
 import SmartImage from '@/src/components/SmartImage';
 import type { DestinationTree, OriginRow, TourInput, TourCategorySuggestion, TourPriceSuggestion } from '../actions';
-import { getDestinationContent, getTourCategorySuggestion, getTourPriceSuggestion } from '../actions';
+import { getDestinationContent, getTourCategorySuggestion, getTourPriceSuggestion, checkTourRichCols, checkTourMetaCols } from '../actions';
 import { SmartSuggestion } from '../SmartSuggestion';
 import type { TourDraftErrors } from '../tour-helpers';
+// تیم «فرم تورها» (۱۴۰۵/۰۷/۱۱): ویرایشگر غنی توضیحات تور + پیش‌نمایش واقعی +
+// متای سئو با الگوی «نگهبان + اطلاع» برای ستون‌های 0030/0033.
+import { RichEditor } from '@/components/ui/rich-editor/RichEditor';
+import { RichText } from '@/components/ui/rich-editor/RichText';
+import { SeoMetaFields } from '@/components/ui/seo-meta-fields';
+import { ColumnNotice, useColumnGuard } from '@/components/ui/column-guard';
+import { mediaTag } from '@/components/ui/media-library/types';
+import { openMediaPicker } from '@/components/ui/media-library/openMediaPicker';
+import {
+  normalizeRichValue,
+  richFallback,
+  richFromPlainText,
+  richToPlainText,
+  type JSONContent,
+} from '@/lib/rich-text';
 
 interface Stage1IdentityProps {
   data: TourInput;
@@ -132,6 +147,30 @@ export default function Stage1Identity({
   const [showTree, setShowTree] = useState(false);
   const [capacity, setCapacity] = useState('');
   const { toast } = useToast();
+
+  // تیم «فرم تورها»: نگهبان ستون‌های تازه — غنی (0030) و سئو (0033)؛ هر دو
+  // هنوز اجرا نشده‌اند. اگر ستون‌ها در دیتابیس نباشند، کنار همان فیلدها یک
+  // اطلاع صادقانه نشان داده می‌شود تا ویرایشی گم نشود (الگوی lib/column-guard.ts).
+  const richColsReady = useColumnGuard(checkTourRichCols);
+  const metaColsReady = useColumnGuard(checkTourMetaCols);
+
+  /**
+   * مقدار اولیهٔ ویرایشگر توضیحات: اگر نسخهٔ غنی هست همان؛ وگرنه متن تختِ
+   * قدیمی به یک سند تایپ‌تپ تبدیل می‌شود تا با اولین ویرایش، متن قدیم
+   * از بین نرود (همان مسیر مهاجرت گزارش ممیزی).
+   */
+  const descriptionEditorValue: JSONContent =
+    normalizeRichValue(data.descriptionRich) ?? richFromPlainText(data.description || '');
+
+  /** تغییر متن غنی → متن تختِ `description` هم از همان ساخته می‌شود (ستون
+      قدیمی notNull است و گیت انتشار/سایت/کد main روی آن حساب می‌کنند). */
+  const onDescriptionRichChange = (json: JSONContent) => {
+    onChange({ descriptionRich: json, description: richToPlainText(json) });
+  };
+
+  // عکس داخل متن توضیحات از کتابخانهٔ رسانه (تگ تور).
+  const pickDescriptionImage = () =>
+    openMediaPicker({ tag: mediaTag('tour', data.slug), title: 'انتخاب عکس برای متن توضیحات' });
 
   /**
    * پیشنهادهای هوشمند از مقصد (موج ۱، قلم ۶ — فرصت‌های ۱-۴ و ۱-۵ ممیزی):
@@ -997,19 +1036,37 @@ export default function Stage1Identity({
         )}
       </div>
 
-      {/* توضیحات کلی تور (T17): همان متن مرحلهٔ ۵، انتهای مرحلهٔ ۱ */}
+      {/* توضیحات کلی تور (T17): همان متن مرحلهٔ ۵، انتهای مرحلهٔ ۱ —
+          تیم «فرم تورها»: ویرایشگر کامل (ستون description_rich) + پیش‌نمایش واقعی */}
       <div className="rounded-sm border border-border bg-card p-5 space-y-3">
         <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
           <FileCheck2 className="size-4 text-brand" />
           <span>توضیحات کلی، مقدمه سفر و نکات تکمیلی</span>
         </h4>
-        <textarea
-          rows={4}
-          value={data.description}
-          onChange={(e) => onChange({ description: e.target.value })}
-          placeholder="روایت جذاب و صادقانه از حال و هوای سفر، تجربیات خاص این مسیر و این‌که چرا مسافر باید همین تور را انتخاب کند…"
-          className="w-full rounded-sm border border-input bg-background p-3 text-xs leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        />
+        <Field
+          label="متن توضیحات تور"
+          hint="درشت، کج، لیست، نقل‌قول، لینک، جدول، عکس با توضیح و ویدیو — همان‌طور که روی سایت دیده می‌شود."
+        >
+          <RichEditor
+            variant="full"
+            value={descriptionEditorValue}
+            onChange={onDescriptionRichChange}
+            placeholder="روایت جذاب و صادقانه از حال و هوای سفر، تجربیات خاص این مسیر و این‌که چرا مسافر باید همین تور را انتخاب کند…"
+            pickImage={pickDescriptionImage}
+          />
+          {richColsReady === false && (
+            <ColumnNotice>
+              قالب‌بندی متن (درشت، لیست و…) هنوز در دیتابیس جا ندارد؛ فعلاً فقط متن ساده ذخیره می‌شود.
+            </ColumnNotice>
+          )}
+        </Field>
+        {/* پیش‌نمایش واقعی متن — همان رندرری که روی سایت متن را چاپ می‌کند */}
+        <div className="rounded-sm border border-border/70 bg-background p-4">
+          <p className="mb-2 text-[11px] font-bold text-muted-foreground">نمای واقعی متن در سایت</p>
+          <div className="text-xs leading-relaxed text-foreground">
+            <RichText value={richFallback(data.descriptionRich, data.description)} />
+          </div>
+        </div>
         {/* توضیحات پیشنهادی از متن مقصد (موج ۱، قلم ۶ — فرصت ۱-۵): دکمهٔ صریح
             با پیش‌نمایش و تأیید؛ متن خالیِ مدیر هرگز بازنویسی نمی‌شود. */}
         {needDesc && destContent?.description && (
@@ -1021,6 +1078,28 @@ export default function Stage1Identity({
             <Sparkles className="size-3.5" />
             شروع از متن «{destContent.name}»
           </button>
+        )}
+      </div>
+
+      {/* متای سئوی سطح تور (تیم «فرم تورها»؛ ستون‌های meta_title/meta_description —
+          مایگریشن 0033 هنوز اجرا نشده). شمارنده فقط نرم و راهنماست. */}
+      <div className="rounded-sm border border-border bg-card p-5 space-y-3">
+        <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
+          <Search className="size-4 text-brand" />
+          <span>سئوی صفحهٔ تور</span>
+        </h4>
+        <SeoMetaFields
+          metaTitle={data.metaTitle || ''}
+          onMetaTitleChange={(v) => onChange({ metaTitle: v })}
+          metaDescription={data.metaDescription || ''}
+          onMetaDescriptionChange={(v) => onChange({ metaDescription: v })}
+          titleFallback={data.title}
+          urlPreview={data.slug.trim() ? `/tour/${data.slug.trim()}` : ''}
+        />
+        {metaColsReady === false && (
+          <ColumnNotice>
+            ذخیرهٔ این فیلدها به به‌روزرسانی دیتابیس نیاز دارد؛ فعلاً اعمال نمی‌شوند.
+          </ColumnNotice>
         )}
       </div>
 
@@ -1057,7 +1136,8 @@ export default function Stage1Identity({
           const text = [destContent.heroTagline.trim(), destContent.description.trim()]
             .filter(Boolean)
             .join('\n\n');
-          onChange({ description: text });
+          // متن غنی هم از همان ساخته می‌شود تا ویرایشگر خالی نماند.
+          onChange({ description: text, descriptionRich: richFromPlainText(text) });
           setShowDescPreview(false);
           toast({ title: 'متن مقصد درج شد', description: 'بخوانید و ویرایشش کنید.' });
         }}

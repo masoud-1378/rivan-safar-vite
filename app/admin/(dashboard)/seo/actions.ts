@@ -10,10 +10,17 @@ import {
   siteSettings,
   auditLogs,
 } from '@/db/schema';
-import { desc, eq, and, isNull } from 'drizzle-orm';
+import { desc, eq, and, isNull, sql } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 import { normalizeLandingPath } from '@/src/lib/db-content';
+import { checkColumnsExist } from '@/lib/column-guard';
+import {
+  cleanRichValue,
+  normalizeRichValue,
+  richFromPlainText,
+  type JSONContent,
+} from '@/lib/rich-text';
 import {
   findRouteCollision,
   nextLandingPathCandidate,
@@ -149,6 +156,25 @@ export async function listLandings() {
   return db.select().from(seoLandings).where(isNull(seoLandings.deletedAt)).orderBy(desc(seoLandings.updatedAt)).limit(200);
 }
 
+/**
+ * نگهبان ستون `body_fa_rich` بلوک‌های لندینگ (مایگریشن 0030، هنوز اجرا نشده).
+ * الگوی مصوب «نگهبان + اطلاع» (lib/column-guard.ts): خواندن/نوشتن متن غنی
+ * فقط وقتی انجام می‌شود که ستون واقعاً در دیتابیس باشد؛ فرم کنار فیلد اطلاع
+ * صادقانه نشان می‌دهد تا هیچ ویرایشی بی‌صدا گم نشود.
+ */
+async function blockRichColReady(db: AppDb): Promise<boolean> {
+  const { ready } = await checkColumnsExist(db, 'content_blocks', ['body_fa_rich']);
+  return ready;
+}
+
+/** وضعیت ستون برای فرم (سمت کلاینت): false یعنی اطلاع «فعلاً اعمال نمی‌شود». */
+export async function checkLandingBlockRichCol(): Promise<boolean> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) return false;
+  return blockRichColReady(db);
+}
+
 export async function getLanding(id: string) {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
@@ -160,6 +186,17 @@ export async function getLanding(id: string) {
     .from(contentBlocks)
     .where(eq(contentBlocks.landingId, id))
     .orderBy(contentBlocks.blockOrder);
+  // متن غنی بلوک‌ها (ستون body_fa_rich) فقط وقتی خوانده می‌شود که ستون باشد —
+  // در drizzle schema نیست (db/schema.ts دست نمی‌خورد)، پس با SQL خام.
+  const richById = new Map<string, JSONContent | null>();
+  if (await blockRichColReady(db)) {
+    const res = await db.execute(sql`
+      select id, body_fa_rich from content_blocks where landing_id = ${id}::uuid
+    `);
+    for (const row of res as unknown as Array<{ id: string; body_fa_rich: unknown }>) {
+      richById.set(row.id, normalizeRichValue(row.body_fa_rich as JSONContent | string | null | undefined));
+    }
+  }
   const links = await db
     .select()
     .from(seoInternalLinks)
@@ -170,7 +207,12 @@ export async function getLanding(id: string) {
     .select()
     .from(seoInternalLinks)
     .where(eq(seoInternalLinks.toPath, rows[0].urlPath));
-  return { ...rows[0], blocks, links, inLinks };
+  return {
+    ...rows[0],
+    blocks: blocks.map((b) => ({ ...b, bodyFaRich: richById.get(b.id) ?? null })),
+    links,
+    inLinks,
+  };
 }
 
 async function audit(actor: string, action: string, entity: string, entityId: string, reasonFa: string) {
@@ -464,7 +506,7 @@ export async function deleteBlock(id: string) {
  */
 export async function replaceBlocks(
   landingId: string,
-  blocks: Array<{ blockKind: string; bodyFa: string; blockOrder: number }>,
+  blocks: Array<{ blockKind: string; bodyFa: string; bodyFaRich?: JSONContent | null; blockOrder: number }>,
 ) {
   const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
@@ -475,16 +517,31 @@ export async function replaceBlocks(
     .where(eq(seoLandings.id, landingId))
     .limit(1);
   if (!exists[0]) throw new Error('لندینگ یافت نشد.');
+  // ستون body_fa_rich در drizzle schema نیست (db/schema.ts دست نمی‌خورد)؛
+  // اگر ستون در دیتابیس باشد، درج با SQL خام انجام می‌شود، وگرنه همان مسیر
+  // قدیمی — متن تخت جاری در body_fa می‌نشیند و فرم کنار بلوک‌ها صادقانه
+  // می‌گوید قالب‌بندی فعلاً ذخیره نمی‌شود (متن ساده می‌ماند).
+  const richReady = await blockRichColReady(db);
   await db.transaction(async (tx) => {
     await tx.delete(contentBlocks).where(eq(contentBlocks.landingId, landingId));
     let order = 1;
     for (const b of blocks) {
-      await tx.insert(contentBlocks).values({
-        landingId,
-        blockKind: b.blockKind,
-        bodyFa: b.bodyFa,
-        blockOrder: b.blockOrder || order,
-      });
+      const blockOrder = b.blockOrder || order;
+      if (richReady) {
+        const rich = cleanRichValue(b.bodyFaRich ?? null);
+        await tx.execute(sql`
+          insert into content_blocks (landing_id, block_kind, body_fa, body_fa_rich, block_order)
+          values (${landingId}::uuid, ${b.blockKind}, ${b.bodyFa},
+                  ${rich ? JSON.stringify(rich) : null}::jsonb, ${blockOrder})
+        `);
+      } else {
+        await tx.insert(contentBlocks).values({
+          landingId,
+          blockKind: b.blockKind,
+          bodyFa: b.bodyFa,
+          blockOrder,
+        });
+      }
       order += 1;
     }
   });

@@ -29,6 +29,8 @@ import type {
   OriginRow, 
   TourInput, 
   TourRow,
+  TourRichFields,
+  TourFaqItem,
   TourItineraryDayItem,
 } from './actions';
 import { saveTour, checkSlugUnique } from './actions';
@@ -52,7 +54,8 @@ import StageFinalStation from './stages/StageFinalStation';
 import SmartImage from '@/src/components/SmartImage';
 
 export interface TourFormProps {
-  initial?: TourRow | null;
+  /** ردیف تور + فیلدهای غنی/سئو (وقتی ویرایش است، از getTourById می‌آید). */
+  initial?: (TourRow & Partial<TourRichFields>) | null;
   editingId?: string | null;
   /** بعد از ذخیرهٔ موفق صدا زده می‌شود؛ برای تور تازه، شناسهٔ ساخته‌شده را می‌گیرد. */
   onDone: (id?: string | null) => void;
@@ -279,6 +282,12 @@ export default function TourForm({
       excludedServices: Array.isArray(initial?.excludedServices) ? (initial.excludedServices as string[]) : [],
       hotelOptions: Array.isArray(initial?.hotelOptions) ? (initial.hotelOptions as any[]) : [],
       description: initial?.description || '',
+      // تیم «فرم تورها» (۱۴۰۵/۰۷/۱۱): فیلدهای غنی/سئوی سطح تور.
+      descriptionRich: initial?.descriptionRich ?? null,
+      faqs: Array.isArray(initial?.faqs) ? (initial.faqs as TourFaqItem[]) : [],
+      whyThisTourRich: initial?.whyThisTourRich ?? null,
+      metaTitle: initial?.metaTitle ?? '',
+      metaDescription: initial?.metaDescription ?? '',
       // قلم ۳ موج ۰: شیوهٔ سفر فقط از مقدار ذخیره‌شده می‌آید — هیچ حدس regex از
       // روی نام ایرلاین و هیچ پیش‌فرض حدسی. تور تازه در مرحلهٔ ۱ صریح انتخاب می‌شود.
       transportKind: initial?.transportKind,

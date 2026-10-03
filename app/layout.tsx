@@ -5,6 +5,7 @@ import ClientChrome from './ClientChrome';
 import { getGaId, getSiteMeta } from '@/src/lib/site-contact';
 import { getNavLinks } from '@/src/lib/db-content';
 import '../src/index.css';
+import '@/components/ui/rich-editor/rich-editor.css';
 import { pinar, vazirmatn } from "./fonts";
 
 

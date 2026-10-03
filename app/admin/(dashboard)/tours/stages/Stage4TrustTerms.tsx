@@ -18,8 +18,21 @@ import { Button } from '@/components/ui/button';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/toast';
 import { cn, fa } from '@/lib/utils';
-import type { TourTrustSpecsItem, TourInput, TourDocsSuggestion } from '../actions';
-import { getTourDocsSuggestion } from '../actions';
+import type { TourTrustSpecsItem, TourInput, TourDocsSuggestion, TourFaqItem } from '../actions';
+import { getTourDocsSuggestion, checkTourRichCols } from '../actions';
+// تیم «فرم تورها» (۱۴۰۵/۰۷/۱۱): «سوالات پرتکرار» سطح تور (تکرارشوندهٔ پرسش +
+// پاسخ با ویرایشگر سبک → ستون faqs) و «چرا همین تور» (ویرایشگر کامل → ستون
+// why_this_tour) — هر دو از روز اول روی ویرایشگر، با الگوی «نگهبان + اطلاع».
+import { RichEditor } from '@/components/ui/rich-editor/RichEditor';
+import { ColumnNotice, useColumnGuard } from '@/components/ui/column-guard';
+import { mediaTag } from '@/components/ui/media-library/types';
+import { openMediaPicker } from '@/components/ui/media-library/openMediaPicker';
+import {
+  normalizeRichValue,
+  richFromPlainText,
+  richToPlainText,
+  type JSONContent,
+} from '@/lib/rich-text';
 
 interface Stage4TrustTermsProps {
   data: TourInput;
@@ -68,6 +81,29 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
   };
 
   const [customDoc, setCustomDoc] = React.useState('');
+
+  // تیم «فرم تورها»: نگهبان ستون‌های تازه (faqs و why_this_tour — مایگریشن
+  // 0030، اجرا نشده). اگر ستون‌ها در دیتابیس نباشند، کنار همان فیلدها یک
+  // اطلاع صادقانه نشان داده می‌شود تا ویرایشی گم نشود.
+  const tourRichReady = useColumnGuard(checkTourRichCols);
+
+  /** «سوالات پرتکرار» سطح تور — تکرارشوندهٔ پرسش + پاسخ (ویرایشگر سبک). */
+  const faqs: TourFaqItem[] = Array.isArray(data.faqs) ? data.faqs : [];
+  const updateFaqs = (next: TourFaqItem[]) => onChange({ faqs: next });
+  const addFaq = () => {
+    updateFaqs([...faqs, { question: '', answer: '', answerRich: null }]);
+  };
+  const updateFaq = (index: number, patch: Partial<TourFaqItem>) => {
+    updateFaqs(faqs.map((f, i) => (i === index ? { ...f, ...patch } : f)));
+  };
+  const removeFaq = (index: number) => {
+    updateFaqs(faqs.filter((_, i) => i !== index));
+  };
+
+  /** «چرا همین تور» — ویرایشگر کامل. */
+  const whyThisTourValue: JSONContent | null = normalizeRichValue(data.whyThisTourRich);
+  const pickWhyImage = () =>
+    openMediaPicker({ tag: mediaTag('tour', data.slug), title: 'انتخاب عکس برای «چرا همین تور»' });
 
   const addDoc = (docText: string) => {
     if (!docText.trim() || currentDocs.includes(docText.trim())) return;
@@ -364,6 +400,97 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
             </div>
           ))}
         </div>
+      </div>
+
+      {/* چرا همین تور (تیم «فرم تورها»): ویرایشگر کامل → ستون why_this_tour */}
+      <div className="rounded-sm border border-border bg-card p-5 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
+            <FileText className="size-4 text-brand" />
+            <span>چرا همین تور</span>
+          </h4>
+          <span className="text-[11px] text-muted-foreground">در صفحهٔ تور، بعد از توضیحات نمایش داده می‌شود</span>
+        </div>
+        <Field
+          label="متن «چرا همین تور»"
+          hint="نکته‌های متمایزکنندهٔ این تور: چرا مسافر باید همین را انتخاب کند، نه تور مشابه را."
+        >
+          <RichEditor
+            variant="full"
+            value={whyThisTourValue}
+            onChange={(json: JSONContent) => onChange({ whyThisTourRich: json })}
+            placeholder="مثلاً: تنها توری که…، هتل‌های…، لیدر…"
+            pickImage={pickWhyImage}
+          />
+          {tourRichReady === false && (
+            <ColumnNotice>
+              ذخیرهٔ این فیلد به به‌روزرسانی دیتابیس نیاز دارد؛ فعلاً اعمال نمی‌شود.
+            </ColumnNotice>
+          )}
+        </Field>
+      </div>
+
+      {/* سوالات پرتکرار تور (تیم «فرم تورها»): تکرارشوندهٔ پرسش + پاسخ با
+          ویرایشگر سبک → ستون faqs */}
+      <div className="rounded-sm border border-border bg-card p-5 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
+            <HelpCircle className="size-4 text-emerald-500" />
+            <span>سوالات پرتکرار این تور</span>
+          </h4>
+          <Button type="button" variant="outline" size="sm" onClick={addFaq} className="gap-1.5 text-xs">
+            <Plus className="size-3.5" />
+            افزودن پرسش
+          </Button>
+        </div>
+
+        {faqs.length === 0 ? (
+          <p className="text-[11px] leading-5 text-muted-foreground">
+            هنوز پرسشی ثبت نشده؛ سؤال‌هایی که مسافرها دربارهٔ همین تور زیاد می‌پرسند را این‌جا بنویسید.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {faqs.map((faq, i) => (
+              <div key={i} className="rounded-sm border border-border/70 bg-secondary/15 p-3.5 space-y-3">
+                <div className="flex items-start gap-2">
+                  <div className="grow">
+                    <Field label={`پرسش ${fa(i + 1)}`}>
+                      <Input
+                        value={faq.question}
+                        onChange={(e) => updateFaq(i, { question: e.target.value })}
+                        placeholder="مثلاً: آیا این تور برای کودکان مناسب است؟"
+                        className="text-xs font-medium"
+                      />
+                    </Field>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeFaq(i)}
+                    aria-label={`حذف پرسش ${fa(i + 1)}`}
+                    className="mt-6 inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+                <Field label="پاسخ">
+                  <RichEditor
+                    variant="light"
+                    value={normalizeRichValue(faq.answerRich) ?? richFromPlainText(faq.answer || '')}
+                    onChange={(json: JSONContent) =>
+                      updateFaq(i, { answerRich: json, answer: richToPlainText(json) })
+                    }
+                    placeholder="پاسخ کوتاه و شفاف…"
+                  />
+                </Field>
+              </div>
+            ))}
+          </div>
+        )}
+        {tourRichReady === false && (
+          <ColumnNotice>
+            ذخیرهٔ این فیلد به به‌روزرسانی دیتابیس نیاز دارد؛ فعلاً اعمال نمی‌شود.
+          </ColumnNotice>
+        )}
       </div>
 
       {/* دیالوگ تأیید بازنشانی مدارک (C4-3): مدارک دستی پاک می‌شود، بدون بازگشت */}

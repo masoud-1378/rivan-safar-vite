@@ -13,6 +13,10 @@ import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import { fa } from '@/lib/utils';
 import { formatHotelStarsRange } from '@/lib/hotel-stars';
+// تیم «فرم تورها»: رندر متن‌های غنی تور (description_rich / faqs / why_this_tour)
+// با RichText + fallback متن تخت قدیمی.
+import { RichText } from '@/components/ui/rich-editor/RichText';
+import { faqRichAnswer, isRichEmpty, normalizeRichValue, richFallback, type JSONContent } from '@/lib/rich-text';
 import {
   liveExtras, isDomesticTour, faDateTime, boardLabel,
   transportLabel, transportSpecLabel,
@@ -61,9 +65,47 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
   // فیلدهای زنده تورساز (بسته A) — همه اختیاری و دفاعی
   const extras = liveExtras(tour);
   const itineraryDays = (extras.itineraryDays || []).filter(
-    (d) => d && (d.title || d.description)
+    (d) =>
+      d &&
+      (d.title ||
+        (d.description || '').trim() ||
+        !isRichEmpty(normalizeRichValue(d.descriptionRich as JSONContent | string | null | undefined)))
   );
+  // متن‌های غنی تور (مایگریشن 0030) — خالی یعنی بخش نمایش داده نمی‌شود.
+  const whyThisTourJson = normalizeRichValue(tour.whyThisTourRich);
+  const hasWhyThisTour = !isRichEmpty(whyThisTourJson);
+  const tourFaqs = (Array.isArray(tour.faqs) ? tour.faqs : [])
+    .filter((f) => f && typeof f.question === 'string' && f.question.trim() !== '')
+    .map((f) => ({
+      question: f.question.trim(),
+      answer: f.answer ?? '',
+      answerRich: normalizeRichValue(faqRichAnswer(f)),
+    }))
+    .filter((f) => f.answer.trim() !== '' || !isRichEmpty(f.answerRich));
+  // بلوک مالی واقعی (بسته A — موج ۳، مایگریشن 0027): همه اختیاری و دفاعی.
+  // فقط چیزی که مدیر واقعاً وارد کرده نمایش داده می‌شود؛ پلهٔ ناقص (یکی از سه
+  // عددش خالی) هرگز به مسافر نشان داده نمی‌شود.
   const trust = extras.trustSpecs || null;
+  const fin = extras.financialSpecs || null;
+  const cancelTiers = ((fin?.cancellationTiers || []) as Array<{
+    fromDays?: number | null;
+    toDays?: number | null;
+    penaltyPercent?: number | null;
+  }>).filter((t) => {
+    const from = Number(t?.fromDays);
+    const to = Number(t?.toDays);
+    const p = Number(t?.penaltyPercent);
+    return (
+      Number.isFinite(from) && from >= 0 &&
+      Number.isFinite(to) && to >= 0 &&
+      Number.isFinite(p) && p >= 0 && p <= 100
+    );
+  });
+  const visaRejectionNote = (fin?.visaRejectionNote || '').trim();
+  const depositAmount = (fin?.depositAmount || '').trim();
+  const depositDeadline = (fin?.depositDeadline || '').trim();
+  const hasFinancial =
+    cancelTiers.length > 0 || !!visaRejectionNote || !!depositAmount || !!depositDeadline;
   const hasTrust =
     !!trust &&
     !!(
@@ -164,9 +206,9 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 {tour.title}
               </h1>
 
-              <p className="text-body text-text-secondary leading-relaxed mb-6">
-                {tour.description}
-              </p>
+              <div className="text-body text-text-secondary leading-relaxed mb-6">
+                <RichText value={richFallback(tour.descriptionRich, tour.description)} />
+              </div>
 
               {/* Specifications Box */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-surface-secondary rounded-card border border-border-default/80 mb-6 text-caption font-medium">
@@ -274,6 +316,25 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
         </div>
       </section>
 
+      {/* ---------------- چرا همین تور (تیم «فرم تورها»؛ فقط وقتی داده هست) ---------------- */}
+      {hasWhyThisTour && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="bg-surface-primary border border-border-default rounded-card p-5 md:p-6 shadow-subtle">
+            <div className="text-right mb-4">
+              <h2 className="text-h2 text-text-heading font-bold mb-1.5">
+                چرا همین تور؟
+              </h2>
+              <p className="text-body-sm text-text-secondary">
+                نکته‌هایی که این تور را از تورهای مشابه جدا می‌کند.
+              </p>
+            </div>
+            <div className="text-body-sm text-text-secondary leading-relaxed">
+              <RichText value={whyThisTourJson} />
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ---------------- برنامه روزبه‌روز (از تورساز؛ فقط وقتی داده هست) ---------------- */}
       {itineraryDays.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
@@ -307,8 +368,10 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 {day.title && (
                   <h3 className="text-body font-bold text-text-heading mb-1.5">{day.title}</h3>
                 )}
-                {day.description && (
-                  <p className="text-body-sm text-text-secondary leading-relaxed">{day.description}</p>
+                {((day.description || '').trim() || !isRichEmpty(normalizeRichValue(day.descriptionRich as JSONContent | string | null | undefined))) && (
+                  <div className="text-body-sm text-text-secondary leading-relaxed">
+                    <RichText value={richFallback(day.descriptionRich, day.description)} />
+                  </div>
                 )}
                 {day.meals && (
                   <p className="text-caption text-text-muted mt-2">
@@ -317,6 +380,37 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 )}
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* ---------------- سوالات پرتکرار این تور (تیم «فرم تورها»؛ فقط وقتی داده هست) ---------------- */}
+      {tourFaqs.length > 0 && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="bg-surface-primary border border-border-default rounded-card p-5 md:p-6 shadow-subtle">
+            <div className="text-right mb-5">
+              <h2 className="text-h2 text-text-heading font-bold mb-1.5">
+                سوالات پرتکرار
+              </h2>
+              <p className="text-body-sm text-text-secondary">
+                پاسخ سؤال‌هایی که مسافرها دربارهٔ همین تور زیاد می‌پرسند.
+              </p>
+            </div>
+            <div className="space-y-2.5">
+              {tourFaqs.map((f, i) => (
+                <details
+                  key={i}
+                  className="rounded-control border border-border-default/70 bg-surface-secondary/40 px-4 py-3"
+                >
+                  <summary className="cursor-pointer text-body-sm font-bold text-text-heading">
+                    {f.question}
+                  </summary>
+                  <div className="pt-2 text-body-sm text-text-secondary leading-relaxed">
+                    <RichText value={richFallback(f.answerRich, f.answer)} />
+                  </div>
+                </details>
+              ))}
+            </div>
           </div>
         </section>
       )}
@@ -597,10 +691,61 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
             </div>
           )}
 
-          {/* موج ۰: کارت‌های «قوانین کودک و تخت اضافه» و «شرایط تغییر و کنسلی»
-              برداشته شدند — متن ثابت کلیشه‌ای بود و ممکن بود با قرارداد واقعی
-              تور نخواند. جای آن‌ها در موج ۳ با دادهٔ واقعی (جدول کنسلی و
-              قوانین واقعی کودک همین تور) پر می‌شود. */}
+          {/* موج ۳ — کارت «شرایط کنسلی و پیش‌پرداخت»: جای خالی‌ای که موج ۰ برای
+              دادهٔ واقعی گذاشته بود. فقط با دادهٔ واقعیِ همین تور پر می‌شود —
+              هیچ متن ثابت کلیشه‌ای این‌جا نیست. */}
+          {hasFinancial && (
+            <div className="bg-surface-primary border border-border-default rounded-card p-6">
+              <h3 className="text-h4 font-bold text-text-heading mb-1.5">شرایط کنسلی و پیش‌پرداخت</h3>
+              <p className="text-caption text-text-muted mb-4">
+                جریمهٔ کنسلی همین تور؛ روزشمار نسبت به تاریخ حرکت است.
+              </p>
+              {cancelTiers.length > 0 && (
+                <div className="overflow-x-auto mb-4">
+                  <table className="w-full text-caption border-collapse">
+                    <thead>
+                      <tr className="text-text-muted border-b border-border-default">
+                        <th className="text-start font-bold py-2 pe-2">از چند روز مانده</th>
+                        <th className="text-start font-bold py-2 pe-2">تا چند روز مانده</th>
+                        <th className="text-start font-bold py-2">جریمه</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cancelTiers.map((t, i) => (
+                        <tr key={i} className="border-b border-border-default/60 last:border-0">
+                          <td className="py-2 pe-2 text-text-secondary">{fa(Number(t.fromDays))} روز</td>
+                          <td className="py-2 pe-2 text-text-secondary">{fa(Number(t.toDays))} روز</td>
+                          <td className="py-2 font-bold text-text-heading">{fa(Number(t.penaltyPercent))}٪</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {visaRejectionNote && (
+                <div className="mb-3">
+                  <p className="text-caption text-text-muted font-bold mb-0.5">در صورت رد ویزا</p>
+                  <p className="text-body-sm text-text-secondary leading-relaxed">{visaRejectionNote}</p>
+                </div>
+              )}
+              {(depositAmount || depositDeadline) && (
+                <dl className="space-y-2 text-caption">
+                  {depositAmount && (
+                    <div className="flex items-start gap-2">
+                      <dt className="text-text-muted font-bold shrink-0">پیش‌پرداخت:</dt>
+                      <dd className="text-text-secondary">{depositAmount}</dd>
+                    </div>
+                  )}
+                  {depositDeadline && (
+                    <div className="flex items-start gap-2">
+                      <dt className="text-text-muted font-bold shrink-0">مهلت تسویه:</dt>
+                      <dd className="text-text-secondary">{depositDeadline}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
+            </div>
+          )}
 
         </div>
       </section>

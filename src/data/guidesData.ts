@@ -1,3 +1,5 @@
+import type { JSONContent } from '@/lib/rich-text';
+
 export interface GuideItem {
   id: string;
   slug: string;
@@ -8,12 +10,21 @@ export interface GuideItem {
   author: string;
   reviewer: string;
   lastReviewedAt: string;
+  /** متن تخت قدیمی (fallback) — خوانش نمایشی اول از summaryRich می‌آید. */
   summary: string;
+  /** متن غنی خلاصه (ستون summary_rich)؛ می‌تواند JSON تایپ‌تپ یا رشته باشد. */
+  summaryRich?: JSONContent | string | null;
   heroImage: string;
+  /** متن تخت قدیمی (fallback) — خوانش نمایشی اول از directAnswerRich می‌آید. */
   directAnswer: string;
+  /** متن غنی پاسخ مستقیم (ستون direct_answer_rich). */
+  directAnswerRich?: JSONContent | string | null;
   sections: Array<{
     heading: string;
+    /** متن تخت قدیمی (fallback). */
     content: string;
+    /** متن غنی بخش (کلید content_rich داخل آبجکت). */
+    contentRich?: JSONContent | string | null;
     checkpoints?: string[];
     table?: {
       headers: string[];
@@ -23,7 +34,13 @@ export interface GuideItem {
   relatedDestinationSlug?: string;
   // F8: نامک تور مرتبط (مقدار ذخیره‌شده نامک است، نه شناسه).
   relatedTourSlug?: string;
-  faqs: Array<{ question: string; answer: string }>;
+  faqs: Array<{
+    question: string;
+    /** پاسخ تخت قدیمی (fallback). */
+    answer: string;
+    /** پاسخ غنی (کلید answer_rich داخل آبجکت). */
+    answerRich?: JSONContent | string | null;
+  }>;
 }
 
 export const GUIDES: Record<string, GuideItem> = {

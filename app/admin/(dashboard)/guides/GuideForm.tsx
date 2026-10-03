@@ -1,16 +1,31 @@
 'use client';
 
 import React, { useEffect, useState, useTransition } from 'react';
+import { Archive, Eye } from 'lucide-react';
 import { Alert } from '@/components/ui/alert';
+import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { fa, faSlug } from '@/lib/utils';
-import { saveGuide, type GuideInput, type GuideRow, type GuideStatus } from './actions';
+import { deleteGuide, saveGuide, checkGuideRichCols, type GuideInput, type GuideRow, type GuideStatus } from './actions';
+import { ColumnNotice, useColumnGuard } from '@/components/ui/column-guard';
 import { DatePicker } from '@/components/ui/date-picker';
-import BlockEditor, { cleanBlocks, validateBlocks } from '@/components/ui/block-editor';
+import BlockEditor, { cleanBlocks, readItem, validateBlocks } from '@/components/ui/block-editor';
+import { MediaField } from '@/components/ui/media-library/MediaField';
+import { mediaTag, type PickedImage } from '@/components/ui/media-library/types';
+import { openMediaPicker } from '@/components/ui/media-library/openMediaPicker';
+import { RichEditor, RichText } from '@/components/ui/rich-editor';
+import {
+  cleanRichValue,
+  isRichEmpty,
+  normalizeRichValue,
+  richFallback,
+  richFromPlainText,
+  richToPlainText,
+  type JSONContent,
+} from '@/lib/rich-text';
 
 export interface GuidePickerOption {
   value: string;
@@ -34,16 +49,35 @@ const STATUSES: Array<{ value: GuideStatus; label: string }> = [
   { value: 'archived', label: 'بایگانی' },
 ];
 
-/** G4: شمارش واژه‌های بخش‌ها (تیتر + متن) برای تخمین زمان مطالعه. */
+/** مقدار اولیهٔ ویرایشگر: اول نسخهٔ غنی (`*_rich`)، اگر خالی بود متن تخت قدیمی. */
+function initialRich(
+  rich: JSONContent | string | null | undefined,
+  plain: string | null | undefined,
+): JSONContent | null {
+  const json = normalizeRichValue(rich ?? null);
+  if (json && !isRichEmpty(json)) return json;
+  const t = (plain ?? '').trim();
+  return t ? richFromPlainText(t) : null;
+}
+
+/** G4: شمارش واژه‌های بخش‌ها (تیتر + متن غنی/تخت) برای تخمین زمان مطالعه. */
 function sectionWords(items: unknown[]): number {
   let n = 0;
+  const count = (s: string) => {
+    n += s.trim().split(/\s+/).filter(Boolean).length;
+  };
   for (const it of items) {
     if (!it || typeof it !== 'object') continue;
     const o = it as Record<string, unknown>;
-    for (const k of ['heading', 'content', 'title', 'text']) {
-      const v = o[k];
-      if (typeof v === 'string') n += v.trim().split(/\s+/).filter(Boolean).length;
-    }
+    const heading = typeof o.heading === 'string' ? o.heading : typeof o.title === 'string' ? o.title : '';
+    count(heading);
+    const rich = normalizeRichValue(o.content_rich as JSONContent | string | null | undefined);
+    const body = rich && !isRichEmpty(rich)
+      ? richToPlainText(rich)
+      : typeof o.content === 'string'
+        ? o.content
+        : '';
+    count(body);
   }
   return n;
 }
@@ -53,11 +87,115 @@ function readTimeLabel(words: number): string {
   return `${fa(minutes)} دقیقه مطالعه`;
 }
 
+/** پیش‌نمایش واقعی متن — همان رندر RichText که روی سایت دیده می‌شود. */
+function GuidePreview({
+  titleFa,
+  categoryLabel,
+  readTime,
+  author,
+  reviewer,
+  heroUrl,
+  summaryRich,
+  summaryPlain,
+  directAnswerRich,
+  directAnswerPlain,
+  sections,
+  faqs,
+}: {
+  titleFa: string;
+  categoryLabel: string;
+  readTime: string;
+  author: string;
+  reviewer: string;
+  heroUrl: string;
+  summaryRich: JSONContent | null;
+  summaryPlain: string;
+  directAnswerRich: JSONContent | null;
+  directAnswerPlain: string;
+  sections: unknown[];
+  faqs: unknown[];
+}) {
+  return (
+    <div className="space-y-6 rounded-md border border-border bg-card p-6" dir="rtl">
+      <p className="text-xs text-muted-foreground">
+        پیش‌نمایش متن — همان‌طور که روی سایت دیده می‌شود.
+      </p>
+      <div>
+        <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          {categoryLabel && <span className="font-semibold">{categoryLabel}</span>}
+          {readTime && <span>زمان مطالعه: {readTime}</span>}
+        </div>
+        <h2 className="mb-3 text-xl font-extrabold">{titleFa || '—'}</h2>
+        <div className="mb-3 font-medium leading-relaxed text-muted-foreground">
+          <RichText value={richFallback(summaryRich, summaryPlain)} />
+        </div>
+        {(author || reviewer) && (
+          <p className="mb-4 text-xs text-muted-foreground">
+            {author && <>نویسنده: <span className="font-bold">{author}</span></>}
+            {author && reviewer && ' • '}
+            {reviewer && <>بازبین: <span className="font-bold">{reviewer}</span></>}
+          </p>
+        )}
+        {heroUrl && (
+          <div className="mb-4 overflow-hidden rounded-md border border-border">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={heroUrl} alt={titleFa} className="aspect-[21/9] w-full object-cover" />
+          </div>
+        )}
+        <div className="rounded-md border border-orange-200 bg-orange-50 p-4 dark:border-orange-900/40 dark:bg-orange-950/20">
+          <p className="mb-2 text-sm font-bold">خلاصه و نتیجه‌گیری سریع برای مسافر</p>
+          <RichText value={richFallback(directAnswerRich, directAnswerPlain)} />
+        </div>
+      </div>
+      {sections.length > 0 && (
+        <div className="space-y-6">
+          {sections.map((raw, idx) => {
+            const f = readItem('section', raw);
+            return (
+              <div key={idx} className="space-y-2">
+                <h3 className="border-r-4 border-orange-500 pr-3 text-base font-bold">
+                  {String(f.heading ?? '')}
+                </h3>
+                <RichText
+                  value={richFallback(
+                    f.contentRich as JSONContent | string | null,
+                    String(f.content ?? ''),
+                  )}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {faqs.length > 0 && (
+        <div className="space-y-4 border-t border-border pt-4">
+          <h3 className="text-base font-bold">پرسش‌های متداول</h3>
+          {faqs.map((raw, idx) => {
+            const f = readItem('faq', raw);
+            return (
+              <div key={idx} className="space-y-1">
+                <p className="text-sm font-bold">{String(f.question ?? '')}</p>
+                <RichText
+                  value={richFallback(
+                    f.answerRich as JSONContent | string | null,
+                    String(f.answer ?? ''),
+                  )}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function GuideForm({
   initial,
   editingId,
   onSaved,
   onCancel,
+  onDeleted,
   destinationOptions = [],
   tourOptions = [],
 }: {
@@ -65,6 +203,8 @@ export default function GuideForm({
   editingId?: string | null;
   onSaved?: () => void;
   onCancel?: () => void;
+  /** بعد از بایگانی راهنما از داخل فرم صدا زده می‌شود. */
+  onDeleted?: () => void;
   /** G3: فهرست واقعی مقصدها برای انتخاب «مقصد مرتبط». */
   destinationOptions?: GuidePickerOption[];
   /** G3: فهرست واقعی تورها برای انتخاب «تور مرتبط». */
@@ -81,9 +221,19 @@ export default function GuideForm({
   const [readTimeTouched, setReadTimeTouched] = useState(Boolean(initial?.readTime));
   const [author, setAuthor] = useState(initial?.author ?? '');
   const [reviewer, setReviewer] = useState(initial?.reviewer ?? '');
-  const [summary, setSummary] = useState(initial?.summary ?? '');
-  const [heroImage, setHeroImage] = useState(initial?.heroImage ?? '');
-  const [directAnswer, setDirectAnswer] = useState(initial?.directAnswer ?? '');
+  // خلاصه و پاسخ مستقیم با ویرایشگر کامل؛ خوانش اول از *_rich، بعد متن تخت قدیمی.
+  const [summaryRich, setSummaryRich] = useState<JSONContent | null>(() =>
+    initialRich(initial?.summaryRich, initial?.summary),
+  );
+  const [directAnswerRich, setDirectAnswerRich] = useState<JSONContent | null>(() =>
+    initialRich(initial?.directAnswerRich, initial?.directAnswer),
+  );
+  // تصویر اصلی راهنما: آپلود تازه / انتخاب از کتابخانه / لینک دستی.
+  // فرم فقط url را ذخیره می‌کند؛ کپشن و alt در خود مقدار می‌ماند تا
+  // ستون‌هایش به دیتابیس اضافه شود (یادداشت content-editor/media/NOTES.md).
+  const [hero, setHero] = useState<PickedImage | null>(
+    initial?.heroImage ? { url: initial.heroImage } : null,
+  );
   const [relatedDestinationSlug, setRelatedDestinationSlug] = useState(
     initial?.relatedDestinationSlug ?? '',
   );
@@ -103,6 +253,11 @@ export default function GuideForm({
     initial?.lastReviewedAt ? new Date(initial.lastReviewedAt) : null,
   );
   const [error, setError] = useState<string | null>(null);
+  // نگهبان ستون‌های *_rich (مایگریشن 0030): تا وقتی ستون‌ها نباشند، کنار همان
+  // دو فیلد اطلاع صادقانه نشان داده می‌شود تا ویرایش بی‌صدا گم نشود.
+  const richColsReady = useColumnGuard(checkGuideRichCols);
+  const [showPreview, setShowPreview] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, startTransition] = useTransition();
 
   // G4: تا وقتی دستی بازنویسی نشده، زمان مطالعه از طول بخش‌ها می‌آید.
@@ -120,6 +275,10 @@ export default function GuideForm({
     setTitleFa(v);
     if (!slugTouched) setSlug(faSlug(v));
   };
+
+  // عکس داخل متن بخش‌ها از کتابخانهٔ رسانه (تگ راهنما).
+  const pickSectionImage = () =>
+    openMediaPicker({ tag: mediaTag('guide', slug), title: 'انتخاب عکس برای متن بخش' });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,11 +298,14 @@ export default function GuideForm({
       readTime: readTime.trim(),
       author: author.trim(),
       reviewer: reviewer.trim(),
-      summary: summary.trim(),
-      heroImage: heroImage.trim(),
-      directAnswer: directAnswer.trim(),
+      // متن‌های غنی با JSON تمیز؛ ستون‌های متنی قدیمی دست نمی‌خورند (fallback).
+      summaryRich: cleanRichValue(summaryRich),
+      heroImage: hero?.url.trim() ?? '',
+      directAnswerRich: cleanRichValue(directAnswerRich),
       sections: cleanBlocks('section', sections),
       faqs: cleanBlocks('faq', faqs),
+      sectionsFormat: initial?.sectionsFormat,
+      faqsFormat: initial?.faqsFormat,
       relatedDestinationSlug: relatedDestinationSlug.trim(),
       relatedTourSlug: relatedTourSlug.trim(),
       status,
@@ -160,6 +322,16 @@ export default function GuideForm({
     });
   };
 
+  const handleDelete = async () => {
+    if (!editingId) return;
+    try {
+      await deleteGuide(editingId);
+      if (onDeleted) onDeleted();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا در بایگانی راهنما.');
+    }
+  };
+
   return (
     <Card>
       <form onSubmit={handleSubmit} className="space-y-5 p-5">
@@ -168,7 +340,30 @@ export default function GuideForm({
             <h2 className="text-lg font-semibold">{editingId ? 'ویرایش راهنما' : 'راهنمای جدید'}</h2>
             <p className="mt-1 text-sm text-muted-foreground">اطلاعات و محتوای راهنمای سفر را وارد کنید.</p>
           </div>
-          {onCancel && <Button type="button" variant="ghost" size="sm" onClick={onCancel}>انصراف</Button>}
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPreview((v) => !v)}
+            >
+              <Eye />
+              {showPreview ? 'بستن پیش‌نمایش' : 'پیش‌نمایش'}
+            </Button>
+            {editingId && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-destructive"
+                onClick={() => setConfirmDelete(true)}
+              >
+                <Archive />
+                بایگانی
+              </Button>
+            )}
+            {onCancel && <Button type="button" variant="ghost" size="sm" onClick={onCancel}>انصراف</Button>}
+          </div>
         </div>
 
       {error && (
@@ -176,24 +371,32 @@ export default function GuideForm({
       )}
 
       {/* محتوای اصلی (خلاصه + پاسخ مستقیم) نزدیک عنوان — بالای داده‌های فراداده */}
-      <Field label="خلاصه راهنما" htmlFor="guide-summary">
-        <Textarea
-          id="guide-summary"
-          value={summary}
-          onChange={(e) => setSummary(e.target.value)}
-            className="min-h-20"
+      <Field
+        label="خلاصه راهنما"
+        htmlFor="guide-summary"
+        hint="راهنمای نرم سئو: خلاصهٔ کوتاه (یک تا دو جمله) در نتایج گوگل بهتر دیده می‌شود؛ اجباری نیست."
+      >
+        <RichEditor
+          variant="full"
+          value={summaryRich}
+          onChange={setSummaryRich}
           placeholder="چکیده کوتاه راهنما…"
         />
+        {richColsReady === false && (
+          <ColumnNotice>ذخیرهٔ این فیلد به به‌روزرسانی دیتابیس نیاز دارد؛ فعلاً اعمال نمی‌شود.</ColumnNotice>
+        )}
       </Field>
 
       <Field label="پاسخ مستقیم و سریع" htmlFor="guide-direct">
-        <Textarea
-          id="guide-direct"
-          value={directAnswer}
-          onChange={(e) => setDirectAnswer(e.target.value)}
-            className="min-h-20"
+        <RichEditor
+          variant="full"
+          value={directAnswerRich}
+          onChange={setDirectAnswerRich}
           placeholder="پاسخ سریع به پرسش اصلی کاربر…"
         />
+        {richColsReady === false && (
+          <ColumnNotice>ذخیرهٔ این فیلد به به‌روزرسانی دیتابیس نیاز دارد؛ فعلاً اعمال نمی‌شود.</ColumnNotice>
+        )}
       </Field>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -284,16 +487,15 @@ export default function GuideForm({
           />
         </Field>
 
-        <Field label="آدرس تصویر اصلی" htmlFor="guide-hero" hint="فقط لینک Unsplash">
-          <Input
-            id="guide-hero"
-            value={heroImage}
-            onChange={(e) => setHeroImage(e.target.value)}
-            className="text-start"
-            dir="ltr"
-            placeholder="https://..."
-          />
-        </Field>
+        <MediaField
+          label="تصویر اصلی"
+          htmlFor="guide-hero"
+          hint="آپلود تازه، انتخاب از کتابخانهٔ رسانه، یا درج لینک دستی."
+          value={hero}
+          onChange={setHero}
+          tag={mediaTag('guide', slug)}
+          tagLabel="راهنما"
+        />
 
         <Field label="مقصد مرتبط" htmlFor="guide-rel-dest" hint="از فهرست واقعی مقصدها">
           <Select
@@ -340,6 +542,8 @@ export default function GuideForm({
           setSectionsError(undefined);
         }}
         error={sectionsError}
+        sectionBodyEditor="rich"
+        pickImage={pickSectionImage}
       />
 
       <BlockEditor
@@ -351,7 +555,25 @@ export default function GuideForm({
           setFaqsError(undefined);
         }}
         error={faqsError}
+        faqAnswerEditor="rich-light"
       />
+
+      {showPreview && (
+        <GuidePreview
+          titleFa={titleFa}
+          categoryLabel={autoCategoryLabel}
+          readTime={readTime}
+          author={author}
+          reviewer={reviewer}
+          heroUrl={hero?.url.trim() ?? ''}
+          summaryRich={summaryRich}
+          summaryPlain={initial?.summary ?? ''}
+          directAnswerRich={directAnswerRich}
+          directAnswerPlain={initial?.directAnswer ?? ''}
+          sections={sections}
+          faqs={faqs}
+        />
+      )}
 
       <div className="flex items-center gap-3 pt-2">
           <Button type="submit" disabled={pending}>{pending ? 'در حال ذخیره…' : 'ذخیره'}</Button>
@@ -360,6 +582,16 @@ export default function GuideForm({
         )}
         </div>
       </form>
+
+      <AlertDialog
+        open={confirmDelete}
+        onOpenChange={(open) => !open && setConfirmDelete(false)}
+        title="بایگانی راهنما"
+        description={editingId ? `راهنمای «${titleFa || slug}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند. با «بازیابی» خود راهنما برمی‌گردد، ولی لینک‌های داخلی‌اش برای همیشه پاک شده‌اند و برنمی‌گردند.` : ''}
+        confirmText="بایگانی راهنما"
+        destructive
+        onConfirm={handleDelete}
+      />
     </Card>
   );
 }

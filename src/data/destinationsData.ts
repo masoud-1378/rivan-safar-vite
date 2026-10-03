@@ -1,3 +1,5 @@
+import type { JSONContent } from '@/lib/rich-text';
+
 export interface Place {
   id: string;
   slug: string;
@@ -10,6 +12,13 @@ export interface Place {
   image: string;
   heroTagline: string;
   description: string;
+  /** توضیحات غنی (ستون description_rich) — خوانش نمایشی اول از این می‌آید. */
+  descriptionRich?: JSONContent | string | null;
+  /** سئو (ستون‌های meta_title/meta_description). */
+  metaTitle?: string;
+  metaDescription?: string;
+  /** گالری چندعکسی (ستون gallery). */
+  gallery?: Array<{ url: string; caption: string; alt: string }>;
   bestSeason: string;
   visaRequired: boolean;
   visaType?: string;
@@ -22,7 +31,12 @@ export interface Place {
   popularDistricts?: string[];
   keyHighlights: string[];
   travelTips: string[];
-  faqs: Array<{ question: string; answer: string }>;
+  faqs: Array<{
+    question: string;
+    answer: string;
+    /** پاسخ غنی (کلید answer_rich داخل آبجکت). */
+    answerRich?: JSONContent | string | null;
+  }>;
   relatedGuides?: string[];
   /** گیت انتشار مقصد (مایگریشن 0023، قلم ۳ موج ۱). ردیف‌های استاتیک و
       قدیمی‌تر از ستون، undefined دارند و منتشرشده حساب می‌شوند. */

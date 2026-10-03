@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDb, type AppDb } from '@/db/client';
 import { accommodations, auditLogs, originCities, siteDestinations, siteTours } from '@/db/schema';
-import { and, asc, count, desc, eq, inArray, isNull } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 import { assertRenderableImageUrl } from '@/src/lib/site-image-hosts';
@@ -13,6 +13,17 @@ import { assertLatinSlug } from '@/src/lib/slug-format';
 import { cleanupReplacedBanner } from './banner-upload';
 import { checkPublishReadiness, type PublishGateInput } from './publish-gate';
 import { buildDurationFromNights } from '@/src/lib/tour-format';
+// تیم «فرم تورها» (۱۴۰۵/۰۷/۱۱): الگوی «نگهبان + اطلاع» برای ستون‌های تازهٔ
+// *_rich / faqs / why_this_tour (مایگریشن 0030) و ستون‌های سئوی سطح تور
+// (مایگریشن 0033) — هر دو مایگریشن هنوز اجرا نشده‌اند؛ قرارداد در
+// lib/column-guard.ts مستند است.
+import { checkColumnsExist } from '@/lib/column-guard';
+import {
+  cleanRichValue,
+  normalizeRichValue,
+  richToPlainText,
+  type JSONContent,
+} from '@/lib/rich-text';
 
 export type HotelBookingType = 'guarantee' | 'semi_charter' | 'on_request';
 
@@ -41,6 +52,24 @@ export interface TourItineraryDayItem {
   city: string;
   description: string;
   meals?: string;
+  /**
+   * متن غنی همان روز (کلید description_rich داخل آبجکت روز در ستون
+   * itinerary_days — قرارداد content-editor/data/NOTES.md). ویرایشگر سبک.
+   * متن تختِ `description` از همین ساخته می‌شود تا کد قدیمی/گیت انتشار بی‌متن نمانند.
+   */
+  descriptionRich?: JSONContent | null;
+}
+
+/**
+ * قلم «سوالات پرتکرار» سطح تور (ستون faqs؛ مایگریشن 0030، اجرا نشده).
+ * از روز اول روی ویرایشگر: پاسخ با ویرایشگر سبک در answer_rich (JSON تایپ‌تپ)
+ * و نسخهٔ تختِ answer از همان ساخته می‌شود (برای fallback سایت و JSON-LD).
+ */
+export interface TourFaqItem {
+  question: string;
+  answer: string;
+  /** پاسخ غنی (کلید answer_rich داخل آبجکت؛ قرارداد تیم داده) */
+  answerRich?: JSONContent | null;
 }
 
 export interface TourTrustSpecsItem {
@@ -94,6 +123,23 @@ export interface TourInput {
   excludedServices: string[];
   hotelOptions: TourHotelOptionItem[];
   description: string;
+  /**
+   * متن غنی توضیحات تور (ستون description_rich؛ مایگریشن 0030، اجرا نشده).
+   * متن تختِ `description` (notNull قدیمی) از همین ساخته می‌شود تا باگ
+   * «ذخیره با ویرایشگر، متن تخت خالی» پیش نیاید.
+   */
+  descriptionRich?: JSONContent | null;
+  /** «سوالات پرتکرار» سطح تور (ستون faqs؛ مایگریشن 0030، اجرا نشده). */
+  faqs?: TourFaqItem[];
+  /**
+   * «چرا همین تور» (ستون why_this_tour؛ مایگریشن 0030، اجرا نشده).
+   * سند JSON تایپ‌تپ (ویرایشگر کامل).
+   */
+  whyThisTourRich?: JSONContent | null;
+  /** متای سئوی سطح تور (ستون‌های meta_title / meta_description؛ مایگریشن 0033، اجرا نشده). */
+  metaTitle?: string;
+  /** متای سئوی سطح تور (ستون‌های meta_title / meta_description؛ مایگریشن 0033، اجرا نشده). */
+  metaDescription?: string;
   transportKind?: 'air' | 'land' | 'rail' | 'sea' | 'mixed';
   carrierName?: string;
   guaranteedDeparture?: boolean;
@@ -190,7 +236,14 @@ function toTourRow(r: SiteTourRow) {
     excludedServices: asStringArray(r.excludedServices),
     hotelOptions: Array.isArray(r.hotelOptions) ? r.hotelOptions : [],
     description: r.description,
-    itineraryDays: Array.isArray(r.itineraryDays) ? (r.itineraryDays as TourItineraryDayItem[]) : [],
+    // کلید description_rich داخل آبجکت روز (ستون itinerary_days از قبل هست؛
+    // نگهبان لازم ندارد) — خوانش دفاعی و فقط وقتی متن خوانا دارد.
+    itineraryDays: Array.isArray(r.itineraryDays)
+      ? (r.itineraryDays as TourItineraryDayItem[]).map((d) => {
+          const rich = asRich((d ?? {}).descriptionRich);
+          return { ...d, ...(rich ? { descriptionRich: rich } : {}) };
+        })
+      : [],
     trustSpecs: (r.trustSpecs as TourTrustSpecsItem | null) ?? null,
     consultantSpec: (r.consultantSpec as TourConsultantSpecItem | null) ?? null,
     // گشت: برای اینکه فرم ویرایش بعد از ذخیره حتماً مقادیر تازهٔ دیتابیس را نشان بدهد
@@ -209,19 +262,219 @@ export async function listTours() {
 
 export type TourRow = Awaited<ReturnType<typeof listTours>>[number];
 
+/* ── تیم «فرم تورها»: نگهبان + خوانش/نوشتن ستون‌های تازه (0030/0033) ── */
+
+/**
+ * فیلدهای غنی/سئوی تور که از مایگریشن‌های هنوز-اجرانشده (0030/0033) می‌آیند.
+ * عمداً در db/schema.ts نیستند: select(*)ِ دریزل با ستونِ اجرا-نشده می‌شکند؛
+ * پس این‌ها فقط با SQL خامِ نگهبان‌دار خوانده/نوشته می‌شوند (همان الگوی
+ * guides/actions.ts — GUIDE_RICH_COLS).
+ */
+export interface TourRichFields {
+  descriptionRich: JSONContent | null;
+  faqs: TourFaqItem[];
+  whyThisTourRich: JSONContent | null;
+  metaTitle: string;
+  metaDescription: string;
+}
+
+/** ستون‌های غنی تور (مایگریشن 0030 — هنوز اجرا نشده). */
+const TOUR_RICH_COLS = ['description_rich', 'faqs', 'why_this_tour'] as const;
+/** ستون‌های سئوی تور (مایگریشن 0033 — هنوز اجرا نشده). */
+const TOUR_META_COLS = ['meta_title', 'meta_description'] as const;
+
+async function tourRichColsReady(db: AppDb): Promise<boolean> {
+  const { ready } = await checkColumnsExist(db, 'site_tours', TOUR_RICH_COLS);
+  return ready;
+}
+
+async function tourMetaColsReady(db: AppDb): Promise<boolean> {
+  const { ready } = await checkColumnsExist(db, 'site_tours', TOUR_META_COLS);
+  return ready;
+}
+
+/**
+ * وضعیت ستون‌های غنی برای فرم (سمت کلاینت): true یعنی ستون‌ها هستند و
+ * اطلاع لازم نیست؛ false یعنی فرم باید کنار فیلدها اطلاع صادقانه نشان بدهد
+ * تا ویرایش بی‌صدا گم نشود.
+ */
+export async function checkTourRichCols(): Promise<boolean> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) return false;
+  return tourRichColsReady(db);
+}
+
+/** وضعیت ستون‌های سئوی سطح تور برای فرم (همان قرارداد بالا). */
+export async function checkTourMetaCols(): Promise<boolean> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) return false;
+  return tourMetaColsReady(db);
+}
+
+/** خوانش دفاعی یک مقدار `*_rich`: JSON تایپ‌تپ، رشتهٔ تخت، یا null. */
+function asRich(v: unknown): JSONContent | null {
+  return normalizeRichValue(v as JSONContent | string | null | undefined);
+}
+
+/** خوانش دفاعی آرایهٔ FAQ از jsonb (رشته-کدشده هم ممکن است). */
+function asFaqs(v: unknown): TourFaqItem[] {
+  let arr: unknown[] = [];
+  if (Array.isArray(v)) arr = v;
+  else if (typeof v === 'string' && v.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(v);
+      if (Array.isArray(parsed)) arr = parsed;
+    } catch {
+      // رشتهٔ خراب → آرایهٔ خالی
+    }
+  }
+  return arr
+    .filter((x) => x && typeof x === 'object')
+    .map((x) => {
+      const o = x as Record<string, unknown>;
+      const question = typeof o.question === 'string' ? o.question : '';
+      // خوانش دوسویه: قرارداد answer_rich است؛ دادهٔ آزمایشی قدیمی با
+      // کلید camelCase هم خوانده می‌شود (QA ترک تورها، ایراد ۱).
+      const answerRich = normalizeRichValue(
+        (o.answer_rich ?? o.answerRich) as JSONContent | string | null | undefined,
+      );
+      const answer = typeof o.answer === 'string' && o.answer.trim()
+        ? o.answer
+        : richToPlainText(answerRich);
+      return {
+        question,
+        answer,
+        ...(answerRich ? { answerRich } : {}),
+      } as TourFaqItem;
+    })
+    .filter((f) => f.question.trim() !== '');
+}
+
+function asMetaStr(v: unknown): string {
+  return typeof v === 'string' ? v : '';
+}
+
+const EMPTY_RICH_FIELDS: TourRichFields = {
+  descriptionRich: null,
+  faqs: [],
+  whyThisTourRich: null,
+  metaTitle: '',
+  metaDescription: '',
+};
+
+/**
+ * خوانش ستون‌های تازهٔ یک تور با SQL خام — فقط وقتی نگهبان می‌گوید ستون‌ها
+ * هستند (وگرنه selectِ دریزل/خام می‌شکند). فهرست ستون‌ها از آرایه‌های ثابت
+ * خودمان ساخته می‌شود؛ شناسه پارامتری است.
+ */
+async function readTourRichFields(db: AppDb, id: string): Promise<TourRichFields> {
+  const [richReady, metaReady] = await Promise.all([
+    tourRichColsReady(db),
+    tourMetaColsReady(db),
+  ]);
+  if (!richReady && !metaReady) return { ...EMPTY_RICH_FIELDS };
+  // ستون‌ها از const خودمان می‌آیند (whitelist ثابت)؛ id پارامتری است.
+  const cols = sql.raw(
+    [
+      ...(richReady ? ['description_rich', 'faqs', 'why_this_tour'] : []),
+      ...(metaReady ? ['meta_title', 'meta_description'] : []),
+    ].join(', '),
+  );
+  const res = await db.execute(
+    sql`select ${cols} from site_tours where id = ${id}::uuid limit 1`,
+  );
+  const row = (res as unknown as Array<Record<string, unknown>>)[0];
+  if (!row) return { ...EMPTY_RICH_FIELDS };
+  return {
+    descriptionRich: richReady ? asRich(row.description_rich) : null,
+    faqs: richReady ? asFaqs(row.faqs) : [],
+    whyThisTourRich: richReady ? asRich(row.why_this_tour) : null,
+    metaTitle: metaReady ? asMetaStr(row.meta_title) : '',
+    metaDescription: metaReady ? asMetaStr(row.meta_description) : '',
+  };
+}
+
+/** نرمالایز FAQ برای ذخیره: پرسش خالی رد می‌شود؛ answer از پاسخ غنی ساخته می‌شود. */
+function normalizeFaqs(items: unknown): TourFaqItem[] {
+  if (!Array.isArray(items)) return [];
+  return items
+    .filter((x) => x && typeof x === 'object')
+    .map((x) => {
+      const o = x as Record<string, unknown>;
+      const question = typeof o.question === 'string' ? o.question.trim() : '';
+      // ورودی هم می‌تواند شکل فرم تور ({answerRich}) باشد هم شکل خام DB
+      // ({answer_rich}) — هر دو خوانده می‌شود و یکدستِ snake_case ذخیره می‌شود.
+      const answerRich = cleanRichValue(
+        normalizeRichValue(
+          (o.answer_rich ?? o.answerRich) as JSONContent | string | null | undefined,
+        ),
+      );
+      const answer =
+        typeof o.answer === 'string' && o.answer.trim()
+          ? o.answer.trim()
+          : richToPlainText(answerRich);
+      return { question, answer, ...(answerRich ? { answer_rich: answerRich } : {}) } as TourFaqItem;
+    })
+    .filter((f) => f.question !== '');
+}
+
+/**
+ * نوشتن ستون‌های تازهٔ تور با SQL خام — فقط وقتی نگهبان می‌گوید ستون‌ها
+ * هستند. هر گروه (غنی / سئو) مستقل است چون مایگریشن‌هایشان (0030/0033)
+ * ممکن است در زمان‌های جدا اجرا شوند.
+ */
+async function writeTourRichFields(
+  db: AppDb,
+  id: string,
+  data: TourInput,
+): Promise<void> {
+  const [richReady, metaReady] = await Promise.all([
+    tourRichColsReady(db),
+    tourMetaColsReady(db),
+  ]);
+  if (!richReady && !metaReady) return;
+  if (richReady) {
+    const descriptionRich = cleanRichValue(data.descriptionRich);
+    const whyThisTourRich = cleanRichValue(data.whyThisTourRich);
+    const faqs = normalizeFaqs(data.faqs);
+    await db.execute(sql`
+      update site_tours set
+        description_rich = ${descriptionRich ? JSON.stringify(descriptionRich) : null}::jsonb,
+        faqs = ${faqs.length > 0 ? JSON.stringify(faqs) : null}::jsonb,
+        why_this_tour = ${whyThisTourRich ? JSON.stringify(whyThisTourRich) : null}::jsonb
+      where id = ${id}::uuid
+    `);
+  }
+  if (metaReady) {
+    const mt = (data.metaTitle ?? '').trim();
+    const md = (data.metaDescription ?? '').trim();
+    await db.execute(sql`
+      update site_tours set
+        meta_title = ${mt || null},
+        meta_description = ${md || null}
+      where id = ${id}::uuid
+    `);
+  }
+}
+
 /** خواندن یک تور برای صفحهٔ ویرایش؛ بایگانی‌شده‌ها null برمی‌گردانند (→ صفحه ۴۰۴). */
-export async function getTourById(id: string): Promise<TourRow | null> {
+export async function getTourById(id: string): Promise<(TourRow & Partial<TourRichFields>) | null> {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   const rows = await db.select().from(siteTours).where(eq(siteTours.id, id)).limit(1);
   const r = rows[0];
   if (!r || r.deletedAt) return null;
-  return toTourRow(r);
+  const row = toTourRow(r);
+  // ستون‌های تازه (0030/0033): فقط وقتی نگهبان می‌گوید هستند خوانده می‌شوند.
+  const rich = await readTourRichFields(db, r.id);
+  return { ...row, ...rich };
 }
 
 /** خواندن یک تور با نامک (برای تکثیر از روی تور موجود). */
-export async function getTourBySlug(slug: string): Promise<TourRow | null> {
+export async function getTourBySlug(slug: string): Promise<(TourRow & Partial<TourRichFields>) | null> {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
@@ -230,7 +483,10 @@ export async function getTourBySlug(slug: string): Promise<TourRow | null> {
   const rows = await db.select().from(siteTours).where(eq(siteTours.slug, s)).limit(1);
   const r = rows[0];
   if (!r || r.deletedAt) return null;
-  return toTourRow(r);
+  const row = toTourRow(r);
+  // تکثیر، متن‌های غنی را هم با خودش می‌برد تا ویرایش بی‌صدا گم نشود.
+  const rich = await readTourRichFields(db, r.id);
+  return { ...row, ...rich };
 }
 
 export async function listDestinationTree(): Promise<DestinationTree> {
@@ -654,11 +910,16 @@ export async function saveTour(
   const normalizedItinerary: TourItineraryDayItem[] = Array.isArray(data.itineraryDays)
     ? data.itineraryDays.map((d, i) => {
         const o = (d ?? {}) as Partial<TourItineraryDayItem>;
+        const descriptionRich = cleanRichValue(o.descriptionRich);
+        // پشتیبان سرور: اگر متن تخت خالی است و غنی متن دارد، از همان ساخته
+        // می‌شود تا ستون قدیمی/گیت انتشار/کد main بی‌متن نمانند.
+        const plainDesc = String(o.description ?? '').trim();
         return {
           day: Number(o.day) || i + 1,
           title: String(o.title ?? ''),
           city: String(o.city ?? ''),
-          description: String(o.description ?? ''),
+          description: plainDesc || richToPlainText(descriptionRich),
+          ...(descriptionRich ? { descriptionRich } : {}),
           meals: o.meals ? String(o.meals) : undefined,
         };
       })
@@ -738,7 +999,10 @@ export async function saveTour(
     includedServices: data.includedServices ?? [],
     excludedServices: data.excludedServices ?? [],
     hotelOptions: normalizedHotels,
-    description: data.description || '',
+    // پشتیبان سرور (تیم «فرم تورها»): متن تخت توضیحات تور اگر خالی است و نسخهٔ
+    // غنی متن دارد، از همان ساخته می‌شود — ستون description قدیمی notNull است
+    // و گیت انتشار/سایت/کد main روی همین متن تخت حساب می‌کنند.
+    description: (data.description || '').trim() || richToPlainText(cleanRichValue(data.descriptionRich)),
     itineraryDays: normalizedItinerary,
     trustSpecs: normalizedTrust,
     consultantSpec: normalizedConsultant,
@@ -761,6 +1025,11 @@ export async function saveTour(
   } else {
     const inserted = await db.insert(siteTours).values(values).returning({ id: siteTours.id });
     id = inserted[0]?.id ?? id;
+  }
+  // ستون‌های تازه (0030/0033): فقط وقتی نگهبان می‌گوید هستند نوشته می‌شوند؛
+  // قبل از اجرای مایگریشن، فرم کنار فیلدها اطلاع نشان می‌دهد و چیزی گم نمی‌شود.
+  if (id) {
+    await writeTourRichFields(db, id, data);
   }
   const oldImage = (previousImage || '').trim();
   const newImage = (values.image || '').trim();

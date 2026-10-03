@@ -19,9 +19,24 @@ export interface TourLiveExtras {
     title?: string;
     city?: string;
     description?: string;
+    /** متن غنی همان روز (کلید description_rich داخل آبجکت روز). */
+    descriptionRich?: unknown;
     activityType?: string;
     meals?: string;
   }>;
+  /** متن غنی توضیحات تور (ستون description_rich، مایگریشن 0030). */
+  descriptionRich?: unknown;
+  /** «سوالات پرتکرار» سطح تور (ستون faqs، مایگریشن 0030). */
+  faqs?: Array<{
+    question?: string;
+    answer?: string;
+    /** پاسخ غنی (کلید answer_rich داخل آبجکت؛ قرارداد تیم داده). */
+    answer_rich?: unknown;
+    /** تحمل دادهٔ آزمایشی قدیمی با کلید camelCase. */
+    answerRich?: unknown;
+  }>;
+  /** «چرا همین تور» (ستون why_this_tour، مایگریشن 0030). */
+  whyThisTourRich?: unknown;
   trustSpecs?: {
     returnGuarantee?: string;
     cityTax?: string;
@@ -36,6 +51,17 @@ export interface TourLiveExtras {
     phone?: string;
     audioUrl?: string;
     emergencyPhone?: string;
+  } | null;
+  /** بلوک مالی واقعی (مایگریشن 0027): جدول کنسلی پلکانی، بند رد ویزا، پیش‌پرداخت. */
+  financialSpecs?: {
+    cancellationTiers?: Array<{
+      fromDays?: number | null;
+      toDays?: number | null;
+      penaltyPercent?: number | null;
+    }>;
+    visaRejectionNote?: string;
+    depositAmount?: string;
+    depositDeadline?: string;
   } | null;
 }
 

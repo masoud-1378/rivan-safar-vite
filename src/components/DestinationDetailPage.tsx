@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Phone, MapPin, Globe, Calendar, Clock, ShieldCheck, ChevronLeft, CheckCircle2, FileText, ArrowLeft, HelpCircle, Check, Send, AlertCircle, Coins, BookOpen } from 'lucide-react';
 import { type Place } from '../data/destinationsData';
+import { RichText } from '@/components/ui/rich-editor/RichText';
+import { faqRichAnswer, richFallback } from '@/lib/rich-text';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
 import { submitLead } from '../../app/actions/lead';
@@ -144,9 +146,9 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
               <h1 className="text-h1 text-text-heading font-extrabold mb-3">
                 تور {city.name}؛ تاریخ‌ها، قیمت و شرایط سفر
               </h1>
-              <p className="text-body text-text-secondary leading-relaxed mb-6">
-                {city.description}
-              </p>
+              <div className="text-body text-text-secondary leading-relaxed mb-6">
+                <RichText value={richFallback(city.descriptionRich, city.description)} />
+              </div>
 
               {/* Price & Basis Card */}
               <div className="p-4 bg-surface-secondary rounded-card border border-border-default/80 mb-6 text-right">
@@ -334,9 +336,9 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                   <HelpCircle className="w-4 h-4 text-brand-orange" />
                   <span>{faq.question}</span>
                 </h4>
-                <p className="text-body-sm text-text-secondary leading-relaxed mr-6">
-                  {faq.answer}
-                </p>
+                <div className="text-body-sm text-text-secondary leading-relaxed mr-6">
+                  <RichText value={richFallback(faqRichAnswer(faq), faq.answer)} />
+                </div>
               </div>
             ))}
           </div>

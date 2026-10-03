@@ -5,6 +5,15 @@ import {
   Sparkles, ExternalLink, Send, Check, HelpCircle
 } from 'lucide-react';
 import { type ExhibitionSeries } from '../data/exhibitionsData';
+import { RichText } from '@/components/ui/rich-editor/RichText';
+import {
+  faqRichAnswer,
+  isRichEmpty,
+  normalizeRichValue,
+  richFallback,
+  richToPlainText,
+  type JSONContent,
+} from '@/lib/rich-text';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
 import { createLead } from '../../app/actions/lead';
@@ -89,7 +98,14 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
   const editionMismatch =
     !!editionSlug && editionSlug !== ex.upcomingEdition.editionSlug;
 
-  const faqs = (ex.faqs || []).filter((f) => f && f.question && f.answer);
+  /** متن تختِ خوانا از پاسخ غنی — برای JSON-LD. */
+  const faqPlain = (f: ExhibitionSeries['faqs'][number]): string => {
+    const json = normalizeRichValue(faqRichAnswer(f) ?? null);
+    if (json && !isRichEmpty(json)) return richToPlainText(json);
+    return f.answer;
+  };
+
+  const faqs = (ex.faqs || []).filter((f) => f && f.question && (f.answer || !isRichEmpty(normalizeRichValue(faqRichAnswer(f) ?? null))));
   const faqJsonLd =
     faqs.length > 0
       ? {
@@ -98,7 +114,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
           mainEntity: faqs.map((f) => ({
             '@type': 'Question',
             name: f.question,
-            acceptedAnswer: { '@type': 'Answer', text: f.answer },
+            acceptedAnswer: { '@type': 'Answer', text: faqPlain(f) },
           })),
         }
       : null;
@@ -170,9 +186,9 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                 {ex.titleEn}
               </p>
 
-              <p className="text-body text-text-secondary leading-relaxed mb-6">
-                {ex.description}
-              </p>
+              <div className="text-body text-text-secondary leading-relaxed mb-6">
+                <RichText value={richFallback(ex.descriptionRich, ex.description)} />
+              </div>
 
               {/* Event Timing & Venue Box */}
               <div className="p-4 bg-surface-secondary rounded-card border border-border-default mb-6 text-caption space-y-2.5">
@@ -368,7 +384,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   </button>
                   {open && (
                     <div className="px-4 sm:px-5 pb-5 pt-0 text-body-sm text-text-secondary leading-relaxed">
-                      {faq.answer}
+                      <RichText value={richFallback(faqRichAnswer(faq), faq.answer)} />
                     </div>
                   )}
                 </div>

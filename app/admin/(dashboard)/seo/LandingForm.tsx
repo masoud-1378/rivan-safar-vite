@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
-import { Textarea } from '@/components/ui/textarea';
+import { SeoMetaFields } from '@/components/ui/seo-meta-fields';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { faSlug } from '@/lib/utils';
 import { createLanding, updateLanding, type LandingInput } from './actions';
@@ -197,12 +197,17 @@ export default function LandingForm({
         <Field label="نوع صفحه" htmlFor="pt">
           <Select id="pt" value={pageType} onChange={(e) => onPageType(e.target.value)} options={PAGE_TYPES} />
         </Field>
-        <Field label="Title (عنوان سئو)" htmlFor="tf" hint="حدود ۶۰ نویسه" error={errors.titleFa}>
-          <Input id="tf" value={titleFa} onChange={(e) => onTitleFa(e.target.value)} placeholder="تور استانبول با اقامت در مرکز شهر" />
-        </Field>
-        <Field label="Meta Description (توضیحات متا)" htmlFor="md" hint="حدود ۱۵۵ نویسه">
-          <Textarea id="md" autoResize showCount maxLength={200} value={metaDescriptionFa} onChange={(e) => setMetaDescriptionFa(e.target.value)} placeholder="توضیح کوتاهی که در نتایج جست‌وجو نمایش داده می‌شود." />
-        </Field>
+        <div className="sm:col-span-2">
+          <SeoMetaFields
+            metaTitle={titleFa}
+            onMetaTitleChange={(v) => onTitleFa(v)}
+            metaDescription={metaDescriptionFa}
+            onMetaDescriptionChange={setMetaDescriptionFa}
+            metaTitleError={errors.titleFa}
+            titleFallback={h1Fa}
+            urlPreview={urlPath.trim() || undefined}
+          />
+        </div>
         <Field label="تیتر صفحه (H1)" htmlFor="h1" error={errors.h1Fa}>
           <Input id="h1" value={h1Fa} onChange={(e) => { setH1Fa(e.target.value); setErrors((prev) => ({ ...prev, h1Fa: undefined })); }} placeholder="تور استانبول" />
         </Field>

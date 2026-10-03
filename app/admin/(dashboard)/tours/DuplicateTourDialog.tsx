@@ -8,7 +8,7 @@ import { Field, Input } from '@/components/ui/input';
 import { AmountInput } from '@/components/ui/amount-input';
 import { faSlug, formatToman, en } from '@/lib/utils';
 import { JALALI_MONTHS, toJalali, formatJalali } from '@/lib/jalali';
-import { checkSlugUnique, saveTour, type TourRow } from './actions';
+import { checkSlugUnique, saveTour, getTourById, type TourRow, type TourRichFields } from './actions';
 import { useToast } from '@/components/ui/toast';
 import { DepartureDateField } from './DepartureDateField';
 import { SmartSuggestion } from './SmartSuggestion';
@@ -48,6 +48,21 @@ async function firstFreeSlug(base: string): Promise<string> {
  */
 export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDialogProps) {
   const { toast } = useToast();
+  // تیم «فرم تورها»: ردیف کامل تور (همراه فیلدهای غنی/سئو) خوانده می‌شود تا
+  // تکثیر، متن‌های غنی و متا را هم با خودش ببرد — چیزی بی‌صدا گم نمی‌شود.
+  const [fullTour, setFullTour] = useState<(TourRow & Partial<TourRichFields>) | null>(null);
+  // نکتهٔ ۲ QA: دکمهٔ «کپی تور» تا رسیدن پاسخ getTourById غیرفعال است؛ وگرنه
+  // کپی از ردیف فهرست (بدون متن غنی/متا) ساخته می‌شود. اگر خوانش خطا بخورد،
+  // دکمه فعال می‌شود و همان رفتار قبلی (ردیف فهرست) اعمال می‌شود.
+  const [fullLoaded, setFullLoaded] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    setFullLoaded(false);
+    getTourById(tour.id)
+      .then((r) => { if (alive) { setFullTour(r); setFullLoaded(true); } })
+      .catch(() => { if (alive) { setFullTour(null); setFullLoaded(true); } });
+    return () => { alive = false; };
+  }, [tour.id]);
   // گشت (ایراد ۲): ورودی عنوان آنکنترلد است (ref + defaultValue) تا تایپ کردن
   // هیچ ریرندری تحریک نکند؛ مقدار نهایی روی دیبونس/blur کامیت می‌شود و نامک
   // از همان عنوان نهایی مشتق می‌شود.
@@ -172,7 +187,10 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
     }
     // قلم ۳ موج ۰: قیمت نسخهٔ تازه یا همان قیمت مبدأ است (انتخاب صریح) یا عددی
     // که مدیر همین‌جا وارد می‌کند؛ قیمت نامعتبر، تکثیر را نگه می‌دارد.
-    let newPrice = tour.price;
+    // منبع تکثیر: ردیف کامل (غنی/سئو هم می‌آید). دکمه تا رسیدن پاسخ getTourById
+    // غیرفعال است؛ فقط اگر خوانش خطا بخورد همان ردیف فهرست مبناست.
+    const source: TourRow & Partial<TourRichFields> = fullTour ?? tour;
+    let newPrice = source.price;
     if (priceMode === 'custom') {
       const v = Number(customPrice) || 0;
       if (v <= 0) {
@@ -192,7 +210,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         return;
       }
       const result = await saveTour(null, {
-        ...tour,
+        ...source,
         title: cleanTitle,
         slug: cleanSlug,
         closestDeparture: departure.trim(),
@@ -204,7 +222,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         price: newPrice,
         // قلم ۳ موج ۰: نشان «حرکت تضمین‌شده» قول حقوقی است؛ چون ظرفیت نسخهٔ
         // تازه «در انتظار تأیید» است، خاموش می‌ماند و منتقل نمی‌شود.
-        badge: tour.badge === 'حرکت تضمین‌شده' ? '' : tour.badge,
+        badge: source.badge === 'حرکت تضمین‌شده' ? '' : source.badge,
       }, 'draft');
       // خطای قابل‌پیش‌بینی به‌صورت مقدار برمی‌گردد تا پیام واقعی‌اش در پروداکشن
       // پشت #441 گم نشود (ریشهٔ مشترک bugfix-441).
@@ -245,9 +263,9 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
       description={`از «${tour.title}» یک کپی می‌گیرید. مبدأ و ویزا از تور اصلی حفظ می‌شوند؛ قیمت را همین‌جا انتخاب می‌کنید و نشان «حرکت تضمین‌شده» به کپی منتقل نمی‌شود. کپی به‌صورت پیش‌نویس ساخته می‌شود.`}
       footer={
         <>
-          <Button size="md" disabled={busy} onClick={() => void submit()} className="gap-2">
+          <Button size="md" disabled={busy || !fullLoaded} onClick={() => void submit()} className="gap-2">
             <Copy className="size-4" />
-            {busy ? 'در حال کپی…' : 'کپی تور'}
+            {busy ? 'در حال کپی…' : !fullLoaded ? 'در حال بارگذاری…' : 'کپی تور'}
           </Button>
           <Button size="md" variant="outline" onClick={onClose} disabled={busy}>
             انصراف

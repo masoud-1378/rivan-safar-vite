@@ -2,13 +2,14 @@
 
 import { useRouter } from 'next/navigation';
 import TourForm from '../TourForm';
-import type { TourRow } from '../actions';
+import type { TourRow, TourRichFields } from '../actions';
 import type { DestinationTree } from '../actions';
 import type { OriginRow } from '../actions';
 import type { HotelPickerItem } from '../../hotels/actions';
 
 interface Props {
-  tour: TourRow;
+  /** ردیف تور + فیلدهای غنی/سئو (از getTourById می‌آید). */
+  tour: TourRow & Partial<TourRichFields>;
   tree: DestinationTree;
   origins: OriginRow[];
   hotels: HotelPickerItem[];

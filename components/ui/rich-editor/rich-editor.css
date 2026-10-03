@@ -1,0 +1,733 @@
+/**
+ * استایل‌های ویرایشگر متن غنی.
+ *
+ * قانون آهنی: letter-spacing این‌جا (و هیچ‌جای ویرایشگر) تنظیم نمی‌شود —
+ * حتی یک‌دهم پیکسل فاصلهٔ حروف، اتصال حروف فارسی را می‌شکند.
+ * فونت از تم ارث می‌رسد (وزیرمتن)؛ این‌جا فقط اندازه و ارتفاع خط.
+ */
+
+.rich-editor {
+  border: 1px solid var(--border, #e5e1d8);
+  border-radius: 0.625rem;
+  background: var(--background, #fff);
+  overflow: hidden;
+}
+
+.rich-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.375rem 0.5rem;
+  border-bottom: 1px solid var(--border, #e5e1d8);
+  background: var(--muted, #faf9f6);
+}
+
+.rich-editor-toolbar:empty {
+  display: none;
+}
+
+.rich-editor-toolbar + .rich-editor-toolbar {
+  border-top: none;
+}
+
+.rich-editor-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.375rem;
+  border-radius: 0.375rem;
+  color: var(--foreground, #3e3932);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.rich-editor-tool:hover:not(:disabled) {
+  background: var(--accent, #f0ede6);
+}
+
+.rich-editor-tool[data-active="true"] {
+  background: var(--accent, #f0ede6);
+  color: var(--primary, #c14a0e);
+}
+
+.rich-editor-tool:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.rich-editor-tool svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.rich-editor-divider {
+  width: 1px;
+  height: 1.25rem;
+  margin: 0 0.25rem;
+  background: var(--border, #e5e1d8);
+}
+
+.rich-editor-body {
+  position: relative;
+}
+
+.rich-editor-placeholder {
+  position: absolute;
+  inset-inline-start: 1rem;
+  top: 0.875rem;
+  color: var(--muted-foreground, #a39e93);
+  font-size: 0.875rem;
+  pointer-events: none;
+}
+
+.rich-editor-content {
+  min-height: 12rem;
+  max-height: 32rem;
+  overflow-y: auto;
+  padding: 0.875rem 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.9;
+  outline: none;
+}
+
+.rich-editor-content > *:first-child {
+  margin-top: 0;
+}
+
+.rich-editor-content p {
+  margin: 0.5em 0;
+}
+
+.rich-editor-content h2 {
+  font-size: 1.375rem;
+  font-weight: 700;
+  margin: 1em 0 0.5em;
+  line-height: 1.6;
+}
+
+.rich-editor-content h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 1em 0 0.5em;
+  line-height: 1.6;
+}
+
+.rich-editor-content ul,
+.rich-editor-content ol {
+  padding-inline-start: 1.5rem;
+  margin: 0.5em 0;
+}
+
+.rich-editor-content li > p {
+  margin: 0.25em 0;
+}
+
+.rich-editor-content blockquote {
+  border-inline-start: 3px solid var(--primary, #c14a0e);
+  padding-inline-start: 1rem;
+  margin: 0.75em 0;
+  color: var(--muted-foreground, #6b655c);
+}
+
+.rich-editor-content a {
+  color: var(--primary, #c14a0e);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.rich-editor-content hr {
+  border: none;
+  border-top: 1px solid var(--border, #e5e1d8);
+  margin: 1.25em 0;
+}
+
+.rich-editor-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.75em 0;
+  font-size: 0.875rem;
+}
+
+.rich-editor-content th,
+.rich-editor-content td {
+  border: 1px solid var(--border, #e5e1d8);
+  padding: 0.5rem 0.75rem;
+  text-align: start;
+  vertical-align: top;
+  min-width: 3rem;
+}
+
+.rich-editor-content th {
+  background: var(--muted, #faf9f6);
+  font-weight: 700;
+}
+
+.rich-editor-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 0.5em 0;
+}
+
+.rich-editor-content img.ProseMirror-selectednode {
+  outline: 2px solid var(--primary, #c14a0e);
+  outline-offset: 2px;
+}
+
+.rich-editor-content .rich-video {
+  margin: 0.75em 0;
+}
+
+.rich-editor-content .rich-video iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  border-radius: 0.5rem;
+}
+
+.rich-editor-loading {
+  border: 1px dashed var(--border, #e5e1d8);
+  border-radius: 0.625rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted-foreground, #a39e93);
+  font-size: 0.875rem;
+}
+
+/* ——— استایل رندر عمومی (کلاس rich-text)؛ بدون letter-spacing ——— */
+
+.rich-text {
+  font-size: 1rem;
+  line-height: 2;
+  overflow-wrap: break-word;
+}
+
+.rich-text > *:first-child {
+  margin-top: 0;
+}
+
+.rich-text > *:last-child {
+  margin-bottom: 0;
+}
+
+.rich-text p {
+  margin: 0.75em 0;
+}
+
+.rich-text h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 1.25em 0 0.5em;
+  line-height: 1.7;
+}
+
+.rich-text h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 1.1em 0 0.5em;
+  line-height: 1.7;
+}
+
+.rich-text ul,
+.rich-text ol {
+  padding-inline-start: 1.5rem;
+  margin: 0.75em 0;
+}
+
+.rich-text li {
+  margin: 0.25em 0;
+}
+
+.rich-text li > p {
+  margin: 0.25em 0;
+}
+
+.rich-text blockquote {
+  border-inline-start: 3px solid var(--primary, #c14a0e);
+  padding-inline-start: 1rem;
+  margin: 1em 0;
+  color: var(--muted-foreground, #6b655c);
+}
+
+.rich-text a {
+  color: var(--primary, #c14a0e);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.rich-text hr {
+  border: none;
+  border-top: 1px solid var(--border, #e5e1d8);
+  margin: 1.5em 0;
+}
+
+.rich-text table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  font-size: 0.9375rem;
+  display: block;
+  overflow-x: auto;
+}
+
+.rich-text th,
+.rich-text td {
+  border: 1px solid var(--border, #e5e1d8);
+  padding: 0.625rem 0.875rem;
+  text-align: start;
+  vertical-align: top;
+}
+
+.rich-text th {
+  background: var(--muted, #faf9f6);
+  font-weight: 700;
+}
+
+.rich-text figure {
+  margin: 1.25em 0;
+}
+
+.rich-text figure img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  display: block;
+}
+
+.rich-text figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground, #6b655c);
+  text-align: center;
+}
+
+.rich-text .rich-video {
+  margin: 1.25em 0;
+}
+
+.rich-text .rich-video iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  border-radius: 0.5rem;
+  display: block;
+}
+
+/* ——— بلوک‌های تخصصی ریوان سفر: نمای داخل ویرایشگر ——— */
+
+.rich-block {
+  position: relative;
+  border: 1px dashed var(--border, #e5e1d8);
+  border-radius: 0.625rem;
+  padding: 0.875rem 1rem;
+  margin: 0.75em 0;
+  background: var(--muted, #faf9f6);
+}
+
+.rich-block-actions {
+  position: absolute;
+  inset-inline-end: 0.5rem;
+  top: 0.5rem;
+  display: flex;
+  gap: 0.125rem;
+  background: var(--background, #fff);
+  border: 1px solid var(--border, #e5e1d8);
+  border-radius: 0.375rem;
+  padding: 0.125rem;
+  z-index: 2;
+}
+
+.rich-block-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--foreground, #3e3932);
+  cursor: pointer;
+}
+
+.rich-block-action:hover {
+  background: var(--accent, #f0ede6);
+}
+
+.rich-block-action--danger:hover {
+  color: #b3261e;
+}
+
+.rich-block-action svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.rich-block__title {
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  padding-inline-end: 4.5rem;
+}
+
+.rich-block-empty {
+  margin: 0;
+  color: var(--muted-foreground, #a39e93);
+  font-size: 0.875rem;
+}
+
+.rich-block-more {
+  margin: 0.375rem 0 0;
+  color: var(--muted-foreground, #a39e93);
+  font-size: 0.8125rem;
+}
+
+/* کارت تور (ویرایشگر) */
+.rich-block-tourcard__card {
+  display: flex;
+  gap: 0.875rem;
+  align-items: center;
+}
+
+.rich-block-tourcard__img {
+  width: 5.5rem;
+  height: 4.25rem;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  flex-shrink: 0;
+}
+
+.rich-block-tourcard__body {
+  min-width: 0;
+  padding-inline-end: 4rem;
+}
+
+.rich-block-tourcard__title {
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+  font-size: 0.9375rem;
+}
+
+.rich-block-tourcard__meta {
+  margin: 0 0 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground, #6b655c);
+}
+
+.rich-block-tourcard__price {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--primary, #c14a0e);
+}
+
+/* جدول قیمت (ویرایشگر) */
+.rich-block-pricetable__table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.875rem;
+  background: var(--background, #fff);
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.rich-block-pricetable__table td {
+  border: 1px solid var(--border, #e5e1d8);
+  padding: 0.375rem 0.625rem;
+  text-align: start;
+}
+
+.rich-block-pricetable__table td:last-child {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* پرسش‌وپاسخ (ویرایشگر) */
+.rich-block-faq__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.rich-block-faq__item {
+  background: var(--background, #fff);
+  border: 1px solid var(--border, #e5e1d8);
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.rich-block-faq__item summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rich-block-faq__item p {
+  margin: 0.375rem 0 0;
+  color: var(--muted-foreground, #6b655c);
+}
+
+/* گالری (ویرایشگر) */
+.rich-block-gallery__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.rich-block-gallery__grid figure {
+  margin: 0;
+}
+
+.rich-block-gallery__grid img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 0.375rem;
+}
+
+.rich-block-gallery__grid figcaption {
+  font-size: 0.75rem;
+  color: var(--muted-foreground, #6b655c);
+  margin-top: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* دکمهٔ تماس (ویرایشگر) */
+.rich-block-callcta__banner {
+  border: 1px solid var(--primary, #c14a0e);
+  border-radius: 0.5rem;
+  background: var(--background, #fff);
+  padding: 1rem;
+  text-align: center;
+}
+
+.rich-block-callcta__heading {
+  margin: 0 0 0.625rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground, #6b655c);
+}
+
+.rich-block-callcta__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--primary, #c14a0e);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 700;
+  font-size: 0.9375rem;
+}
+
+.rich-block-callcta__btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.rich-block-callcta__phone {
+  font-weight: 800;
+}
+
+.rich-block-callcta__note {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground, #6b655c);
+}
+
+/* دکمهٔ بلوک در نوار ابزار — کمی برجسته‌تر از ابزارهای متن */
+.rich-editor-tool--block {
+  color: var(--primary, #c14a0e);
+}
+
+.rich-editor-toolbar--blocks {
+  background: var(--background, #fff);
+}
+
+/* ——— بلوک‌های تخصصی ریوان سفر: رندر عمومی (کلاس rich-text) ——— */
+
+.rich-text .rich-tour-card {
+  margin: 1.5em auto;
+  max-width: 26rem;
+}
+
+/* کارت تورِ بایگانی‌شده (تور حذف شده — نمای ذخیره‌شده، بدون پیوند) */
+.rich-tour-card__static {
+  border: 1px solid var(--border, #e5e1d8);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: var(--background, #fff);
+}
+
+.rich-tour-card__static-img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+}
+
+.rich-tour-card__static-body {
+  padding: 1rem 1.25rem;
+  text-align: center;
+}
+
+.rich-tour-card__static-title {
+  font-weight: 800;
+  font-size: 1.0625rem;
+  margin: 0 0 0.25rem;
+}
+
+.rich-tour-card__static-meta {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground, #6b655c);
+}
+
+.rich-tour-card__static-price {
+  margin: 0 0 0.25rem;
+  font-weight: 800;
+  color: var(--primary, #c14a0e);
+}
+
+.rich-tour-card__static-note {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground, #a39e93);
+}
+
+/* جدول قیمت (عمومی) */
+.rich-text .rich-price-table {
+  margin: 1.25em 0;
+}
+
+.rich-text .rich-price-table__title {
+  font-weight: 800;
+  font-size: 1.0625rem;
+  margin: 0 0 0.5rem;
+}
+
+/* آکاردئون پرسش‌وپاسخ (عمومی) */
+.rich-text .rich-faq {
+  margin: 1.25em 0;
+}
+
+.rich-text .rich-faq__title {
+  font-weight: 800;
+  font-size: 1.125rem;
+  margin: 0 0 0.75rem;
+}
+
+.rich-text .rich-faq__item {
+  border: 1px solid var(--border, #e5e1d8);
+  border-radius: 0.625rem;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.rich-text .rich-faq__item summary {
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.rich-text .rich-faq__item summary::-webkit-details-marker {
+  display: none;
+}
+
+.rich-text .rich-faq__item summary::after {
+  content: '+';
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--primary, #c14a0e);
+}
+
+.rich-text .rich-faq__item[open] summary::after {
+  content: '−';
+}
+
+.rich-text .rich-faq__answer {
+  padding: 0 1rem 0.875rem;
+  color: var(--muted-foreground, #6b655c);
+}
+
+.rich-text .rich-faq__answer p {
+  margin: 0.5em 0;
+}
+
+/* گالری عکس (عمومی) */
+.rich-text .rich-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.875rem;
+  margin: 1.25em 0;
+}
+
+.rich-text .rich-gallery figure {
+  margin: 0;
+}
+
+.rich-text .rich-gallery img {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  width: 100%;
+}
+
+/* دکمهٔ درخواست تماس (عمومی) */
+.rich-text .rich-call-cta {
+  margin: 1.5em 0;
+  border: 1px solid var(--primary, #c14a0e);
+  border-radius: 1rem;
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  background: color-mix(in srgb, var(--primary, #c14a0e) 6%, transparent);
+}
+
+.rich-text .rich-call-cta__heading {
+  margin: 0 0 1rem;
+  font-weight: 700;
+  font-size: 1.0625rem;
+}
+
+.rich-text .rich-call-cta__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: var(--primary, #c14a0e);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.75rem 1.75rem;
+  font-weight: 800;
+  font-size: 1.0625rem;
+  text-decoration: none;
+}
+
+.rich-text .rich-call-cta__btn:hover {
+  color: #fff;
+  filter: brightness(0.94);
+}
+
+.rich-text .rich-call-cta__icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.rich-text .rich-call-cta__phone {
+  font-weight: 800;
+}
+
+.rich-text .rich-call-cta__note {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+  color: var(--muted-foreground, #6b655c);
+}

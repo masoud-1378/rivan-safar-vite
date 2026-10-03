@@ -1,3 +1,5 @@
+import type { JSONContent } from '@/lib/rich-text';
+
 /** یک روز از برنامهٔ سفر (آینهٔ ساختاری TourItineraryDayItem در پنل) */
 export interface TourItineraryDay {
   day: number;
@@ -6,6 +8,16 @@ export interface TourItineraryDay {
   description: string;
   activityType: 'guided' | 'free' | 'transit' | 'departure' | string;
   meals?: string;
+  /** متن غنی همان روز (کلید description_rich داخل آبجکت روز)؛ خالی یعنی متن تخت. */
+  descriptionRich?: JSONContent | string | null;
+}
+
+/** یک قلم «سوالات پرتکرار» سطح تور (آینهٔ ساختاری TourFaqItem در پنل) */
+export interface TourFaq {
+  question: string;
+  answer: string;
+  /** پاسخ غنی (کلید answer_rich داخل آبجکت؛ قرارداد تیم داده). */
+  answerRich?: JSONContent | string | null;
 }
 
 /** سپر اعتماد / مدارک و هزینه‌ها (آینهٔ ساختاری TourTrustSpecsItem در پنل) */
@@ -16,6 +28,25 @@ export interface TourTrustSpecs {
   luggageKg?: number;
   activityLevel?: 'easy' | 'moderate' | 'demanding' | string;
   requiredDocs?: string[];
+}
+
+/** یک پله از جدول کنسلی پلکانی (آینهٔ ساختاری TourCancellationTier در پنل) */
+export interface TourCancellationTier {
+  fromDays?: number | null;
+  toDays?: number | null;
+  penaltyPercent?: number | null;
+}
+
+/**
+ * بلوک مالی واقعی (آینهٔ ساختاری TourFinancialSpecsItem در پنل، مایگریشن 0027).
+ * ستون ممکن است هنوز روی دیتابیس واقعی نباشد؛ در این صورت undefined می‌ماند
+ * و هیچ‌چیز نمی‌شکند (دسترسی دفاعی در restToTour).
+ */
+export interface TourFinancialSpecs {
+  cancellationTiers?: TourCancellationTier[];
+  visaRejectionNote?: string;
+  depositAmount?: string;
+  depositDeadline?: string;
 }
 
 /** مشخصات کارشناس تور (آینهٔ ساختاری TourConsultantSpecItem در پنل) */
@@ -59,6 +90,28 @@ export interface TourItem {
   trustSpecs?: TourTrustSpecs | null;
   /** مشخصات کارشناس تور (مایگریشن 0007)؛ خام از jsonb */
   consultantSpec?: TourConsultantSpec | null;
+  /**
+   * بلوک مالی واقعی (مایگریشن 0027)؛ خام از jsonb. ستون ممکن است هنوز روی
+   * دیتابیس واقعی نباشد؛ در این صورت undefined می‌ماند و هیچ‌چیز نمی‌شکند
+   * (دسترسی دفاعی در restToTour).
+   */
+  financialSpecs?: TourFinancialSpecs | null;
+  /**
+   * متن غنی توضیحات تور (ستون description_rich، مایگریشن 0030)؛ خام از jsonb.
+   * ستون ممکن است هنوز روی دیتابیس واقعی نباشد؛ در این صورت undefined می‌ماند
+   * و متن تختِ description چاپ می‌شود (دسترسی دفاعی در restToTour).
+   */
+  descriptionRich?: JSONContent | string | null;
+  /**
+   * «سوالات پرتکرار» سطح تور (ستون faqs، مایگریشن 0030)؛ خام از jsonb.
+   * ستون ممکن است هنوز نباشد؛ خالی یعنی بخش FAQ نمایش داده نمی‌شود.
+   */
+  faqs?: TourFaq[];
+  /**
+   * «چرا همین تور» (ستون why_this_tour، مایگریشن 0030)؛ سند JSON تایپ‌تپ.
+   * ستون ممکن است هنوز نباشد؛ خالی یعنی بخش نمایش داده نمی‌شود.
+   */
+  whyThisTourRich?: JSONContent | string | null;
   updatedAt: string;
   image: string;
   badge?: string;

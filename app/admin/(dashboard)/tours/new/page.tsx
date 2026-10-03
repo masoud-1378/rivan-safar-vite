@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { listDestinationTree, listOrigins, getTourBySlug, type TourRow } from '../actions';
+import { listDestinationTree, listOrigins, getTourBySlug, type TourRow, type TourRichFields } from '../actions';
 import { listHotelsForPicker } from '../../hotels/actions';
 import { AdminBreadcrumb } from '../AdminBreadcrumb';
 import { NewTourClient } from './NewTourClient';
@@ -30,7 +30,7 @@ export default async function AdminTourNewPage({ searchParams }: Props) {
   ]);
 
   // اگر نامکِ تکراری پیدا نشد، صفحهٔ معمولِ تور تازه است — هیچ کپی بی‌صدایی.
-  const duplicateSource: TourRow | null = source ?? null;
+  const duplicateSource: (TourRow & Partial<TourRichFields>) | null = source ?? null;
   const duplicateTitle = duplicateSource?.title ?? null;
 
   return (

@@ -9,6 +9,8 @@ import { cache } from 'react';
 import { SAMPLE_TOURS, type TourItem, type TourItineraryDay } from '@/src/data/toursData';
 import { COUNTRIES, CITIES, type Place } from '@/src/data/destinationsData';
 import { GUIDES, type GuideItem } from '@/src/data/guidesData';
+import type { JSONContent } from '@/lib/rich-text';
+import { faqRichAnswer } from '@/lib/rich-text';
 import { EXHIBITION_SERIES, type ExhibitionSeries } from '@/src/data/exhibitionsData';
 
 type Row = Record<string, unknown>;
@@ -38,6 +40,13 @@ const arrParsed = <T>(v: unknown): T[] => {
   }
   return [];
 };
+/**
+ * یکدست‌سازی پاسخ غنی FAQها روی prop تایپ‌شدهٔ answerRich: قرارداد تیم داده
+ * کلید answer_rich است؛ دادهٔ قدیمی با answerRich هم خوانده می‌شود
+ * (QA ترک تورها، ایراد ۱). آبجکت‌ها همان می‌مانند، فقط prop پر می‌شود.
+ */
+const faqsRich = <T extends { answerRich?: JSONContent | string | null }>(items: T[]): T[] =>
+  (items ?? []).map((f) => ({ ...f, answerRich: faqRichAnswer(f) }));
 const iso = (v: unknown): string => {
   if (typeof v === 'string' && v) return v;
   if (v instanceof Date) return v.toISOString();
@@ -45,6 +54,28 @@ const iso = (v: unknown): string => {
   // رشتهٔ خالی در مرتب‌سازیِ تازه‌ترین‌ها (Date.parse → NaN → ۰) آخر می‌ایستد
   // و در نمایش تاریخ (faDateTime → null → «—») تاریخ جعلی نمی‌سازد.
   return '';
+};
+/**
+ * ستون غنی (`*_rich`): خودِ مقدار (JSON یا رشته) یا null — تا fallback متن
+ * تخت قدیمی خوانده شود. jsonb از REST آبجکت برمی‌گرداند؛ دفاعی رشته را هم
+ * می‌پذیریم.
+ */
+const richCol = (v: unknown): JSONContent | string | null =>
+  v === null || v === undefined ? null : (v as JSONContent | string);
+/** گالری مقصد: آرایهٔ {url, caption, alt} — ورودی خراب → آرایهٔ خالی. */
+const asGallery = (v: unknown): Array<{ url: string; caption: string; alt: string }> => {
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter((x) => x && typeof x === 'object')
+    .map((x) => {
+      const o = x as Record<string, unknown>;
+      return {
+        url: typeof o.url === 'string' ? o.url : '',
+        caption: typeof o.caption === 'string' ? o.caption : '',
+        alt: typeof o.alt === 'string' ? o.alt : '',
+      };
+    })
+    .filter((g) => g.url.trim() !== '');
 };
 
 /* ------------------------------------------------------------------ */
@@ -125,6 +156,15 @@ function restToTour(r: Row, priceNoteDefault?: string): TourItem {
     itineraryDays: arr<TourItineraryDay>(r.itinerary_days),
     trustSpecs: (r.trust_specs as TourItem['trustSpecs']) ?? undefined,
     consultantSpec: (r.consultant_spec as TourItem['consultantSpec']) ?? undefined,
+    // بلوک مالی واقعی (مایگریشن 0027) ممکن است هنوز روی دیتابیس واقعی نباشد؛
+    // نبود کلید در ردیف فقط undefined می‌دهد و هیچ‌چیز نمی‌شکند (همان الگوی
+    // transport_kind). هیچ پیش‌فرض حدسی این‌جا نیست: خالی = نمایش داده نمی‌شود.
+    financialSpecs: (r.financial_specs as TourItem['financialSpecs']) ?? undefined,
+    // متن‌های غنی تور (مایگریشن 0030) ممکن است هنوز روی دیتابیس واقعی نباشند؛
+    // نبود کلید فقط undefined می‌دهد و متن تخت قدیمی چاپ می‌شود (همان الگو).
+    descriptionRich: richCol(r.description_rich) ?? undefined,
+    faqs: faqsRich(arrParsed<TourItem['faqs'][number]>(r.faqs)),
+    whyThisTourRich: richCol(r.why_this_tour) ?? undefined,
   };
 }
 
@@ -283,6 +323,12 @@ function restToPlace(r: Row): Place {
     image: str(r.image),
     heroTagline: str(r.hero_tagline),
     description: str(r.description),
+    // متن غنی مقصد (ستون description_rich؛ مایگریشن 0030) — نبود ستون فقط
+    // undefined می‌دهد و هیچ‌چیز نمی‌شکند (الگوی transport_kind).
+    descriptionRich: richCol(r.description_rich) ?? undefined,
+    metaTitle: str(r.meta_title) || undefined,
+    metaDescription: str(r.meta_description) || undefined,
+    gallery: asGallery(r.gallery),
     bestSeason: str(r.best_season),
     visaRequired: Boolean(r.visa_required),
     visaType: (r.visa_type as string) ?? undefined,
@@ -297,7 +343,8 @@ function restToPlace(r: Row): Place {
     popularDistricts: arr<string>(r.popular_districts),
     keyHighlights: arr<string>(r.key_highlights),
     travelTips: arrParsed<string>(r.travel_tips),
-    faqs: arr<Place['faqs'][number]>(r.faqs),
+    // arrParsed: رشته-کدشده‌های قدیمی را هم می‌فهمد (یادداشت تیم داده، بخش ۶).
+    faqs: faqsRich(arrParsed<Place['faqs'][number]>(r.faqs)),
     relatedGuides: arr<string>(r.related_guides),
     // گیت انتشار مقصد (مایگریشن 0023)؛ ستون ممکن است هنوز روی دیتابیس نباشد.
     publishStatus: (r.publish_status as Place['publishStatus']) ?? undefined,
@@ -494,6 +541,10 @@ function restToGuide(r: Row): GuideItem {
   const lastReviewed = r.last_reviewed_at
     ? new Intl.DateTimeFormat('fa-IR', { dateStyle: 'long' }).format(new Date(String(r.last_reviewed_at)))
     : '';
+  // متن‌های غنی: اول *_rich، اگر نبود متن تخت قدیمی (قرارداد تیم داده).
+  // jsonb از REST آبجکت برمی‌گرداند؛ دفاعی رشته را هم می‌پذیریم.
+  const richCol = (v: unknown): JSONContent | string | null =>
+    v === null || v === undefined ? null : (v as JSONContent | string);
   return {
     id: str(r.id),
     slug: str(r.slug),
@@ -505,12 +556,15 @@ function restToGuide(r: Row): GuideItem {
     reviewer: str(r.reviewer),
     lastReviewedAt: lastReviewed,
     summary: str(r.summary),
+    summaryRich: richCol(r.summary_rich),
     heroImage: str(r.hero_image),
     directAnswer: str(r.direct_answer),
-    sections: arr<GuideItem['sections'][number]>(r.sections),
+    directAnswerRich: richCol(r.direct_answer_rich),
+    // arrParsed: رشته-کدشده‌های قدیمی را هم می‌فهمد (یادداشت تیم داده، بخش ۶).
+    sections: arrParsed<GuideItem['sections'][number]>(r.sections),
     relatedDestinationSlug: (r.related_destination_slug as string) ?? undefined,
     relatedTourSlug: (r.related_tour_id as string) ?? undefined,
-    faqs: arr<GuideItem['faqs'][number]>(r.faqs),
+    faqs: faqsRich(arrParsed<GuideItem['faqs'][number]>(r.faqs)),
   };
 }
 
@@ -566,6 +620,11 @@ function restToExhibition(r: Row): ExhibitionSeries {
     industrySlug: str(r.industry_slug),
     heroTagline: str(r.hero_tagline),
     description: str(r.description),
+    // متن غنی نمایشگاه (ستون description_rich؛ مایگریشن 0030) — نبود ستون
+    // فقط undefined می‌دهد و هیچ‌چیز نمی‌شکند (الگوی transport_kind).
+    descriptionRich: richCol(r.description_rich) ?? undefined,
+    metaTitle: str(r.meta_title) || undefined,
+    metaDescription: str(r.meta_description) || undefined,
     image: str(r.image),
     upcomingEdition: {
       editionSlug: str(r.edition_slug),
@@ -579,7 +638,8 @@ function restToExhibition(r: Row): ExhibitionSeries {
     },
     servicesIncluded: arr<string>(r.services_included),
     businessTips: arr<string>(r.business_tips),
-    faqs: arr<ExhibitionSeries['faqs'][number]>(r.faqs),
+    // arrParsed: رشته-کدشده‌های قدیمی را هم می‌فهمد (یادداشت تیم داده، بخش ۶).
+    faqs: faqsRich(arrParsed<ExhibitionSeries['faqs'][number]>(r.faqs)),
   };
 }
 
@@ -663,6 +723,8 @@ export interface DbLandingBlock {
   blockKind: string;
   heading: string;
   content: string;
+  /** متن غنی ستون body_fa_rich (مایگریشن 0030)؛ نبود ستون فقط null می‌دهد. */
+  bodyFaRich: JSONContent | string | null;
   blockOrder: number;
 }
 
@@ -738,9 +800,11 @@ export async function getLandingBlocks(landingId: string): Promise<DbLandingBloc
   try {
     const rest = getRest();
     if (!rest) return [];
+    // متن غنی بلوک (ستون body_fa_rich؛ مایگریشن 0030) — با select(*) تا نبود
+    // ستون خطا ندهد و فقط null برگردد (همان قرارداد راهنماها/مقصدها).
     const { data, error } = await rest
       .from('content_blocks')
-      .select('id, block_kind, body_fa, block_order')
+      .select('*')
       .eq('landing_id', landingId)
       .is('deleted_at', null)
       .order('block_order', { ascending: true });
@@ -763,6 +827,7 @@ export async function getLandingBlocks(landingId: string): Promise<DbLandingBloc
         blockKind: str(r.block_kind, 'section'),
         heading,
         content,
+        bodyFaRich: richCol(r.body_fa_rich),
         blockOrder: num(r.block_order, 1),
       };
     });

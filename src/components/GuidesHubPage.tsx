@@ -6,7 +6,15 @@ import {
 import { type GuideItem } from '../data/guidesData';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
+import { isRichEmpty, normalizeRichValue, richToPlainText } from '@/lib/rich-text';
 import SmartImage from './SmartImage';
+
+/** خلاصهٔ تخت برای کارت: اول نسخهٔ غنی، اگر نبود متن قدیمی. */
+function cardSummary(guide: GuideItem): string {
+  const json = normalizeRichValue(guide.summaryRich ?? null);
+  if (json && !isRichEmpty(json)) return richToPlainText(json);
+  return guide.summary;
+}
 
 interface GuidesHubPageProps {
   onNavigate: (path: string) => void;
@@ -35,7 +43,7 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
 
   const filteredGuides = allGuides.filter((guide) => {
     const matchCategory = selectedCategory === 'all' || guide.category === selectedCategory;
-    const matchSearch = guide.title.includes(searchTerm) || guide.summary.includes(searchTerm);
+    const matchSearch = guide.title.includes(searchTerm) || cardSummary(guide).includes(searchTerm);
     return matchCategory && matchSearch;
   });
 
@@ -136,7 +144,7 @@ export default function GuidesHubPage({ onNavigate }: GuidesHubPageProps) {
                     </h3>
 
                     <p className="text-body-sm text-text-secondary line-clamp-3 leading-relaxed mb-4">
-                      {guide.summary}
+                      {cardSummary(guide)}
                     </p>
                   </div>
                 </div>

@@ -17,6 +17,16 @@ import { AlertDialog } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/toast';
 import { fa, faNumber } from '@/lib/utils';
 import type { TourHotelOptionItem, TourItineraryDayItem, TourInput } from '../actions';
+// تیم «فرم تورها»: شرح هر روز با ویرایشگر سبک (کلید description_rich داخل آبجکت روز).
+import { RichEditor } from '@/components/ui/rich-editor/RichEditor';
+import { mediaTag } from '@/components/ui/media-library/types';
+import { openMediaPicker } from '@/components/ui/media-library/openMediaPicker';
+import {
+  normalizeRichValue,
+  richFromPlainText,
+  richToPlainText,
+  type JSONContent,
+} from '@/lib/rich-text';
 import { boardMealsText } from './Stage2Hotels';
 
 interface Stage3ItineraryProps {
@@ -383,14 +393,29 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
                 />
               </Field>
 
-              {/* Description */}
-              <Field label="شرح کامل برنامه‌ها، ساعت حرکت و گشت‌ها">
-                <textarea
-                  rows={2}
-                  value={dayItem.description}
-                  onChange={(e) => handleUpdateDay(idx, { description: e.target.value })}
+              {/* Description — ویرایشگر سبک (bold/ایتالیک/لیست/لینک)؛
+                  متن تختِ description از همان ساخته می‌شود تا گیت انتشار و
+                  سایت بی‌متن نمانند. */}
+              <Field
+                label="شرح کامل برنامه‌ها، ساعت حرکت و گشت‌ها"
+                hint="درشت، کج، لیست و لینک — روز شلوغ نمی‌شود؛ عکس و جدول این‌جا نیست."
+              >
+                <RichEditor
+                  variant="light"
+                  value={normalizeRichValue(dayItem.descriptionRich) ?? richFromPlainText(dayItem.description || '')}
+                  onChange={(json: JSONContent) =>
+                    handleUpdateDay(idx, {
+                      descriptionRich: json,
+                      description: richToPlainText(json),
+                    })
+                  }
                   placeholder="توضیح دهید مسافر در این روز چه کارهایی انجام می‌دهد، چه جاهایی را می‌بیند و چه ساعتی بازمی‌گردد…"
-                  className="w-full rounded-sm border border-input bg-background p-2.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  pickImage={() =>
+                    openMediaPicker({
+                      tag: mediaTag('tour', data.slug || `day-${dayItem.day}`),
+                      title: `انتخاب عکس برای روز ${dayItem.day}`,
+                    })
+                  }
                 />
               </Field>
             </div>

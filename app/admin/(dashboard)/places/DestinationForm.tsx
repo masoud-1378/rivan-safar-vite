@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Plus, Link2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible } from '@/components/ui/collapsible';
@@ -11,10 +11,41 @@ import { TagsInput } from '@/components/ui/tags-input';
 import { useToast } from '@/components/ui/toast';
 import { Textarea } from '@/components/ui/textarea';
 import { fa, faSlug } from '@/lib/utils';
-import { saveDestination, checkDestinationSlugUnique, type DestinationInput, type DestinationRow, type FaqItem } from './actions';
+import { MediaField } from '@/components/ui/media-library/MediaField';
+import { mediaTag, type PickedImage } from '@/components/ui/media-library/types';
+import { openMediaPicker } from '@/components/ui/media-library/openMediaPicker';
+import { RichEditor } from '@/components/ui/rich-editor';
+import { ColumnNotice, useColumnGuard } from '@/components/ui/column-guard';
+import { SeoMetaFields } from '@/components/ui/seo-meta-fields';
+import {
+  cleanRichValue,
+  isRichEmpty,
+  normalizeRichValue,
+  richFromPlainText,
+  type JSONContent,
+} from '@/lib/rich-text';
+import { saveDestination, checkDestinationSlugUnique, checkDestinationDescriptionCol, checkDestinationSeoCols, checkDestinationGalleryCol, type DestinationInput, type DestinationRow, type FaqItem, type GalleryImage } from './actions';
 import { DESTINATION_CATEGORIES, isValidDestinationCategory } from './categories';
 
-const EMPTY: DestinationInput = { slug: '', name: '', nameEn: '', type: 'city', parentCountrySlug: '', category: '', image: '', heroTagline: '', description: '', bestSeason: '', visaRequired: false, visaType: '', flightDuration: '', currency: '', startingPrice: '', startingPriceNote: '', lastVerifiedAt: '', activeToursCount: 0, popularDistricts: [], keyHighlights: [], travelTips: [], faqs: [], relatedGuides: [] };
+/** مقدار اولیهٔ ویرایشگر: اول نسخهٔ غنی (`*_rich`)، اگر خالی بود متن تخت قدیمی. */
+function initialRich(
+  rich: JSONContent | string | null | undefined,
+  plain: string | null | undefined,
+): JSONContent | null {
+  const json = normalizeRichValue(rich ?? null);
+  if (json && !isRichEmpty(json)) return json;
+  const t = (plain ?? '').trim();
+  return t ? richFromPlainText(t) : null;
+}
+
+/** پیش‌نویس پرسش در فرم: سؤال تخت + پاسخ غنی (+ متن تخت قدیمی فقط برای fallback). */
+interface FaqDraft {
+  question: string;
+  answerRich: JSONContent | null;
+  answerPlain: string;
+}
+
+const EMPTY: DestinationInput = { slug: '', name: '', nameEn: '', type: 'city', parentCountrySlug: '', category: '', image: '', heroTagline: '', descriptionRich: null, metaTitle: '', metaDescription: '', gallery: [], faqsFormat: 'array', bestSeason: '', visaRequired: false, visaType: '', flightDuration: '', currency: '', startingPrice: '', startingPriceNote: '', lastVerifiedAt: '', activeToursCount: 0, popularDistricts: [], keyHighlights: [], travelTips: [], faqs: [], relatedGuides: [] };
 const nlToArray = (v: string) => v.split('\n').map((s) => s.trim()).filter(Boolean);
 
 export interface CountryOption {
@@ -30,24 +61,37 @@ interface DestinationFormProps {
 }
 
 export default function DestinationForm({ initial, editingId, onDone, countries: initialCountries }: DestinationFormProps) {
-  const src: DestinationInput = initial ? { slug: initial.slug, name: initial.name, nameEn: initial.nameEn, type: initial.type, parentCountrySlug: initial.parentCountrySlug, category: initial.category, image: initial.image, heroTagline: initial.heroTagline, description: initial.description, bestSeason: initial.bestSeason, visaRequired: initial.visaRequired, visaType: initial.visaType, flightDuration: initial.flightDuration, currency: initial.currency, startingPrice: initial.startingPrice, startingPriceNote: initial.startingPriceNote, lastVerifiedAt: initial.lastVerifiedAt, activeToursCount: initial.activeToursCount, popularDistricts: initial.popularDistricts, keyHighlights: initial.keyHighlights, travelTips: initial.travelTips, faqs: initial.faqs, relatedGuides: initial.relatedGuides } : EMPTY;
+  const src: DestinationInput = initial ? { slug: initial.slug, name: initial.name, nameEn: initial.nameEn, type: initial.type, parentCountrySlug: initial.parentCountrySlug, category: initial.category, image: initial.image, heroTagline: initial.heroTagline, descriptionRich: initial.descriptionRich ?? null, metaTitle: initial.metaTitle ?? '', metaDescription: initial.metaDescription ?? '', gallery: initial.gallery ?? [], faqsFormat: initial.faqsFormat ?? 'array', bestSeason: initial.bestSeason, visaRequired: initial.visaRequired, visaType: initial.visaType, flightDuration: initial.flightDuration, currency: initial.currency, startingPrice: initial.startingPrice, startingPriceNote: initial.startingPriceNote, lastVerifiedAt: initial.lastVerifiedAt, activeToursCount: initial.activeToursCount, popularDistricts: initial.popularDistricts, keyHighlights: initial.keyHighlights, travelTips: initial.travelTips, faqs: initial.faqs, relatedGuides: initial.relatedGuides } : EMPTY;
   const [form, setForm] = useState<DestinationInput>(src);
   const [guidesTxt, setGuidesTxt] = useState((src.relatedGuides ?? []).join('\n'));
-  const [faqs, setFaqs] = useState<FaqItem[]>(src.faqs ?? []);
+  // توضیحات با ویرایشگر کامل؛ خوانش اول از description_rich، بعد متن تخت قدیمی.
+  const [descriptionRich, setDescriptionRich] = useState<JSONContent | null>(() =>
+    initialRich(initial?.descriptionRich, initial?.description),
+  );
+  const [faqs, setFaqs] = useState<FaqDraft[]>(() =>
+    (src.faqs ?? []).map((f: FaqItem) => ({
+      question: f.question,
+      answerRich: initialRich(f.answerRich, f.answer),
+      answerPlain: f.answer,
+    })),
+  );
+  const [gallery, setGallery] = useState<GalleryImage[]>(src.gallery ?? []);
+  // نگهبان ستون‌های تازه (الگوی مصوب QA): اگر مایگریشن 0030/0032 هنوز اجرا
+  // نشده، کنار همان فیلد اطلاع صادقانه و غیربلاک‌کننده نشان می‌دهیم.
+  const descriptionColReady = useColumnGuard(checkDestinationDescriptionCol);
+  const seoColsReady = useColumnGuard(checkDestinationSeoCols);
+  const galleryColReady = useColumnGuard(checkDestinationGalleryCol);
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
-  // پولیش موج ۲: لینک تصویر مقصد پشت «ویرایش لینک»/«کپی لینک» است، نه عنصر اصلی.
-  const [showImageUrl, setShowImageUrl] = useState(false);
-
-  const copyImageLink = async () => {
-    const url = form.image.trim();
-    if (!url) return;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast({ title: 'لینک تصویر کپی شد' });
-    } catch {
-      toast({ variant: 'error', title: 'کپی لینک انجام نشد.' });
-    }
+  // تصویر اصلی مقصد: آپلود تازه / انتخاب از کتابخانه / لینک دستی.
+  // form.image همان url است و به اکشن ذخیره می‌رسد؛ کپشن و alt در خودِ
+  // مقدار می‌ماند تا ستون‌هایش به دیتابیس اضافه شود.
+  const [heroImg, setHeroImg] = useState<PickedImage | null>(
+    src.image ? { url: src.image } : null,
+  );
+  const onHeroImg = (p: PickedImage | null) => {
+    setHeroImg(p);
+    set('image', p?.url ?? '');
   };
 
   // قلم ۱۱: نامک خودکار از نام فارسی؛ ویرایش دستی فقط در «پیشرفته».
@@ -79,9 +123,26 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
     setNameError('');
   };
 
-  const addFaq = () => setFaqs((arr) => [...arr, { question: '', answer: '' }]);
+  const addFaq = () => setFaqs((arr) => [...arr, { question: '', answerRich: null, answerPlain: '' }]);
   const removeFaq = (idx: number) => setFaqs((arr) => arr.filter((_, i) => i !== idx));
-  const updateFaq = (idx: number, patch: Partial<FaqItem>) => setFaqs((arr) => arr.map((item, i) => (i === idx ? { ...item, ...patch } : item)));
+  const updateFaq = (idx: number, patch: Partial<FaqDraft>) => setFaqs((arr) => arr.map((item, i) => (i === idx ? { ...item, ...patch } : item)));
+
+  // عکس داخل متن توضیحات از کتابخانهٔ رسانه (تگ مقصد).
+  const pickDescriptionImage = () =>
+    openMediaPicker({ tag: mediaTag('destination', form.slug), title: 'انتخاب عکس برای متن توضیحات' });
+
+  const addGalleryImage = async () => {
+    const picked = await openMediaPicker({
+      tag: mediaTag('destination', form.slug),
+      title: 'افزودن تصویر به گالری مقصد',
+    });
+    if (picked) {
+      setGallery((g) => [...g, { url: picked.url, caption: picked.caption ?? '', alt: picked.alt ?? '' }]);
+    }
+  };
+  const removeGalleryImage = (idx: number) => setGallery((g) => g.filter((_, i) => i !== idx));
+  const updateGalleryImage = (idx: number, patch: Partial<GalleryImage>) =>
+    setGallery((g) => g.map((item, i) => (i === idx ? { ...item, ...patch } : item)));
 
   const submit = () => {
     const name = (form.name || '').trim();
@@ -114,7 +175,21 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
       keyHighlights: form.keyHighlights ?? [],
       travelTips: form.travelTips ?? [],
       relatedGuides: nlToArray(guidesTxt),
-      faqs: faqs.filter((f) => f.question.trim() || f.answer.trim()),
+      // توضیحات غنی در description_rich ذخیره می‌شود؛ ستون متنی قدیمی
+      // (description) دست نمی‌خورد و فقط fallback می‌ماند.
+      descriptionRich: cleanRichValue(descriptionRich),
+      metaTitle: form.metaTitle.trim(),
+      metaDescription: form.metaDescription.trim(),
+      gallery: gallery.filter((g) => g.url.trim() !== ''),
+      faqsFormat: initial?.faqsFormat ?? 'array',
+      faqs: faqs
+        .filter((f) => f.question.trim() || !isRichEmpty(f.answerRich) || f.answerPlain.trim())
+        .map((f) => ({
+          question: f.question.trim(),
+          // متن تخت قدیمی همان که بود می‌ماند (fallback)؛ نسخهٔ غنی در answer_rich.
+          answer: f.answerPlain,
+          answerRich: cleanRichValue(f.answerRich),
+        })),
     };
     startTransition(async () => {
       try {
@@ -289,32 +364,14 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
               ]}
             />
           </Field>
-          {/* پولیش موج ۲: پیش‌نمایش جمع‌وجور + «کپی لینک»؛ لینک خام فقط با «ویرایش لینک». */}
-          <Field label="تصویر" hint="تصویر اصلی مقصد که روی کارت و صفحهٔ مقصد نمایش داده می‌شود؛ فقط Unsplash">
-            {form.image.trim() ? (
-              <div className="flex items-center gap-3">
-                <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-sm border border-border/70">
-                  <img src={form.image.trim()} alt={`پیش‌نمایش تصویر ${form.name || 'مقصد'}`} className="h-full w-full object-cover" loading="lazy" />
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={copyImageLink} className="gap-1.5 text-xs">
-                    <Link2 className="size-4" />
-                    کپی لینک
-                  </Button>
-                  {!showImageUrl && (
-                    <button type="button" onClick={() => setShowImageUrl(true)} className="text-[11px] font-bold text-brand hover:underline">
-                      ویرایش لینک
-                    </button>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <Input value={form.image} dir="ltr" onChange={(e) => set('image', e.target.value)} placeholder="https://images.unsplash.com/..." />
-            )}
-            {showImageUrl && form.image.trim() ? (
-              <Input value={form.image} dir="ltr" onChange={(e) => set('image', e.target.value)} placeholder="https://images.unsplash.com/..." aria-label="لینک تصویر مقصد" className="mt-2" />
-            ) : null}
-          </Field>
+          <MediaField
+            label="تصویر"
+            hint="تصویر اصلی مقصد که روی کارت و صفحهٔ مقصد نمایش داده می‌شود."
+            value={heroImg}
+            onChange={onHeroImg}
+            tag={mediaTag('destination', form.slug)}
+            tagLabel="مقصد"
+          />
           </div>
         </div>
 
@@ -341,7 +398,72 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
         </div>
 
         <div className="grid gap-4">
-          <Field label="توضیحات" hint="حداکثر ۱۲۰۰ نویسه"><Textarea autoResize showCount maxLength={1200} value={form.description} onChange={(e) => set('description', e.target.value)} /></Field>
+          {/* توضیحات کامل با ویرایشگر غنی؛ بدون هیچ سقف کاراکتری (دستور مسعود). */}
+          <Field
+            label="توضیحات"
+            hint="متن کامل معرفی مقصد؛ تیتر، لیست، لینک و عکس هم می‌شود گذاشت."
+          >
+            <RichEditor
+              variant="full"
+              value={descriptionRich}
+              onChange={setDescriptionRich}
+              pickImage={pickDescriptionImage}
+              placeholder="معرفی کامل مقصد…"
+            />
+            {descriptionColReady === false && (
+              <ColumnNotice>ذخیرهٔ این فیلد به به‌روزرسانی دیتابیس نیاز دارد؛ فعلاً اعمال نمی‌شود.</ColumnNotice>
+            )}
+          </Field>
+
+          <div className="space-y-3 border-t pt-5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">گالری تصاویر</h3>
+              <Button type="button" variant="outline" size="sm" onClick={addGalleryImage}>افزودن تصویر</Button>
+            </div>
+            <p className="text-xs text-muted-foreground">چند عکس از کتابخانهٔ رسانه برای این مقصد.</p>
+            {galleryColReady === false && (
+              <ColumnNotice>ذخیرهٔ این فیلد به به‌روزرسانی دیتابیس نیاز دارد؛ فعلاً اعمال نمی‌شود.</ColumnNotice>
+            )}
+            {gallery.length === 0 ? (
+              <p className="text-sm text-muted-foreground">هنوز تصویری به گالری اضافه نشده است.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {gallery.map((g, idx) => (
+                  <div key={idx} className="space-y-2 rounded-sm border border-border bg-muted/30 p-2">
+                    <div className="aspect-[4/3] overflow-hidden rounded-sm bg-muted">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={g.url} alt={g.alt || form.name} className="h-full w-full object-cover" />
+                    </div>
+                    <Input
+                      value={g.caption}
+                      onChange={(e) => updateGalleryImage(idx, { caption: e.target.value })}
+                      placeholder="کپشن (اختیاری)…"
+                      className="text-xs"
+                    />
+                    <Button type="button" variant="ghost" size="sm" className="w-full text-destructive" onClick={() => removeGalleryImage(idx)}>
+                      حذف از گالری
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3 border-t pt-5">
+            <h3 className="text-sm font-semibold">سئو</h3>
+            {seoColsReady === false && (
+              <ColumnNotice>ذخیرهٔ این فیلد به به‌روزرسانی دیتابیس نیاز دارد؛ فعلاً اعمال نمی‌شود.</ColumnNotice>
+            )}
+            <SeoMetaFields
+              metaTitle={form.metaTitle}
+              onMetaTitleChange={(v) => set('metaTitle', v)}
+              metaDescription={form.metaDescription}
+              onMetaDescriptionChange={(v) => set('metaDescription', v)}
+              titleFallback={form.name}
+              urlPreview={form.slug ? `/destination/${form.slug}` : ''}
+            />
+          </div>
+
           <Field label="محله‌های محبوب" hint="با Enter یا ویرگول اضافه کنید"><TagsInput value={form.popularDistricts ?? []} onChange={(v) => set('popularDistricts', v)} placeholder="مثلاً شهر قدیم" /></Field>
           <Field label="جاذبه‌های کلیدی" hint="با Enter یا ویرگول اضافه کنید"><TagsInput value={form.keyHighlights ?? []} onChange={(v) => set('keyHighlights', v)} placeholder="مثلاً برج میلاد" /></Field>
           <Field label="نکات سفر" hint="با Enter یا ویرگول اضافه کنید"><TagsInput value={form.travelTips ?? []} onChange={(v) => set('travelTips', v)} placeholder="مثلاً بهترین زمان سفر" /></Field>
@@ -364,7 +486,13 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
                     <Button type="button" variant="ghost" size="sm" onClick={() => removeFaq(idx)}>حذف پرسش</Button>
                   </div>
                   <Input placeholder="پرسش…" value={faq.question} onChange={(e) => updateFaq(idx, { question: e.target.value })} />
-                  <Textarea placeholder="پاسخ…" value={faq.answer} onChange={(e) => updateFaq(idx, { answer: e.target.value })} />
+                  {/* پاسخ با ویرایشگر سبک (bold/لیست/لینک)؛ در answer_rich ذخیره می‌شود. */}
+                  <RichEditor
+                    variant="light"
+                    value={faq.answerRich}
+                    onChange={(json) => updateFaq(idx, { answerRich: json })}
+                    placeholder="پاسخ…"
+                  />
                 </div>
               ))}
             </div>
