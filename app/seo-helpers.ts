@@ -7,7 +7,7 @@ import { SAMPLE_TOURS, type TourItem } from '@/src/data/toursData';
 import { COUNTRIES, CITIES } from '@/src/data/destinationsData';
 import { GUIDES } from '@/src/data/guidesData';
 import { EXHIBITION_SERIES } from '@/src/data/exhibitionsData';
-import { getTour, getGuide, getExhibition, getSeoLandingByPath } from '@/src/lib/db-content';
+import { getTour, getGuide, getExhibition, getSeoLandingByPath, getCountries, getCities } from '@/src/lib/db-content';
 
 export interface ResolvedSeo {
   title: string;
@@ -172,6 +172,37 @@ export async function resolveSeoLive(path: string): Promise<ResolvedSeo> {
             : series.heroTagline,
           robots: 'index,follow',
           breadcrumbs: withCrumb(series.title),
+        };
+      }
+    } else if (route.type === 'country') {
+      // ایراد ۲۲: متای کشورها هم از DB می‌آید، نه فقط دیتای استاتیک.
+      const countries = await getCountries();
+      const c = countries[route.params.countrySlug];
+      if (c) {
+        return {
+          ...fallback,
+          title: `تور ${c.name}؛ تاریخ‌ها، قیمت و شرایط سفر · ریوان سفر`,
+          description: c.description && c.description.length > 140 ? `${c.description.slice(0, 140)}…` : c.description || fallback.description,
+          robots: 'index,follow',
+          breadcrumbs: withCrumb(`تور ${c.name}`),
+        };
+      }
+    } else if (route.type === 'destination_city') {
+      // ایراد ۲۲: متای شهرها هم از DB می‌آید، نه فقط دیتای استاتیک.
+      const [cities, countries] = await Promise.all([getCities(), getCountries()]);
+      const city = cities[route.params.placeSlug];
+      if (city) {
+        const crumbs = withCrumb(`تور ${city.name}`);
+        const country = city.parentCountrySlug ? countries[city.parentCountrySlug] : undefined;
+        if (country && crumbs.length >= 3) {
+          crumbs[crumbs.length - 2] = { name: `تور ${country.name}`, url: `/destination/${country.slug}` };
+        }
+        return {
+          ...fallback,
+          title: `تور ${city.name}؛ تاریخ‌ها، قیمت و شرایط سفر · ریوان سفر`,
+          description: city.description && city.description.length > 140 ? `${city.description.slice(0, 140)}…` : city.description || fallback.description,
+          robots: 'index,follow',
+          breadcrumbs: crumbs,
         };
       }
     }

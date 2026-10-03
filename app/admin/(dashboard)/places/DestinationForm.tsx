@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible } from '@/components/ui/collapsible';
 import { Field, Input } from '@/components/ui/input';
-import { NumberField } from '@/components/ui/number-field';
 import { Select } from '@/components/ui/select';
 import { TagsInput } from '@/components/ui/tags-input';
 import { useToast } from '@/components/ui/toast';
@@ -113,7 +112,11 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
           setAdvancedOpen(true);
           return;
         }
-        await saveDestination(editingId ?? null, payload);
+        const result = await saveDestination(editingId ?? null, payload);
+        // ایراد ۱۸: اگر نامک عوض شده، به ادمین بگو پیوند تورها هم به‌روز شد.
+        if (result.slugChanged) {
+          toast({ title: `نامک عوض شد؛ پیوند ${fa(result.updatedTours)} تور متصل به‌روز شد.` });
+        }
         onDone();
       } catch (e) {
         toast({ variant: 'error', title: e instanceof Error ? e.message : 'ذخیره انجام نشد؛ دوباره تلاش کنید.' });
@@ -294,7 +297,9 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
           <Field label="شروع قیمت"><Input value={form.startingPrice} onChange={(e) => set('startingPrice', e.target.value)} /></Field>
           <Field label="یادداشت شروع قیمت"><Input value={form.startingPriceNote} onChange={(e) => set('startingPriceNote', e.target.value)} /></Field>
           <Field label="آخرین راستی‌آزمایی"><Input value={form.lastVerifiedAt} onChange={(e) => set('lastVerifiedAt', e.target.value)} /></Field>
-          <Field label="تعداد تورهای فعال"><NumberField value={Number(form.activeToursCount) || 0} onChange={(v) => set('activeToursCount', v)} min={0} aria-label="تعداد تورهای فعال" /></Field>
+          {/* ایراد ۱۷: شمارش «تور فعال» همیشه خودکار از تورهای منتشرشده ساخته می‌شود
+              (db-content.ts)؛ فیلد دستی از فرم برداشته شد تا ادمین را گمراه نکند.
+              ستون دیتابیس سر جایش است و فقط در حالت فالبک استاتیک به کار می‌آید. */}
         </div>
 
         <div className="grid gap-4">
@@ -337,7 +342,11 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
         >
           <Field
             label="نامک"
-            hint="آدرس اینترنتی این مقصد در سایت؛ خودکار از نام فارسی ساخته می‌شود و معمولاً لازم نیست دست بزنید"
+            hint={
+              editingId && initial && form.slug.trim().toLowerCase() !== (initial.slug || '').trim().toLowerCase()
+                ? 'نامک عوض شده؛ آدرس این صفحه در سایت عوض می‌شود ولی پیوند تورهای متصل خودکار به‌روز می‌شود.'
+                : 'آدرس اینترنتی این مقصد در سایت؛ خودکار از نام فارسی ساخته می‌شود و معمولاً لازم نیست دست بزنید'
+            }
             error={slugError}
           >
             <Input

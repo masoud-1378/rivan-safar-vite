@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { organizationJsonLd } from './seo-helpers';
 import ClientChrome from './ClientChrome';
 import { getGaId, getSiteMeta } from '@/src/lib/site-contact';
+import { getNavLinks } from '@/src/lib/db-content';
 import '../src/index.css';
 import { pinar, vazirmatn } from "./fonts";
 
@@ -42,7 +43,9 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  const GA_ID = await getGaId();
+  // ایراد ۱۹/۲۳: لینک‌های منو و فوتر از دیتابیس می‌آیند (فقط مقصدهای دارای
+  // تور فعال + نمایشگاه‌های منتشرشده)؛ قطعی DB → همان هاردکد قبلی.
+  const [GA_ID, navLinks] = await Promise.all([getGaId(), getNavLinks()]);
   return (
     <html lang="fa" dir="rtl" className={`${pinar.variable} ${vazirmatn.variable}`}>
       <head>
@@ -67,7 +70,7 @@ export default async function RootLayout({
         ) : null}
       </head>
       <body className="font-sans">
-        <ClientChrome>{children}</ClientChrome>
+        <ClientChrome navLinks={navLinks}>{children}</ClientChrome>
       </body>
     </html>
   );

@@ -5,12 +5,15 @@ import { usePathname, useRouter } from 'next/navigation';
 import Navbar from '@/src/components/Navbar';
 import Footer from '@/src/components/Footer';
 import { installPhoneClickTracker } from '@/src/lib/analytics';
+import type { NavLinks } from '@/src/lib/db-content';
 
 /** پوسته کلاینت: هدر/فوتر + وضعیت بنر — محتوای هر صفحه از app router می‌آید */
 export default function ClientChrome({
   children,
+  navLinks,
 }: {
   children: ReactNode;
+  navLinks?: NavLinks;
 }) {
   const [showAnnouncement, setShowAnnouncement] = useState(true);
   const pathname = usePathname() ?? '/';
@@ -43,6 +46,7 @@ export default function ClientChrome({
         setShowAnnouncement={setShowAnnouncement}
         onNavigate={navigateTo}
         currentPath={pathname}
+        navLinks={navLinks}
       />
       <main
         className={`flex-1 pb-32 lg:pb-0 transition-[padding-top] duration-300 ${
@@ -55,7 +59,7 @@ export default function ClientChrome({
       >
         {children}
       </main>
-      <Footer onNavigate={navigateTo} />
+      <Footer onNavigate={navigateTo} navLinks={navLinks} />
     </div>
   );
 }

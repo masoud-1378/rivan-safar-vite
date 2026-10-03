@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { Pencil, Plus, Archive, Building2 } from 'lucide-react';
 import { buttonClasses } from '@/components/ui/button';
 import DestinationForm from './DestinationForm';
-import { deleteDestination, countDestinationTours, type DestinationRow } from './actions';
-import { DESTINATION_CATEGORIES } from './categories';
+import { deleteDestination, countDestinationTours, type DestinationRow } from './actions';import { DESTINATION_CATEGORIES } from './categories';
 import SectionSettingsDialog from '../SectionSettingsDialog';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
@@ -15,7 +14,7 @@ import { DataTable, type Column } from '@/components/ui/data-table';
 import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
 
-export default function CatalogManager({ initial, sectionSettings }: { initial: DestinationRow[]; sectionSettings: Record<string, string> }) {
+export default function CatalogManager({ initial, sectionSettings, tourCounts = {} }: { initial: DestinationRow[]; sectionSettings: Record<string, string>; tourCounts?: Record<string, number> }) {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<DestinationRow | null>(null);
   const [deleting, setDeleting] = useState<DestinationRow | null>(null);
@@ -53,6 +52,14 @@ export default function CatalogManager({ initial, sectionSettings }: { initial: 
     { key: 'type', header: 'نوع', sortable: true, cell: (destination) => TYPE_LABELS[destination.type] ?? destination.type ?? '—' },
     { key: 'category', header: 'دسته‌بندی', sortable: true, cell: (destination) => (destination.category ? (CATEGORY_LABELS[destination.category] ?? destination.category) : '—') },
     { key: 'startingPrice', header: 'قیمت شروع', cell: (destination) => destination.startingPrice || '—' },
+    // ایراد ۲۱: قرارداد انتشار مقصدها همین‌جا به چشم ادمین می‌آید — مقصدِ
+    // بایگانی‌نشده روی سایت است، ولی صفحه‌اش وقتی کامل است که تور فعال داشته باشد.
+    { key: 'slug', header: 'وضعیت سایت', cell: (destination) => {
+      const n = tourCounts[destination.slug] ?? 0;
+      return n > 0
+        ? <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">فعال روی سایت · {fa(n)} تور</span>
+        : <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">بدون تور فعال</span>;
+    } },
     { key: 'id', header: 'عملیات', className: 'w-44', cell: (destination) => <div className="flex flex-wrap gap-1"><Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => edit(destination)}><Pencil />ویرایش</Button><Link href={`/admin/catalog?tab=hotels&city=${encodeURIComponent(destination.slug)}`} title={`افزودن هتل در ${destination.name}`} className={buttonClasses('ghost', 'sm', 'max-md:min-h-11')}><Building2 />هتل</Link><Button variant="ghost" size="sm" className="text-destructive max-md:min-h-11" onClick={() => openDelete(destination)} disabled={pending}><Archive />بایگانی</Button></div> },
   ];
 
@@ -60,6 +67,10 @@ export default function CatalogManager({ initial, sectionSettings }: { initial: 
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-foreground">مکان‌ها و مقصدها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول مقصدها</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="places" title="تنظیمات مقصدها" tabs={['general']} values={sectionSettings} /><Button className="h-11 lg:h-10" onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن مقصد جدید</Button></div></div>
       {showForm || editing ? <DestinationForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onDone={reload} countries={countries} /> : null}
+      {/* ایراد ۲۱: قرارداد انتشار مقصدها — گیت جداگانه‌ای نیست؛ همین متن به ادمین می‌گوید. */}
+      <p className="rounded-sm border border-border bg-muted/30 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+        مقصدها وضعیت انتشار جدا ندارند: هر مقصدی که بایگانی نباشد روی سایت دیده می‌شود. صفحهٔ هر مقصد وقتی کامل است که دست‌کم یک تور فعالِ منتشرشده داشته باشد؛ ستون «وضعیت سایت» همین را نشان می‌دهد.
+      </p>
       <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">مقصدها ({fa(initial.length)})</h2><DataTable rows={initial} columns={columns} rowKey={(destination) => destination.id} searchKeys={['name', 'nameEn', 'type', 'category']} searchPlaceholder="جست‌وجوی نام، نوع یا دسته‌بندی…" emptyTitle="مقصدی ثبت نشده است" emptyDescription="برای شروع، مقصد جدیدی اضافه کنید." emptyAction={initial.length === 0 ? { label: 'افزودن اولین مقصد', onClick: () => { setEditing(null); setShowForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); } } : undefined} /></CardContent></Card>
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => { if (!open) { setDeleting(null); setUsage(null); setUsageFailed(false); } }} title="بایگانی مقصد" description={deleting ? (<span className="block space-y-2"><span className="block">مقصد «{deleting.name}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.</span>{usageFailed ? <span className="block font-medium text-destructive">شمارش ارجاع‌ها ناموفق بود؛ با احتیاط بایگانی کنید.</span> : null}{usage !== null && usage > 0 ? <span className="block font-medium text-amber-600 dark:text-amber-400">این مقصد در {fa(usage)} تور استفاده شده است؛ آن تورها سر جایشان می‌مانند و فقط این مقصد از دسترس خارج می‌شود.</span> : null}</span>) : ''} confirmText="بایگانی مقصد" destructive onConfirm={onDelete} />
     </div>

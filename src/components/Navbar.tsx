@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Phone, Menu, X, ChevronDown, Map, Globe, Compass,
   MapPin, Plane, ArrowLeft
@@ -8,12 +8,15 @@ import Image from 'next/image';
 import SmartImage from './SmartImage';
 import AnnouncementBar from './AnnouncementBar';
 import { useContact } from '@/src/lib/contact-context';
+import type { NavLinks } from '@/src/lib/db-content';
 
 interface NavbarProps {
   showAnnouncement: boolean;
   setShowAnnouncement: (val: boolean) => void;
   onNavigate?: (path: string) => void;
   currentPath?: string;
+  /** لینک‌های دیتابیس‌محور از RootLayout؛ نبودش یعنی فالبک هاردکد. */
+  navLinks?: NavLinks;
 }
 
 const navigation = [
@@ -169,7 +172,114 @@ const mobileNavData = [
   { name: 'راهنمای سفر و مقالات', path: '/guides' },
 ];
 
-export default function Navbar({ showAnnouncement, setShowAnnouncement, onNavigate, currentPath = '/' }: NavbarProps) {
+/* ------------------------------------------------------------------ */
+/* منوی دیتابیس‌محور (ایرادهای ۱۹ و ۲۳)                                 */
+/* ------------------------------------------------------------------ */
+
+/** حالت «زنده» یعنی لینک‌های DB واقعاً رسیده‌اند؛ وگرنه همان هاردکد بالا. */
+function isNavLive(navLinks?: NavLinks): navLinks is NavLinks {
+  return Boolean(navLinks && navLinks.destinations.length > 0);
+}
+
+/** نگاشت عنوان ستون مگامنو به دسته‌بندی دیتابیس مقصدها. */
+const FOREIGN_COLUMN_CATEGORIES: Record<string, 'turkey' | 'asia' | 'europe' | 'middle_east'> = {
+  'تورهای ترکیه': 'turkey',
+  'شرق آسیا': 'asia',
+  'اروپا و روسیه': 'europe',
+  'امارات و قفقاز': 'middle_east',
+  'خاورمیانه و قفقاز': 'middle_east',
+};
+
+/**
+ * لینک‌های محصولیِ دستیِ /tour/* «منتخب سردبیر»اند — در حالت زنده فقط
+ * آن‌هایی می‌مانند که تورشان منتشرشده است (ضد لینک ۴۰۴).
+ */
+const PRODUCT_LINK_SLUGS: Record<string, string> = {
+  '/tour/malaysia-kl': 'malaysia-kl',
+  '/tour/russia-moscow': 'russia-moscow',
+  '/tour/paris-rome': 'paris-rome',
+  '/tour/georgia-tbilisi': 'georgia-tbilisi',
+  '/tour/armenia-yerevan': 'armenia-yerevan',
+};
+
+const MAX_MENU_DEST_LINKS = 4;
+
+/** ستون‌های «تورهای خارجی» — لینک‌های مقصد از DB (فقط دارای تور فعال). */
+function buildForeignColumns(navLinks?: NavLinks) {
+  if (!isNavLive(navLinks)) return foreignToursData;
+  const liveSlugs = new Set(navLinks.tourSlugs);
+  const countrySlugs = new Set(navLinks.countries.map((c) => c.slug));
+  return foreignToursData
+    .map((col) => {
+      const category = FOREIGN_COLUMN_CATEGORIES[col.title];
+      const destLinks = category
+        ? navLinks.destinations
+            .filter((d) => d.category === category)
+            .slice(0, MAX_MENU_DEST_LINKS)
+            .map((d) => ({ name: `تور ${d.name}`, path: d.path }))
+        : [];
+      const products = col.links
+        .filter((l) => PRODUCT_LINK_SLUGS[l.path] && liveSlugs.has(PRODUCT_LINK_SLUGS[l.path]))
+        .map((l) => ({ name: l.name, path: l.path }));
+      // «مشاهده همه»ای که به کشور بایگانی‌شده اشاره کند به هاب خارجی برمی‌گردد.
+      let path = col.path;
+      const m = path.match(/^\/destination\/([a-zA-Z0-9_-]+)$/);
+      if (m && !countrySlugs.has(m[1])) path = '/tours/foreign';
+      return { ...col, links: [...destLinks, ...products], path };
+    })
+    .filter((col) => col.links.length > 0);
+}
+
+/** ستون‌های «تورهای داخلی» — در حالت زنده یک فهرست یکپارچه از DB. */
+function buildDomesticColumns(navLinks?: NavLinks) {
+  if (!isNavLive(navLinks)) return domesticToursData;
+  const links = navLinks.destinations
+    .filter((d) => d.category === 'domestic')
+    .slice(0, 6)
+    .map((d) => ({ name: `تور ${d.name}`, path: d.path }));
+  if (links.length === 0) return domesticToursData;
+  return [{ title: 'مقصدهای داخلی', links }];
+}
+
+/** لینک‌های «نمایشگاه‌های بین‌المللی» — فقط نمایشگاه‌های منتشرشده (ایراد ۲۳). */
+function buildExhibitionLinks(navLinks?: NavLinks) {
+  if (!navLinks || navLinks.exhibitions.length === 0) return exhibitionToursData.links;
+  return navLinks.exhibitions.slice(0, 5).map((e) => ({ name: e.name, path: e.path }));
+}
+
+/** منوی موبایل — همان منطق دسکتاپ، در ساختار دراور. */
+function buildMobileNav(navLinks?: NavLinks) {
+  if (!isNavLive(navLinks)) return mobileNavData;
+  return [
+    {
+      name: 'تورهای خارجی',
+      path: '/tours/foreign',
+      subcategories: buildForeignColumns(navLinks),
+      viewAll: 'همه تورهای خارجی',
+    },
+    {
+      name: 'تورهای داخلی',
+      path: '/tours/domestic',
+      subcategories: buildDomesticColumns(navLinks),
+      viewAll: 'همه تورهای داخلی',
+    },
+    {
+      name: 'تورهای نمایشگاهی',
+      path: '/exhibitions',
+      subcategories: [
+        {
+          title: 'نمایشگاه‌های نزدیک',
+          links: buildExhibitionLinks(navLinks),
+          viewAll: 'مشاهده همه تورهای نمایشگاهی',
+          path: '/exhibitions',
+        },
+      ],
+    },
+    { name: 'راهنمای سفر و مقالات', path: '/guides' },
+  ];
+}
+
+export default function Navbar({ showAnnouncement, setShowAnnouncement, onNavigate, currentPath = '/', navLinks }: NavbarProps) {
   const contact = useContact();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -180,6 +290,13 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // ایرادهای ۱۹ و ۲۳: لینک‌های منو از DB می‌آیند (فقط مقصدهای دارای تور فعال
+  // و نمایشگاه‌های منتشرشده)؛ اگر لینک زنده‌ای نرسید، همان هاردکد قبلی.
+  const foreignCols = useMemo(() => buildForeignColumns(navLinks), [navLinks]);
+  const domesticCols = useMemo(() => buildDomesticColumns(navLinks), [navLinks]);
+  const exhibitionMenuLinks = useMemo(() => buildExhibitionLinks(navLinks), [navLinks]);
+  const mobileItems = useMemo(() => buildMobileNav(navLinks), [navLinks]);
 
   const handleMouseEnter = (menuName: string) => {
     if (closeTimeout.current) clearTimeout(closeTimeout.current);
@@ -335,7 +452,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                         }`}
                       >
                         <div className="p-7 lg:p-8 grid grid-cols-5 gap-6">
-                          {foreignToursData.map((col) => (
+                          {foreignCols.map((col) => (
                             <div key={col.title}>
                               <h3 className="text-[15px] font-bold text-text-heading mb-4 border-r-2 border-border-brand pr-2.5 leading-snug">
                                 {col.title}
@@ -407,7 +524,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                         }`}
                       >
                         <div className="p-7 grid grid-cols-2 gap-8">
-                          {domesticToursData.map((col) => (
+                          {domesticCols.map((col) => (
                             <div key={col.title}>
                               <h3 className="text-[15px] font-bold text-text-heading mb-4 border-r-2 border-border-brand pr-2.5 leading-snug">
                                 {col.title}
@@ -456,7 +573,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                               {exhibitionToursData.title}
                             </h3>
                             <ul className="flex flex-col gap-3">
-                              {exhibitionToursData.links.map((link) => (
+                              {exhibitionMenuLinks.map((link) => (
                                 <li key={link.name}>
                                   <a
                                     href={link.path}
@@ -570,7 +687,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
               {/* Drawer Scrollable Content */}
               <div className="flex-1 overflow-y-auto p-5">
                 <nav className="space-y-3">
-                  {mobileNavData.map((item) => (
+                  {mobileItems.map((item) => (
                     <div key={item.name} className="flex flex-col">
                       <button
                         onClick={() => {

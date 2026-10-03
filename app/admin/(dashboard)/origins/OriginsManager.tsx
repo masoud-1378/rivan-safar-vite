@@ -134,7 +134,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">مبدأها</h1>
-          <p className="mt-1 text-sm text-muted-foreground">شهرهای مبدأ حرکت تورها با ساختار سلسله‌مراتبی</p>
+          <p className="mt-1 text-sm text-muted-foreground">فهرست مبدأهای فرم تورساز؛ فقط در پنل استفاده می‌شود و صفحه‌ای در سایت ندارد</p>
         </div>
         <Button className="h-11 lg:h-10" onClick={startCreate}>
           <Plus />
@@ -172,10 +172,10 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
         }
       >
         <div className="space-y-4">
-          <Field label="نام مبدأ" error={nameError} hint="همین نام در فهرست مبدأهای فرم تور و روی سایت دیده می‌شود">
+          <Field label="نام مبدأ" error={nameError} hint="همین نام در فهرست «مبدأ» فرم تورساز می‌آید؛ مبدأها صفحه‌ای در سایت ندارند">
             <Input value={name} onChange={(e) => { setName(e.target.value); setNameError(undefined); }} placeholder="مثل تهران" />
           </Field>
-          <Field label="نوع" hint="شهر، کشور یا قاره/ناحیه؛ ترتیب نمایش در درخت مبدأها">
+          <Field label="نوع" hint="شهر، کشور یا قاره/ناحیه؛ فقط برای مرتب‌بودن فهرست در همین پنل است">
             <Select
               value={type}
               onChange={(e) => setType(e.target.value)}
@@ -186,7 +186,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
               ]}
             />
           </Field>
-          <Field label="والد" hint="اختیاری؛ مشخص می‌کند این مبدأ زیر کدام والد در درخت سایت می‌نشیند">
+          <Field label="والد" hint="اختیاری؛ فقط برای مرتب‌بودن فهرست در همین پنل است">
             <Select
               value={parentSlug}
               onChange={(e) => setParentSlug(e.target.value)}
