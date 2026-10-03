@@ -44,7 +44,7 @@ export default async function RootLayout({
   children: ReactNode;
 }) {
   // ایراد ۱۹/۲۳: لینک‌های منو و فوتر از دیتابیس می‌آیند (فقط مقصدهای دارای
-  // تور فعال + نمایشگاه‌های منتشرشده)؛ قطعی DB → همان هاردکد قبلی.
+  // تور فعال + نمایشگاه‌های منتشرشده)؛ دادهٔ خالی → هاردکد؛ قطعی DB → دیتای استاتیک پشتیبان.
   const [GA_ID, navLinks] = await Promise.all([getGaId(), getNavLinks()]);
   return (
     <html lang="fa" dir="rtl" className={`${pinar.variable} ${vazirmatn.variable}`}>

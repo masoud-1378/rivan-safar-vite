@@ -9,6 +9,7 @@ import {
   IMAGE_UPLOAD_BUCKET,
   IMAGE_UPLOAD_MAX_BYTES,
   assertUploadImage,
+  cleanStorageSlug,
   storagePathInBucket,
 } from '@/src/lib/upload-policy';
 
@@ -53,7 +54,7 @@ export async function uploadTourBanner(
   await requireAdmin(['owner', 'editor']);
   const file = formData.get('photo');
   // قرارداد مشترک آپلود تصویر (ایراد ۲۷): فرمت/حجم/SVG همین‌جا سنجیده می‌شود.
-  assertUploadImage(file as File);
+  await assertUploadImage(file as File);
   const f = file as File;
 
   const db = getDb();
@@ -61,7 +62,7 @@ export async function uploadTourBanner(
   const sb = serviceClient();
   await ensureBucket(sb);
 
-  const cleanSlug = (slug || 'tour').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'tour';
+  const cleanSlug = cleanStorageSlug(slug, 'tour');
   // پسوند این‌جا حتماً معتبر است (assertUploadImage ردش کرده).
   const ext = (f.name.split('.').pop() || '').toLowerCase();
   const path = `${BANNER_PREFIX}${cleanSlug}/${crypto.randomUUID()}.${ext}`;

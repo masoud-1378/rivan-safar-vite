@@ -26,7 +26,8 @@ const SUPABASE_STORAGE_PATH_PREFIX = '/storage/v1/object/public/';
 export function isRenderableImageUrl(raw: string): boolean {
   const url = (raw || '').trim();
   if (!url) return true;
-  if (url.startsWith('/')) return true; // تصویر لوکالِ خود سایت
+  // «//evil.com/x» هم با «/» شروع می‌شود ولی لوکال نیست (پروتکل‌نسبی)؛ رد می‌شود.
+  if (url.startsWith('/') && !url.startsWith('//')) return true; // تصویر لوکالِ خود سایت
   let parsed: URL;
   try {
     parsed = new URL(url);

@@ -60,6 +60,14 @@ export interface TourConsultantSpecItem {
   emergencyPhone?: string;
 }
 
+/**
+ * ورودی ذخیرهٔ تور.
+ *
+ * نکتهٔ آگاهانه (ایراد ۸، میز ۱): فیلد `features` عمداً این‌جا نیست — در هیچ
+ * مرحلهٔ ویزارد ورودی نداشت و هیچ‌جای سایت رندر نمی‌شد. ستون دیتابیس
+ * (`site_tours.features`) و نگاشت `db-content` دست‌نخورده ماندند تا داده‌های
+ * قدیمی حفظ شوند؛ پس اگر دنبالش گشتی، حذفش اشتباه نیست، تصمیم است.
+ */
 export interface TourInput {
   slug: string;
   title: string;
@@ -356,10 +364,14 @@ export async function saveTour(id: string | undefined | null, data: TourInput) {
       .select({ nameFa: accommodations.nameFa, deletedAt: accommodations.deletedAt })
       .from(accommodations)
       .where(inArray(accommodations.id, hotelIds));
+    // شناسه‌ای که به هیچ ردیفی نرسید بی‌صدا رد نمی‌شود.
+    if (hotelStates.length !== hotelIds.length) {
+      throw new Error('هتل پیدا نشد.');
+    }
     const archived = hotelStates.find((r) => r.deletedAt != null);
     if (archived) {
       throw new Error(
-        `هتل «${archived.nameFa}» بایگانی شده است؛ هتل بایگانی‌شده را نمی‌توان به تور اضافه کرد. اول از صفحهٔ بایگانی بازیابیش کنید.`,
+        `هتل «${archived.nameFa}» بایگانی شده است؛ اول از صفحهٔ بایگانی بازیابیش کنید، بعد تور را ذخیره کنید.`,
       );
     }
   }
