@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Headphones, 
   UserCheck, 
@@ -8,9 +8,12 @@ import {
   Mic, 
   CheckCircle, 
   Sparkles,
-  LifeBuoy
+  LifeBuoy,
+  Link2
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast';
 import type { TourConsultantSpecItem, TourInput } from '../actions';
 
 interface Stage5ConsultantProps {
@@ -20,6 +23,20 @@ interface Stage5ConsultantProps {
 
 export default function Stage5Consultant({ data, onChange }: Stage5ConsultantProps) {
   const consultant = data.consultantSpec || {};
+  const { toast } = useToast();
+  // پولیش موج ۲: لینک صوتی خام پشت «ویرایش لینک»/«کپی لینک» است؛ پیش‌نمایش پخش‌کننده.
+  const [showAudioUrl, setShowAudioUrl] = useState(false);
+
+  const copyAudioLink = async () => {
+    const url = (consultant.audioUrl || '').trim();
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: 'لینک فایل صوتی کپی شد' });
+    } catch {
+      toast({ variant: 'error', title: 'کپی لینک انجام نشد.' });
+    }
+  };
 
   const updateConsultant = (patch: Partial<TourConsultantSpecItem>) => {
     onChange({
@@ -103,17 +120,44 @@ export default function Stage5Consultant({ data, onChange }: Stage5ConsultantPro
           </div>
 
           <div>
-            <Field label="لینک فایل صوتی یا پادکست معرفی تور (اختیاری)" hint="مسافر می‌تواند وویس مشاور را در صفحه تور بشنود">
-              <div className="relative">
-                <Input
-                  dir="ltr"
-                  value={consultant.audioUrl || ''}
-                  onChange={(e) => updateConsultant({ audioUrl: e.target.value })}
-                  placeholder="https://rivansafar.com/audio/..."
-                  className="ps-9"
-                />
-                <Mic className="size-4 text-purple-500 absolute left-3 top-2.5" />
-              </div>
+            {/* پولیش موج ۲: وقتی لینک هست، پخش‌کننده + «کپی لینک»؛ لینک خام فقط با «ویرایش لینک». */}
+            <Field label="فایل صوتی یا پادکست معرفی تور (اختیاری)" hint="مسافر می‌تواند وویس مشاور را در صفحه تور بشنود">
+              {(consultant.audioUrl || '').trim() ? (
+                <div className="space-y-2">
+                  <audio controls src={(consultant.audioUrl || '').trim()} className="h-9 w-full max-w-sm" />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={copyAudioLink} className="gap-1.5 text-xs">
+                      <Link2 className="size-4" />
+                      کپی لینک
+                    </Button>
+                    {!showAudioUrl && (
+                      <button type="button" onClick={() => setShowAudioUrl(true)} className="text-[11px] font-bold text-brand hover:underline">
+                        ویرایش لینک
+                      </button>
+                    )}
+                  </div>
+                  {showAudioUrl && (
+                    <Input
+                      dir="ltr"
+                      value={consultant.audioUrl || ''}
+                      onChange={(e) => updateConsultant({ audioUrl: e.target.value })}
+                      placeholder="https://rivansafar.com/audio/..."
+                      aria-label="لینک فایل صوتی"
+                    />
+                  )}
+                </div>
+              ) : (
+                <div className="relative">
+                  <Input
+                    dir="ltr"
+                    value={consultant.audioUrl || ''}
+                    onChange={(e) => updateConsultant({ audioUrl: e.target.value })}
+                    placeholder="https://rivansafar.com/audio/..."
+                    className="ps-9"
+                  />
+                  <Mic className="size-4 text-purple-500 absolute left-3 top-2.5" />
+                </div>
+              )}
             </Field>
           </div>
         </div>

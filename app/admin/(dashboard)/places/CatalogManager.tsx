@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import DestinationForm from './DestinationForm';
 import { deleteDestination, countDestinationTours, setDestinationPublishStatus, type DestinationRow } from './actions';
 import { DESTINATION_CATEGORIES } from './categories';
-import SectionSettingsDialog from '../SectionSettingsDialog';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,7 +15,7 @@ import { DataTable, type Column } from '@/components/ui/data-table';
 import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
 
-export default function CatalogManager({ initial, sectionSettings, tourCounts = {} }: { initial: DestinationRow[]; sectionSettings: Record<string, string>; tourCounts?: Record<string, number> }) {
+export default function CatalogManager({ initial, tourCounts = {} }: { initial: DestinationRow[]; tourCounts?: Record<string, number> }) {
   const [destinations, setDestinations] = useState(initial);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<DestinationRow | null>(null);
@@ -104,7 +103,7 @@ export default function CatalogManager({ initial, sectionSettings, tourCounts = 
 
   return (
     <div className="admin-enter space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-foreground">مکان‌ها و مقصدها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول مقصدها</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="places" title="تنظیمات مقصدها" tabs={['general']} values={sectionSettings} /><Button className="h-11 lg:h-10" onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن مقصد جدید</Button></div></div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-foreground">مکان‌ها و مقصدها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول مقصدها</p></div><div className="flex items-center gap-2"><Button className="h-11 lg:h-10" onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن مقصد جدید</Button></div></div>
       {showForm || editing ? <DestinationForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onDone={reload} countries={countries} /> : null}
       {/* گیت انتشار جدا برای مقصد (قلم ۳ موج ۱، تصمیم ۶): فقط «منتشرشده»ها روی سایت دیده می‌شوند. */}
       <p className="rounded-sm border border-border bg-muted/30 px-4 py-3 text-xs leading-relaxed text-muted-foreground">

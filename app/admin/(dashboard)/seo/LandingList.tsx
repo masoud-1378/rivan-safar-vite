@@ -51,7 +51,6 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
         h1Fa: editing.h1Fa,
         workflow: (editing.workflow ?? 'draft') as LandingFormInitial['workflow'],
         indexStatus: (editing.indexStatus ?? 'noindex') as LandingFormInitial['indexStatus'],
-        nextReviewAt: editing.nextReviewAt ? new Date(editing.nextReviewAt) : null,
       }
     : null;
 

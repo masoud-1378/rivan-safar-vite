@@ -12,6 +12,7 @@ import { getSettingsMap } from '../settings/actions';
 import { assertLatinSlug } from '@/src/lib/slug-format';
 import { cleanupReplacedBanner } from './banner-upload';
 import { checkPublishReadiness, type PublishGateInput } from './publish-gate';
+import { buildDurationFromNights } from '@/src/lib/tour-format';
 
 export type HotelBookingType = 'guarantee' | 'semi_charter' | 'on_request';
 
@@ -30,7 +31,6 @@ export interface TourHotelOptionItem {
   priceSingle?: string;
   priceChildWithBed?: string;
   priceChildNoBed?: string;
-  locationNote?: string;
   /** اتصال به رکورد جدول هتل‌ها (accommodations.id)؛ قیمت‌ها همیشه ویژهٔ این تور دستی وارد می‌شوند */
   hotelId?: string;
 }
@@ -40,7 +40,6 @@ export interface TourItineraryDayItem {
   title: string;
   city: string;
   description: string;
-  activityType: 'guided' | 'free' | 'transit' | 'departure' | string;
   meals?: string;
 }
 
@@ -429,7 +428,10 @@ export async function saveTour(
   }
 
   const carrier = (data.carrierName || data.airline || '').trim();
-  const badge = data.badge || (data.guaranteedDeparture ? 'حرکت تضمین‌شده' : null);
+  // موج ۲، تیم تکراری‌ها: فرم یک کنترل واحد برای نشان می‌فرستد و data.badge همان
+  // مقدار نهایی است؛ تیک دستی و متن دیگر جدا نیستند. fallbackِ تیک فقط برای ورودی‌های
+  // قدیمی/خارجی است — هیچ بازنویسی بی‌صدایی در کار نیست.
+  const badge = (data.badge || '').trim() || (data.guaranteedDeparture ? 'حرکت تضمین‌شده' : null);
   const normalizedHotels = hotelOptions.map((h) => {
     // ستارهٔ خالی یا نامعتبر هرگز حدس زده نمی‌شود؛ نبودن کلید یعنی «بدون درجه» و سایت «—» نشان می‌دهد.
     const starNum = Number(h.stars);
@@ -445,7 +447,6 @@ export async function saveTour(
     priceSingle: h.priceSingle || '',
     priceChildWithBed: h.priceChildWithBed || '',
     priceChildNoBed: h.priceChildNoBed || '',
-    locationNote: h.locationNote || '',
     };
   });
 
@@ -459,7 +460,6 @@ export async function saveTour(
           title: String(o.title ?? ''),
           city: String(o.city ?? ''),
           description: String(o.description ?? ''),
-          activityType: String(o.activityType ?? 'guided'),
           meals: o.meals ? String(o.meals) : undefined,
         };
       })
@@ -521,7 +521,10 @@ export async function saveTour(
     route,
     // شیوهٔ سفر از انتخاب کاربر ذخیره می‌شود؛ بج جدول از همین خوانده می‌شود (T9).
     transportKind: data.transportKind || 'air',
-    duration: data.duration || '',
+    // موج ۲، تیم تکراری‌ها + رفع QA: duration مرجع است و از nights ساخته می‌شود؛
+    // ولی اگر nights چیزی نساخت، متن قدیمیِ ذخیره‌شده حفظ می‌شود تا با یک
+    // ذخیرهٔ ساده، دادهٔ دستیِ تورهای قدیمی بی‌صدا پاک نشود (آینهٔ منطق فرم).
+    duration: buildDurationFromNights(Math.max(0, Number(data.nights) || 0)) || (data.duration || ''),
     nights: Math.max(0, Number(data.nights) || 0),
     closestDeparture: data.closestDeparture || '',
     price: String(price),

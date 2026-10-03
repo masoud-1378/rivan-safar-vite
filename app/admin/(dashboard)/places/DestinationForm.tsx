@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible } from '@/components/ui/collapsible';
@@ -36,6 +36,19 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
   const [faqs, setFaqs] = useState<FaqItem[]>(src.faqs ?? []);
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
+  // پولیش موج ۲: لینک تصویر مقصد پشت «ویرایش لینک»/«کپی لینک» است، نه عنصر اصلی.
+  const [showImageUrl, setShowImageUrl] = useState(false);
+
+  const copyImageLink = async () => {
+    const url = form.image.trim();
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: 'لینک تصویر کپی شد' });
+    } catch {
+      toast({ variant: 'error', title: 'کپی لینک انجام نشد.' });
+    }
+  };
 
   // قلم ۱۱: نامک خودکار از نام فارسی؛ ویرایش دستی فقط در «پیشرفته».
   const [slugTouched, setSlugTouched] = useState(false);
@@ -276,7 +289,32 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
               ]}
             />
           </Field>
-          <Field label="تصویر" hint="آدرس کامل تصویر؛ فقط Unsplash"><Input value={form.image} dir="ltr" onChange={(e) => set('image', e.target.value)} /></Field>
+          {/* پولیش موج ۲: پیش‌نمایش جمع‌وجور + «کپی لینک»؛ لینک خام فقط با «ویرایش لینک». */}
+          <Field label="تصویر" hint="تصویر اصلی مقصد که روی کارت و صفحهٔ مقصد نمایش داده می‌شود؛ فقط Unsplash">
+            {form.image.trim() ? (
+              <div className="flex items-center gap-3">
+                <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-sm border border-border/70">
+                  <img src={form.image.trim()} alt={`پیش‌نمایش تصویر ${form.name || 'مقصد'}`} className="h-full w-full object-cover" loading="lazy" />
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={copyImageLink} className="gap-1.5 text-xs">
+                    <Link2 className="size-4" />
+                    کپی لینک
+                  </Button>
+                  {!showImageUrl && (
+                    <button type="button" onClick={() => setShowImageUrl(true)} className="text-[11px] font-bold text-brand hover:underline">
+                      ویرایش لینک
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <Input value={form.image} dir="ltr" onChange={(e) => set('image', e.target.value)} placeholder="https://images.unsplash.com/..." />
+            )}
+            {showImageUrl && form.image.trim() ? (
+              <Input value={form.image} dir="ltr" onChange={(e) => set('image', e.target.value)} placeholder="https://images.unsplash.com/..." aria-label="لینک تصویر مقصد" className="mt-2" />
+            ) : null}
+          </Field>
           </div>
         </div>
 

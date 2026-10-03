@@ -6,10 +6,6 @@ import {
   Plus, 
   Trash2, 
   CalendarDays, 
-  Compass, 
-  ShoppingBag, 
-  Navigation, 
-  PlaneTakeoff,
   Utensils,
   CheckCircle2,
   XCircle,
@@ -19,7 +15,7 @@ import { Field, Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/toast';
-import { cn, fa, faNumber } from '@/lib/utils';
+import { fa, faNumber } from '@/lib/utils';
 import type { TourHotelOptionItem, TourItineraryDayItem, TourInput } from '../actions';
 import { boardMealsText } from './Stage2Hotels';
 
@@ -27,13 +23,6 @@ interface Stage3ItineraryProps {
   data: TourInput;
   onChange: (fields: Partial<TourInput>) => void;
 }
-
-const ACTIVITY_TYPES = [
-  { id: 'guided', label: 'گشت گروهی با راهنما', icon: Compass, color: 'text-brand' },
-  { id: 'free', label: 'وقت آزاد و خرید', icon: ShoppingBag, color: 'text-amber-500' },
-  { id: 'transit', label: 'جابجایی بین‌شهری / ترانسفر', icon: Navigation, color: 'text-blue-500' },
-  { id: 'departure', label: 'عزیمت و بازگشت به ایران', icon: PlaneTakeoff, color: 'text-purple-500' },
-];
 
 // قالب‌های پیش‌فرض خدمات همراه تور (T12): فقط «خدمات همراه» را پر می‌کنند؛
 // «خدمات خارج از تور» را نه.
@@ -79,7 +68,6 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
         title: '',
         city: data.destination || '',
         description: '',
-        activityType: nextDayNum === 1 ? 'transit' : 'guided',
         meals: 'صبحانه',
       },
     ];
@@ -117,7 +105,6 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
         title: '',
         city: data.destination || '',
         description: '',
-        activityType: d === 1 ? 'transit' : 'guided',
         meals: '',
       });
     }
@@ -383,45 +370,15 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
                 </div>
               </div>
 
-              {/* Activity Type & Meals */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-bold text-foreground block mb-1.5">نوع فعالیت اصلی</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {ACTIVITY_TYPES.map((act) => {
-                      const Icon = act.icon;
-                      const active = dayItem.activityType === act.id;
-                      return (
-                        <button
-                          key={act.id}
-                          type="button"
-                          onClick={() => handleUpdateDay(idx, { activityType: act.id })}
-                          className={cn(
-                            "flex min-h-11 min-w-0 items-center gap-2 rounded-sm border p-2 text-start text-xs transition-colors",
-                            active
-                              ? "border-emerald-500 bg-emerald-500/10 font-bold text-foreground"
-                              : "border-border/60 bg-secondary/30 text-muted-foreground hover:bg-secondary/60"
-                          )}
-                        >
-                          <Icon className={cn("size-3.5", act.color)} />
-                          <span className="min-w-0 truncate text-[11px]">{act.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <Field label="وعده‌های غذایی گنجانده‌شده در این روز" hint="مثال: صبحانه بوفه هتل + ناهار محلی در گشت">
-                    <Input
-                      value={dayItem.meals || ''}
-                      onChange={(e) => handleUpdateDay(idx, { meals: e.target.value })}
-                      placeholder="صبحانه، ناهار یا شام…"
-                      className="text-xs"
-                    />
-                  </Field>
-                </div>
-              </div>
+              {/* Meals */}
+              <Field label="وعده‌های غذایی گنجانده‌شده در این روز" hint="مثال: صبحانه بوفه هتل + ناهار محلی در گشت">
+                <Input
+                  value={dayItem.meals || ''}
+                  onChange={(e) => handleUpdateDay(idx, { meals: e.target.value })}
+                  placeholder="صبحانه، ناهار یا شام…"
+                  className="text-xs"
+                />
+              </Field>
 
               {/* Description */}
               <Field label="شرح کامل برنامه‌ها، ساعت حرکت و گشت‌ها">

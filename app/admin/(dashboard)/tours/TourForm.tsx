@@ -36,6 +36,7 @@ import { getAllDraftFallbackAnswer, getSettingsMap } from '../settings/actions';
 import { AllDraftFallbackDialog } from './AllDraftFallbackDialog';
 import type { HotelPickerItem } from '../hotels/actions';
 import { validateDraft } from './tour-helpers';
+import { buildDurationFromNights } from '@/src/lib/tour-format';
 import { checkPublishReadiness, stageTicksFromGate, type PublishCheck } from './publish-gate';
 import { MissingChecksDialog, PublishConfirmDialog } from './PublishGateDialog';
 import { DOMESTIC_SLUGS, DOMESTIC_NAME_RE, guessVisaRequired } from '@/src/lib/domestic';
@@ -156,7 +157,7 @@ export default function TourForm({
       // پیش‌فرض هوشمند مبدأ (T5): آخرین مبدأ استفاده‌شده یا تنها مبدأ فعال.
       origin: initial?.origin || smartOriginDefault(origins),
       route: initial?.route || '',
-      duration: initial?.duration || '',
+      duration: buildDurationFromNights(initial?.nights) || (initial?.duration || ''),
       nights: Number(initial?.nights) || 0,
       closestDeparture: initial?.closestDeparture || '',
       price: Number(initial?.price) || 0,
@@ -176,7 +177,9 @@ export default function TourForm({
       // روی نام ایرلاین و هیچ پیش‌فرض حدسی. تور تازه در مرحلهٔ ۱ صریح انتخاب می‌شود.
       transportKind: initial?.transportKind,
       carrierName: initial?.airline || '',
-      guaranteedDeparture: initial?.badge === 'حرکت تضمین‌شده',
+      // موج ۲، تیم تکراری‌ها: نشان یک کنترل واحد شد؛ هر نشانِ ذخیره‌شده‌ای
+      // (تضمین‌شده یا متن سفارشی قدیمی) تیک را روشن می‌کند تا بی‌صدا گم نشود.
+      guaranteedDeparture: Boolean(initial?.badge),
       itineraryDays: Array.isArray(initial?.itineraryDays)
         ? (initial.itineraryDays as TourItineraryDayItem[])
         : [],

@@ -7,7 +7,6 @@ import {
   Trash2, 
   Star, 
   UtensilsCrossed, 
-  Users, 
   User, 
   Baby, 
   Info,
@@ -91,24 +90,8 @@ interface HotelCardProps {
 function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps) {
   // پیش‌فرض هوشمند آکاردئون (T7): هتل بی‌نرخ باز، هتل بانرخ بسته.
   const [open, setOpen] = useState(() => !hotelHasRates(hotel));
-  const [copiedFromDouble, setCopiedFromDouble] = useState(false);
-  const copyDoneRef = useRef(false);
 
-  const toggle = () => {
-    const next = !open;
-    setOpen(next);
-    // پیش‌فرض هوشمند (T7): اولین باز شدن؛ «هر نفر» خالی و «دوتخته» پر → کپی یک‌طرفه.
-    if (
-      next &&
-      !copyDoneRef.current &&
-      !(hotel.pricePerPerson || '').trim() &&
-      (hotel.priceDouble || '').trim()
-    ) {
-      copyDoneRef.current = true;
-      onUpdate({ pricePerPerson: hotel.priceDouble });
-      setCopiedFromDouble(true);
-    }
-  };
+  const toggle = () => setOpen((v) => !v);
 
   // نشان زندهٔ سربرگ آکاردئون: «نرخ هر نفر» وگرنه «دوتخته»، وگرنه خط تیره.
   const shownRate = priceNumber(hotel.pricePerPerson) ?? priceNumber(hotel.priceDouble);
@@ -276,7 +259,8 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
               )}
             </div>
 
-            {/* نرخ هر نفر — همان عددی که روی سایت نمایش داده می‌شود */}
+            {/* نرخ هر نفر — تک‌ورودی (موج ۲، تیم تکراری‌ها): همان یک عدد برای هر دو
+                کلید pricePerPerson و priceDouble نوشته می‌شود؛ خوانندهٔ سایت به هر دو تکیه می‌کند. */}
             <div>
               <div className="mb-1.5 flex flex-wrap items-center justify-between gap-1">
                 <span className="text-xs font-bold text-foreground">{perPersonLabel}</span>
@@ -286,35 +270,22 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
                 </span>
               </div>
               <AmountInput
-                value={priceNumber(hotel.pricePerPerson)}
-                onChange={(v) => onUpdate({ pricePerPerson: v == null ? '' : String(v) })}
+                value={priceNumber(hotel.pricePerPerson) ?? priceNumber(hotel.priceDouble)}
+                onChange={(v) => onUpdate({ pricePerPerson: v == null ? '' : String(v), priceDouble: v == null ? '' : String(v) })}
                 placeholder="۰"
               />
               {perPersonHint && (
                 <p className="mt-1.5 text-[11px] text-muted-foreground">{perPersonHint}</p>
               )}
-              {copiedFromDouble && (
-                <p className="mt-1.5 text-[11px] text-muted-foreground">از نرخ اتاق دوتخته کپی شد؛ می‌توانید تغییرش دهید.</p>
-              )}
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                همین نرخ برای «اتاق دوتخته» هم ذخیره می‌شود.
+              </p>
             </div>
 
             {/* تفکیک نرخ اتاق‌ها */}
             <div className="space-y-1.5 pt-1">
               <span className="text-[11px] text-muted-foreground">تفکیک نرخ اتاق‌ها (اختیاری)</span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="rounded-sm bg-card p-3 border border-border/60 space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground">
-                    <Users className="size-3.5 text-muted-foreground" />
-                    <span>اتاق دوتخته *</span>
-                  </div>
-                  <AmountInput
-                    value={priceNumber(hotel.priceDouble)}
-                    onChange={(v) => onUpdate({ priceDouble: v == null ? '' : String(v) })}
-                    placeholder="۰"
-                    words={false}
-                  />
-                </div>
-
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div className="rounded-sm bg-card p-3 border border-border/60 space-y-1.5">
                   <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground">
                     <User className="size-3.5 text-muted-foreground" />
@@ -359,15 +330,6 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
         )}
       </div>
 
-      {/* Location & Transfer note */}
-      <Field label="موقعیت هتل یا نکته ترانسفر" hint="مثال: واقع در میدان تقسیم، فاصله ۵ دقیقه تا مترو، استخر روباز دارد">
-        <Input
-          value={hotel.locationNote || ''}
-          onChange={(e) => onUpdate({ locationNote: e.target.value })}
-          placeholder="فاصله تا مراکز مهم یا ویژگی ممتاز هتل…"
-          className="text-xs"
-        />
-      </Field>
     </div>
   );
 }
@@ -440,7 +402,6 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels, tr
         priceSingle: '',
         priceChildWithBed: '',
         priceChildNoBed: '',
-        locationNote: '',
       },
     ];
     onChange({ hotelOptions: next });
@@ -462,7 +423,6 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels, tr
         priceSingle: '',
         priceChildWithBed: '',
         priceChildNoBed: '',
-        locationNote: '',
       },
     ];
     onChange({ hotelOptions: next });

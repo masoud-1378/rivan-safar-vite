@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
-import { DatePicker } from '@/components/ui/date-picker';
 import { Field, Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
@@ -53,7 +52,6 @@ export interface LandingFormInitial {
   h1Fa: string;
   workflow: NonNullable<LandingInput['workflow']>;
   indexStatus: NonNullable<LandingInput['indexStatus']>;
-  nextReviewAt: Date | null;
 }
 
 export default function LandingForm({
@@ -74,7 +72,6 @@ export default function LandingForm({
   const [h1Fa, setH1Fa] = useState(initial?.h1Fa ?? '');
   const [workflow, setWorkflow] = useState<NonNullable<LandingInput['workflow']>>(initial?.workflow ?? 'draft');
   const [indexStatus, setIndexStatus] = useState<NonNullable<LandingInput['indexStatus']>>(initial?.indexStatus ?? 'noindex');
-  const [nextReviewAt, setNextReviewAt] = useState<Date | null>(initial?.nextReviewAt ?? null);
   const [errors, setErrors] = useState<{ queryOwner?: string; urlPath?: string; titleFa?: string; h1Fa?: string }>({});
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -115,7 +112,6 @@ export default function LandingForm({
       // تغییر وضعیت فقط در ویرایش/فهرست و با گیت انتشار.
       workflow: editing ? workflow : 'draft',
       indexStatus,
-      nextReviewAt: nextReviewAt ? nextReviewAt.toISOString() : '',
     };
     startTransition(async () => {
       try {
@@ -227,9 +223,6 @@ export default function LandingForm({
         )}
         <Field label="نمایش در گوگل" htmlFor="ix" hint="«نباشد» یعنی صفحه از نتایج جست‌وجو پنهان می‌ماند.">
           <Select id="ix" value={indexStatus} onChange={(e) => setIndexStatus(e.target.value as NonNullable<LandingInput['indexStatus']>)} options={[{ value: 'index', label: 'در نتایج گوگل باشد' }, { value: 'noindex', label: 'در نتایج گوگل نباشد' }]} />
-        </Field>
-        <Field label="بازبینی بعدی" htmlFor="nr" hint="تاریخ شمسی">
-          <DatePicker value={nextReviewAt} onChange={setNextReviewAt} placeholder="انتخاب تاریخ بازبینی" />
         </Field>
       </div>
       <div className="flex gap-2">

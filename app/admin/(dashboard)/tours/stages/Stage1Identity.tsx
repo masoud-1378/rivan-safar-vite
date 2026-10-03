@@ -18,6 +18,8 @@ import {
   RefreshCw,
   ImagePlus,
   Loader2,
+  Trash2,
+  Link2,
   FileCheck2
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
@@ -28,6 +30,7 @@ import { Button } from '@/components/ui/button';
 import { Collapsible } from '@/components/ui/collapsible';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/toast';
+import { buildDurationFromNights } from '@/src/lib/tour-format';
 import { cn, fa, formatToman } from '@/lib/utils';
 import { normalizeFaSearch } from '@/lib/persian';
 import { faToSlugFa, CAPACITY_OPTIONS } from '../tour-helpers';
@@ -161,15 +164,24 @@ export default function Stage1Identity({
     };
   }, [singleDestSlug, needBanner, needDesc]);
 
-  /** مدت اقامت پیشنهادی از روی تعداد شب‌ها (فرصت ۱-۲): فقط پیشنهاد، نه پرکردن خودکار. */
-  const suggestedDuration =
-    data.nights > 0 && !data.duration.trim()
-      ? `${fa(data.nights)} شب و ${fa(data.nights + 1)} روز`
-      : null;
   // آپلود بنر تور (T6): همان باکت عکس هتل‌ها، کنار فیلد URL.
   const [uploading, setUploading] = useState(false);
   const uploadingRef = useRef(false);
   const bannerFileRef = useRef<HTMLInputElement | null>(null);
+  // پولیش موج ۲: لینک دستی بنر پشت تاگل مخفی است، نه عنصر اصلی فرم.
+  const [showBannerUrl, setShowBannerUrl] = useState(false);
+
+  // کپی لینک بنر (پولیش موج ۲): لینک خام به کاربر نشان داده نمی‌شود؛ فقط کپی.
+  const copyBannerLink = async () => {
+    const url = data.image.trim();
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: 'لینک تصویر کپی شد' });
+    } catch {
+      toast({ variant: 'error', title: 'کپی لینک انجام نشد.' });
+    }
+  };
 
   const toggleSlug = (slug: string) => {
     const next = selectedSlugs.includes(slug)
@@ -342,17 +354,19 @@ export default function Stage1Identity({
           </Field>
         </div>
 
-        {/* Guaranteed Departure toggle */}
-        <div className="flex flex-col justify-end">
+        {/* نشان تور — یک کنترل واحد (موج ۲، تیم تکراری‌ها):
+            تیک «حرکت تضمین‌شده» + متن اختیاری که فقط با تیک روشن فعال است.
+            متن خالی یعنی همان «حرکت تضمین‌شده». باگ قبلی: متن دستی بی‌صدا تیک را می‌بلعید. */}
+        <div className="flex flex-col justify-end gap-2">
           <label className="flex items-center gap-3 cursor-pointer rounded-sm border border-border bg-card/60 p-3 hover:bg-card transition-colors">
             <input
               type="checkbox"
-              checked={Boolean(data.guaranteedDeparture || data.badge === 'حرکت تضمین‌شده')}
+              checked={Boolean(data.guaranteedDeparture)}
               onChange={(e) => {
                 const checked = e.target.checked;
                 onChange({
                   guaranteedDeparture: checked,
-                  badge: checked ? 'حرکت تضمین‌شده' : (data.badge === 'حرکت تضمین‌شده' ? '' : data.badge),
+                  badge: checked ? (data.badge || 'حرکت تضمین‌شده') : '',
                 });
               }}
               className="size-4 accent-brand rounded cursor-pointer"
@@ -367,18 +381,25 @@ export default function Stage1Identity({
                   <Info className="size-3.5 text-muted-foreground" />
                 </span>
               </span>
-              <span className="text-[11px] text-muted-foreground">تور بدون قید و شرط اجرا می‌شود</span>
+              <span className="text-[11px] text-muted-foreground">نشان روی کارت تور</span>
             </div>
           </label>
-        </div>
-
-        {/* Badge tag */}
-        <div>
-          <Field label="نشان ویژه روی کارت (اختیاری)" hint="مثال: پرواز مستقیم، پیشنهاد ویژه، ویزای فوری">
+          <Field
+            label="متن نشان (اختیاری)"
+            hint={
+              data.guaranteedDeparture
+                ? 'اگر خالی بماند، «حرکت تضمین‌شده» روی کارت می‌آید.'
+                : 'برای نوشتن متن، اول تیک «حرکت تضمین‌شده» را بزنید.'
+            }
+          >
             <Input
-              value={data.badge || ''}
-              onChange={(e) => onChange({ badge: e.target.value })}
-              placeholder="برچسب ویژه…"
+              value={data.badge === 'حرکت تضمین‌شده' ? '' : (data.badge || '')}
+              disabled={!data.guaranteedDeparture}
+              onChange={(e) => {
+                const v = e.target.value;
+                onChange({ badge: v.trim() ? v : 'حرکت تضمین‌شده' });
+              }}
+              placeholder="مثلاً پرواز مستقیم، پیشنهاد ویژه، ویزای فوری"
             />
           </Field>
         </div>
@@ -640,43 +661,30 @@ export default function Stage1Identity({
         </div>
 
         <div>
-          <Field label="مدت اقامت و تعداد شب‌ها *" hint="مثال: ۳ شب و ۴ روز">
+          {/* مدت اقامت دستی تایپ نمی‌شود؛ فقط از تعداد شب‌ها ساخته و همین‌جا پیش‌نمایش داده می‌شود (موج ۲، تیم تکراری‌ها). */}
+          <Field label="مدت اقامت و تعداد شب‌ها *" hint="مدت اقامت خودکار از تعداد شب‌ها ساخته می‌شود.">
             <div className="flex gap-2">
-              <Input
-                value={data.duration}
-                onChange={(e) => onChange({ duration: e.target.value })}
-                placeholder="۳ شب و ۴ روز"
-                className="grow"
-              />
-              <div className="w-24 shrink-0">
+              <div className="w-28 shrink-0">
                 <Input
                   type="number"
                   min="0"
                   value={data.nights || ''}
-                  onChange={(e) => onChange({ nights: Number(e.target.value) || 0 })}
+                  onChange={(e) => {
+                    const n = Math.max(0, Number(e.target.value) || 0);
+                    onChange({ nights: n, duration: buildDurationFromNights(n) });
+                  }}
                   placeholder="شب‌ها"
                   title="تعداد شب"
                 />
               </div>
+              <div
+                className="flex grow items-center rounded-sm border border-border/60 bg-muted/40 px-3 py-2 text-sm text-foreground"
+                aria-live="polite"
+              >
+                {data.duration || 'تعداد شب را وارد کنید'}
+              </div>
             </div>
           </Field>
-          {/* مدت اقامت پیشنهادی از روی شب‌ها (موج ۱، قلم ۶ — فرصت ۱-۲):
-              فقط نمایش و پیشنهاد با دکمهٔ صریح؛ اگر شب‌ها معلوم نیست چیزی حدس زده نمی‌شود. */}
-          {suggestedDuration && (
-            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-sm border border-dashed border-brand/30 bg-brand/5 px-3 py-2">
-              <Sparkles className="size-3.5 shrink-0 text-brand" />
-              <span className="text-[11px] text-foreground">
-                بر اساس {fa(data.nights)} شب: «{suggestedDuration}»
-              </span>
-              <button
-                type="button"
-                onClick={() => onChange({ duration: suggestedDuration })}
-                className="text-[11px] font-bold text-brand hover:underline"
-              >
-                اعمال شود
-              </button>
-            </div>
-          )}
         </div>
 
         {/* تاریخ حرکت بعدی (T3): همان ستون closestDeparture؛ DatePicker شمسی فقط میان‌بر نوشتن متن است. */}
@@ -740,36 +748,94 @@ export default function Stage1Identity({
         </Collapsible>
       </div>
 
-      {/* تصویر بنر تور (T6): آپلود واقعی کنار فیلد URL + پیش‌نمایش زنده */}
+      {/* تصویر بنر تور (T6 + پولیش موج ۲): لینک خام عنصر اصلی فرم نیست؛
+          پیش‌نمایش جمع‌وجور + «جایگزین»/«حذف بنر»، و لینک فقط پشت «کپی لینک». */}
       <div>
-        <Field label="تصویر بنر تور" hint="لینک تصویر باکیفیت و بدون واترمارک از Unsplash، یا آپلود مستقیم از همین‌جا">
-          <div className="flex gap-2">
-            <Input
-              dir="ltr"
-              value={data.image}
-              onChange={(e) => onChange({ image: e.target.value })}
-              placeholder="https://images.unsplash.com/..."
-              className="grow"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={uploading}
-              onClick={() => bannerFileRef.current?.click()}
-              className="gap-2 text-xs shrink-0"
-            >
-              {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
-              {uploading ? 'در حال آپلود…' : 'آپلود بنر'}
-            </Button>
-            <input
-              ref={bannerFileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => void handleBannerFile(e.target)}
-            />
-          </div>
+        <Field label="تصویر بنر تور" hint="بنر روی کارت تور و بالای صفحهٔ تور نمایش داده می‌شود.">
+          <input
+            ref={bannerFileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => void handleBannerFile(e.target)}
+          />
+          {data.image.trim() ? (
+            <div className="flex items-center gap-3">
+              {/* پیش‌نمایش جمع‌وجور بنر: عمداً با همان SmartImageِ سایت رندر می‌شود
+                  تا اگر آدرس روی سایت باز نشود، این‌جا هم خراب دیده شود (نه سالمِ دروغین). */}
+              <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-sm border border-border/70">
+                <SmartImage src={data.image.trim()} alt="پیش‌نمایش بنر تور" className="object-cover" />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploading}
+                  onClick={() => bannerFileRef.current?.click()}
+                  className="gap-1.5 text-xs"
+                >
+                  {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
+                  {uploading ? 'در حال آپلود…' : 'جایگزین'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={copyBannerLink}
+                  className="gap-1.5 text-xs"
+                >
+                  <Link2 className="size-4" />
+                  کپی لینک
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { onChange({ image: '' }); setShowBannerUrl(false); }}
+                  className="gap-1.5 text-xs text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="size-4" />
+                  حذف بنر
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={uploading}
+                onClick={() => bannerFileRef.current?.click()}
+                className="gap-2 text-xs shrink-0"
+              >
+                {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
+                {uploading ? 'در حال آپلود…' : 'آپلود بنر'}
+              </Button>
+              {!showBannerUrl && (
+                <button
+                  type="button"
+                  onClick={() => setShowBannerUrl(true)}
+                  className="text-[11px] font-bold text-brand hover:underline"
+                >
+                  چسباندن لینک تصویر
+                </button>
+              )}
+            </div>
+          )}
+          {showBannerUrl && !data.image.trim() && (
+            <div className="mt-2">
+              <Input
+                dir="ltr"
+                value={data.image}
+                onChange={(e) => onChange({ image: e.target.value })}
+                placeholder="https://images.unsplash.com/..."
+                aria-label="لینک تصویر بنر"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">لینک تصویر باکیفیت و بدون واترمارک از Unsplash.</p>
+            </div>
+          )}
         </Field>
         {/* بنر پیشنهادی از تصویر مقصد (موج ۱، قلم ۶ — فرصت ۱-۴): با پیش‌نمایش و
             تأیید صریح؛ اگر مقصد تصویری نداشت، چیزی پیشنهاد نمی‌شود. */}
@@ -810,13 +876,6 @@ export default function Stage1Identity({
             </div>
           </div>
         )}
-        {/* پیش‌نمایش بنر: عمداً با همان SmartImageِ سایت رندر می‌شود تا اگر آدرس
-            روی سایت باز نشود، این‌جا هم خراب دیده شود (نه سالمِ دروغین). */}
-        {data.image.trim() ? (
-          <div className="relative mt-2 aspect-video overflow-hidden rounded-sm border border-border/70">
-            <SmartImage src={data.image.trim()} alt="پیش‌نمایش بنر تور" className="object-cover" />
-          </div>
-        ) : null}
       </div>
 
       {/* توضیحات کلی تور (T17): همان متن مرحلهٔ ۵، انتهای مرحلهٔ ۱ */}

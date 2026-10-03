@@ -234,6 +234,15 @@ export default function ExhibitionForm({
         <Textarea id="ex-visa" value={visaDeadline} onChange={(e) => setVisaDeadline(e.target.value)} className="min-h-20" placeholder="توضیحات مربوط به مهلت و مدارک ویزا..." />
       </Field>
 
+      {/* محتوای اصلی (شعار + توضیحات کامل) بالای بخش تاشوی تکمیلی — ترتیب فکر کاربر: اول محتوا، بعد جزئیات کم‌کاربرد */}
+      <Field label="شعار اصلی" htmlFor="ex-tagline">
+        <Input id="ex-tagline" value={heroTagline} onChange={(e) => setHeroTagline(e.target.value)} placeholder="جمله کوتاه معرفی نمایشگاه..." />
+      </Field>
+
+      <Field label="توضیحات کامل" htmlFor="ex-desc">
+        <Textarea id="ex-desc" value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-20" placeholder="معرفی کامل نمایشگاه..." />
+      </Field>
+
       {/* E4: فیلدهای کم‌کاربرد در بخش تاشوی «تکمیلی» */}
       <Collapsible trigger="تکمیلی" openLabel="بستن بخش تکمیلی" className="rounded-sm border border-border bg-muted/20 p-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -269,14 +278,6 @@ export default function ExhibitionForm({
           </Field>
         </div>
       </Collapsible>
-
-      <Field label="شعار اصلی" htmlFor="ex-tagline">
-        <Input id="ex-tagline" value={heroTagline} onChange={(e) => setHeroTagline(e.target.value)} placeholder="جمله کوتاه معرفی نمایشگاه..." />
-      </Field>
-
-      <Field label="توضیحات کامل" htmlFor="ex-desc">
-        <Textarea id="ex-desc" value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-20" placeholder="معرفی کامل نمایشگاه..." />
-      </Field>
 
       <BlockEditor
         kind="phase"

@@ -74,7 +74,9 @@ export default function GuideForm({
   const [slugTouched, setSlugTouched] = useState(Boolean(initial?.slug));
   const [titleFa, setTitleFa] = useState(initial?.titleFa ?? '');
   const [category, setCategory] = useState(initial?.category ?? 'general');
-  const [categoryLabel, setCategoryLabel] = useState(initial?.categoryLabel ?? '');
+  // موج ۲، تیم تکراری‌ها: برچسب دسته‌بندی دستی تایپ نمی‌شود؛ همیشه از گزینهٔ
+  // انتخاب‌شدهٔ «دسته‌بندی» می‌آید. ستون categoryLabel در دیتابیس می‌ماند و نوشته می‌شود.
+  const autoCategoryLabel = CATEGORIES.find((c) => c.value === category)?.label ?? '';
   const [readTime, setReadTime] = useState(initial?.readTime ?? '');
   const [readTimeTouched, setReadTimeTouched] = useState(Boolean(initial?.readTime));
   const [author, setAuthor] = useState(initial?.author ?? '');
@@ -133,7 +135,7 @@ export default function GuideForm({
       slug: slug.trim(),
       titleFa: titleFa.trim(),
       category,
-      categoryLabel: categoryLabel.trim(),
+      categoryLabel: autoCategoryLabel,
       readTime: readTime.trim(),
       author: author.trim(),
       reviewer: reviewer.trim(),
@@ -173,7 +175,39 @@ export default function GuideForm({
         <Alert variant="destructive">{error}</Alert>
       )}
 
+      {/* محتوای اصلی (خلاصه + پاسخ مستقیم) نزدیک عنوان — بالای داده‌های فراداده */}
+      <Field label="خلاصه راهنما" htmlFor="guide-summary">
+        <Textarea
+          id="guide-summary"
+          value={summary}
+          onChange={(e) => setSummary(e.target.value)}
+            className="min-h-20"
+          placeholder="چکیده کوتاه راهنما…"
+        />
+      </Field>
+
+      <Field label="پاسخ مستقیم و سریع" htmlFor="guide-direct">
+        <Textarea
+          id="guide-direct"
+          value={directAnswer}
+          onChange={(e) => setDirectAnswer(e.target.value)}
+            className="min-h-20"
+          placeholder="پاسخ سریع به پرسش اصلی کاربر…"
+        />
+      </Field>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {/* عنوان اول، نامک بعد: نامک خودکار از عنوان ساخته می‌شود (ترتیب فکر کاربر) */}
+        <Field label="عنوان فارسی" htmlFor="guide-title">
+          <Input
+            id="guide-title"
+            value={titleFa}
+            onChange={(e) => onTitleFa(e.target.value)}
+            placeholder="مثال: راهنمای کامل متروی دبی"
+            required
+          />
+        </Field>
+
         <Field label="نامک انگلیسی" htmlFor="guide-slug" hint="خودکار از عنوان فارسی ساخته می‌شود؛ فقط حروف انگلیسی، عدد، خط تیره و آندرلاین.">
           <Input
             id="guide-slug"
@@ -182,16 +216,6 @@ export default function GuideForm({
             className="text-start"
             dir="ltr"
             placeholder="e.g. dubai-metro-guide"
-            required
-          />
-        </Field>
-
-        <Field label="عنوان فارسی" htmlFor="guide-title">
-          <Input
-            id="guide-title"
-            value={titleFa}
-            onChange={(e) => onTitleFa(e.target.value)}
-            placeholder="مثال: راهنمای کامل متروی دبی"
             required
           />
         </Field>
@@ -205,13 +229,22 @@ export default function GuideForm({
           />
         </Field>
 
-        <Field label="برچسب دسته‌بندی" htmlFor="guide-cat-lbl">
-          <Input
+        <Field
+          label="برچسب دسته‌بندی"
+          htmlFor="guide-cat-lbl"
+          hint="خودکار از «دسته‌بندی» می‌آید؛ دستی تایپ نمی‌شود."
+        >
+          <div
             id="guide-cat-lbl"
-            value={categoryLabel}
-            onChange={(e) => setCategoryLabel(e.target.value)}
-            placeholder="مثال: راهنمای سفر"
-          />
+            className="rounded-sm border border-border/60 bg-muted/40 px-3 py-2 text-sm text-foreground"
+          >
+            {autoCategoryLabel}
+          </div>
+          {initial?.categoryLabel && initial.categoryLabel !== autoCategoryLabel && (
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              برچسب قدیمی («{initial.categoryLabel}») با ذخیرهٔ بعدی به «{autoCategoryLabel}» یکسان می‌شود.
+            </p>
+          )}
         </Field>
 
         <Field
@@ -297,26 +330,6 @@ export default function GuideForm({
           />
         </Field>
       </div>
-
-      <Field label="خلاصه راهنما" htmlFor="guide-summary">
-        <Textarea
-          id="guide-summary"
-          value={summary}
-          onChange={(e) => setSummary(e.target.value)}
-            className="min-h-20"
-          placeholder="چکیده کوتاه راهنما…"
-        />
-      </Field>
-
-      <Field label="پاسخ مستقیم و سریع" htmlFor="guide-direct">
-        <Textarea
-          id="guide-direct"
-          value={directAnswer}
-          onChange={(e) => setDirectAnswer(e.target.value)}
-            className="min-h-20"
-          placeholder="پاسخ سریع به پرسش اصلی کاربر…"
-        />
-      </Field>
 
       <BlockEditor
         kind="section"

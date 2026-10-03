@@ -31,7 +31,6 @@ export interface LandingInput {
   h1Fa: string;
   workflow?: 'draft' | 'review' | 'published' | 'paused' | 'archived';
   indexStatus?: 'index' | 'noindex';
-  nextReviewAt?: string;
 }
 
 /** نتیجهٔ «نیازمند تأیید»: آدرس با روت سایت یا لندینگ دیگری تصادم دارد. */
@@ -229,7 +228,6 @@ export async function createLanding(
           h1Fa: input.h1Fa.trim(),
           workflow: 'draft',
           indexStatus: input.indexStatus || 'noindex',
-          nextReviewAt: input.nextReviewAt ? new Date(input.nextReviewAt) : null,
         })
         .returning({ id: seoLandings.id });
       revalidatePath('/admin/seo');
@@ -302,7 +300,6 @@ export async function updateLanding(
     data.workflow = input.workflow;
   }
   if (input.indexStatus) data.indexStatus = input.indexStatus;
-  if (input.nextReviewAt !== undefined) data.nextReviewAt = input.nextReviewAt ? new Date(input.nextReviewAt) : null;
   // یافتهٔ ۴: تغییر مسیر لندینگ منتشرشده، لینک‌های ورودی‌اش را یتیم می‌کند —
   // سرور آن را به پیش‌نویس برمی‌گرداند (فرم هم پیشاپیش هشدار می‌دهد).
   const demotedToDraft = urlPathChanged && wasPublished;
