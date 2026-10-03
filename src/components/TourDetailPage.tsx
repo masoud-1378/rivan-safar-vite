@@ -3,7 +3,7 @@ import {
   Phone, Calendar, Clock, MapPin, Plane, ShieldCheck, CheckCircle2, 
   XCircle, Building2, User, Send, Check, AlertCircle, HelpCircle, 
   ChevronLeft, Sparkles, FileText, ArrowRight, CalendarDays, FileCheck2,
-  Headphones, Mic, Luggage, Wallet, BadgeCheck
+  Headphones, Mic, Luggage, Wallet, BadgeCheck, Users, Star, MessageSquareHeart, Images
 } from 'lucide-react';
 import { type TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
 import { useContent } from '@/src/lib/content-context';
@@ -901,6 +901,116 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 </audio>
               </div>
             )}
+          </div>
+        </section>
+      )}
+
+      {/* ---------------- تورلیدر (موج ۴؛ فقط وقتی ثبت شده) ---------------- */}
+      {tour.leader && tour.leader.name && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="bg-surface-primary border border-border-default rounded-card p-6 shadow-subtle">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Users className="w-5 h-5 text-brand-orange" />
+              <h2 className="text-h3 text-text-heading font-bold">تورلیدر شما</h2>
+            </div>
+            <p className="text-body-sm text-text-secondary mb-5">
+              کسی که در این سفر همراهتان است.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 items-start">
+              {tour.leader.photo ? (
+                <div className="w-20 h-20 rounded-full overflow-hidden shrink-0">
+                  <SmartImage src={tour.leader.photo} alt={tour.leader.name} className="object-cover" sizes="80px" />
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-brand-orange/10 text-brand-orange flex items-center justify-center shrink-0">
+                  <Users className="w-9 h-9" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <div className="text-body font-bold text-text-heading flex items-center gap-1.5">
+                  {tour.leader.name}
+                  <BadgeCheck className="w-4 h-4 text-brand-orange" />
+                </div>
+                {tour.leader.languages && (
+                  <div className="text-caption text-text-secondary mt-0.5">زبان‌ها: {tour.leader.languages}</div>
+                )}
+                {tour.leader.joinMode && (
+                  <div className="text-caption text-text-secondary mt-0.5">
+                    {tour.leader.joinMode === 'at_destination' ? 'در مقصد به گروه می‌پیوندد' : 'از مبدأ همراه گروه است'}
+                  </div>
+                )}
+                {tour.leader.bio && (
+                  <p className="text-body-sm text-text-secondary mt-2">{tour.leader.bio}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ---------------- نظر مسافران (موج ۴؛ فقط وقتی نظر تأییدشده هست) ---------------- */}
+      {tour.reviews && tour.reviews.length > 0 && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="flex items-center gap-2 mb-1">
+            <MessageSquareHeart className="w-5 h-5 text-brand-orange" />
+            <h2 className="text-h3 text-text-heading font-bold">نظر مسافران این تور</h2>
+          </div>
+          {tour.ratingSummary && (
+            <div className="flex items-center gap-2 mb-5" dir="ltr">
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Star
+                    key={n}
+                    className={`w-4 h-4 ${n <= Math.round(tour.ratingSummary!.avg) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/40'}`}
+                  />
+                ))}
+              </div>
+              <span className="text-body-sm font-bold text-text-heading">{fa(tour.ratingSummary.avg)}</span>
+              <span className="text-caption text-text-secondary">از {fa(tour.ratingSummary.count)} نظر</span>
+            </div>
+          )}
+          <div className="grid gap-3 md:grid-cols-2">
+            {tour.reviews.slice(0, 6).map((r, i) => (
+              <div key={i} className="bg-surface-primary border border-border-default rounded-card p-4">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span className="text-body-sm font-bold text-text-heading">{r.name}</span>
+                  <div className="flex items-center gap-0.5" dir="ltr">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star
+                        key={n}
+                        className={`w-3.5 h-3.5 ${n <= r.rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/40'}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-body-sm text-text-secondary">{r.text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ---------------- گالری واقعی (موج ۴؛ فقط وقتی عکس هست) ---------------- */}
+      {tour.gallery && tour.gallery.length > 0 && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="flex items-center gap-2 mb-1">
+            <Images className="w-5 h-5 text-brand-orange" />
+            <h2 className="text-h3 text-text-heading font-bold">گالری واقعی</h2>
+          </div>
+          <p className="text-body-sm text-text-secondary mb-5">
+            عکس‌های واقعی همین تور و مقصد — نه عکس تبلیغاتی.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {tour.gallery.map((g, i) => (
+              <figure key={i} className="rounded-card overflow-hidden border border-border-default bg-surface-primary">
+                <div className="aspect-[4/3] relative">
+                  <SmartImage src={g.url} alt={g.caption || tour.title} className="object-cover" sizes="(max-width: 640px) 50vw, 33vw" />
+                </div>
+                {g.caption && (
+                  <figcaption className="text-caption text-text-secondary p-2">{g.caption}</figcaption>
+                )}
+              </figure>
+            ))}
           </div>
         </section>
       )}

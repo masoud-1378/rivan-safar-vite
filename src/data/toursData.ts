@@ -164,6 +164,31 @@ export interface TourItem {
     locationNote?: string;
   }>;
   description: string;
+  /**
+   * موج ۴ — تورلیدر این حرکت (مایگریشن 0034). undefined یعنی لیدر ثبت نشده
+   * و بخش روی سایت نمایش داده نمی‌شود.
+   */
+  leader?: {
+    name: string;
+    photo?: string;
+    bio?: string;
+    languages?: string;
+    /** 'from_origin' = از مبدأ همراه گروه؛ 'at_destination' = در مقصد می‌پیوندد */
+    joinMode?: string;
+  } | null;
+  /** شناسهٔ داخلی لیدر (برای اتصال)؛ روی سایت نمایش داده نمی‌شود. */
+  leaderId?: string;
+  /**
+   * موج ۴ — گالری عکس واقعی (ستون gallery). خالی یعنی بخش نمایش داده نمی‌شود.
+   */
+  gallery?: Array<{ url: string; caption?: string }>;
+  /**
+   * موج ۴ — نظرهای تأییدشدهٔ مسافران (فقط is_visible). خالی یعنی بخش
+   * نمایش داده نمی‌شود.
+   */
+  reviews?: Array<{ name: string; rating: number; text: string; createdAt?: string }>;
+  /** میانگین و تعداد نظرها — برای نمایش و JSON-LD. */
+  ratingSummary?: { avg: number; count: number };
 }
 
 export const SAMPLE_TOURS: TourItem[] = [

@@ -105,6 +105,11 @@ export const siteTours = pgTable(
     // مشخصات پرواز (موج ۳، مایگریشن 0028): فعلاً فقط در state فرم زنده است؛
     // ستون آماده است تا وقتی ذخیره‌سازی در saveTour وصل شد جایش باشد.
     flightDetails: jsonb('flight_details'),
+    // موج ۴ (مایگریشن 0034): تورلیدر هر حرکت — nullable؛ تور بی‌لیدر معتبر است.
+    leaderId: uuid('leader_id'),
+    // موج ۴ (مایگریشن 0034): گالری واقعی تور — آرایهٔ [{url, caption}]؛
+    // خالی یعنی «گالری نداریم»، نه پلیس‌هولدر.
+    gallery: jsonb('gallery').default('[]'),
     deletedAt: timestamp('deleted_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -543,5 +548,37 @@ export const leadRequests = pgTable('lead_requests', {
   adminNotes: text('admin_notes'),
   status: leadStatusEnum('status').notNull().default('new'),
   assignee: varchar('assignee', { length: 160 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * موج ۴ (مایگریشن 0034): تورلیدرها — نام، عکس، سابقه در مسیر، زبان‌ها و
+ * نحوهٔ همراهی گروه. لیدر هر حرکت عوض می‌شود، پس جدول جداست و تور فقط
+ * به یکی اشاره می‌کند (leader_id)؛ نزدیک تاریخ حرکت پر/عوض می‌شود.
+ */
+export const tourLeaders = pgTable('tour_leaders', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 160 }).notNull(),
+  photo: text('photo'),
+  bio: text('bio'),
+  languages: varchar('languages', { length: 240 }),
+  joinMode: varchar('join_mode', { length: 40 }).notNull().default('from_origin'), // 'from_origin' | 'at_destination'
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/**
+ * موج ۴ (مایگریشن 0034): نظر مسافران هر تور — فقط is_visible=true روی
+ * سایت دیده می‌شود. حذف تور، نظرهایش را هم می‌برد (cascade).
+ */
+export const tourReviews = pgTable('tour_reviews', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tourId: uuid('tour_id')
+    .notNull()
+    .references(() => siteTours.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 120 }).notNull(),
+  rating: integer('rating').notNull(), // ۱ تا ۵ (چک در دیتابیس)
+  text: text('text').notNull(),
+  isVisible: boolean('is_visible').notNull().default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });

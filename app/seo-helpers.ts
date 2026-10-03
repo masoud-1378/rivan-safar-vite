@@ -307,6 +307,18 @@ export function tourJsonLd(tour: TourItem | null | undefined) {
       priceValidUntil: undefined,
       seller: { '@type': 'Organization', name: 'ریوان سفر' },
     },
+    // موج ۴: امتیاز تجمیعی نظرهای تأییدشده — فقط وقتی نظر واقعی هست.
+    ...(tour.ratingSummary && tour.ratingSummary.count > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: tour.ratingSummary.avg,
+            reviewCount: tour.ratingSummary.count,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
   };
 }
 

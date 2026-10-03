@@ -165,7 +165,93 @@ function restToTour(r: Row, priceNoteDefault?: string): TourItem {
     descriptionRich: richCol(r.description_rich) ?? undefined,
     faqs: faqsRich(arrParsed<TourItem['faqs'][number]>(r.faqs)),
     whyThisTourRich: richCol(r.why_this_tour) ?? undefined,
+    // موج ۴ (مایگریشن 0034): گالری واقعی و شناسهٔ لیدر — ستون نباشد فقط
+    // undefined می‌دهد و هیچ‌چیز نمی‌شکند (همان الگوی transport_kind).
+    gallery: galleryCol(r.gallery),
+    leaderId: str(r.leader_id) || undefined,
   };
+}
+
+/** نرمالایز گالری: فقط آیتم‌های دارای آدرس می‌مانند. */
+function galleryCol(v: unknown): TourItem['gallery'] {
+  if (!Array.isArray(v) || v.length === 0) return undefined;
+  const out: Array<{ url: string; caption?: string }> = [];
+  for (const item of v) {
+    const o = (item ?? {}) as { url?: unknown; caption?: unknown };
+    const url = typeof o.url === 'string' ? o.url.trim() : '';
+    if (!url) continue;
+    const caption = typeof o.caption === 'string' ? o.caption.trim() : '';
+    out.push(caption ? { url, caption } : { url });
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+/**
+ * موج ۴: اتصال تورلیدر و نظرهای مسافران به تورها — دو کوئری دسته‌ای، نه
+ * N+1. هر خطایی → نقشه‌های خالی و بخش‌ها روی سایت نمایش داده نمی‌شوند
+ * (رفتار قبلی می‌ماند).
+ */
+async function attachTourExperience(
+  rest: ReturnType<typeof getRest>,
+  tours: TourItem[],
+  uuidBySlug: Map<string, string>,
+): Promise<void> {
+  if (!rest || tours.length === 0) return;
+  try {
+    const leaderIds = [...new Set(tours.map((t) => t.leaderId).filter((x): x is string => !!x))];
+    const leadersById = new Map<string, NonNullable<TourItem['leader']>>();
+    if (leaderIds.length > 0) {
+      const { data } = await rest
+        .from('tour_leaders')
+        .select('id,name,photo,bio,languages,join_mode')
+        .in('id', leaderIds);
+      for (const l of (data as Row[]) ?? []) {
+        const id = str(l.id);
+        if (!id) continue;
+        leadersById.set(id, {
+          name: str(l.name),
+          photo: str(l.photo) || undefined,
+          bio: str(l.bio) || undefined,
+          languages: str(l.languages) || undefined,
+          joinMode: str(l.join_mode) || undefined,
+        });
+      }
+    }
+    const uuids = [...new Set(uuidBySlug.values())].filter(Boolean);
+    const reviewsByUuid = new Map<string, NonNullable<TourItem['reviews']>>();
+    if (uuids.length > 0) {
+      const { data } = await rest
+        .from('tour_reviews')
+        .select('tour_id,name,rating,text,created_at')
+        .in('tour_id', uuids)
+        .eq('is_visible', true)
+        .order('created_at', { ascending: false })
+        .limit(500);
+      for (const v of (data as Row[]) ?? []) {
+        const tid = str(v.tour_id);
+        if (!tid) continue;
+        const arr = reviewsByUuid.get(tid) ?? [];
+        arr.push({
+          name: str(v.name),
+          rating: Math.min(5, Math.max(1, Number(v.rating) || 5)),
+          text: str(v.text),
+          createdAt: iso(v.created_at),
+        });
+        reviewsByUuid.set(tid, arr);
+      }
+    }
+    for (const t of tours) {
+      if (t.leaderId && leadersById.has(t.leaderId)) t.leader = leadersById.get(t.leaderId);
+      const revs = reviewsByUuid.get(uuidBySlug.get(t.id) ?? '') ?? [];
+      if (revs.length > 0) {
+        t.reviews = revs;
+        const avg = revs.reduce((s, r) => s + r.rating, 0) / revs.length;
+        t.ratingSummary = { avg: Math.round(avg * 10) / 10, count: revs.length };
+      }
+    }
+  } catch (error) {
+    console.error('[db-content] tour experience read failed:', (error as Error).message);
+  }
 }
 
 /**
@@ -258,7 +344,11 @@ export const getTours = cache(async (): Promise<TourItem[]> => {
     const hotelMeta = await getHotelMeta();
     // فاز B5 موج ۲: یادداشت قیمت از تنظیم می‌آید، نه از ستون price_note.
     const priceNoteDefault = await getPublicPriceNoteDefault();
-    const tours = (data as Row[]).map((r) => restToTour(r, priceNoteDefault));
+    const rows = data as Row[];
+    const uuidBySlug = new Map(rows.map((r) => [str(r.slug), str(r.id)]));
+    const tours = rows.map((r) => restToTour(r, priceNoteDefault));
+    // موج ۴: تورلیدر + نظرهای مسافران (دسته‌ای).
+    await attachTourExperience(rest, tours, uuidBySlug);
     // میز ۳ — ایراد ۱۲: گزینه‌ای که به هتل بایگانی‌شده اشاره می‌کند روی سایت
     // دیده نمی‌شود (snapshot لحظهٔ افزودن، ولی بایگانی تصمیمِ تازهٔ مدیر است).
     // هتل دستیِ آزاد (hotelId خالی) دست نمی‌خورد.

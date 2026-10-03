@@ -18,7 +18,8 @@ import {
   EyeOff,
   ExternalLink,
   Flag,
-  Wallet
+  Wallet,
+  Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +35,7 @@ import type {
   TourFaqItem,
   TourItineraryDayItem,
 } from './actions';
+import type { TourGalleryItem, TourReviewItem } from './experience-types';
 import { saveTour, checkSlugUnique } from './actions';
 import { getAllDraftFallbackAnswer, getSettingsMap } from '../settings/actions';
 import { AllDraftFallbackDialog } from './AllDraftFallbackDialog';
@@ -44,7 +46,7 @@ import { checkPublishReadiness, stageTicksFromGate, type PublishCheck } from './
 import { MissingChecksDialog, PublishConfirmDialog } from './PublishGateDialog';
 import { DOMESTIC_SLUGS, DOMESTIC_NAME_RE, guessVisaRequired } from '@/src/lib/domestic';
 
-// 5 Modular Stage Components + ایستگاه پایانی (فعلاً مرحلهٔ ۶)
+// 7 Modular Stage Components + ایستگاه پایانی (موج ۴: تجربه سفر شد مرحلهٔ ۷)
 import Stage1Identity from './stages/Stage1Identity';
 import Stage2Hotels from './stages/Stage2Hotels';
 import Stage3Itinerary from './stages/Stage3Itinerary';
@@ -52,6 +54,7 @@ import Stage4TrustTerms from './stages/Stage4TrustTerms';
 import Stage5Consultant from './stages/Stage5Consultant';
 // بلوک مالی واقعی (موج ۳): مرحلهٔ ۶ «هزینه‌ها و شرایط».
 import Stage6Financial from './stages/Stage6Financial';
+import Stage7Experience from './stages/Stage7Experience';
 // ایستگاه پایانی (موج ۱، قلم ۵): جمع‌بندی خودکار + انتشارِ گیت‌دار.
 import StageFinalStation from './stages/StageFinalStation';
 import SmartImage from '@/src/components/SmartImage';
@@ -74,7 +77,7 @@ export interface TourFormProps {
   hotels: HotelPickerItem[];
 }
 
-export type StageId = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type StageId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 const LAST_ORIGIN_KEY = 'rivan-last-origin';
 
@@ -110,12 +113,15 @@ const STAGES: StageTabConfig[] = [
   // بلوک مالی واقعی (موج ۳): مرحلهٔ ۶ «هزینه‌ها و شرایط» — جدول کنسلی پلکانی،
   // بند رد ویزا، پیش‌پرداخت و مهلت تسویه. ایستگاه پایانی شد مرحلهٔ ۷.
   { id: 6, shortTitle: '۶. هزینه‌ها و شرایط', label: 'هزینه‌ها و شرایط', icon: Wallet, description: 'کنسلی پلکانی، رد ویزا، پیش‌پرداخت' },
-  // ایستگاه پایانی (موج ۱، قلم ۵): مرحلهٔ ۷ ویزارد — جمع‌بندی و انتشار.
-  { id: 7, shortTitle: '۷. ایستگاه پایانی', label: 'ایستگاه پایانی', icon: Flag, description: 'جمع‌بندی و انتشار' },
+  // موج ۴: مرحلهٔ ۷ «تجربه سفر» — تورلیدر، نظر مسافران، گالری واقعی.
+  // ایستگاه پایانی شد مرحلهٔ ۸.
+  { id: 7, shortTitle: '۷. تجربه سفر', label: 'تورلیدر، نظرها و گالری', icon: Users, description: 'لیدر حرکت، نظر مسافران، عکس واقعی' },
+  // ایستگاه پایانی (موج ۱، قلم ۵): مرحلهٔ ۸ ویزارد — جمع‌بندی و انتشار.
+  { id: 8, shortTitle: '۸. ایستگاه پایانی', label: 'ایستگاه پایانی', icon: Flag, description: 'جمع‌بندی و انتشار' },
 ];
 
-/** ترتیب واقعی گام‌های ویزارد (۶ گام + ایستگاه پایانی). */
-const STAGE_ORDER: StageId[] = [1, 2, 3, 4, 5, 6, 7];
+/** ترتیب واقعی گام‌های ویزارد (۷ گام + ایستگاه پایانی). */
+const STAGE_ORDER: StageId[] = [1, 2, 3, 4, 5, 6, 7, 8];
 
 export default function TourForm({
   initial,
@@ -332,6 +338,10 @@ export default function TourForm({
         audioUrl: initial?.consultantSpec?.audioUrl || '',
         emergencyPhone: initial?.consultantSpec?.emergencyPhone || '',
       },
+      // موج ۴: تورلیدر، نظر مسافران، گالری واقعی.
+      leaderId: initial?.leaderId ?? null,
+      gallery: Array.isArray(initial?.gallery) ? (initial.gallery as TourGalleryItem[]) : [],
+      reviews: Array.isArray(initial?.reviews) ? (initial.reviews as TourReviewItem[]) : [],
     };
   });
 
@@ -695,6 +705,10 @@ export default function TourForm({
           )}
 
           {activeStage === 7 && (
+            <Stage7Experience data={formData} onChange={updateFormData} />
+          )}
+
+          {activeStage === 8 && (
             <StageFinalStation
               data={formData}
               priceNoteDefault={priceNoteDefault}
@@ -731,7 +745,7 @@ export default function TourForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={activeStage === 7}
+                disabled={activeStage === 8}
                 onClick={() => {
                   const i = STAGE_ORDER.indexOf(activeStage);
                   setActiveStage(STAGE_ORDER[Math.min(STAGE_ORDER.length - 1, i + 1)]);

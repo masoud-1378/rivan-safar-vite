@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb, type AppDb } from '@/db/client';
-import { accommodations, auditLogs, originCities, siteDestinations, siteTours } from '@/db/schema';
+import { accommodations, auditLogs, originCities, siteDestinations, siteTours, tourLeaders, tourReviews } from '@/db/schema';
 import { and, asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
@@ -11,6 +11,12 @@ import { DOMESTIC_SLUGS, DOMESTIC_NAME_RE } from '@/src/lib/domestic';
 import { getSettingsMap } from '../settings/actions';
 import { assertLatinSlug } from '@/src/lib/slug-format';
 import { cleanupReplacedBanner } from './banner-upload';
+import {
+  normalizeGalleryItems,
+  normalizeReviewItems,
+  type TourGalleryItem,
+  type TourReviewItem,
+} from './experience-types';
 import { checkPublishReadiness, type PublishGateInput } from './publish-gate';
 import { buildDurationFromNights } from '@/src/lib/tour-format';
 // تیم «فرم تورها» (۱۴۰۵/۰۷/۱۱): الگوی «نگهبان + اطلاع» برای ستون‌های تازهٔ
@@ -206,6 +212,13 @@ export interface TourInput {
   consultantSpec?: TourConsultantSpecItem;
   /** بلوک مالی واقعی (موج ۳، مرحلهٔ ۶ ویزارد): ستون jsonb روی site_tours (مایگریشن 0027) */
   financialSpecs?: TourFinancialSpecsItem;
+  /**
+   * موج ۴ — تورلیدر (ستون leader_id، مایگریشن 0034)؛ null یعنی «بدون لیدر».
+   * نظر مسافران (جدول tour_reviews) و گالری واقعی (ستون gallery).
+   */
+  leaderId?: string | null;
+  gallery?: TourGalleryItem[];
+  reviews?: TourReviewItem[];
 }
 
 export interface DestinationTreeCity {
@@ -366,6 +379,12 @@ function toTourRow(r: SiteTourRow) {
     // transport_kind — ستون نباشد (پیش از اجرای 0028) یا null باشد،
     // undefined برمی‌گردد و هیچ‌چیز نمی‌شکند. nullِ دیتابیسی هم → undefined.
     flightDetails: readFlightDetails(r),
+    // موج ۴: تورلیدر و گالری واقعی — ستون‌های nullable/پیش‌فرض‌دار (مایگریشن 0034)؛
+    // نبودشان فقط null/خالی می‌دهد و هیچ‌چیز نمی‌شکند.
+    leaderId: r.leaderId ?? null,
+    gallery: normalizeGalleryItems(r.gallery),
+    // نظرها در getTourById جداگانه خوانده می‌شوند (لیست تورها لازمشان ندارد).
+    reviews: [],
     // گشت: برای اینکه فرم ویرایش بعد از ذخیره حتماً مقادیر تازهٔ دیتابیس را نشان بدهد
     // (کلید ریمونت در EditTourClient)، مهر زمانی به‌روزرسانی هم برمی‌گردد.
     updatedAt: r.updatedAt ? r.updatedAt.toISOString() : null,
@@ -541,6 +560,47 @@ function normalizeFaqs(items: unknown): TourFaqItem[] {
 }
 
 /**
+ * موج ۴: هم‌گام‌سازی نظرهای مسافران یک تور.
+ * - شناسهٔ واقعیِ موجود در دیتابیس → update
+ * - شناسهٔ tmp- یا بی‌شناسه → insert
+ * - ردیف دیتابیس که در ورودی نیست → delete
+ */
+async function syncTourReviews(db: AppDb, tourId: string, incoming: TourReviewItem[]): Promise<void> {
+  const existing = await db
+    .select({ id: tourReviews.id })
+    .from(tourReviews)
+    .where(eq(tourReviews.tourId, tourId));
+  const existingIds = new Set(existing.map((r) => r.id));
+  const incomingRealIds = new Set(
+    incoming
+      .map((r) => r.id || '')
+      .filter((id) => id && !id.startsWith('tmp-') && existingIds.has(id)),
+  );
+  for (const row of existing) {
+    if (!incomingRealIds.has(row.id)) {
+      await db.delete(tourReviews).where(eq(tourReviews.id, row.id));
+    }
+  }
+  for (const r of incoming) {
+    const id = r.id || '';
+    if (id && !id.startsWith('tmp-') && existingIds.has(id)) {
+      await db
+        .update(tourReviews)
+        .set({ name: r.name, rating: r.rating, text: r.text, isVisible: r.isVisible })
+        .where(eq(tourReviews.id, id));
+    } else {
+      await db.insert(tourReviews).values({
+        tourId,
+        name: r.name,
+        rating: r.rating,
+        text: r.text,
+        isVisible: r.isVisible,
+      });
+    }
+  }
+}
+
+/**
  * نوشتن ستون‌های تازهٔ تور با SQL خام — فقط وقتی نگهبان می‌گوید ستون‌ها
  * هستند. هر گروه (غنی / سئو) مستقل است چون مایگریشن‌هایشان (0030/0033)
  * ممکن است در زمان‌های جدا اجرا شوند.
@@ -590,7 +650,21 @@ export async function getTourById(id: string): Promise<(TourRow & Partial<TourRi
   const row = toTourRow(r);
   // ستون‌های تازه (0030/0033): فقط وقتی نگهبان می‌گوید هستند خوانده می‌شوند.
   const rich = await readTourRichFields(db, r.id);
-  return { ...row, ...rich };
+  // موج ۴: نظرهای این تور (جدید به قدیم).
+  const reviewRows = await db
+    .select()
+    .from(tourReviews)
+    .where(eq(tourReviews.tourId, r.id))
+    .orderBy(desc(tourReviews.createdAt))
+    .limit(100);
+  const reviews: TourReviewItem[] = reviewRows.map((v) => ({
+    id: v.id,
+    name: v.name ?? '',
+    rating: Math.min(5, Math.max(1, Number(v.rating) || 5)),
+    text: v.text ?? '',
+    isVisible: v.isVisible !== false,
+  }));
+  return { ...row, ...rich, reviews };
 }
 
 /** خواندن یک تور با نامک (برای تکثیر از روی تور موجود). */
@@ -1133,6 +1207,21 @@ export async function saveTour(
 
   // مشخصات پرواز (موج ۳، مایگریشن 0028): در ستون jsonb ذخیره می‌شود؛ کاملاً
   // خالی → null (ستون null می‌ماند).
+  // موج ۴: تورلیدر — شناسه فقط وقتی می‌نشیند که لیدر واقعاً هست؛
+  // در غیر این صورت null (تور بی‌لیدر معتبر است).
+  let leaderId: string | null = null;
+  const wantedLeaderId = (data.leaderId || '').trim();
+  if (wantedLeaderId) {
+    const [leaderRow] = await db
+      .select({ id: tourLeaders.id })
+      .from(tourLeaders)
+      .where(eq(tourLeaders.id, wantedLeaderId))
+      .limit(1);
+    leaderId = leaderRow?.id ?? null;
+  }
+  const normalizedGallery = normalizeGalleryItems(data.gallery);
+  const normalizedReviews = normalizeReviewItems(data.reviews);
+
   const values = {
     slug,
     title,
@@ -1171,6 +1260,9 @@ export async function saveTour(
     consultantSpec: normalizedConsultant,
     financialSpecs: normalizedFinancial,
     flightDetails: normalizedFlight,
+    // موج ۴: تورلیدر و گالری واقعی (مایگریشن 0034).
+    leaderId,
+    gallery: normalizedGallery,
     updatedAt: new Date(),
   };
 
@@ -1195,6 +1287,9 @@ export async function saveTour(
   // قبل از اجرای مایگریشن، فرم کنار فیلدها اطلاع نشان می‌دهد و چیزی گم نمی‌شود.
   if (id) {
     await writeTourRichFields(db, id, data);
+    // موج ۴: هم‌گام‌سازی نظرهای مسافران — تازه‌ها insert، موجودها update،
+    // حذف‌شده‌ها delete. شناسه‌های tmp- یعنی «هنوز در دیتابیس نیست».
+    await syncTourReviews(db, id, normalizedReviews);
   }
   const oldImage = (previousImage || '').trim();
   const newImage = (values.image || '').trim();

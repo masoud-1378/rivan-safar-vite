@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   UserCheck,
   Tag,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +28,7 @@ export interface StageFinalStationProps {
   /** فاز B5 موج ۲: «مبنای قیمت» دیگر ستون نیست — از تنظیم tours.default_price_note می‌آید. */
   priceNoteDefault?: string;
   tree: DestinationTree;
-  onGoToStage: (stage: 1 | 2 | 3 | 4 | 5 | 6) => void;
+  onGoToStage: (stage: 1 | 2 | 3 | 4 | 5 | 6 | 7) => void;
   /**
    * انتشارِ گیت‌دار (موج ۱، قلم ۲): خودِ TourForm گیت checkPublishReadiness را
    * صدا می‌زند و همان دیالوگ فهرست ناقصی‌ها (MissingChecksDialog) یا دیالوگ
@@ -54,14 +55,14 @@ interface SummaryRow {
   key: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  stage: 1 | 2 | 3 | 4 | 5 | 6;
+  stage: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   body: ReactNode;
 }
 
 /**
  * ایستگاه پایانی (موج ۱، قلم ۵): کارت جمع‌بندی خودکار از همهٔ مرحله‌ها —
  * هر ردیف لینک «ویرایش» به مرحلهٔ مربوط دارد — + دکمهٔ انتشارِ گیت‌دار.
- * از موج ۳، مرحلهٔ ۷ ویزارد است (قبلش به‌خاطر باگ شماره‌گذاری موج ۱، ۶ بود).
+ * از موج ۴، مرحلهٔ ۸ ویزارد است (موج ۳: ۷ بود؛ موج ۱: ۶).
  */
 export default function StageFinalStation({
   data,
@@ -279,6 +280,22 @@ export default function StageFinalStation({
           }
           parts.push(visaNote ? 'بند رد ویزا ثبت شده' : 'بند رد ویزا خالی است');
           parts.push(deposit ? `پیش‌پرداخت: ${deposit}` : 'پیش‌پرداخت خالی است');
+          return <span>{parts.join(' · ')}</span>;
+        })(),
+      },
+      {
+        // موج ۴: جمع‌بندی تجربه سفر — تورلیدر، نظرها، گالری.
+        key: 'experience',
+        label: 'تجربه سفر',
+        icon: Users,
+        stage: 7,
+        body: (() => {
+          const parts: string[] = [];
+          parts.push(data.leaderId ? 'تورلیدر انتخاب شده' : 'تورلیدر انتخاب نشده');
+          const rc = Array.isArray(data.reviews) ? data.reviews.length : 0;
+          parts.push(rc > 0 ? `${fa(rc)} نظر مسافر` : 'نظری ثبت نشده');
+          const gc = Array.isArray(data.gallery) ? data.gallery.length : 0;
+          parts.push(gc > 0 ? `${fa(gc)} عکس در گالری` : 'گالری خالی است');
           return <span>{parts.join(' · ')}</span>;
         })(),
       },
