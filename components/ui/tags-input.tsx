@@ -72,7 +72,7 @@ export function TagsInput({
         aria-label={aria["aria-label"] ?? "برچسب‌ها"}
         onClick={() => inputRef.current?.focus()}
         className={cn(
-          "flex min-h-10 w-full cursor-text flex-wrap items-center gap-1.5 rounded-field border-0 border-b border-input bg-transparent px-2 py-1.5 text-sm transition-colors",
+          "flex min-h-10 w-full cursor-text flex-wrap items-center gap-1.5 rounded-field border-0 border-b border-input bg-transparent px-2 py-1.5 text-panel-body transition-colors",
           "focus-within:border-brand",
           disabled && "cursor-not-allowed opacity-50",
         )}
@@ -81,7 +81,7 @@ export function TagsInput({
           <span
             key={t}
             dir="auto"
-            className="inline-flex h-6 items-center gap-1 rounded-sm bg-secondary ps-2 pe-1 text-xs font-medium text-secondary-foreground"
+            className="inline-flex h-6 items-center gap-1 rounded-sm bg-secondary ps-2 pe-1 text-panel-caption text-secondary-foreground"
           >
             {t}
             <button
@@ -122,7 +122,7 @@ export function TagsInput({
         />
       </div>
       {max !== undefined && (
-        <p className="text-end text-[11px] text-muted-foreground" aria-live="polite">
+        <p className="text-end text-panel-micro text-muted-foreground" aria-live="polite">
           {fa(tags.length)} / {fa(max)}
         </p>
       )}

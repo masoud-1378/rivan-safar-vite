@@ -39,7 +39,7 @@ export function useColumnGuard(check: () => Promise<boolean>): boolean | null {
 /** اطلاع غیربلاک‌کننده کنار فیلد. متن را خود فرم می‌دهد (لحن طبیعی فارسی). */
 export function ColumnNotice({ children }: { children: React.ReactNode }) {
   return (
-    <p role="note" className="mt-1.5 text-xs leading-5 text-amber-700 dark:text-amber-400">
+    <p role="note" className="mt-1.5 text-panel-caption leading-5 text-amber-700 dark:text-amber-400">
       {children}
     </p>
   );

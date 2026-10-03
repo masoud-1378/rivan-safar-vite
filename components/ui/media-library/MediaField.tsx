@@ -86,7 +86,7 @@ export function MediaField({ label, hint, htmlFor, value, onChange, tag, tagLabe
                 variant="outline"
                 size="sm"
                 onClick={pick}
-                className="gap-1.5 text-xs"
+                className="gap-1.5 text-panel-caption"
               >
                 <ImagePlus className="size-4" />
                 تغییر تصویر
@@ -96,7 +96,7 @@ export function MediaField({ label, hint, htmlFor, value, onChange, tag, tagLabe
                 variant="ghost"
                 size="sm"
                 onClick={() => onChange(null)}
-                className="gap-1.5 text-xs text-destructive hover:text-destructive"
+                className="gap-1.5 text-panel-caption text-destructive hover:text-destructive"
               >
                 <Trash2 className="size-4" />
                 حذف
@@ -132,7 +132,7 @@ export function MediaField({ label, hint, htmlFor, value, onChange, tag, tagLabe
                 </Button>
               </div>
               {linkError && (
-                <p role="alert" className="mt-1 text-xs text-destructive">
+                <p role="alert" className="mt-1 text-panel-caption text-destructive">
                   {linkError}
                 </p>
               )}
@@ -164,7 +164,7 @@ export function MediaField({ label, hint, htmlFor, value, onChange, tag, tagLabe
               variant="outline"
               size="sm"
               onClick={pick}
-              className="gap-2 text-xs"
+              className="gap-2 text-panel-caption"
             >
               <ImagePlus className="size-4" />
               انتخاب از کتابخانه / آپلود
@@ -199,7 +199,7 @@ export function MediaField({ label, hint, htmlFor, value, onChange, tag, tagLabe
                 </Button>
               </div>
               {linkError && (
-                <p role="alert" className="mt-1 text-xs text-destructive">
+                <p role="alert" className="mt-1 text-panel-caption text-destructive">
                   {linkError}
                 </p>
               )}

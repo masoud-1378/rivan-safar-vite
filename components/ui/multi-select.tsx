@@ -108,7 +108,7 @@ export function MultiSelect({
         onClick={() => show(!open)}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); show(true); } else onKeyDown(e); }}
         className={cn(
-          "flex min-h-10 w-full cursor-pointer flex-wrap items-center gap-1.5 rounded-field border-0 border-b border-input bg-transparent py-1.5 pe-2 ps-2 text-sm transition-colors",
+          "flex min-h-10 w-full cursor-pointer flex-wrap items-center gap-1.5 rounded-field border-0 border-b border-input bg-transparent py-1.5 pe-2 ps-2 text-panel-body transition-colors",
           "focus-visible:outline-none focus-visible:border-brand",
           open && "border-brand",
           disabled && "cursor-not-allowed opacity-50",
@@ -116,7 +116,7 @@ export function MultiSelect({
       >
         {chips.length === 0 && <span className="px-1 text-muted-foreground/70">{placeholder}</span>}
         {chips.slice(0, maxVisible).map((o) => (
-          <span key={o.value} className="inline-flex h-6 items-center gap-1 rounded-sm bg-secondary ps-2 pe-1 text-xs font-medium text-secondary-foreground">
+          <span key={o.value} className="inline-flex h-6 items-center gap-1 rounded-sm bg-secondary ps-2 pe-1 text-panel-caption text-secondary-foreground">
             {o.label}
             <button
               type="button"
@@ -131,12 +131,12 @@ export function MultiSelect({
             </button>
           </span>
         ))}
-        {hidden > 0 && <span className="px-1 text-xs text-muted-foreground">+{fa(hidden)} مورد دیگر</span>}
+        {hidden > 0 && <span className="px-1 text-panel-caption text-muted-foreground">+{fa(hidden)} مورد دیگر</span>}
         <ChevronDown className={cn("ms-auto size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} aria-hidden />
       </div>
 
       <FloatPortal open={open} mounted={mounted} style={style} theme={theme} panelRef={panel} className="fixed z-50">
-        <div className="overflow-hidden rounded-overlay border-line border-border bg-popover text-sm shadow-overlay">
+        <div className="overflow-hidden rounded-overlay border-line border-border bg-popover text-panel-body shadow-overlay">
           {searchable && (
             <div className="flex items-center gap-2 border-b border-border px-2.5">
               <Search className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
@@ -147,7 +147,7 @@ export function MultiSelect({
                 aria-controls={listId}
                 onChange={(e) => { setQuery(e.target.value); setIndex(0); }}
                 onKeyDown={onKeyDown}
-                className="h-9 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/70"
+                className="h-9 min-w-0 flex-1 bg-transparent text-panel-body outline-none placeholder:text-muted-foreground/70"
               />
             </div>
           )}
@@ -180,7 +180,7 @@ export function MultiSelect({
             })}
           </ul>
           {selected.length > 0 && (
-            <div className="flex items-center justify-between border-t border-border px-3 py-1.5 text-xs text-muted-foreground">
+            <div className="flex items-center justify-between border-t border-border px-3 py-1.5 text-panel-caption text-muted-foreground">
               <span>{fa(selected.length)} مورد انتخاب شده{max !== undefined && ` از ${fa(max)}`}</span>
               <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => commit([])} className="cursor-pointer hover:text-foreground">
                 پاک کردن

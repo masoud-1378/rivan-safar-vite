@@ -152,7 +152,7 @@ export function MediaPickerDialog({ open, tag, title, onPick, onClose }: MediaPi
           </div>
 
           {error && (
-            <p role="alert" className="text-xs text-destructive">
+            <p role="alert" className="text-panel-caption text-destructive">
               {error}
             </p>
           )}
@@ -166,10 +166,10 @@ export function MediaPickerDialog({ open, tag, title, onPick, onClose }: MediaPi
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center gap-2 rounded-sm border border-dashed border-border py-10 text-center">
               <Images className="size-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-panel-body text-muted-foreground">
                 هنوز رسانه‌ای با این برچسب ثبت نشده است.
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-panel-caption text-muted-foreground">
                 با «آپلود تازه» اولین عکس را اضافه کنید.
               </p>
             </div>

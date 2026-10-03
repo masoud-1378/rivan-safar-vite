@@ -52,11 +52,11 @@ export function Checkbox({ checked, defaultChecked = false, onCheckedChange, dis
 
   if (!label) return box;
   return (
-    <label htmlFor={boxId} className={cn("flex cursor-pointer items-start gap-2.5 text-sm", disabled && "cursor-not-allowed opacity-60", className)}>
+    <label htmlFor={boxId} className={cn("flex cursor-pointer items-start gap-2.5 text-panel-body", disabled && "cursor-not-allowed opacity-60", className)}>
       {box}
       <span>
         <span className="block leading-5">{label}</span>
-        {description && <span className="block text-xs text-muted-foreground">{description}</span>}
+        {description && <span className="block text-panel-caption text-muted-foreground">{description}</span>}
       </span>
     </label>
   );

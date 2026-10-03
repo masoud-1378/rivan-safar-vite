@@ -93,13 +93,13 @@ export function FormField({ label, htmlFor, error, hint, required, className, ch
   const msgId = htmlFor ? `${htmlFor}-msg` : undefined;
   return (
     <div className={cn("space-y-1.5", className)}>
-      <label htmlFor={htmlFor} className="text-sm font-medium text-foreground/90">
+      <label htmlFor={htmlFor} className="text-panel-label text-foreground/90">
         {label}
         {required && <span className="ms-1 text-destructive">*</span>}
       </label>
       {children}
       {(error || hint) && (
-        <p id={msgId} role={error ? "alert" : undefined} className={cn("text-xs", error ? "text-destructive" : "text-muted-foreground")}>{error ?? hint}</p>
+        <p id={msgId} role={error ? "alert" : undefined} className={cn("text-panel-caption", error ? "text-destructive" : "text-muted-foreground")}>{error ?? hint}</p>
       )}
     </div>
   );
@@ -110,7 +110,7 @@ export function FormErrors<T>({ errors, labels }: { errors: Errors<T>; labels: P
   const entries = Object.entries(errors).filter(([, m]) => m) as [string, string][];
   if (!entries.length) return null;
   return (
-    <ul role="alert" className="space-y-1 rounded-sm border border-destructive/30 bg-destructive/10 p-3 text-xs">
+    <ul role="alert" className="space-y-1 rounded-sm border border-destructive/30 bg-destructive/10 p-3 text-panel-caption">
       {entries.map(([k, m]) => (
         <li key={k}><a href={`#${k}`} className="font-medium underline underline-offset-4">{labels[k as keyof T] ?? k}</a>: {m}</li>
       ))}

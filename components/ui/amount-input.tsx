@@ -70,14 +70,14 @@ export function AmountInput({ value, defaultValue = null, onChange, unit = "تو
           value={amount === null ? "" : faNumber(amount)}
           onChange={(e) => type(e.target.value)}
           placeholder={placeholder}
-          className={cn("h-full min-w-0 flex-1 bg-transparent text-sm font-medium tabular-nums outline-none placeholder:text-muted-foreground/50 disabled:cursor-not-allowed", inputClassName)}
+          className={cn("h-full min-w-0 flex-1 bg-transparent text-panel-label tabular-nums outline-none placeholder:text-muted-foreground/50 disabled:cursor-not-allowed", inputClassName)}
           aria-invalid={invalid ? true : undefined}
           aria-describedby={id ? `${id}-words` : undefined}
         />
-        <span className="shrink-0 text-sm text-muted-foreground">{unit}</span>
+        <span className="shrink-0 text-panel-body text-muted-foreground">{unit}</span>
       </div>
       {(words || invalid) && (
-        <p id={id ? `${id}-words` : undefined} className={cn("min-h-4 text-[11px]", invalid ? "text-destructive" : "text-muted-foreground")} aria-live="polite">
+        <p id={id ? `${id}-words` : undefined} className={cn("min-h-4 text-panel-micro", invalid ? "text-destructive" : "text-muted-foreground")} aria-live="polite">
           {tooLow ? `حداقل ${faNumber(min!)} ${unit}` : tooHigh ? `حداکثر ${faNumber(max!)} ${unit}` : amount !== null ? amountToWords(amount, unit) : " "}
         </p>
       )}
@@ -90,7 +90,7 @@ export function AmountInput({ value, defaultValue = null, onChange, unit = "تو
               disabled={disabled}
               onClick={() => set(q)}
               className={cn(
-                "cursor-pointer rounded-full border px-2.5 py-0.5 text-[11px] tabular-nums transition-colors disabled:cursor-not-allowed",
+                "cursor-pointer rounded-full border px-2.5 py-0.5 text-panel-micro tabular-nums transition-colors disabled:cursor-not-allowed",
                 amount === q ? "border-foreground bg-foreground text-background" : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
               )}
             >

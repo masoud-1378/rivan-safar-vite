@@ -114,14 +114,14 @@ export function RangeCalendar({ value, defaultValue = EMPTY, onChange, min, max,
                 {mi === 0 ? (
                   <button type="button" aria-label="ماه قبل" onClick={() => move(-1)} className={nav}><ChevronRight className="size-4" /></button>
                 ) : <span className="size-7" />}
-                <span className={cn("font-semibold", compact ? "text-xs" : "text-sm")}>
+                <span className={cn("font-semibold", compact ? "text-panel-caption" : "text-panel-body")}>
                   {JALALI_MONTHS[m.jm - 1]} {fa(m.jy)}
                 </span>
                 {mi === months - 1 ? (
                   <button type="button" aria-label="ماه بعد" onClick={() => move(1)} className={nav}><ChevronLeft className="size-4" /></button>
                 ) : <span className="size-7" />}
               </div>
-              <div className={cn("mt-2 grid grid-cols-7 gap-y-0.5 overflow-hidden text-center", compact ? "text-[10px]" : "text-[11px]")} role="grid">
+              <div className="mt-2 grid grid-cols-7 gap-y-0.5 overflow-hidden text-center text-panel-micro" role="grid">
                 {JALALI_WEEKDAYS_SHORT.map((d) => (
                   <span key={d} className="py-1 text-muted-foreground/80" aria-hidden>{d}</span>
                 ))}
@@ -175,7 +175,7 @@ export function RangeCalendar({ value, defaultValue = EMPTY, onChange, min, max,
           );
         })}
       </div>
-      <p className="mt-2 min-h-4 px-1 text-[11px] text-muted-foreground" aria-live="polite">
+      <p className="mt-2 min-h-4 px-1 text-panel-micro text-muted-foreground" aria-live="polite">
         {length ? `${fa(length)} روز` : range.from ? "روز پایان را انتخاب کنید" : "روز شروع را انتخاب کنید"}
       </p>
     </div>
@@ -236,7 +236,7 @@ export function DateRangePicker({ value, defaultValue = EMPTY, onChange, placeho
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "flex h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-field border-0 border-b border-input bg-transparent px-3 text-sm transition-colors",
+          "flex h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-field border-0 border-b border-input bg-transparent px-3 text-panel-body transition-colors",
           "focus-visible:outline-none focus-visible:border-brand",
         )}
       >
@@ -258,7 +258,7 @@ export function DateRangePicker({ value, defaultValue = EMPTY, onChange, placeho
                   key={p.label}
                   type="button"
                   onClick={() => set(p.range(), true)}
-                  className="cursor-pointer rounded-full border border-border px-2.5 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+                  className="cursor-pointer rounded-full border border-border px-2.5 py-0.5 text-panel-micro text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
                 >
                   {p.label}
                 </button>

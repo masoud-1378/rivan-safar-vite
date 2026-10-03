@@ -37,7 +37,7 @@ export function Textarea({ className, autoResize, showCount, maxLength, onChange
           onChange?.(e);
         }}
         className={cn(
-          "flex min-h-20 w-full rounded-field border-0 border-b border-input bg-transparent px-3 py-2 text-sm leading-7 text-foreground",
+          "flex min-h-20 w-full rounded-field border-0 border-b border-input bg-transparent px-3 py-2 text-panel-body leading-7 text-foreground",
           "placeholder:text-muted-foreground/70 transition-colors",
           "focus-visible:outline-none focus-visible:border-brand",
           "disabled:cursor-not-allowed disabled:opacity-50",
@@ -47,7 +47,7 @@ export function Textarea({ className, autoResize, showCount, maxLength, onChange
         {...props}
       />
       {showCount && maxLength && (
-        <p className="text-end text-[11px] text-muted-foreground" aria-live="polite">
+        <p className="text-end text-panel-micro text-muted-foreground" aria-live="polite">
           {fa(len)} / {fa(maxLength)}
         </p>
       )}

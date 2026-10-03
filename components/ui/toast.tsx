@@ -50,7 +50,7 @@ export function ToastProvider({ children, max = 3, position = "bottom-start" }: 
       <div aria-live="polite" className={cn("pointer-events-none fixed z-[60] flex w-[min(360px,calc(100vw-2rem))] flex-col gap-2", pos, fromTop ? "" : "flex-col-reverse")}>
         {items.map((t) => <ToastCard key={t.id} toast={t} onClose={() => dismiss(t.id)} />)}
         {items.length > 1 && (
-          <button type="button" onClick={dismissAll} className="pointer-events-auto self-end rounded-sm px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground">
+          <button type="button" onClick={dismissAll} className="pointer-events-auto self-end rounded-sm px-2 py-1 text-panel-micro text-muted-foreground hover:text-foreground">
             بستن همه ({fa(items.length)})
           </button>
         )}
@@ -85,12 +85,12 @@ export function ToastCard({ toast, onClose, className }: { toast: Omit<Toast, "i
         : "bg-foreground text-background")}>
         <Icon className="size-3" />
       </span>
-      <div className="min-w-0 flex-1 text-sm">
+      <div className="min-w-0 flex-1 text-panel-body">
         <p className="font-medium leading-5">{toast.title}</p>
-        {toast.description && <p className="text-xs text-muted-foreground">{toast.description}</p>}
+        {toast.description && <p className="text-panel-caption text-muted-foreground">{toast.description}</p>}
       </div>
       {toast.action && (
-        <button type="button" onClick={() => { toast.action?.onClick(); onClose?.(); }} className="cursor-pointer rounded-sm border border-border px-2 py-1 text-xs transition-colors hover:bg-accent">
+        <button type="button" onClick={() => { toast.action?.onClick(); onClose?.(); }} className="cursor-pointer rounded-sm border border-border px-2 py-1 text-panel-caption transition-colors hover:bg-accent">
           {toast.action.label}
         </button>
       )}

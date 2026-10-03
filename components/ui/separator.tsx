@@ -20,7 +20,7 @@ export function Separator({ orientation = "horizontal", label, decorative = true
   if (!label) return <div {...a11y} className={cn("h-px w-full bg-border", className)} {...props} />;
 
   return (
-    <div {...a11y} className={cn("flex w-full items-center gap-3 text-xs text-muted-foreground", className)} {...props}>
+    <div {...a11y} className={cn("flex w-full items-center gap-3 text-panel-caption text-muted-foreground", className)} {...props}>
       <span className="h-px flex-1 bg-border" />
       <span className="shrink-0">{label}</span>
       <span className="h-px flex-1 bg-border" />

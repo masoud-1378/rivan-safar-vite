@@ -20,7 +20,7 @@ export function SidebarItem({ icon: Icon, label, href = "#", active, badge, onCl
       onClick={onClick}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-2 rounded-sm px-2.5 py-2 text-sm transition-colors",
+        "flex items-center gap-2 rounded-sm px-2.5 py-2 text-panel-body transition-colors",
         active ? "bg-accent font-medium text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
       )}
     >
@@ -28,7 +28,7 @@ export function SidebarItem({ icon: Icon, label, href = "#", active, badge, onCl
         {Icon && <Icon className="size-4 shrink-0" />}
         <span className="truncate">{label}</span>
         {badge !== undefined && (
-          <span className="shrink-0 rounded-full bg-foreground px-1.5 text-[10px] font-semibold leading-4 text-background">
+          <span className="shrink-0 rounded-full bg-foreground px-1.5 text-panel-micro font-semibold leading-4 text-background">
             {typeof badge === "number" ? fa(badge) : badge}
           </span>
         )}
@@ -45,7 +45,7 @@ export function SidebarGroup({ title, collapsible, defaultOpen = true, children 
         <button
           type="button"
           onClick={() => collapsible && setOpen((o) => !o)}
-          className={cn("flex w-full items-center justify-between px-2.5 pb-1 pt-3 text-[11px] font-medium text-muted-foreground", collapsible && "cursor-pointer hover:text-foreground")}
+          className={cn("flex w-full items-center justify-between px-2.5 pb-1 pt-3 text-panel-micro font-medium text-muted-foreground", collapsible && "cursor-pointer hover:text-foreground")}
         >
           {title}
           {collapsible && <ChevronDown className={cn("size-3 transition-transform", !open && "rotate-90")} />}

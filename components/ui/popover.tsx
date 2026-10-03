@@ -57,7 +57,7 @@ export function Popover({ trigger, children, side = "bottom", align = "start", o
         id={id}
         role="dialog"
         className={cn(
-          "fixed z-50 min-w-56 rounded border border-border bg-popover p-4 text-sm text-popover-foreground shadow-overlay",
+          "fixed z-50 min-w-56 rounded border border-border bg-popover p-4 text-panel-body text-popover-foreground shadow-overlay",
           "animate-fade-up [animation-duration:180ms]",
           className,
         )}

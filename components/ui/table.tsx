@@ -5,12 +5,12 @@ import { cn } from "@/lib/utils";
 export function Table({ className, ...props }: React.TableHTMLAttributes<HTMLTableElement>) {
   return (
     <div className="w-full overflow-x-auto rounded-sm border border-border">
-      <table className={cn("w-full caption-bottom text-sm", className)} {...props} />
+      <table className={cn("w-full caption-bottom text-panel-body", className)} {...props} />
     </div>
   );
 }
 export function TableHeader({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn("bg-muted/60 text-xs text-muted-foreground [&_tr]:border-b", className)} {...props} />;
+  return <thead className={cn("bg-muted/60 text-panel-caption text-muted-foreground [&_tr]:border-b", className)} {...props} />;
 }
 export function TableBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return <tbody className={cn("[&_tr:last-child]:border-0", className)} {...props} />;
@@ -25,5 +25,5 @@ export function TableCell({ className, numeric, ...props }: React.TdHTMLAttribut
   return <td className={cn("px-3 py-2.5 align-middle", numeric && "tabular-nums", className)} {...props} />;
 }
 export function TableCaption({ className, ...props }: React.HTMLAttributes<HTMLTableCaptionElement>) {
-  return <caption className={cn("mt-3 text-xs text-muted-foreground", className)} {...props} />;
+  return <caption className={cn("mt-3 text-panel-caption text-muted-foreground", className)} {...props} />;
 }

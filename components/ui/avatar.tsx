@@ -8,7 +8,7 @@ export interface AvatarProps {
   className?: string;
 }
 
-const sizes = { sm: "size-7 text-[11px]", md: "size-9 text-sm", lg: "size-12 text-base" };
+const sizes = { sm: "size-7 text-panel-micro", md: "size-9 text-panel-body", lg: "size-12 text-panel-label" };
 
 /** آواتار. Photo when `src` is set; otherwise a white initial in a white ring. */
 export function Avatar({ name, src, size = "md", className }: AvatarProps) {
@@ -38,7 +38,7 @@ export function AvatarGroup({ people, max = 4, size = "md", className }: { peopl
       {shown.map((p, i) => (
         <Avatar key={p.name} {...p} size={size} className={cn("ring-2 ring-background", i > 0 && "-ms-2")} />
       ))}
-      {rest > 0 && <span className="ms-2 text-xs text-muted-foreground">+{fa(rest)} نفر دیگر</span>}
+      {rest > 0 && <span className="ms-2 text-panel-caption text-muted-foreground">+{fa(rest)} نفر دیگر</span>}
     </div>
   );
 }

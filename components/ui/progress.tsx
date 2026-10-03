@@ -15,7 +15,7 @@ export function Progress({ value, max = 100, label, showValue, size = "md", clas
   return (
     <div className={cn("space-y-1.5", className)}>
       {(label || showValue) && (
-        <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center justify-between text-panel-caption">
           <span>{label}</span>
           {showValue && <span className="text-muted-foreground tabular-nums">{faPercent(pct)}</span>}
         </div>

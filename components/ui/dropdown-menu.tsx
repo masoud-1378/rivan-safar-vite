@@ -83,7 +83,7 @@ export function DropdownMenu({
         panelRef={panel}
         role="menu"
         className={cn(
-          "fixed z-50 min-w-44 rounded border border-border bg-popover p-1 text-sm text-popover-foreground shadow-overlay",
+          "fixed z-50 min-w-44 rounded border border-border bg-popover p-1 text-panel-body text-popover-foreground shadow-overlay",
           "animate-fade-up [animation-duration:150ms]",
         )}
       >
@@ -94,7 +94,7 @@ export function DropdownMenu({
               return (
                 <p
                   key={i}
-                  className="px-2 py-1 text-[11px] text-muted-foreground"
+                  className="px-2 py-1 text-panel-micro text-muted-foreground"
                 >
                   {it.label}
                 </p>
@@ -120,7 +120,7 @@ export function DropdownMenu({
                   {it.label}
                 </span>
                 {it.shortcut && (
-                  <kbd className="  text-[10px] text-muted-foreground">
+                  <kbd className="  text-panel-micro text-muted-foreground">
                     {it.shortcut}
                   </kbd>
                 )}

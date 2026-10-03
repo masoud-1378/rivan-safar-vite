@@ -114,7 +114,7 @@ export function DualImageInput({
               size="sm"
               aria-busy={uploading}
               onClick={() => fileRef.current?.click()}
-              className="gap-1.5 text-xs"
+              className="gap-1.5 text-panel-caption"
             >
               {uploading ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -138,7 +138,7 @@ export function DualImageInput({
                 variant="ghost"
                 size="sm"
                 onClick={() => onChange('')}
-                className="gap-1.5 text-xs text-destructive hover:text-destructive"
+                className="gap-1.5 text-panel-caption text-destructive hover:text-destructive"
               >
                 <Trash2 className="size-4" />
                 حذف
@@ -159,7 +159,7 @@ export function DualImageInput({
         </div>
 
         {error && (
-          <p role="alert" className="text-xs text-destructive">
+          <p role="alert" className="text-panel-caption text-destructive">
             {error}
           </p>
         )}
@@ -184,7 +184,7 @@ export function DualImageInput({
               </Button>
             </div>
             {linkError && (
-              <p role="alert" className="text-xs text-destructive">
+              <p role="alert" className="text-panel-caption text-destructive">
                 {linkError}
               </p>
             )}
@@ -244,7 +244,7 @@ export function DualGalleryAdd({
           size="sm"
           aria-busy={uploading}
           onClick={() => fileRef.current?.click()}
-          className="gap-1.5 text-xs"
+          className="gap-1.5 text-panel-caption"
         >
           {uploading ? (
             <Loader2 className="size-4 animate-spin" />
@@ -298,7 +298,7 @@ export function DualGalleryAdd({
             </Button>
           </div>
           {linkError && (
-            <p role="alert" className="text-xs text-destructive">
+            <p role="alert" className="text-panel-caption text-destructive">
               {linkError}
             </p>
           )}

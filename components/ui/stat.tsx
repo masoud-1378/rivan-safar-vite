@@ -17,14 +17,14 @@ export function Stat({ label, value, unit, delta, deltaLabel = "نسبت به د
   const up = (delta ?? 0) >= 0;
   return (
     <div className={cn("min-w-0 overflow-hidden rounded-sm border border-border bg-card", size === "sm" ? "p-3" : "p-4", className)}>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-panel-caption text-muted-foreground">{label}</p>
       <div className="mt-1 flex items-end justify-between gap-2">
-        <p className={cn("min-w-0 font-bold leading-tight wrap-break-word", size === "sm" ? "text-lg" : "text-xl sm:text-2xl")}>
+        <p className={cn("min-w-0 wrap-break-word", size === "sm" ? "text-panel-title" : "text-panel-display")}>
           <span className="tabular-nums">{value}</span>
-          {unit && <span className="ms-1 inline-block text-xs font-normal text-muted-foreground">{unit}</span>}
+          {unit && <span className="ms-1 inline-block text-panel-caption font-normal text-muted-foreground">{unit}</span>}
         </p>
         {delta !== undefined && (
-          <span className={cn("inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold", up ? "text-success" : "text-destructive")} title={String(deltaLabel)}>
+          <span className={cn("inline-flex shrink-0 items-center gap-0.5 text-panel-caption font-semibold", up ? "text-success" : "text-destructive")} title={String(deltaLabel)}>
             {up ? <ArrowUpLeft className="size-3.5" /> : <ArrowDownLeft className="size-3.5" />}
             {faPercent(Math.abs(delta))}
           </span>

@@ -92,13 +92,13 @@ export function Command({
           aria-expanded
           aria-controls={listId}
           aria-autocomplete="list"
-          className="h-10 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/70"
+          className="h-10 flex-1 bg-transparent text-panel-body outline-none placeholder:text-muted-foreground/70"
         />
-        <kbd className="rounded border border-border px-1.5   text-[10px] text-muted-foreground">
+        <kbd className="rounded border border-border px-1.5   text-panel-micro text-muted-foreground">
           Esc
         </kbd>
       </div>
-      <div id={listId} role="listbox" className="max-h-72 overflow-auto p-1.5 text-sm">
+      <div id={listId} role="listbox" className="max-h-72 overflow-auto p-1.5 text-panel-body">
         {filtered.length === 0 && (
           <p className="px-2 py-6 text-center text-muted-foreground">
             {emptyText}
@@ -107,7 +107,7 @@ export function Command({
         {groups.map((g) => (
           <div key={g}>
             {g && (
-              <p className="px-2 pb-1 pt-2 text-[11px] text-muted-foreground">
+              <p className="px-2 pb-1 pt-2 text-panel-micro text-muted-foreground">
                 {g}
               </p>
             )}
@@ -138,7 +138,7 @@ export function Command({
                       <CornerDownLeft className="size-3.5 text-muted-foreground" />
                     ) : (
                       item.shortcut && (
-                        <kbd className="  text-[10px] text-muted-foreground">
+                        <kbd className="  text-panel-micro text-muted-foreground">
                           {item.shortcut}
                         </kbd>
                       )

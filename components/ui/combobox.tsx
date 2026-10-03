@@ -63,12 +63,12 @@ export function Combobox({ options, value = "", onChange, placeholder = "جست�
             if (e.key === "Enter" && open && filtered[index]) { e.preventDefault(); pick(filtered[index]); }
             if (e.key === "Escape") setOpen(false);
           }}
-          className="h-full min-w-0 flex-1 bg-transparent pe-1 text-sm leading-8 outline-none placeholder:text-muted-foreground/70"
+          className="h-full min-w-0 flex-1 bg-transparent pe-1 text-panel-body leading-8 outline-none placeholder:text-muted-foreground/70"
         />
         <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
       </div>
       <FloatPortal open={open} mounted={mounted} style={style} theme={theme} panelRef={panel} className="fixed z-50">
-        <ul id={listId} role="listbox" className="max-h-56 overflow-auto rounded-overlay border-line border-border bg-popover p-1 text-sm leading-7 shadow-overlay">
+        <ul id={listId} role="listbox" className="max-h-56 overflow-auto rounded-overlay border-line border-border bg-popover p-1 text-panel-body leading-7 shadow-overlay">
           {filtered.length === 0 && <li className="px-2.5 py-2 text-muted-foreground">{emptyText}</li>}
           {filtered.map((o, i) => (
             <li

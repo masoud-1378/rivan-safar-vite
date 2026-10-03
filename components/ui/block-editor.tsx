@@ -353,12 +353,12 @@ export default function BlockEditor({
     <div className="space-y-3">
       {(title || hint) && (
         <div>
-          {title ? <h3 className="text-sm font-semibold text-foreground">{title}</h3> : null}
-          {hint ? <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p> : null}
+          {title ? <h3 className="text-panel-body font-semibold text-foreground">{title}</h3> : null}
+          {hint ? <p className="mt-0.5 text-panel-caption text-muted-foreground">{hint}</p> : null}
         </div>
       )}
       {items.length === 0 ? (
-        <p className="rounded-sm border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+        <p className="rounded-sm border border-dashed border-border p-4 text-center text-panel-body text-muted-foreground">
           هنوز چیزی ثبت نشده است.
         </p>
       ) : null}
@@ -367,7 +367,7 @@ export default function BlockEditor({
         return (
           <div key={index} className="space-y-3 rounded-sm border border-border bg-card p-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-foreground">
+              <span className="text-panel-body font-semibold text-foreground">
                 {meta.itemLabel} {n}
               </span>
               <Button
@@ -390,7 +390,7 @@ export default function BlockEditor({
         <Plus />
         {addLabel ?? meta.addLabel}
       </Button>
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? <p className="text-panel-body text-destructive">{error}</p> : null}
     </div>
   );
 }

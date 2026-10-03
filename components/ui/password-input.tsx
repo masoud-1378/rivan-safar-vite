@@ -34,7 +34,7 @@ export function PasswordInput({ strength, className, onChange, value, defaultVal
           value={value}
           defaultValue={defaultValue}
           onChange={(e) => { setV(e.target.value); onChange?.(e); }}
-          className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/70"
+          className="h-full min-w-0 flex-1 bg-transparent text-panel-body outline-none placeholder:text-muted-foreground/70"
           {...props}
         />
         <button type="button" aria-label={show ? "پنهان کردن رمز" : "نمایش رمز"} aria-pressed={show} onClick={() => setShow((s) => !s)} className="flex size-8 cursor-pointer items-center justify-center rounded-control text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
@@ -48,7 +48,7 @@ export function PasswordInput({ strength, className, onChange, value, defaultVal
               <span key={i} className={cn("h-1 flex-1 rounded-full transition-colors", i <= level ? (level <= 1 ? "bg-destructive" : level === 2 ? "bg-warning" : "bg-success") : "bg-input")} />
             ))}
           </div>
-          <p className="text-[11px] text-muted-foreground">{level ? `قدرت رمز: ${LEVELS[level]}` : "حداقل ۸ نویسه، شامل حروف بزرگ و کوچک انگلیسی، عدد و نماد"}</p>
+          <p className="text-panel-micro text-muted-foreground">{level ? `قدرت رمز: ${LEVELS[level]}` : "حداقل ۸ نویسه، شامل حروف بزرگ و کوچک انگلیسی، عدد و نماد"}</p>
         </div>
       )}
     </div>

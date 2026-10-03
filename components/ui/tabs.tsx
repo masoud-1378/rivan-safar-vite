@@ -125,7 +125,7 @@ export function TabsTrigger({
       tabIndex={active ? 0 : -1}
       onClick={() => ctx.setValue(value)}
       className={cn(
-        "relative z-10 cursor-pointer text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+        "relative z-10 cursor-pointer text-panel-body transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
         ctx.variant === "segmented"
           ? cn(
               "rounded-sm px-3 py-1.5",

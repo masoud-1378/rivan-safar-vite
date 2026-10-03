@@ -59,7 +59,7 @@ export function Calendar({ value, defaultValue = null, onChange, min, max, markW
   return (
     <div className={cn("rounded-sm border border-border bg-card p-3", compact ? "w-[220px]" : "w-[260px]", className)}>
       <div className="flex items-center justify-between px-1">
-        <span className={cn("font-semibold", compact ? "text-xs" : "text-sm")}>
+        <span className={cn("font-semibold", compact ? "text-panel-caption" : "text-panel-body")}>
           {JALALI_MONTHS[view.jm - 1]} {fa(view.jy)}
         </span>
         <div className="flex gap-0.5">
@@ -67,7 +67,7 @@ export function Calendar({ value, defaultValue = null, onChange, min, max, markW
           <button type="button" aria-label="ماه بعد" onClick={() => move(1)} className={nav}><ChevronLeft className="size-4" /></button>
         </div>
       </div>
-      <div className={cn("mt-2 grid grid-cols-7 overflow-hidden text-center", compact ? "gap-px text-[10px]" : "gap-0.5 text-[11px]")} role="grid">
+      <div className={cn("mt-2 grid grid-cols-7 overflow-hidden text-center", compact ? "gap-px text-panel-micro" : "gap-0.5 text-panel-micro")} role="grid">
         {JALALI_WEEKDAYS_SHORT.map((d) => (
           <span key={d} className="py-1 text-muted-foreground/80" aria-hidden>{d}</span>
         ))}

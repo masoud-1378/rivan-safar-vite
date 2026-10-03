@@ -17,7 +17,7 @@ import type {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block space-y-1.5 text-sm">
+    <label className="block space-y-1.5 text-panel-body">
       <span className="font-medium">{label}</span>
       {children}
     </label>
@@ -115,13 +115,13 @@ export function TourPickerDialog({
         </div>
         <div className="max-h-72 space-y-1 overflow-y-auto rounded-lg border p-1">
           {loading && (
-            <p className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+            <p className="flex items-center justify-center gap-2 py-6 text-panel-body text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               در حال جست‌وجو…
             </p>
           )}
           {!loading && hits.length === 0 && (
-            <p className="py-6 text-center text-sm text-muted-foreground">توری پیدا نشد.</p>
+            <p className="py-6 text-center text-panel-body text-muted-foreground">توری پیدا نشد.</p>
           )}
           {hits.map((h) => {
             const active = selected?.slug === h.slug;
@@ -131,17 +131,17 @@ export function TourPickerDialog({
                 key={h.slug}
                 type="button"
                 onClick={() => setSelected(h)}
-                className={`flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-right text-sm transition-colors ${
+                className={`flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-right text-panel-body transition-colors ${
                   active ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'
                 }`}
               >
                 <span className="min-w-0">
                   <span className="block truncate font-medium">{h.title}</span>
-                  <span className="block truncate text-xs text-muted-foreground">
+                  <span className="block truncate text-panel-caption text-muted-foreground">
                     {[h.destination, h.duration, h.statusLabel].filter(Boolean).join(' · ')}
                   </span>
                 </span>
-                {price && <span className="shrink-0 text-xs font-bold text-primary">{price}</span>}
+                {price && <span className="shrink-0 text-panel-caption font-bold text-primary">{price}</span>}
               </button>
             );
           })}
@@ -397,7 +397,7 @@ export function GalleryDialog({
       <div className="space-y-3" dir="rtl">
         <div className="max-h-96 space-y-3 overflow-y-auto">
           {images.length === 0 && (
-            <p className="py-6 text-center text-sm text-muted-foreground">
+            <p className="py-6 text-center text-panel-body text-muted-foreground">
               هنوز عکسی انتخاب نشده است.
             </p>
           )}
@@ -409,13 +409,13 @@ export function GalleryDialog({
                   value={img.caption ?? ''}
                   onChange={(e) => setImage(i, { caption: e.target.value || null })}
                   placeholder="زیرنویس (اختیاری)"
-                  className="text-sm"
+                  className="text-panel-body"
                 />
                 <Input
                   value={img.alt ?? ''}
                   onChange={(e) => setImage(i, { alt: e.target.value || null })}
                   placeholder="متن جایگزین (اختیاری)"
-                  className="text-sm"
+                  className="text-panel-body"
                 />
               </div>
               <div className="flex shrink-0 flex-col gap-1">
@@ -516,7 +516,7 @@ export function CallCtaDialog({
             <Input value={phoneHref} onChange={(e) => setPhoneHref(e.target.value)} dir="ltr" className="text-left" placeholder="tel:02633350139" />
           </Field>
         </div>
-        {!telOk && <p className="text-sm text-red-600">نشانی تماس باید با tel: شروع شود؛ مثلاً tel:02633350139</p>}
+        {!telOk && <p className="text-panel-body text-red-600">نشانی تماس باید با tel: شروع شود؛ مثلاً tel:02633350139</p>}
         <Field label="یادداشت زیر دکمه (اختیاری)">
           <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="شنبه تا پنجشنبه، ۹ تا ۲۱" />
         </Field>

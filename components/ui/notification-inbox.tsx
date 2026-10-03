@@ -35,27 +35,27 @@ export function NotificationInbox({ items, onRead, onReadAll, className }: { ite
       trigger={
         <span className="relative inline-flex size-9 items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:text-foreground">
           <Bell className="size-4" />
-          {unread > 0 && <span className="absolute -end-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold text-brand-foreground">{fa(unread)}</span>}
+          {unread > 0 && <span className="absolute -end-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-panel-micro font-bold text-brand-foreground">{fa(unread)}</span>}
         </span>
       }
     >
       <div className="flex items-center justify-between border-b border-border px-3 py-2">
-        <div className="inline-flex rounded-sm bg-background p-0.5 text-xs">
+        <div className="inline-flex rounded-sm bg-background p-0.5 text-panel-caption">
           {(["all", "unread"] as const).map((t) => (
             <button key={t} type="button" onClick={() => setTab(t)} className={cn("cursor-pointer rounded px-2 py-1 transition-colors", tab === t ? "bg-secondary font-semibold" : "text-muted-foreground")}>
               {t === "all" ? "همه" : `نخوانده (${fa(unread)})`}
             </button>
           ))}
         </div>
-        <button type="button" onClick={onReadAll} disabled={!unread} className="inline-flex cursor-pointer items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground disabled:opacity-40">
+        <button type="button" onClick={onReadAll} disabled={!unread} className="inline-flex cursor-pointer items-center gap-1 text-panel-micro text-muted-foreground hover:text-foreground disabled:opacity-40">
           <CheckCheck className="size-3.5" />خواندن همه
         </button>
       </div>
       <div className="max-h-80 overflow-auto">
-        {groups.length === 0 && <p className="p-6 text-center text-xs text-muted-foreground">اعلانی نیست.</p>}
+        {groups.length === 0 && <p className="p-6 text-center text-panel-caption text-muted-foreground">اعلانی نیست.</p>}
         {groups.map(([g, l]) => (
           <div key={g}>
-            <p className="px-3 pb-1 pt-2 text-[11px] text-muted-foreground">{g}</p>
+            <p className="px-3 pb-1 pt-2 text-panel-micro text-muted-foreground">{g}</p>
             {l.map((n) => (
               <a key={n.id} href={n.href ?? "#"} onClick={() => onRead?.(n.id)} className={cn("flex gap-3 px-3 py-2.5 transition-colors hover:bg-accent/60", !n.read && "bg-accent/30")}>
                 <span className="relative mt-0.5">
@@ -63,9 +63,9 @@ export function NotificationInbox({ items, onRead, onReadAll, className }: { ite
                   {!n.read && <span className="absolute -end-0.5 -top-0.5 size-2 rounded-full bg-brand" />}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-medium leading-5">{n.title}</span>
-                  {n.description && <span className="block truncate text-xs text-muted-foreground">{n.description}</span>}
-                  <span className="block text-[11px] text-muted-foreground">{timeAgo(n.date)}</span>
+                  <span className="block text-panel-label leading-5">{n.title}</span>
+                  {n.description && <span className="block truncate text-panel-caption text-muted-foreground">{n.description}</span>}
+                  <span className="block text-panel-micro text-muted-foreground">{timeAgo(n.date)}</span>
                 </span>
               </a>
             ))}

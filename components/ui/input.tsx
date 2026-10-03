@@ -26,7 +26,7 @@ export function Input({ className, type, startAddon, endAddon, error, id, dir, r
       dir={grouped ? undefined : dir}
       aria-invalid={error ? true : undefined}
       className={cn(
-        "flex w-full min-w-0 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/70",
+        "flex w-full min-w-0 bg-transparent text-panel-body text-foreground placeholder:text-muted-foreground/70",
         "disabled:cursor-not-allowed disabled:opacity-50",
         grouped
           ? "h-full px-0 outline-none"
@@ -50,7 +50,7 @@ export function Input({ className, type, startAddon, endAddon, error, id, dir, r
     <div
       dir={dir}
       className={cn(
-        "flex h-10 w-full items-center gap-2 rounded-field border-0 border-b border-input bg-transparent px-3 text-sm transition-all duration-(--motion) ease-motion",
+        "flex h-10 w-full items-center gap-2 rounded-field border-0 border-b border-input bg-transparent px-3 text-panel-body transition-all duration-(--motion) ease-motion",
         "focus-within:border-brand",
         error && "border-destructive",
         className,
@@ -69,13 +69,13 @@ function withError(node: React.ReactNode, error?: string) {
   return (
     <div className="space-y-1.5">
       {node}
-      <p className="text-xs text-destructive">{error}</p>
+      <p className="text-panel-caption text-destructive">{error}</p>
     </div>
   );
 }
 
 export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn("text-sm font-medium text-foreground/90", className)} {...props} />;
+  return <label className={cn("text-panel-label text-foreground/90", className)} {...props} />;
 }
 
 /** Stacks a Label above a control with consistent spacing. */
@@ -99,9 +99,9 @@ export function Field({
       {label ? <Label htmlFor={htmlFor}>{label}</Label> : null}
       {children}
       {error ? (
-        <p className="text-xs text-destructive" role="alert">{error}</p>
+        <p className="text-panel-caption text-destructive" role="alert">{error}</p>
       ) : (
-        hint && <p className="text-xs text-muted-foreground">{hint}</p>
+        hint && <p className="text-panel-caption text-muted-foreground">{hint}</p>
       )}
     </div>
   );

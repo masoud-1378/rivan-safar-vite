@@ -250,6 +250,60 @@ html, body {
   font-weight: var(--font-weight-medium);
 }
 
+/* --- مقیاس تایپوگرافی پنل مدیریت (تیم ۷، موج ۶) ---
+   تنها مجموعهٔ مجاز برای تایپ در کد جدید داخل ‎.admin-vibefarsi‎.
+   هر سطح، خانواده + سایز + ارتفاع خط + وزن پیش‌فرض را یکجا می‌بندد؛
+   به‌جای سایزهای خام (text-xs / text-sm / ...) و text-[...] از همین‌ها
+   استفاده کنید. تغییر وزن روی همین سطوح با font-medium/semibold/bold
+   آزاد است (یوتیلیتی هسته دیرتر می‌آید و در تساوی می‌برد).
+   سقف وزن: وزیرمتن تا ۷۰۰ و پینار تا ۸۰۰ ثبت شده؛ font-black (۹۰۰) روی
+   هیچ‌کدام واقعی نیست و مرورگر توپرِ مصنوعی می‌زند — ممنوع. */
+@utility text-panel-display {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  line-height: 1.4;
+  font-weight: var(--font-weight-bold);
+  text-wrap: balance;
+}
+@utility text-panel-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  line-height: 1.5;
+  font-weight: var(--font-weight-bold);
+  text-wrap: balance;
+}
+@utility text-panel-heading {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  line-height: 1.6;
+  font-weight: var(--font-weight-semibold);
+  text-wrap: balance;
+}
+@utility text-panel-body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.8;
+  font-weight: var(--font-weight-regular);
+}
+@utility text-panel-label {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: var(--font-weight-medium);
+}
+@utility text-panel-caption {
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.7;
+  font-weight: var(--font-weight-medium);
+}
+@utility text-panel-micro {
+  font-family: var(--font-body);
+  font-size: 11px;
+  line-height: 1.5;
+  font-weight: var(--font-weight-medium);
+}
+
 .text-link-ui {
   font-size: clamp(14px, 1vw, 15px);
   font-weight: var(--font-weight-semibold);
@@ -1677,7 +1731,12 @@ body:has(.admin-vibefarsi) {
 }
 /* --- vibefarsi:theme-paper-end --- */
 
-/* کاغذ: تیترهای پنل با پینار FD وزن ۷۰۰ */
+/* کاغذ: تیترهای پنل با پینار FD.
+   (مدیر برنامه، موج ۶) وزن اجباری ۷۰۰ موقتاً برگردانده شد: برداشتنش
+   ده‌ها تیترِ هنوزمهاجرت‌نکرده را ۷۰۰←۶۰۰ روشن می‌کرد (رگرسیون بصری،
+   گزارش QC). وقتی مهاجرت همهٔ صفحه‌ها به text-panel-* تمام شد
+   (مأموریت تیم ۲)، این خط حذف می‌شود و وزن را فقط سطح مقیاس یا
+   کلاس روی خودش تعیین می‌کند. */
 .admin-vibefarsi h1,
 .admin-vibefarsi h2,
 .admin-vibefarsi h3,
@@ -1685,7 +1744,7 @@ body:has(.admin-vibefarsi) {
 .admin-vibefarsi h5,
 .admin-vibefarsi h6 {
   font-family: var(--type-display);
-  font-weight: var(--type-display-weight);
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0;
 }
 

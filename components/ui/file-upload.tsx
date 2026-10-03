@@ -51,15 +51,15 @@ export function FileUpload({ accept, multiple = true, maxSize, onFiles, hint, cl
         )}
       >
         <FileUp className="size-5 text-muted-foreground" />
-        <p className="text-sm">فایل را این‌جا رها کنید یا <span className="font-medium underline underline-offset-4">انتخاب کنید</span></p>
-        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+        <p className="text-panel-body">فایل را این‌جا رها کنید یا <span className="font-medium underline underline-offset-4">انتخاب کنید</span></p>
+        {hint && <p className="text-panel-caption text-muted-foreground">{hint}</p>}
         <input ref={inputRef} type="file" accept={accept} multiple={multiple} className="sr-only" onChange={(e) => add(e.target.files)} />
       </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p className="text-panel-caption text-destructive">{error}</p>}
       {files.length > 0 && (
         <ul className="divide-y divide-border rounded-field border-line border-border">
           {files.map((f, i) => (
-            <li key={`${f.name}-${i}`} className="flex items-center gap-2 px-3 py-2 text-xs">
+            <li key={`${f.name}-${i}`} className="flex items-center gap-2 px-3 py-2 text-panel-caption">
               <span className="flex-1 truncate" dir="auto">{f.name}</span>
               <span className="text-muted-foreground">{faFileSize(f.size)}</span>
               <button

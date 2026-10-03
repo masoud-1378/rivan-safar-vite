@@ -21,7 +21,7 @@ export function Select({ className, options, placeholder, ref, ...props }: Selec
       <select
         ref={ref}
         className={cn(
-          "h-10 w-full cursor-pointer appearance-none rounded-field border-0 border-b border-input bg-transparent ps-3 pe-9 text-sm text-foreground",
+          "h-10 w-full cursor-pointer appearance-none rounded-field border-0 border-b border-input bg-transparent ps-3 pe-9 text-panel-body text-foreground",
           "focus-visible:outline-none focus-visible:border-brand",
           "disabled:cursor-not-allowed disabled:opacity-50",
           className,

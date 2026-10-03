@@ -64,7 +64,7 @@ type Sort<T> = { key: keyof T & string; dir: "asc" | "desc" } | null;
  */
 export function ResponsivePagination({ page, total, onChange }: { page: number; total: number; onChange: (page: number) => void }) {
   const prevNext =
-    "flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1 rounded-sm border border-border px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40";
+    "flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1 rounded-sm border border-border px-3 text-panel-body text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40";
   return (
     <>
       <div className="flex items-center justify-between gap-2 sm:hidden">
@@ -72,7 +72,7 @@ export function ResponsivePagination({ page, total, onChange }: { page: number; 
           <ChevronRight className="size-4" />
           قبلی
         </button>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-panel-caption text-muted-foreground">
           صفحه‌ی {fa(page)} از {fa(total)}
         </span>
         <button type="button" aria-label="صفحه‌ی بعد" disabled={page >= total} onClick={() => onChange(page + 1)} className={prevNext}>
@@ -81,7 +81,7 @@ export function ResponsivePagination({ page, total, onChange }: { page: number; 
         </button>
       </div>
       <div className="hidden flex-wrap items-center justify-between gap-2 sm:flex">
-        <span className="text-xs text-muted-foreground">
+        <span className="text-panel-caption text-muted-foreground">
           صفحه‌ی {fa(page)} از {fa(total)}
         </span>
         <Pagination page={page} total={total} onChange={onChange} size="sm" />
@@ -226,7 +226,7 @@ export function DataTable<T extends Record<string, unknown>>({ rows, columns, ro
             </div>
           )}
           {toolbar}
-          <span className="text-xs text-muted-foreground">{fa(sorted.length)} مورد</span>
+          <span className="text-panel-caption text-muted-foreground">{fa(sorted.length)} مورد</span>
         </div>
       )}
 

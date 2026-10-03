@@ -48,7 +48,7 @@ export function NumberField({ value, defaultValue = 0, onChange, min = -Infinity
           const parsed = Number(en(e.target.value).replace(/[^\d.-]/g, ""));
           if (!Number.isNaN(parsed)) set(parsed);
         }}
-        className="w-14 border-x border-input bg-transparent text-center text-sm font-semibold outline-none"
+        className="w-14 border-x border-input bg-transparent text-center text-panel-body font-semibold outline-none"
       />
       <button type="button" aria-label="کاهش" disabled={disabled || n <= min} onClick={() => set(n - step)} className={btn}>
         <Minus className="size-4" />

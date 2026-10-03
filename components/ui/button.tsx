@@ -16,8 +16,8 @@ const variants: Record<Variant, string> = {
 const sizes: Record<Size, string> = {
   // موبایل‌اول: سایزهای کوچک در موبایل حداقل ۴۴px تارگت لمسی دارند؛
   // از sm به بعد همان ارتفاع طراحی (h-8 / size-10) برمی‌گردد.
-  sm: "h-8 min-h-11 px-3 text-[13px] gap-1.5 md:min-h-0",
-  md: "h-10 px-4 text-sm gap-2",
+  sm: "h-8 min-h-11 px-3 text-panel-body gap-1.5 md:min-h-0",
+  md: "h-10 px-4 text-panel-body gap-2",
   lg: "h-12 px-6 text-base gap-2.5",
   icon: "size-10 min-h-11 min-w-11 md:min-h-0 md:min-w-0",
 };

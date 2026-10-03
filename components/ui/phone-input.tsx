@@ -30,7 +30,7 @@ export function PhoneInput({ value, onChange, className, id, autoFocus }: PhoneI
   return (
     <div className={cn("space-y-1.5", className)}>
       <div className={cn("flex h-10 items-center gap-2 rounded-field border-0 border-b bg-transparent px-3 transition-colors focus-within:border-brand", digits.length === 10 && !valid ? "border-destructive" : "border-input")} dir="ltr">
-        <span className="text-sm text-muted-foreground">+98</span>
+        <span className="text-panel-body text-muted-foreground">+98</span>
         <input
           id={id}
           type="tel"
@@ -40,12 +40,12 @@ export function PhoneInput({ value, onChange, className, id, autoFocus }: PhoneI
           value={formatIranMobile(digits)}
           onChange={(e) => set(e.target.value)}
           placeholder="۹۱۲ ۳۴۵ ۶۷۸۹"
-          className="h-full min-w-0 flex-1 bg-transparent text-sm tabular-nums outline-none placeholder:text-muted-foreground/50"
+          className="h-full min-w-0 flex-1 bg-transparent text-panel-body tabular-nums outline-none placeholder:text-muted-foreground/50"
           aria-invalid={digits.length === 10 && !valid ? true : undefined}
         />
         {valid && <Check className="size-4 text-success" />}
       </div>
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-panel-micro text-muted-foreground">
         {op ? `اپراتور: ${op}` : digits.length === 10 && !valid ? <span className="text-destructive">شماره باید با ۹ شروع شود و ۱۰ رقم باشد</span> : "بدون صفر اول هم می‌توانید وارد کنید"}
       </p>
     </div>

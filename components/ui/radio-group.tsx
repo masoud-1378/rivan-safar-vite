@@ -59,7 +59,7 @@ export function RadioGroup({ options, value, defaultValue, onChange, variant = "
             onClick={() => select(o.value)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
-              "flex w-full cursor-pointer items-start gap-2.5 text-start text-sm transition-colors",
+              "flex w-full cursor-pointer items-start gap-2.5 text-start text-panel-body transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               "disabled:cursor-not-allowed disabled:opacity-50",
               variant === "cards" && "rounded-field border-line p-3",
@@ -71,7 +71,7 @@ export function RadioGroup({ options, value, defaultValue, onChange, variant = "
             </span>
             <span>
               <span className="block font-medium leading-5">{o.label}</span>
-              {o.description && <span className="block text-xs text-muted-foreground">{o.description}</span>}
+              {o.description && <span className="block text-panel-caption text-muted-foreground">{o.description}</span>}
             </span>
           </button>
         );

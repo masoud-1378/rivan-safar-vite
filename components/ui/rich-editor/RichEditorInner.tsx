@@ -110,7 +110,7 @@ function Divider() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block space-y-1.5 text-sm">
+    <label className="block space-y-1.5 text-panel-body">
       <span className="font-medium">{label}</span>
       {children}
     </label>
@@ -257,7 +257,7 @@ function VideoDialog({
           dir="ltr"
           className="text-left"
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-panel-body text-red-600">{error}</p>}
       </div>
     </Dialog>
   );

@@ -16,8 +16,8 @@ export function EmptyState({ icon: Icon = Inbox, title, description, action, cla
       <span className="flex size-10 items-center justify-center rounded-full bg-secondary">
         <Icon className="size-5 text-muted-foreground" />
       </span>
-      <p className="text-sm font-medium">{title}</p>
-      {description && <p className="max-w-xs text-xs leading-5 text-muted-foreground">{description}</p>}
+      <p className="text-panel-label">{title}</p>
+      {description && <p className="max-w-xs text-panel-caption leading-5 text-muted-foreground">{description}</p>}
       {action && <div className="mt-2">{action}</div>}
     </div>
   );

@@ -42,7 +42,7 @@ export function Collapsible({ trigger, openLabel, open, defaultOpen = false, onO
         disabled={disabled}
         onClick={toggle}
         className={cn(
-          "inline-flex cursor-pointer items-center gap-1.5 rounded-sm text-sm font-medium text-foreground/90 transition-colors hover:text-foreground",
+          "inline-flex cursor-pointer items-center gap-1.5 rounded-sm text-panel-label text-foreground/90 transition-colors hover:text-foreground",
           // موبایل‌اول: تارگت لمسی ۴۴px در موبایل.
           "max-md:min-h-11",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 disabled:cursor-not-allowed disabled:opacity-50",

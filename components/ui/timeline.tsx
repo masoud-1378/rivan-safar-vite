@@ -14,9 +14,9 @@ export function Timeline({ items, activeIndex = 0, className }: { items: Timelin
       {items.map((it, i) => (
         <li key={i} className="relative">
           <span className={cn("absolute -start-[26px] top-1.5 size-2.5 rounded-full border-2 border-background", i === activeIndex ? "bg-primary" : "bg-muted-foreground/50")} />
-          <p className="text-sm font-medium leading-5">{it.title}</p>
-          <p className="text-[11px] text-muted-foreground">{it.date instanceof Date ? formatJalali(it.date) : it.date}</p>
-          {it.description && <p className="mt-1 text-xs text-muted-foreground">{it.description}</p>}
+          <p className="text-panel-label leading-5">{it.title}</p>
+          <p className="text-panel-micro text-muted-foreground">{it.date instanceof Date ? formatJalali(it.date) : it.date}</p>
+          {it.description && <p className="mt-1 text-panel-caption text-muted-foreground">{it.description}</p>}
         </li>
       ))}
     </ol>
