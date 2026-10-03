@@ -175,13 +175,20 @@ function restToTour(r: Row, priceNoteDefault?: string): TourItem {
 /** نرمالایز گالری: فقط آیتم‌های دارای آدرس می‌مانند. */
 function galleryCol(v: unknown): TourItem['gallery'] {
   if (!Array.isArray(v) || v.length === 0) return undefined;
-  const out: Array<{ url: string; caption?: string }> = [];
+  const out: NonNullable<TourItem['gallery']> = [];
   for (const item of v) {
-    const o = (item ?? {}) as { url?: unknown; caption?: unknown };
+    const o = (item ?? {}) as { url?: unknown; caption?: unknown; type?: unknown; aspect?: unknown };
     const url = typeof o.url === 'string' ? o.url.trim() : '';
     if (!url) continue;
     const caption = typeof o.caption === 'string' ? o.caption.trim() : '';
-    out.push(caption ? { url, caption } : { url });
+    // موج ۶: ویدیو بودن و نسبتش از ستون gallery عبور می‌کند؛ بقیهٔ مقادیر
+    // (از جمله آیتم‌های قدیمیِ بدون type) عکس می‌مانند.
+    const next: NonNullable<TourItem['gallery']>[number] = caption ? { url, caption } : { url };
+    if (o.type === 'video') {
+      next.type = 'video';
+      next.aspect = o.aspect === 'square' ? 'square' : o.aspect === 'portrait' ? 'portrait' : 'landscape';
+    }
+    out.push(next);
   }
   return out.length > 0 ? out : undefined;
 }

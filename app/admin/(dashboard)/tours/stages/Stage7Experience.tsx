@@ -9,6 +9,7 @@ import {
   Star,
   ImagePlus,
   X,
+  Play,
   MessageSquareHeart,
   Images,
   Loader2,
@@ -17,10 +18,16 @@ import {
   EyeOff,
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { AlertDialog } from '@/components/ui/alert-dialog';
-import { DualGalleryAdd, DualImageInput } from '@/components/ui/dual-image-input';
+import {
+  DualGalleryAdd,
+  DualImageInput,
+  GALLERY_VIDEO_ASPECT_OPTIONS,
+  type GalleryVideoAspect,
+} from '@/components/ui/dual-image-input';
 import { useToast } from '@/components/ui/toast';
 import type { TourInput } from '../actions';
 import {
@@ -35,6 +42,7 @@ import type {
   TourLeaderItem,
   TourReviewItem,
   TourGalleryItem,
+  TourGalleryAspect,
   LeaderInput,
   LeaderJoinMode,
 } from '../experience-types';
@@ -43,6 +51,13 @@ interface Stage7ExperienceProps {
   data: TourInput;
   onChange: (fields: Partial<TourInput>) => void;
 }
+
+/** کلاس نسبت تصویر پیش‌نمایش ویدیو در پنل — آینهٔ نسبت واقعی روی سایت. */
+const PANEL_VIDEO_ASPECT_CLS: Record<TourGalleryAspect, string> = {
+  landscape: 'aspect-video',
+  square: 'aspect-square',
+  portrait: 'aspect-[9/16]',
+};
 
 const EMPTY_LEADER: LeaderInput = { name: '', photo: '', bio: '', languages: '', joinMode: 'from_origin' };
 
@@ -248,6 +263,11 @@ export default function Stage7Experience({ data, onChange }: Stage7ExperiencePro
   function setCaption(i: number, caption: string) {
     onChange({ gallery: gallery.map((g, idx) => (idx === i ? { ...g, caption } : g)) });
   }
+  function setVideoAspect(i: number, aspect: GalleryVideoAspect) {
+    onChange({
+      gallery: gallery.map((g, idx) => (idx === i ? { ...g, type: 'video' as const, aspect } : g)),
+    });
+  }
   function removeGalleryItem(i: number) {
     const url = gallery[i]?.url;
     onChange({ gallery: gallery.filter((_, idx) => idx !== i) });
@@ -451,35 +471,70 @@ export default function Stage7Experience({ data, onChange }: Stage7ExperiencePro
       <section className="rounded-card border border-border bg-card p-5">
         <div className="flex items-center gap-2 mb-1">
           <Images className="w-5 h-5 text-brand-orange" />
-          <h3 className="text-h4 font-bold text-text-heading">گالری عکس واقعی</h3>
+          <h3 className="text-panel-heading font-bold text-text-heading">گالری عکس و ویدیوی واقعی</h3>
         </div>
-        <p className="text-body-sm text-text-secondary mb-4">
-          مسافر می‌خواهد ببیند پولش دقیقاً کجا می‌رود: ۶ تا ۱۰ عکس واقعی از هتل و مقصد، نه استوک.
+        <p className="text-panel-body text-text-secondary mb-4">
+          مسافر می‌خواهد ببیند پولش دقیقاً کجا می‌رود: ۶ تا ۱۰ عکس و ویدیوی واقعی از هتل و مقصد، نه استوک.
         </p>
 
         {gallery.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
-            {gallery.map((g, i) => (
-              <div key={`${g.url}-${i}`} className="rounded-control border border-border overflow-hidden bg-background">
-                <div className="relative aspect-[4/3]">
-                  <img src={g.url} alt={g.caption || 'عکس گالری تور'} className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removeGalleryItem(i)}
-                    className="absolute top-1.5 left-1.5 rounded-full bg-black/60 text-white p-1.5 hover:bg-black/80"
-                    title="حذف عکس"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+            {gallery.map((g, i) => {
+              const isVideo = g.type === 'video';
+              return (
+                <div key={`${g.url}-${i}`} className="rounded-control border border-border overflow-hidden bg-background">
+                  <div className={`relative ${isVideo ? PANEL_VIDEO_ASPECT_CLS[g.aspect ?? 'landscape'] : 'aspect-[4/3]'}`}>
+                    {isVideo ? (
+                      <>
+                        <video
+                          src={g.url}
+                          muted
+                          playsInline
+                          preload="metadata"
+                          className="w-full h-full object-cover"
+                          aria-label={g.caption || 'ویدیوی گالری تور'}
+                        />
+                        <div className="absolute inset-0 grid place-items-center pointer-events-none" aria-hidden>
+                          <span className="rounded-full bg-black/60 p-2.5">
+                            <Play className="w-5 h-5 text-white fill-white" />
+                          </span>
+                        </div>
+                        <span className="absolute top-1.5 start-1.5 rounded-sm bg-black/60 px-1.5 py-0.5 text-panel-micro text-white">
+                          ویدیو
+                        </span>
+                      </>
+                    ) : (
+                      <img src={g.url} alt={g.caption || 'عکس گالری تور'} className="w-full h-full object-cover" />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeGalleryItem(i)}
+                      className="absolute top-1.5 end-1.5 rounded-full bg-black/60 text-white p-1.5 hover:bg-black/80"
+                      title={isVideo ? 'حذف ویدیو' : 'حذف عکس'}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {isVideo && (
+                    <div className="px-2 pt-2">
+                      <Select
+                        value={g.aspect ?? 'landscape'}
+                        onChange={(e) => setVideoAspect(i, e.target.value as GalleryVideoAspect)}
+                        options={GALLERY_VIDEO_ASPECT_OPTIONS}
+                        aria-label="نسبت تصویر ویدیو"
+                        className="text-panel-caption h-9"
+                      />
+                    </div>
+                  )}
+                  <Input
+                    value={g.caption}
+                    onChange={(e) => setCaption(i, e.target.value)}
+                    placeholder={isVideo ? 'زیرنویس ویدیو…' : 'زیرنویس عکس…'}
+                    className="border-0 rounded-none text-panel-caption"
+                  />
                 </div>
-                <Input
-                  value={g.caption}
-                  onChange={(e) => setCaption(i, e.target.value)}
-                  placeholder="زیرنویس عکس…"
-                  className="border-0 rounded-none text-caption"
-                />
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -490,8 +545,16 @@ export default function Stage7Experience({ data, onChange }: Stage7ExperiencePro
             onChange({ gallery: [...gallery, { url, caption: '' }].slice(0, 30) });
             toast({ title: 'عکس با لینک اضافه شد' });
           }}
+          videoAdd={{
+            onAdd: (url, aspect) => {
+              onChange({
+                gallery: [...gallery, { url, caption: '', type: 'video' as const, aspect }].slice(0, 30),
+              });
+              toast({ title: 'ویدیو به گالری اضافه شد.' });
+            },
+          }}
         />
-        <p className="text-caption text-text-secondary mt-2">
+        <p className="text-panel-caption text-text-secondary mt-2">
           اگر گالری خالی بماند، این بخش روی سایت نمایش داده نمی‌شود.
         </p>
       </section>

@@ -1,4 +1,5 @@
 import type { JSONContent } from '@/lib/rich-text';
+import type { TourGalleryAspect, TourGalleryMediaType } from '@/app/admin/(dashboard)/tours/experience-types';
 
 /** یک روز از برنامهٔ سفر (آینهٔ ساختاری TourItineraryDayItem در پنل) */
 export interface TourItineraryDay {
@@ -180,8 +181,15 @@ export interface TourItem {
   leaderId?: string;
   /**
    * موج ۴ — گالری عکس واقعی (ستون gallery). خالی یعنی بخش نمایش داده نمی‌شود.
+   * موج ۶ — ترکیبی شد: type غایب یعنی عکس (آیتم‌های قدیمی نمی‌شکنند)؛ ویدیو
+   * نسبتش را در aspect دارد (۱۶:۹ افقی / مربعی / ۹:۱۶ عمودی).
    */
-  gallery?: Array<{ url: string; caption?: string }>;
+  gallery?: Array<{
+    url: string;
+    caption?: string;
+    type?: TourGalleryMediaType;
+    aspect?: TourGalleryAspect;
+  }>;
   /**
    * موج ۴ — نظرهای تأییدشدهٔ مسافران (فقط is_visible). خالی یعنی بخش
    * نمایش داده نمی‌شود.

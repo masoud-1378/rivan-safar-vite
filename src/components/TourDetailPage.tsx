@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Phone, Calendar, Clock, MapPin, Plane, ShieldCheck, CheckCircle2, 
   XCircle, Building2, User, Send, Check, AlertCircle, HelpCircle, 
-  ChevronLeft, Sparkles, FileText, ArrowRight, CalendarDays, FileCheck2,
+  ChevronLeft, ChevronRight, X, Play, Sparkles, FileText, ArrowRight, CalendarDays, FileCheck2,
   Headphones, Mic, Luggage, Wallet, BadgeCheck, Users, Star, MessageSquareHeart, Images
 } from 'lucide-react';
 import { type TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
@@ -28,6 +28,93 @@ interface TourDetailPageProps {
   onNavigate: (path: string) => void;
 }
 
+type GalleryItem = NonNullable<TourItem['gallery']>[number];
+
+/**
+ * لایت‌باکس گالری ترکیبی (موج ۶): عکس و ویدیو را با ناوبری مشترک نشان می‌دهد.
+ * راست‌چین: «بعدی» به سمت چپ است (ChevronLeft) و «قبلی» به سمت راست.
+ */
+function GalleryLightbox({
+  items,
+  index,
+  fallbackAlt,
+  onClose,
+  onNavigate,
+}: {
+  items: GalleryItem[];
+  index: number;
+  fallbackAlt: string;
+  onClose: () => void;
+  onNavigate: (i: number) => void;
+}) {
+  const item = items[index];
+  if (!item) return null;
+  const isVideo = item.type === 'video';
+  const count = items.length;
+  const goNext = () => onNavigate((index + 1) % count);
+  const goPrev = () => onNavigate((index - 1 + count) % count);
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={isVideo ? 'پخش ویدیو' : 'نمایش عکس'}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="w-full max-w-4xl flex items-center justify-between mb-3">
+        <span className="text-caption text-white/70">
+          {fa(index + 1)} از {fa(count)}
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="بستن"
+          className="min-w-11 min-h-11 grid place-items-center rounded-full text-white hover:bg-white/10"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+      <div className="relative w-full max-w-4xl flex items-center justify-center">
+        <button
+          type="button"
+          onClick={goPrev}
+          aria-label="قبلی"
+          className="absolute start-2 z-10 min-w-11 min-h-11 grid place-items-center rounded-full bg-black/60 text-white hover:bg-black/80"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+        {isVideo ? (
+          <video
+            key={item.url}
+            src={item.url}
+            controls
+            autoPlay
+            playsInline
+            className="max-h-[70vh] w-auto max-w-full rounded-card"
+            aria-label={item.caption || fallbackAlt}
+          />
+        ) : (
+          <div className="relative w-full aspect-[16/10] max-h-[70vh]">
+            <SmartImage src={item.url} alt={item.caption || fallbackAlt} className="object-contain" sizes="100vw" />
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={goNext}
+          aria-label="بعدی"
+          className="absolute end-2 z-10 min-w-11 min-h-11 grid place-items-center rounded-full bg-black/60 text-white hover:bg-black/80"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+      </div>
+      {item.caption && <p className="mt-3 text-body-sm text-white/80 text-center">{item.caption}</p>}
+    </div>
+  );
+}
+
 export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageProps) {
   const contact = useContact();
   const { tours, countries, cities, guides, exhibitions } = useContent();
@@ -47,6 +134,27 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
   const [submitStored, setSubmitStored] = useState(true);
   const [errors, setErrors] = useState({ name: '', phone: '' });
   const [formError, setFormError] = useState('');
+
+  // موج ۶ — لایت‌باکس گالری ترکیبی (عکس + ویدیو)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const galleryCount = tour?.gallery?.length ?? 0;
+
+  useEffect(() => {
+    if (lightboxIndex === null || galleryCount === 0) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxIndex(null);
+      // راست‌چین: «بعدی» به سمت چپ است، پس ArrowLeft یعنی جلو.
+      else if (e.key === 'ArrowLeft') setLightboxIndex((i) => (i === null ? i : (i + 1) % galleryCount));
+      else if (e.key === 'ArrowRight') setLightboxIndex((i) => (i === null ? i : (i - 1 + galleryCount) % galleryCount));
+    };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [lightboxIndex, galleryCount]);
 
   if (!tour) {
     return (
@@ -1029,7 +1137,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
         </section>
       )}
 
-      {/* ---------------- گالری واقعی (موج ۴؛ فقط وقتی عکس هست) ---------------- */}
+      {/* ---------------- گالری واقعی (موج ۴ عکس؛ موج ۶ ترکیبی عکس+ویدیو) ---------------- */}
       {tour.gallery && tour.gallery.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
           <div className="flex items-center gap-2 mb-1">
@@ -1037,21 +1145,75 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
             <h2 className="text-h3 text-text-heading font-bold">گالری واقعی</h2>
           </div>
           <p className="text-body-sm text-text-secondary mb-5">
-            عکس‌های واقعی همین تور و مقصد — نه عکس تبلیغاتی.
+            {tour.gallery.some((g) => g.type === 'video')
+              ? 'عکس‌ها و ویدیوهای واقعی همین تور و مقصد، نه تبلیغاتی.'
+              : 'عکس‌های واقعی همین تور و مقصد، نه تبلیغاتی.'}
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {tour.gallery.map((g, i) => (
-              <figure key={i} className="rounded-card overflow-hidden border border-border-default bg-surface-primary">
-                <div className="aspect-[4/3] relative">
-                  <SmartImage src={g.url} alt={g.caption || tour.title} className="object-cover" sizes="(max-width: 640px) 50vw, 33vw" />
-                </div>
-                {g.caption && (
-                  <figcaption className="text-caption text-text-secondary p-2">{g.caption}</figcaption>
-                )}
-              </figure>
-            ))}
+            {tour.gallery.map((g, i) => {
+              const isVideo = g.type === 'video';
+              // نقد بصری: همهٔ تایل‌ها ۴:۳ یکدست می‌مانند (مثل عکس‌ها)؛ نسبت
+              // واقعی ویدیو فقط در لایت‌باکس دیده می‌شود تا ریتم گرید نشکند.
+              return (
+                <figure
+                  key={i}
+                  className="rounded-card overflow-hidden border border-border-default bg-surface-primary"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setLightboxIndex(i)}
+                    className="relative block w-full cursor-pointer group aspect-[4/3]"
+                    aria-label={isVideo ? `پخش ویدیو: ${g.caption || tour.title}` : `بزرگ‌نمایی عکس: ${g.caption || tour.title}`}
+                  >
+                    {isVideo ? (
+                      <video
+                        src={g.url}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="absolute inset-0 w-full h-full object-cover"
+                        aria-hidden
+                      />
+                    ) : (
+                      <SmartImage
+                        src={g.url}
+                        alt={g.caption || tour.title}
+                        className="object-cover"
+                        sizes="(max-width: 640px) 50vw, 33vw"
+                      />
+                    )}
+                    {isVideo && (
+                      <>
+                        <span className="absolute inset-0 grid place-items-center" aria-hidden>
+                          <span className="rounded-full bg-black/60 p-3 transition-transform group-hover:scale-110">
+                            <Play className="w-6 h-6 text-white fill-white" />
+                          </span>
+                        </span>
+                        <span className="absolute top-2 start-2 rounded-sm bg-black/60 px-1.5 py-0.5 text-caption text-white">
+                          ویدیو
+                        </span>
+                      </>
+                    )}
+                  </button>
+                  {g.caption && (
+                    <figcaption className="text-caption text-text-secondary p-2">{g.caption}</figcaption>
+                  )}
+                </figure>
+              );
+            })}
           </div>
         </section>
+      )}
+
+      {/* لایت‌باکس گالری — عکس و ویدیو (موج ۶) */}
+      {tour.gallery && lightboxIndex !== null && (
+        <GalleryLightbox
+          items={tour.gallery}
+          index={lightboxIndex}
+          fallbackAlt={tour.title}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={(i) => setLightboxIndex(i)}
+        />
       )}
 
       {/* ---------------- Related Tours ---------------- */}

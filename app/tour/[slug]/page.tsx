@@ -7,6 +7,7 @@ import {
   resolveSeo,
   breadcrumbJsonLd,
   tourJsonLd,
+  tourVideosJsonLd,
 } from '../../seo-helpers';
 import { getTourDetailContent, getTours } from '@/src/lib/db-content';
 import { getContactInfo } from '@/src/lib/site-contact';
@@ -41,6 +42,8 @@ export default async function TourPage({
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />
       <JsonLd data={tourJsonLd(tour)} />
+      {/* موج ۶: ویدیوهای گالری — VideoObject، فقط وقتی ویدیو هست */}
+      <JsonLd data={tourVideosJsonLd(tour)} />
       <RouteView type="tour_detail" params={{ tourSlug: slug }} data={content} contact={contact} />
     </>
   );

@@ -26,7 +26,21 @@ export interface TourReviewItem {
 export interface TourGalleryItem {
   url: string;
   caption: string;
+  /**
+   * نوع آیتم — موج ۶ (گالری ترکیبی): غایب یعنی عکس. آیتم‌های قدیمیِ بدون این
+   * فیلد (فقط {url, caption}) همچنان عکس محسوب می‌شوند و نمی‌شکنند.
+   */
+  type?: TourGalleryMediaType;
+  /**
+   * نسبت تصویر ویدیو: ۱۶:۹ افقی / مربعی / ۹:۱۶ عمودی. فقط برای ویدیو
+   * معنادار است؛ برای عکس بی‌اثر می‌ماند.
+   */
+  aspect?: TourGalleryAspect;
 }
+
+/** موج ۶ — نوع رسانه و نسبت تصویر آیتم‌های گالری ترکیبی. */
+export type TourGalleryMediaType = 'photo' | 'video';
+export type TourGalleryAspect = 'landscape' | 'square' | 'portrait';
 
 export interface LeaderInput {
   name: string;
@@ -45,7 +59,16 @@ export function normalizeGalleryItems(v: unknown): TourGalleryItem[] {
     const o = (item ?? {}) as Partial<TourGalleryItem>;
     const url = String(o.url || '').trim();
     if (!url) continue;
-    out.push({ url, caption: String(o.caption || '').trim() });
+    const caption = String(o.caption || '').trim();
+    // موج ۶: ویدیو بودن و نسبتش عبور می‌کند؛ بقیهٔ مقادیر (از جمله
+    // آیتم‌های قدیمیِ بدون type) عکس می‌مانند و نمی‌شکنند.
+    const next: TourGalleryItem = { url, caption };
+    if (o.type === 'video') {
+      next.type = 'video';
+      next.aspect =
+        o.aspect === 'square' ? 'square' : o.aspect === 'portrait' ? 'portrait' : 'landscape';
+    }
+    out.push(next);
     if (out.length >= 30) break;
   }
   return out;

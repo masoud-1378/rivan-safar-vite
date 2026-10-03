@@ -374,6 +374,28 @@ export function tourJsonLd(tour: TourItem | null | undefined) {
   };
 }
 
+/**
+ * موج ۶ — اسکیمای ویدیوهای گالری تور: برای هر ویدیوی گالری یک VideoObject.
+ * فقط وقتی ویدیو روی صفحه نمایش داده می‌شود (همان قاعدهٔ «فقط دادهٔ
+ * نمایش‌داده‌شده به کاربر»). thumbnailUrl نداریم چون کاور ویدیو جداگانه
+ * ذخیره نمی‌شود؛ name/contentUrl همان چیزی است که خزنده می‌تواند مصرف کند.
+ */
+export function tourVideosJsonLd(tour: TourItem | null | undefined) {
+  if (!tour || !Array.isArray(tour.gallery)) return null;
+  const videos = tour.gallery.filter((g) => g.type === 'video' && g.url);
+  if (videos.length === 0) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@graph': videos.map((v, i) => ({
+      '@type': 'VideoObject',
+      name: v.caption || `${tour.title} — ویدیو`,
+      description: v.caption || tour.description,
+      contentUrl: v.url,
+      inLanguage: 'fa-IR',
+    })),
+  };
+}
+
 /** Schema فهرست — ItemList برای صفحات لیستینگ (سند ۰۱: داده متناسب با صفحه) */
 export function itemListJsonLd(
   path: string,

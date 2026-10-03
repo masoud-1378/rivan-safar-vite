@@ -6,7 +6,9 @@ import {
   Plane, 
   Train, 
   Bus, 
-  ChevronDown, 
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   X, 
   Check as CheckIcon,
   Sparkles,
@@ -80,41 +82,11 @@ const TRANSPORT_OPTIONS: Array<{ id: 'air' | 'land' | 'rail' | 'sea' | 'mixed'; 
   { id: 'land', label: 'زمینی (اتوبوس)', icon: Bus, placeholder: 'نوع اتوبوس (مثلاً: اتوبوس VIP ۲۵ نفره تخت‌شو)' },
 ];
 
-function regionDescendants(regionSlug: string, tree: DestinationTree): string[] {
-  const region = tree.regions.find((r) => r.slug === regionSlug);
-  if (!region) return [];
-  const out: string[] = [];
-  for (const c of region.countries) {
-    out.push(c.slug);
-    for (const city of c.cities) out.push(city.slug);
-  }
-  return out;
-}
-
 function countryDescendants(regionSlug: string, countrySlug: string, tree: DestinationTree): string[] {
   const region = tree.regions.find((r) => r.slug === regionSlug);
   const country = region?.countries.find((c) => c.slug === countrySlug);
   if (!country) return [countrySlug];
   return [country.slug, ...country.cities.map((c) => c.slug)];
-}
-
-function CheckBox({ checked, onToggle, label }: { checked: boolean; onToggle: () => void; label: string }) {
-  return (
-    <button
-      type="button"
-      role="checkbox"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={onToggle}
-      className={cn(
-        // ناحیهٔ لمسی نامرئی تا ~۳۲px (تا لبهٔ gap، بدون هم‌پوشانی با دکمهٔ مجاور)؛ خود باکس ۱۶px می‌ماند.
-        'relative flex size-4 shrink-0 cursor-pointer items-center justify-center rounded border transition-colors after:absolute after:-inset-2 after:content-[""]',
-        checked ? 'border-brand bg-brand text-brand-foreground' : 'border-input bg-background/60 hover:border-foreground/40'
-      )}
-    >
-      {checked && <CheckIcon className="size-3" />}
-    </button>
-  );
 }
 
 export default function Stage1Identity({
@@ -132,20 +104,19 @@ export default function Stage1Identity({
   const selectedSlugs = Array.isArray(data.destinationSlugs) ? data.destinationSlugs : [];
   const nameBySlug = new Map(tree.all.map((a) => [a.slug, a.name]));
 
-  const [openRegions, setOpenRegions] = useState<Record<string, boolean>>(() => {
-    const out: Record<string, boolean> = {};
-    tree.regions.forEach((r, i) => {
-      out[r.slug] = i === 0 || r.countries.some((c) => selectedSlugs.includes(c.slug) || c.cities.some((x) => selectedSlugs.includes(x.slug)));
-    });
-    return out;
-  });
-  const [openCountries, setOpenCountries] = useState<Record<string, boolean>>({});
+  // تیم ۳ (موج ۶، ایراد ۴): فقط نام کشورِ بازشده نگه داشته می‌شود؛
+  // مرور دسته‌بندی‌شدهٔ مقصدها تک‌آکاردئونی است تا پنل جمع‌وجور بماند.
+  const [openCountry, setOpenCountry] = useState<string | null>(null);
+  // تأیید افزودن دسته‌ای کشور (گزارش QC موج ۶): یک کلیک ده‌ها مقصد
+  // اضافه می‌کند؛ بدون تأیید خطرناک است.
+  const [bulkCountry, setBulkCountry] = useState<{ name: string; slugs: string[] } | null>(null);
   // نامک خودکار: تا وقتی کاربر دستی به نامک دست نزده و نامکی هم از قبل ثبت نشده،
   // با هر نویسهٔ عنوان از نو ساخته می‌شود (گشت، ایراد ۳: قبلاً فقط نویسهٔ اول می‌ماند و «t» می‌شد).
   const [slugAuto, setSlugAuto] = useState(() => !data.slug);
   const [destQuery, setDestQuery] = useState('');
-  // درخت مقصدها به‌صورت پیش‌فرض جمع است؛ جست‌وجو + تگ‌ها نمای اصلی‌اند (T2).
-  const [showTree, setShowTree] = useState(false);
+  // تیم ۳ (موج ۶، ایراد ۴): پیکر مقصد به‌صورت پیش‌فرض بسته است؛
+  // نمای اصلی فقط چیپ‌های مرتب‌شدهٔ مسیر سفر است.
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [capacity, setCapacity] = useState('');
   const { toast } = useToast();
 
@@ -302,14 +273,20 @@ export default function Stage1Identity({
     onChange({ destinationSlugs: next });
   };
 
-  // دیالوگ تأیید تیک قاره (B-15): زدن یا برداشتن تیک، کل قاره (ده‌ها مقصد) را
-  // یک‌جا اضافه یا کم می‌کند؛ پس هر دو مسیر دیالوگ دارند (mode: ‏add | ‏remove).
-  const [confirmRegion, setConfirmRegion] = useState<{ name: string; count: number; desc: string[]; mode: 'add' | 'remove' } | null>(null);
-  // دیالوگ قاره در حالت حذف (برداشتن تیک) است اگر mode برابر remove باشد.
-  const confirmRemoveRegion = confirmRegion !== null && confirmRegion.mode === 'remove';
+  // تیم ۳ (موج ۶، ایراد ۴): جابه‌جایی ترتیب مقصد در مسیر سفر — فقط جای دو
+  // اسلاگ در آرایهٔ destinationSlugs عوض می‌شود؛ مدل داده همان است،
+  // فقط UI ترتیب را قابل‌تغییر کرده. dir منفی یعنی جلوتر در مسیر.
+  const moveSlug = (slug: string, dir: 1 | -1) => {
+    const i = selectedSlugs.indexOf(slug);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= selectedSlugs.length) return;
+    const next = [...selectedSlugs];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange({ destinationSlugs: next });
+  };
 
-  // عنوان که عوض شود، اگر نامک هنوز خودکار است (دستی ویرایش نشده و از قبل هم خالی بوده)،
-  // با هر نویسه از روی عنوان بازسازی می‌شود؛ قانون «عنوان بعدی نامک موجود را عوض نکند» سر جایش است.
+  // عنوان که عوض شود، اگر نامک هنوز خودکار است با هر نویسه از روی عنوان
+  // بازسازی می‌شود؛ قانون «عنوانِ بعدی نامک موجود را عوض نکند» سر جایش است.
   const handleTitleChange = (v: string) => {
     const patch: Partial<TourInput> = { title: v };
     if (slugAuto) patch.slug = faToSlugFa(v);
@@ -567,166 +544,220 @@ export default function Stage1Identity({
         </div>
       </div>
 
-      {/* Destinations Hierarchy Tree Selector */}
+      {/* انتخاب مقصدها — چیپ‌های شماره‌دارِ مسیر سفر + یک پیکر جست‌وجوپذیر.
+          تیم ۳ (موج ۶، ایراد ۴): سه نمای موازی قبلی (جست‌وجوی همیشه‌باز، تگ‌ها،
+          درخت تودرتو) به یک نمای بسته + یک پنل واحد جمع شد. */}
       <div className="rounded-sm border border-border bg-card p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <label className="text-xs font-bold text-foreground flex items-center gap-2">
+          <label className="text-panel-label font-bold text-foreground flex items-center gap-2">
             <MapPin className="size-4 text-brand" />
             <span>انتخاب مقاصد و شهرهای سفر *</span>
           </label>
-          <span className="text-xs text-muted-foreground">
-            {selectedSlugs.length > 0 ? `${fa(selectedSlugs.length)} مقصد انتخاب‌شده` : 'حداقل یک مقصد انتخاب کنید'}
+          <span className="text-panel-caption text-muted-foreground">
+            {selectedSlugs.length > 0 ? `${fa(selectedSlugs.length)} مقصد` : 'حداقل یک مقصد انتخاب کنید'}
           </span>
         </div>
         {/* گشت (ایراد ۴): خطای «مقصد» هیچ‌جا قرمز نشان داده نمی‌شد؛ زیر همان بلوک. */}
         {errors.destinations && (
-          <p className="text-xs text-destructive" role="alert">{errors.destinations}</p>
+          <p className="text-panel-caption text-destructive" role="alert">{errors.destinations}</p>
         )}
 
-        {/* جست‌وجوی نام فارسی مقصد: در حالت جست‌وجو، لیست تخت نتایج با انتخاب تک‌کلیکی */}
-        <div className="relative">
-          <Input
-            value={destQuery}
-            onChange={(e) => setDestQuery(e.target.value)}
-            placeholder="نام شهر یا کشور را بنویسید… مثلاً: استانبول"
-            className="ps-9 text-xs max-md:text-base"
-          />
-          <Search className="size-4 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
-        </div>
-        {destSearchQuery && (
-          <div className="max-h-56 overflow-y-auto rounded-sm border border-border/60 divide-y divide-border/40">
-            {destSearchResults.length === 0 ? (
-              <p className="px-3 py-4 text-xs text-muted-foreground text-center">چیزی پیدا نشد.</p>
-            ) : (
-              destSearchResults.map((r) => {
-                const selected = selectedSlugs.includes(r.slug);
-                return (
-                  <button
-                    key={r.slug}
-                    type="button"
-                    onClick={() => toggleSlug(r.slug)}
-                    className={cn(
-                      "flex w-full items-center justify-between px-3 py-2.5 text-xs transition-colors min-h-11",
-                      selected ? "bg-brand/10" : "hover:bg-accent/40"
-                    )}
-                  >
-                    <span className="flex items-center gap-2 text-foreground">
-                      <MapPin className="size-3.5 text-brand shrink-0" />
-                      <span className="font-medium">{r.name}</span>
-                      <span className="text-caption text-muted-foreground">{r.type === 'city' ? 'شهر' : r.type === 'region' ? 'منطقه' : 'کشور'}</span>
-                    </span>
-                    {selected
-                      ? <CheckIcon className="size-4 text-emerald-600 shrink-0" />
-                      : <Plus className="size-4 text-muted-foreground shrink-0" />}
-                  </button>
-                );
-              })
-            )}
-          </div>
-        )}
-
-        {/* Selected Destinations Tags */}
+        {/* مقصدهای انتخاب‌شده: ترتیب چیپ‌ها همان مسیر سفر است؛
+            شمارهٔ ترتیب، جابه‌جایی جلو/عقب و حذف روی هر چیپ. */}
         {selectedSlugs.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 pb-2">
-            {selectedSlugs.map((slug) => (
-              <span
-                key={slug}
-                className="inline-flex items-center gap-1 rounded-sm bg-brand/10 border border-brand/20 px-2.5 py-1 text-xs font-medium text-brand"
-              >
-                {nameBySlug.get(slug) || slug}
-                <button
-                  type="button"
-                  onClick={() => toggleSlug(slug)}
-                  className="rounded hover:bg-brand/20 p-0.5"
-                >
-                  <X className="size-3" />
-                </button>
-              </span>
-            ))}
+          <div>
+            <p className="mb-1.5 text-panel-caption text-muted-foreground">ترتیب مقصدها همان مسیر سفر است:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {selectedSlugs.map((slug, i) => {
+                const destName = nameBySlug.get(slug) || slug;
+                return (
+                  <span
+                    key={slug}
+                    className="inline-flex items-center gap-1.5 rounded-sm border border-brand/20 bg-brand/10 py-1 pe-1 ps-2 text-panel-caption font-medium text-brand"
+                  >
+                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-panel-micro tabular-nums text-brand-foreground">
+                      {fa(i + 1)}
+                    </span>
+                    <span>{destName}</span>
+                    <span className="flex items-center">
+                      <button
+                        type="button"
+                        onClick={() => moveSlug(slug, -1)}
+                        disabled={i === 0}
+                        title={`«${destName}» را یک مقصد جلوتر ببر`}
+                        aria-label={`«${destName}» را یک مقصد جلوتر ببر`}
+                        className="rounded p-1 text-brand/70 transition-colors hover:bg-brand/20 hover:text-brand disabled:invisible"
+                      >
+                        <ChevronRight className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveSlug(slug, 1)}
+                        disabled={i === selectedSlugs.length - 1}
+                        title={`«${destName}» را یک مقصد عقب‌تر ببر`}
+                        aria-label={`«${destName}» را یک مقصد عقب‌تر ببر`}
+                        className="rounded p-1 text-brand/70 transition-colors hover:bg-brand/20 hover:text-brand disabled:invisible"
+                      >
+                        <ChevronLeft className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleSlug(slug)}
+                        title={`حذف «${destName}»`}
+                        aria-label={`حذف «${destName}»`}
+                        className="rounded p-1 text-brand/70 transition-colors hover:bg-brand/20 hover:text-brand"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </span>
+                  </span>
+                );
+              })}
+            </div>
           </div>
         )}
 
-        {/* درخت مقصدها (T2): به‌صورت پیش‌فرض جمع؛ نمای اصلی فقط جست‌وجو و تگ‌هاست. */}
+        {/* پیکر مقصد: یک دکمه که یک پنل واحد را باز می‌کند؛
+            بالای پنل جست‌وجو، پایینش مرور دسته‌بندی‌شده (قاره ← کشور ← شهر).
+            تیک قارهٔ قبلی (که دیالوگ تأیید B-15 می‌خواست) حذف شد؛ افزودن دسته‌ای
+            فقط در سطح کشور است که همان رفتار toggleMany قبلی است. */}
         <button
           type="button"
-          onClick={() => setShowTree((v) => !v)}
-          aria-expanded={showTree}
-          className="flex w-full items-center justify-center gap-2 rounded-sm border border-dashed border-border/80 p-3 text-xs font-bold text-foreground transition-colors hover:bg-accent/40"
+          onClick={() => setPickerOpen((v) => !v)}
+          aria-expanded={pickerOpen}
+          className="flex w-full items-center justify-center gap-2 rounded-sm border border-dashed border-border/80 p-3 text-panel-caption font-bold text-foreground transition-colors hover:bg-accent/40"
         >
-          مرور همهٔ مقصدها
-          <ChevronDown className={cn('size-4 text-muted-foreground transition-transform', showTree && 'rotate-180')} />
+          <Plus className="size-4 text-brand" />
+          {selectedSlugs.length > 0 ? 'تغییر مقصدها' : 'افزودن مقصد'}
+          <ChevronDown className={cn('size-4 text-muted-foreground transition-transform', pickerOpen && 'rotate-180')} />
         </button>
 
-        {showTree && (
-        <div className="space-y-2 rounded-sm border border-border/70 p-3 max-h-72 overflow-y-auto">
-          {tree.regions.map((region) => {
-            const desc = regionDescendants(region.slug, tree);
-            const allOn = desc.length > 0 && desc.every((s) => selectedSlugs.includes(s));
-            const open = openRegions[region.slug] ?? false;
-
-            return (
-              <div key={region.slug} className="rounded-sm border border-border/60">
-                <div className="flex items-center gap-2 p-2.5 bg-secondary/20">
-                  <CheckBox
-                    checked={allOn}
-                    onToggle={() => {
-                      setConfirmRegion({ name: region.name, count: desc.length, desc, mode: allOn ? 'remove' : 'add' });
-                    }}
-                    label={region.name}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setOpenRegions((p) => ({ ...p, [region.slug]: !open }))}
-                    className="flex flex-1 items-center justify-between text-start text-xs font-bold"
-                  >
-                    <span>{region.name}</span>
-                    <ChevronDown className={cn('size-3.5 text-muted-foreground transition-transform', open && 'rotate-180')} />
-                  </button>
-                </div>
-
-                {open && (
-                  <div className="space-y-2 border-t border-border/60 p-2.5">
+        {pickerOpen && (
+          <div className="overflow-hidden rounded-sm border border-border/70">
+            <div className="border-b border-border/60 p-2">
+              <div className="relative">
+                <Input
+                  value={destQuery}
+                  onChange={(e) => setDestQuery(e.target.value)}
+                  placeholder="نام شهر یا کشور را بنویسید… مثلاً: استانبول"
+                  className="ps-9 text-xs max-md:text-base"
+                />
+                <Search className="size-4 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
+            <div className="max-h-72 overflow-y-auto p-1.5">
+              {destSearchQuery ? (
+                destSearchResults.length === 0 ? (
+                  <p className="px-3 py-4 text-center text-panel-caption text-muted-foreground">چیزی پیدا نشد.</p>
+                ) : (
+                  destSearchResults.map((r) => {
+                    const selected = selectedSlugs.includes(r.slug);
+                    const parentName = nameBySlug.get(r.parent);
+                    return (
+                      <button
+                        key={r.slug}
+                        type="button"
+                        onClick={() => toggleSlug(r.slug)}
+                        className={cn(
+                          'flex min-h-11 w-full items-center justify-between gap-2 rounded-sm px-2.5 py-2 text-xs transition-colors',
+                          selected ? 'bg-brand/10' : 'hover:bg-accent/40'
+                        )}
+                      >
+                        <span className="flex min-w-0 items-center gap-2 text-foreground">
+                          <MapPin className="size-3.5 shrink-0 text-brand" />
+                          <span className="truncate font-medium">{r.name}</span>
+                          <span className="truncate text-panel-caption text-muted-foreground">
+                            {parentName ? `${parentName} · ` : ''}{r.type === 'city' ? 'شهر' : r.type === 'region' ? 'منطقه' : 'کشور'}
+                          </span>
+                        </span>
+                        {selected
+                          ? <CheckIcon className="size-4 shrink-0 text-emerald-600" />
+                          : <Plus className="size-4 shrink-0 text-muted-foreground" />}
+                      </button>
+                    );
+                  })
+                )
+              ) : (
+                tree.regions.map((region) => (
+                  <div key={region.slug}>
+                    <p className="px-2 pb-0.5 pt-2 text-panel-caption font-bold text-muted-foreground">{region.name}</p>
                     {region.countries.map((country) => {
                       const cdesc = countryDescendants(region.slug, country.slug, tree);
-                      const cOn = cdesc.length > 0 && cdesc.every((s) => selectedSlugs.includes(s));
-                      const cOpen = openCountries[country.slug] ?? false;
-
+                      const addedCount = cdesc.filter((s) => selectedSlugs.includes(s)).length;
+                      const allOn = cdesc.length > 0 && addedCount === cdesc.length;
+                      const cOpen = openCountry === country.slug;
                       return (
-                        <div key={country.slug} className="rounded-sm bg-muted/30">
-                          <div className="flex items-center gap-2 px-2.5 py-1.5">
-                            <CheckBox checked={cOn} onToggle={() => toggleMany(cdesc)} label={country.name} />
+                        <div key={country.slug}>
+                          <div className="flex items-center gap-1 py-0.5 pe-1 ps-1.5">
                             <button
                               type="button"
-                              onClick={() => setOpenCountries((p) => ({ ...p, [country.slug]: !cOpen }))}
-                              className="flex flex-1 items-center justify-between text-start text-xs font-medium"
+                              onClick={() => {
+                                // افزودن دسته‌ای تأیید می‌خواهد (ده‌ها مقصد یک‌جا)؛
+                                // برداشتن مستقیم است چون مقصدها همین‌جا دیده می‌شوند.
+                                if (allOn) toggleMany(cdesc);
+                                else setBulkCountry({ name: country.name, slugs: cdesc });
+                              }}
+                              title={allOn ? `برداشتن همهٔ «${country.name}»` : `افزودن همهٔ «${country.name}»`}
+                              aria-label={allOn ? `برداشتن همهٔ «${country.name}»` : `افزودن همهٔ «${country.name}»`}
+                              aria-pressed={allOn}
+                              className={cn(
+                                'flex size-7 shrink-0 items-center justify-center rounded-sm border transition-colors',
+                                allOn
+                                  ? 'border-brand bg-brand text-brand-foreground'
+                                  : 'border-input bg-background/60 text-muted-foreground hover:border-foreground/40 hover:text-foreground'
+                              )}
+                            >
+                              {allOn ? <CheckIcon className="size-3.5" /> : <Plus className="size-3.5" />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setOpenCountry(cOpen ? null : country.slug)}
+                              aria-expanded={cOpen}
+                              className="flex min-h-11 flex-1 items-center justify-between gap-2 rounded-sm px-1.5 py-2 text-start text-xs font-medium text-foreground transition-colors hover:bg-accent/40"
                             >
                               <span>{country.name}</span>
-                              <span className="flex items-center gap-1 text-caption text-muted-foreground">
-                                {country.cities.length > 0 ? `${fa(country.cities.length)} شهر` : ''}
-                                <ChevronDown className={cn('size-3 transition-transform', cOpen && 'rotate-180')} />
+                              <span className="flex items-center gap-1.5 text-panel-caption text-muted-foreground">
+                                {addedCount > 0 && (
+                                  <span className="font-bold text-brand">{fa(addedCount)} انتخاب‌شده</span>
+                                )}
+                                {country.cities.length > 0 && `${fa(country.cities.length)} شهر`}
+                                <ChevronDown className={cn('size-3.5 transition-transform', cOpen && 'rotate-180')} />
                               </span>
                             </button>
                           </div>
-
                           {cOpen && country.cities.length > 0 && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 border-t border-border/50 px-2.5 py-1.5">
-                              {country.cities.map((city) => (
-                                <label key={city.slug} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-accent/40">
-                                  <CheckBox checked={selectedSlugs.includes(city.slug)} onToggle={() => toggleSlug(city.slug)} label={city.name} />
-                                  <span>{city.name}</span>
-                                </label>
-                              ))}
+                            <div className="mb-1 ms-5 space-y-0.5 border-s-2 border-border/50 ps-1">
+                              {country.cities.map((city) => {
+                                const selected = selectedSlugs.includes(city.slug);
+                                return (
+                                  <button
+                                    key={city.slug}
+                                    type="button"
+                                    onClick={() => toggleSlug(city.slug)}
+                                    className={cn(
+                                      'flex min-h-10 w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-xs transition-colors',
+                                      selected
+                                        ? 'bg-brand/10 font-medium text-foreground'
+                                        : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground'
+                                    )}
+                                  >
+                                    <span>{city.name}</span>
+                                    {selected
+                                      ? <CheckIcon className="size-3.5 shrink-0 text-emerald-600" />
+                                      : <Plus className="size-3.5 shrink-0" />}
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
                       );
                     })}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                ))
+              )}
+            </div>
+          </div>
         )}
       </div>
 
@@ -1131,19 +1162,6 @@ export default function Stage1Identity({
         )}
       </div>
 
-      {/* دیالوگ تأیید تیک قاره (B-15): پیامد با تعداد واقعی مقصدهایی که اضافه یا کم می‌شود */}
-      <AlertDialog
-        open={confirmRegion !== null}
-        onOpenChange={(open) => { if (!open) setConfirmRegion(null); }}
-        title={confirmRegion ? (confirmRemoveRegion ? `«${confirmRegion.name}» از مقصدها حذف شود؟` : `«${confirmRegion.name}» به مقصدها اضافه شود؟`) : ''}
-        description={confirmRegion ? (confirmRemoveRegion
-          ? `با این کار ${fa(confirmRegion.count)} مقصد از این تور کم می‌شود.`
-          : `با این کار ${fa(confirmRegion.count)} مقصد (همهٔ کشورها و شهرهای ${confirmRegion.name}) یک‌جا به این تور اضافه می‌شود؛ هر کدام را بعداً می‌توانید جداگانه حذف کنید.`) : ''}
-        confirmText={confirmRegion ? `${confirmRemoveRegion ? 'حذف' : 'افزودن'} ${fa(confirmRegion.count)} مقصد` : ''}
-        destructive={confirmRemoveRegion}
-        onConfirm={() => { if (confirmRegion) toggleMany(confirmRegion.desc); }}
-      />
-
       {/* پیش‌نمایش متن مقصد (موج ۱، قلم ۶ — فرصت ۱-۵): درج فقط با تأیید صریح */}
       <AlertDialog
         open={showDescPreview}
@@ -1168,6 +1186,19 @@ export default function Stage1Identity({
           onChange({ description: text, descriptionRich: richFromPlainText(text) });
           setShowDescPreview(false);
           toast({ title: 'متن مقصد درج شد', description: 'بخوانید و ویرایشش کنید.' });
+        }}
+      />
+      {/* تأیید افزودن دسته‌ای کشور (گزارش QC موج ۶) */}
+      <AlertDialog
+        open={bulkCountry !== null}
+        onOpenChange={(open) => !open && setBulkCountry(null)}
+        title={bulkCountry ? `همهٔ مقصدهای «${bulkCountry.name}» اضافه شود؟` : ''}
+        description={bulkCountry ? `${bulkCountry.slugs.length} مقصد یک‌جا به مسیر سفر اضافه می‌شود.` : ''}
+        confirmText="افزودن همه"
+        cancelText="انصراف"
+        onConfirm={() => {
+          if (bulkCountry) toggleMany(bulkCountry.slugs);
+          setBulkCountry(null);
         }}
       />
     </div>
