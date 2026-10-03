@@ -9,6 +9,8 @@ import {
   ALLOWED_IMAGE_EXTS,
   IMAGE_UPLOAD_BUCKET,
   assertUploadImage,
+  cleanStorageSlug,
+  storagePathInBucket,
 } from '@/src/lib/upload-policy';
 
 /**
@@ -72,7 +74,7 @@ export async function uploadHotelPhoto(
   const file = formData.get('photo');
   // قرارداد مشترک آپلود تصویر (میز ۳ — ایراد ۲۷): همان سیاست بنر تور؛
   // SVG هم از روی پسوند هم از روی content-type رد می‌شود (ریسک XSS ذخیره‌شده).
-  assertUploadImage(file as File);
+  await assertUploadImage(file as File);
   const f = file as File;
 
   const db = getDb();
@@ -81,8 +83,9 @@ export async function uploadHotelPhoto(
   await ensureBucket(sb);
 
   // پسوند این‌جا حتماً معتبر است (assertUploadImage ردش کرده) — همان را برای مسیر فایل برمی‌داریم.
+  // نامک هم مثل بنر تور تمیز می‌شود تا نویسهٔ نامعتبر وارد مسیر استوریج نشود.
   const ext = (f.name.split('.').pop() || '').toLowerCase();
-  const path = `${slug}/${crypto.randomUUID()}.${ext}`;
+  const path = `${cleanStorageSlug(slug, 'hotel')}/${crypto.randomUUID()}.${ext}`;
   const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, f, {
     contentType: f.type,
     upsert: false,
@@ -108,9 +111,12 @@ export async function deleteHotelPhoto(id: string): Promise<{ ok: true }> {
   if (!row) throw new Error('عکس پیدا نشد.');
   await db.update(media).set({ deletedAt: new Date() }).where(eq(media.id, id));
   // حذف فایل از استوریج؛ اگر نشد، رکورد بایگانی‌شده دیگر نمایش داده نمی‌شود.
+  // همان اعتبارسنج سخت‌گیرانهٔ پاک‌سازی بنر تور: فقط همین باکت، فقط زیرمسیرِ
+  // همین هتل، فقط URL عمومی استوریج همین پروژه — آدرس دست‌کاری‌شده رد می‌شود.
   try {
     const sb = serviceClient();
-    const path = row.url.split(`/${BUCKET}/`)[1];
+    const rawSlug = row.source.startsWith('hotel:') ? row.source.slice('hotel:'.length) : '';
+    const path = storagePathInBucket(row.url, BUCKET, `${cleanStorageSlug(rawSlug, 'hotel')}/`);
     if (path) await sb.storage.from(BUCKET).remove([path]);
   } catch {
     /* نادیده — بایگانی منطقی کافی است */
