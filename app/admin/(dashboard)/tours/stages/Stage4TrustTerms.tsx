@@ -209,7 +209,7 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
               />
               <div>
                 <span className="text-xs font-bold text-foreground block">نیاز به دریافت ویزا</span>
-                <span className="text-[11px] text-muted-foreground">این سفر به ویزا نیاز دارد؟ اگر دست نزنید، بر اساس داخلی یا خارجی بودن مقصد خودش تنظیم می‌شود.</span>
+                <span className="text-caption text-muted-foreground">این سفر به ویزا نیاز دارد؟ اگر دست نزنید، بر اساس داخلی یا خارجی بودن مقصد خودش تنظیم می‌شود.</span>
               </div>
             </label>
           </div>
@@ -300,7 +300,7 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
                   <span className="text-xs font-bold text-foreground">{lvl.label}</span>
                   {isSelected && <Check className="size-4 text-emerald-600" />}
                 </div>
-                <p className="text-[11px] text-muted-foreground mt-1">{lvl.desc}</p>
+                <p className="text-caption text-muted-foreground mt-1">{lvl.desc}</p>
               </button>
             );
           })}
@@ -314,7 +314,7 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
             <FileText className="size-4 text-blue-500" />
             <span>مدارک لازم برای ثبت‌نام و ویزا</span>
           </h4>
-          <span className="text-[11px] text-muted-foreground">روی صفحه تور به عنوان چک‌لیست نمایش داده می‌شود</span>
+          <span className="text-caption text-muted-foreground">روی صفحه تور به عنوان چک‌لیست نمایش داده می‌شود</span>
         </div>
 
         {/* قلم ۳ موج ۲: اگر تور قبلی همین مقصد مدرکی ثبت کرده باشد، مدیر می‌تواند
@@ -323,7 +323,7 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
           <button
             type="button"
             onClick={openDocsPicker}
-            className="inline-flex items-center gap-1.5 text-[11px] font-bold text-brand hover:underline"
+            className="inline-flex items-center gap-1.5 text-caption font-bold text-brand hover:underline"
           >
             <FileText className="size-3.5" />
             {`افزودن مدارک تور قبلی («${docsSuggestion.title}»)`}
@@ -333,11 +333,11 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
         {/* Quick presets */}
         <div>
           <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-[11px] text-muted-foreground">پیشنهادهای سریع برای افزودن:</span>
+            <span className="text-caption text-muted-foreground">پیشنهادهای سریع برای افزودن:</span>
             <button
               type="button"
               onClick={() => setConfirmResetDocs(true)}
-              className="text-[11px] font-bold text-brand hover:underline"
+              className="text-caption font-bold text-brand hover:underline"
             >
               برگرداندن به پیش‌فرض ویزا (نوشته‌های شما پاک می‌شود)
             </button>
@@ -352,7 +352,7 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
                   disabled={exists}
                   onClick={() => addDoc(doc)}
                   className={cn(
-                    "text-[11px] rounded-sm border px-2 py-1 transition-colors text-start",
+                    "text-caption rounded-sm border px-2 py-1 transition-colors text-start",
                     exists
                       ? "border-transparent bg-muted/60 text-muted-foreground/60 cursor-not-allowed"
                       : "border-border/80 bg-secondary/40 text-foreground hover:bg-brand/10 hover:border-brand/40"
@@ -410,7 +410,7 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
             <FileText className="size-4 text-brand" />
             <span>چرا همین تور</span>
           </h4>
-          <span className="text-[11px] text-muted-foreground">در صفحهٔ تور، بعد از توضیحات نمایش داده می‌شود</span>
+          <span className="text-caption text-muted-foreground">در صفحهٔ تور، بعد از توضیحات نمایش داده می‌شود</span>
         </div>
         <Field
           label="متن «چرا همین تور»"
@@ -446,7 +446,7 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
         </div>
 
         {faqs.length === 0 ? (
-          <p className="text-[11px] leading-5 text-muted-foreground">
+          <p className="text-caption leading-5 text-muted-foreground">
             هنوز پرسشی ثبت نشده؛ سؤال‌هایی که مسافرها دربارهٔ همین تور زیاد می‌پرسند را این‌جا بنویسید.
           </p>
         ) : (
@@ -512,7 +512,7 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
         title="کدام مدارک اضافه شوند؟"
         description={docsSuggestion ? (
           <span className="block space-y-1.5 text-start">
-            <span className="block text-[11px] text-muted-foreground">{`از تور «${docsSuggestion.title}»:`}</span>
+            <span className="block text-caption text-muted-foreground">{`از تور «${docsSuggestion.title}»:`}</span>
             {docsSuggestion.docs.map((d) => (
               <label
                 key={d}

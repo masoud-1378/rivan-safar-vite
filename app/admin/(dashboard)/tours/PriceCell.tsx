@@ -83,7 +83,7 @@ export function PriceCell({ id, price, onSaved }: PriceCellProps) {
           {formatToman(price)}
           <Pencil className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
         </span>
-        <span className="text-[11px] text-muted-foreground">قیمتی که مشتری می‌بیند</span>
+        <span className="text-caption text-muted-foreground">قیمتی که مشتری می‌بیند</span>
       </button>
     );
   }
@@ -120,7 +120,7 @@ export function PriceCell({ id, price, onSaved }: PriceCellProps) {
           {error}
         </p>
       ) : (
-        <p className="text-[11px] text-muted-foreground">اینتر برای ذخیره، Esc برای انصراف</p>
+        <p className="text-caption text-muted-foreground">اینتر برای ذخیره، Esc برای انصراف</p>
       )}
     </div>
   );

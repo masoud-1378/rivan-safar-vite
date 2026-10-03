@@ -49,7 +49,7 @@ export default function CatalogTabs({
               <span>{t.label}</span>
               <span
                 className={cn(
-                  'ms-1 rounded-full px-1.5 py-0.5 text-[11px] font-bold',
+                  'ms-1 rounded-full px-1.5 py-0.5 text-caption font-bold',
                   active ? 'bg-black/20 text-brand-foreground' : 'bg-muted text-muted-foreground',
                 )}
               >

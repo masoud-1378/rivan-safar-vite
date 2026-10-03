@@ -309,7 +309,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
           <button
             type="button"
             onClick={rebuildSlugFromTitle}
-            className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:underline"
+            className="mt-1.5 inline-flex items-center gap-1 text-caption font-bold text-brand hover:underline"
           >
             <RefreshCw className="size-3" />
             بازسازی خودکار از عنوان

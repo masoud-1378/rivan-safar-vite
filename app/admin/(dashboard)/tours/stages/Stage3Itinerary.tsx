@@ -280,7 +280,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
         <div className="flex items-center gap-2">
           <Plane className="size-4 shrink-0 text-brand" />
           <h4 className="text-sm font-bold text-foreground">مشخصات پرواز</h4>
-          <span className="text-[11px] text-muted-foreground">(اختیاری)</span>
+          <span className="text-caption text-muted-foreground">(اختیاری)</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="ایرلاین" hint="همان که در قرارداد و کارت تور نمایش داده می‌شود">

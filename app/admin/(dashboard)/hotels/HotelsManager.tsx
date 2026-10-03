@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { Pencil, Plus, Archive, ImagePlus, Trash2, Loader2 } from 'lucide-react';
 import { deleteHotel, saveHotel, type HotelRow } from './actions';
-import { deleteHotelPhoto, listHotelPhotos, uploadHotelPhoto, type HotelPhoto } from './photos';
+import { addHotelPhotoByLink, deleteHotelPhoto, listHotelPhotos, uploadHotelPhoto, type HotelPhoto } from './photos';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { DualGalleryAdd } from '@/components/ui/dual-image-input';
 import { Card, CardContent } from '@/components/ui/card';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { Dialog } from '@/components/ui/dialog';
@@ -42,7 +43,6 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
   const [photosLoading, setPhotosLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [deletingPhoto, setDeletingPhoto] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   // گشت (ایراد ۴): مقدار جاری select مقصد را در لحظهٔ ثبت از ref می‌خوانیم تا
   // race بین انتخاب دراپ‌داون و کلیک سریع «ذخیره» (state کهنه) مقصد را گم نکند.
   const placeRef = useRef<HTMLSelectElement | null>(null);
@@ -81,9 +81,8 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
       .finally(() => setPhotosLoading(false));
   };
 
-  const onPickPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
+  const onPickPhoto = async (files: File[]) => {
+    const file = files[0];
     if (!file || !editing) return;
     setUploading(true);
     try {
@@ -105,20 +104,19 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
     }
   };
 
-  // گشت (ایراد ۳): فالبک تشخیص فایل — در برخی مرورگرها onChange اینپوت مخفی
-  // فایل شلیک نمی‌شود. تا وقتی دیالوگ باز است هر ثانیه files را وارسی می‌کنیم؛
-  // onChange سر جایش می‌ماند و هر فایل فقط یک‌بار برداشته می‌شود.
-  useEffect(() => {
-    if (!open) return;
-    const timer = setInterval(() => {
-      const input = fileRef.current;
-      if (input?.files?.length && !uploadingRef.current) {
-        void onPickPhoto({ target: input } as React.ChangeEvent<HTMLInputElement>);
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open ]);
+  const onAddPhotoLink = async (url: string) => {
+    if (!editing) return;
+    setUploading(true);
+    try {
+      const photo = await addHotelPhotoByLink(editing.slug, editing.nameFa, url);
+      setPhotos((prev) => [photo, ...prev]);
+      toast({ title: 'عکس با لینک اضافه شد.' });
+    } catch (err) {
+      toast({ variant: 'error', title: safeErrorMessage(err, 'افزودن عکس ناموفق بود.') });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const onDeletePhoto = async () => {
     const id = deletingPhoto;
@@ -292,11 +290,12 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
                   ))}
                 </div>
               )}
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickPhoto} aria-label="انتخاب عکس هتل" />
-              <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => fileRef.current?.click()}>
-                {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
-                {uploading ? 'در حال آپلود…' : 'افزودن عکس'}
-              </Button>
+              <DualGalleryAdd
+                uploading={uploading}
+                multiple={false}
+                onFiles={(files) => void onPickPhoto(files)}
+                onLink={(url) => void onAddPhotoLink(url)}
+              />
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">پس از ثبت هتل می‌توانید عکس اضافه کنید.</p>

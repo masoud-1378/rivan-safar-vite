@@ -40,7 +40,7 @@ export function MissingChecksDialog({ open, onOpenChange, missing, onGoToStage }
             <div className="min-w-0 space-y-1">
               <div className="text-xs font-bold text-foreground">{check.label}</div>
               <div className="text-xs text-muted-foreground">{check.message}</div>
-              <div className="text-[11px] text-muted-foreground">
+              <div className="text-caption text-muted-foreground">
                 مرحلهٔ {fa(check.stageId)} · {STAGE_SHORT_TITLES[check.stageId] ?? ''}
               </div>
             </div>

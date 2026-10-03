@@ -445,7 +445,7 @@ export default function GuideForm({
             {autoCategoryLabel}
           </div>
           {initial?.categoryLabel && initial.categoryLabel !== autoCategoryLabel && (
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
+            <p className="mt-1.5 text-caption text-muted-foreground">
               برچسب قدیمی («{initial.categoryLabel}») با ذخیرهٔ بعدی به «{autoCategoryLabel}» یکسان می‌شود.
             </p>
           )}

@@ -96,7 +96,7 @@ export default function AuditLog({ logs, page, totalPages, total, filters }: { l
     title: `${ACTION_LABELS[l.action] ?? l.action} — ${ENTITY_LABELS[l.entity] ?? l.entity}`,
     description: (
       <span className="flex flex-wrap items-center gap-2">
-        <span dir="ltr" className="font-mono text-[11px]">{l.actor}</span>
+        <span dir="ltr" className="font-mono text-caption">{l.actor}</span>
         {l.reasonFa ? <span>{l.reasonFa}</span> : null}
       </span>
     ),
@@ -173,11 +173,11 @@ export default function AuditLog({ logs, page, totalPages, total, filters }: { l
                       <Badge variant="secondary">{ACTION_LABELS[l.action] ?? l.action}</Badge>
                     </div>
                     <p className="mt-1.5 text-sm font-medium">{ENTITY_LABELS[l.entity] ?? l.entity}</p>
-                    <p dir="ltr" className="mt-0.5 text-start font-mono text-[11px] text-muted-foreground">
+                    <p dir="ltr" className="mt-0.5 text-start font-mono text-caption text-muted-foreground">
                       {l.actor}
                     </p>
                     {l.reasonFa ? <p className="mt-1.5 text-xs text-muted-foreground">{l.reasonFa}</p> : null}
-                    <p dir="ltr" className="mt-1 text-start font-mono text-[11px] text-muted-foreground/70">
+                    <p dir="ltr" className="mt-1 text-start font-mono text-caption text-muted-foreground/70">
                       {l.entityId}
                     </p>
                   </div>

@@ -76,7 +76,7 @@ function PhoneDisplaySync({
   if (displayTrimmed === suggestion || dismissed === suggestion) return null;
   return (
     <div className="rounded-sm border border-dashed border-brand/30 bg-brand/5 px-3 py-2">
-      <p className="text-[11px] text-foreground">
+      <p className="text-caption text-foreground">
         {displayTrimmed
           ? `قالب نمایشی («${displayTrimmed}») با شمارهٔ اصلی هم‌خوان نیست. `
           : 'برای این شماره هنوز قالب نمایشی نوشته نشده است. '}
@@ -86,14 +86,14 @@ function PhoneDisplaySync({
         <button
           type="button"
           onClick={() => onApply(suggestion)}
-          className="text-[11px] font-bold text-brand hover:underline"
+          className="text-caption font-bold text-brand hover:underline"
         >
           اعمال شود
         </button>
         <button
           type="button"
           onClick={() => setDismissed(suggestion)}
-          className="text-[11px] text-muted-foreground hover:underline"
+          className="text-caption text-muted-foreground hover:underline"
         >
           نه، همین بماند
         </button>

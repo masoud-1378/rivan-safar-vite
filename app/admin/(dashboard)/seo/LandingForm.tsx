@@ -241,7 +241,7 @@ export default function LandingForm({
               <span className="block">{confirmState.collision.reason}</span>
               <span className="block">
                 آدرس پیشنهادی:{' '}
-                <span dir="ltr" className="font-mono text-[13px]">«{confirmState.suggestedPath}»</span>
+                <span dir="ltr" className="font-mono text-body-sm">«{confirmState.suggestedPath}»</span>
               </span>
               <span className="block text-muted-foreground">
                 اگر آدرس دیگری می‌خواهید، انصراف بزنید و در فیلد «مسیر URL» بنویسید.

@@ -9,11 +9,14 @@ import {
   CheckCircle, 
   Sparkles,
   LifeBuoy,
-  Link2
+  Link2,
+  Loader2,
+  Upload
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
+import { uploadConsultantAudio } from '../audio-upload';
 import { fa } from '@/lib/utils';
 import type { TourConsultantSpecItem, TourInput, TourConsultantSuggestion } from '../actions';
 import { getTourConsultantSuggestion } from '../actions';
@@ -74,6 +77,27 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
     }
   };
 
+  const audioFileRef = React.useRef<HTMLInputElement>(null);
+  const [audioUploading, setAudioUploading] = React.useState(false);
+
+  async function uploadAudioFile(file: File | undefined) {
+    if (!file || audioUploading) return;
+    setAudioUploading(true);
+    try {
+      const fd = new FormData();
+      fd.set('audio', file);
+      const res = await uploadConsultantAudio(data.slug || 'tour', fd);
+      if (res.ok === false) {
+        toast({ variant: 'error', title: res.error });
+        return;
+      }
+      updateConsultant({ audioUrl: res.url });
+      toast({ title: 'فایل صوتی آپلود شد.' });
+    } finally {
+      setAudioUploading(false);
+    }
+  }
+
   const updateConsultant = (patch: Partial<TourConsultantSpecItem>) => {
     onChange({
       consultantSpec: {
@@ -107,7 +131,7 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
             <UserCheck className="size-4 text-purple-600" />
             <span>مشخصات کارشناس این تور</span>
           </h4>
-          <span className="text-[11px] text-muted-foreground">در پایین صفحهٔ تور نمایش داده می‌شود تا مسافر مستقیم با او تماس بگیرد</span>
+          <span className="text-caption text-muted-foreground">در پایین صفحهٔ تور نمایش داده می‌شود تا مسافر مستقیم با او تماس بگیرد</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -166,7 +190,7 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
                       کپی لینک
                     </Button>
                     {!showAudioUrl && (
-                      <button type="button" onClick={() => setShowAudioUrl(true)} className="text-[11px] font-bold text-brand hover:underline">
+                      <button type="button" onClick={() => setShowAudioUrl(true)} className="text-caption font-bold text-brand hover:underline">
                         ویرایش لینک
                       </button>
                     )}
@@ -182,15 +206,46 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
                   )}
                 </div>
               ) : (
-                <div className="relative">
-                  <Input
-                    dir="ltr"
-                    value={consultant.audioUrl || ''}
-                    onChange={(e) => updateConsultant({ audioUrl: e.target.value })}
-                    placeholder="https://rivansafar.com/audio/..."
-                    className="ps-9 max-md:text-base"
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Input
+                      dir="ltr"
+                      value={consultant.audioUrl || ''}
+                      onChange={(e) => updateConsultant({ audioUrl: e.target.value })}
+                      placeholder="https://rivansafar.com/audio/..."
+                      className="ps-9 max-md:text-base"
+                    />
+                    <Mic className="size-4 text-purple-500 absolute left-3 top-2.5" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={audioUploading}
+                      onClick={() => audioFileRef.current?.click()}
+                      className="gap-1.5 text-xs"
+                    >
+                      {audioUploading ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Upload className="size-4" />
+                      )}
+                      {audioUploading ? 'در حال آپلود…' : 'آپلود فایل صوتی'}
+                    </Button>
+                    <span className="text-caption text-muted-foreground">یا لینک را بالا بچسبانید</span>
+                  </div>
+                  <input
+                    ref={audioFileRef}
+                    type="file"
+                    accept="audio/*"
+                    className="hidden"
+                    aria-label="انتخاب فایل صوتی"
+                    onChange={(e) => {
+                      void uploadAudioFile(e.target.files?.[0]);
+                      e.target.value = '';
+                    }}
                   />
-                  <Mic className="size-4 text-purple-500 absolute left-3 top-2.5" />
                 </div>
               )}
             </Field>
@@ -229,7 +284,7 @@ export default function Stage5Consultant({ data, onChange, excludeTourId }: Stag
 
         <div className="flex flex-col justify-center rounded-sm bg-secondary/30 p-4 border border-border/60">
           <span className="text-xs font-bold text-foreground">راهنما</span>
-          <p className="text-[11px] text-muted-foreground mt-1">
+          <p className="text-caption text-muted-foreground mt-1">
             «وضعیت فروش» یعنی ثبت‌نام باز است یا بسته؛ به‌صورت برچسب روی سایت دیده می‌شود و انتخابش در مرحلهٔ ۱ است. این‌که تور روی سایت دیده شود یا نه با «انتشار» است. تور «پیش‌نویس» روی سایت نیست و با دکمهٔ «انتشار» پایین همین فرم منتشر می‌شود.
           </p>
         </div>

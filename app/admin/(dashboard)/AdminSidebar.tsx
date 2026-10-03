@@ -105,7 +105,7 @@ export function AdminNavFooter({ email, role }: { email: string; role: 'owner' |
         <Avatar name={email || 'مدیر پنل'} size="sm" />
         <div className="min-w-0">
           <p className="truncate text-xs font-medium" dir="ltr">{email}</p>
-          <p className="text-[11px] text-muted-foreground">{role === 'owner' ? 'مالک سامانه' : 'ویراستار'}</p>
+          <p className="text-caption text-muted-foreground">{role === 'owner' ? 'مالک سامانه' : 'ویراستار'}</p>
         </div>
       </div>
       <AdminSignOut />

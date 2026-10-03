@@ -33,7 +33,7 @@ export function SmartSuggestion({
         <span>{title}</span>
       </p>
       {description ? (
-        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{description}</p>
+        <p className="mt-1 text-caption leading-relaxed text-muted-foreground">{description}</p>
       ) : null}
       <div className="mt-2 flex gap-2">
         <Button type="button" size="sm" onClick={onAccept} className="text-xs">

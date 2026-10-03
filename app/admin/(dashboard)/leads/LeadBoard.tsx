@@ -59,7 +59,7 @@ function DefRow({ label, children, hint }: { label: string; children: React.Reac
     <div className="flex items-start justify-between gap-3 py-2">
       <div>
         <p className="text-xs text-muted-foreground">{label}</p>
-        {hint ? <p className="mt-0.5 text-[11px] text-muted-foreground/70">{hint}</p> : null}
+        {hint ? <p className="mt-0.5 text-caption text-muted-foreground/70">{hint}</p> : null}
       </div>
       <div className="text-start text-sm font-medium">{children}</div>
     </div>
@@ -392,7 +392,7 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
             {/* ۳-۱۰: یادداشت داخلی ادمین — قابل‌ویرایش، فقط در پنل */}
             <div className="mt-3">
               <p className="mb-1 text-xs text-muted-foreground">یادداشت ادمین</p>
-              <p className="mb-1 text-[11px] text-muted-foreground/70">فقط تیم می‌بیند؛ روی سایت نمایش داده نمی‌شود.</p>
+              <p className="mb-1 text-caption text-muted-foreground/70">فقط تیم می‌بیند؛ روی سایت نمایش داده نمی‌شود.</p>
               <Textarea
                 value={adminNoteDraft}
                 onChange={(e) => setAdminNoteDraft(e.target.value)}

@@ -108,7 +108,7 @@ export default function StageFinalStation({
           <span>
             <span className="font-bold">{data.title.trim()}</span>
             {data.slug.trim() && (
-              <span className="block text-[11px] text-muted-foreground" dir="ltr">
+              <span className="block text-caption text-muted-foreground" dir="ltr">
                 /tour/{data.slug.trim()}
               </span>
             )}
@@ -171,7 +171,7 @@ export default function StageFinalStation({
           ) : (
             <span>
               <span className="block">{fa(hotels.length)} هتل</span>
-              <span className="block text-[11px] text-muted-foreground">
+              <span className="block text-caption text-muted-foreground">
                 {hotels
                   .slice(0, 3)
                   .map((h) => {
@@ -198,7 +198,7 @@ export default function StageFinalStation({
           ) : (
             <span>
               <span className="block">{fa(days.length)} روز برنامه</span>
-              <span className="block text-[11px] text-muted-foreground">
+              <span className="block text-caption text-muted-foreground">
                 {days
                   .slice(0, 3)
                   .map((d) => (d.title || '').trim())
@@ -333,7 +333,7 @@ export default function StageFinalStation({
                 <div className="flex min-w-0 items-start gap-2.5">
                   <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0">
-                    <dt className="text-[11px] text-muted-foreground">{row.label}</dt>
+                    <dt className="text-caption text-muted-foreground">{row.label}</dt>
                     <dd className="mt-0.5 text-xs leading-5 text-foreground">{row.body}</dd>
                   </div>
                 </div>

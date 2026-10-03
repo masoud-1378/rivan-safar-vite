@@ -20,6 +20,7 @@ import { Field, Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { AlertDialog } from '@/components/ui/alert-dialog';
+import { DualGalleryAdd, DualImageInput } from '@/components/ui/dual-image-input';
 import { useToast } from '@/components/ui/toast';
 import type { TourInput } from '../actions';
 import {
@@ -82,7 +83,6 @@ export default function Stage7Experience({ data, onChange }: Stage7ExperiencePro
   const [leaderSaving, setLeaderSaving] = useState(false);
   const [leaderUploading, setLeaderUploading] = useState(false);
   const [deletingLeaderId, setDeletingLeaderId] = useState<string | null>(null);
-  const leaderFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let alive = true;
@@ -163,18 +163,15 @@ export default function Stage7Experience({ data, onChange }: Stage7ExperiencePro
     toast({ title: 'تورلیدر حذف شد.' });
   }
 
-  async function uploadLeaderPhotoFile(file: File) {
+  async function uploadLeaderPhoto(file: File): Promise<string> {
     setLeaderUploading(true);
     try {
       const fd = new FormData();
       fd.set('photo', file);
       const res = await uploadExperiencePhoto('leader', fd);
-      if (res.ok === false) {
-        toast({ variant: 'error', title: res.error });
-        return;
-      }
-      setLeaderForm((f) => ({ ...f, photo: res.url }));
+      if (res.ok === false) throw new Error(res.error);
       toast({ title: 'عکس آپلود شد.' });
+      return res.url;
     } finally {
       setLeaderUploading(false);
     }
@@ -223,14 +220,13 @@ export default function Stage7Experience({ data, onChange }: Stage7ExperiencePro
   /* ── گالری واقعی ── */
   const gallery: TourGalleryItem[] = Array.isArray(data.gallery) ? data.gallery : [];
   const [galleryUploading, setGalleryUploading] = useState(false);
-  const galleryFileRef = useRef<HTMLInputElement>(null);
 
-  async function uploadGalleryFiles(files: FileList | null) {
-    if (!files || files.length === 0) return;
+  async function uploadGalleryFiles(files: File[]) {
+    if (files.length === 0) return;
     setGalleryUploading(true);
     try {
       const added: TourGalleryItem[] = [];
-      for (const file of Array.from(files)) {
+      for (const file of files) {
         const fd = new FormData();
         fd.set('photo', file);
         const res = await uploadExperiencePhoto('gallery', fd);
@@ -246,7 +242,6 @@ export default function Stage7Experience({ data, onChange }: Stage7ExperiencePro
       }
     } finally {
       setGalleryUploading(false);
-      if (galleryFileRef.current) galleryFileRef.current.value = '';
     }
   }
 
@@ -335,32 +330,13 @@ export default function Stage7Experience({ data, onChange }: Stage7ExperiencePro
                 <Field label="نام و نام خانوادگی *">
                   <Input value={leaderForm.name} onChange={(e) => setLeaderForm((f) => ({ ...f, name: e.target.value }))} placeholder="مثلاً علی رضایی" />
                 </Field>
-                <Field label="عکس">
-                  <div className="flex items-center gap-3">
-                    {leaderForm.photo ? (
-                      <img src={leaderForm.photo} alt="" className="w-14 h-14 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-                        <Users className="w-6 h-6 text-muted-foreground" />
-                      </div>
-                    )}
-                    <Button type="button" variant="outline" size="sm" disabled={leaderUploading} onClick={() => leaderFileRef.current?.click()}>
-                      {leaderUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
-                      {leaderForm.photo ? 'عوض کردن عکس' : 'آپلود عکس'}
-                    </Button>
-                    <input
-                      ref={leaderFileRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) void uploadLeaderPhotoFile(f);
-                        e.target.value = '';
-                      }}
-                    />
-                  </div>
-                </Field>
+                <DualImageInput
+                  label="عکس"
+                  value={leaderForm.photo}
+                  onChange={(url) => setLeaderForm((f) => ({ ...f, photo: url }))}
+                  uploadFile={uploadLeaderPhoto}
+                  round
+                />
                 <Field label="سابقه در همین مسیر">
                   <Textarea value={leaderForm.bio} onChange={(e) => setLeaderForm((f) => ({ ...f, bio: e.target.value }))} placeholder="مثلاً ۸ سال سابقه در مسیر دبی؛ مسلط به هتل‌های پالم" rows={2} />
                 </Field>
@@ -507,17 +483,13 @@ export default function Stage7Experience({ data, onChange }: Stage7ExperiencePro
           </div>
         )}
 
-        <Button type="button" variant="outline" size="sm" disabled={galleryUploading} onClick={() => galleryFileRef.current?.click()}>
-          {galleryUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
-          افزودن عکس
-        </Button>
-        <input
-          ref={galleryFileRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={(e) => void uploadGalleryFiles(e.target.files)}
+        <DualGalleryAdd
+          uploading={galleryUploading}
+          onFiles={(files) => void uploadGalleryFiles(files)}
+          onLink={(url) => {
+            onChange({ gallery: [...gallery, { url, caption: '' }].slice(0, 30) });
+            toast({ title: 'عکس با لینک به گالری اضافه شد.' });
+          }}
         />
         <p className="text-caption text-text-secondary mt-2">
           اگر گالری خالی بماند، این بخش روی سایت نمایش داده نمی‌شود.

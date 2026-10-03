@@ -72,7 +72,7 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
             {pending ? 'در حال ورود…' : 'شروع با دادهٔ نمونه'}
           </Button>
           {hasAnyData ? (
-            <p className="mt-1 max-w-60 text-[11px] leading-5 text-warning">
+            <p className="mt-1 max-w-60 text-caption leading-5 text-warning">
               داده‌ای در پنل هست؛ «دادهٔ نمونه» فقط نمونه‌های گمشدهٔ خودش را کامل می‌کند و به داده‌های شما دست نمی‌زند.
             </p>
           ) : null}

@@ -390,13 +390,13 @@ export default function Stage1Identity({
         {/* دوگانگی انتشار/ظرفیت (T4): هر دو با برچسب جدا کنار هم دیده می‌شوند. */}
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
           <span className="flex items-center gap-1.5">
-            <span className="text-[11px] text-muted-foreground">انتشار:</span>
+            <span className="text-caption text-muted-foreground">انتشار:</span>
             <Badge variant={data.publishStatus === 'published' ? 'success' : 'warning'}>
               {data.publishStatus === 'published' ? 'منتشرشده' : 'پیش‌نویس'}
             </Badge>
           </span>
           <label className="flex items-center gap-1.5">
-            <span className="text-[11px] text-muted-foreground">وضعیت فروش:</span>
+            <span className="text-caption text-muted-foreground">وضعیت فروش:</span>
             <Select
               aria-label="وضعیت فروش"
               value={CAPACITY_OPTIONS.some((o) => o.value === data.status) ? data.status : 'pending'}
@@ -411,7 +411,7 @@ export default function Stage1Identity({
           </label>
         </div>
         {/* یافتهٔ ۱/۱۲ مبتدی: توضیح «وضعیت فروش» در مرحلهٔ ۵ بود ولی انتخابش اینجاست — توضیح به همان‌جا آمد. */}
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-caption text-muted-foreground">
           انتشار یعنی تور روی سایت دیده شود؛ «وضعیت فروش» یعنی ثبت‌نام باز است یا بسته، و همین به‌صورت برچسب روی سایت نشان داده می‌شود.
         </p>
       </div>
@@ -439,7 +439,7 @@ export default function Stage1Identity({
         trigger={
           <span className="flex flex-col items-start gap-1 text-start">
             <span className="text-xs font-bold text-foreground">تنظیمات پیشرفته</span>
-            <span className="text-[11px] font-normal text-muted-foreground">
+            <span className="text-caption font-normal text-muted-foreground">
               آدرس اینترنتی تور (همان لینکی که تور با آن در سایت باز می‌شود) این‌جاست؛ خودکار از روی عنوان ساخته می‌شود و در کار روزمره نیازی به آن نیست.
             </span>
           </span>
@@ -461,7 +461,7 @@ export default function Stage1Identity({
           <button
             type="button"
             onClick={handleSlugRebuild}
-            className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:underline"
+            className="mt-1.5 inline-flex items-center gap-1 text-caption font-bold text-brand hover:underline"
           >
             <RefreshCw className="size-3" />
             بازسازی خودکار از عنوان
@@ -526,7 +526,7 @@ export default function Stage1Identity({
                   <Info className="size-3.5 text-muted-foreground" />
                 </span>
               </span>
-              <span className="text-[11px] text-muted-foreground">نشان روی کارت تور</span>
+              <span className="text-caption text-muted-foreground">نشان روی کارت تور</span>
             </div>
           </label>
           <Field
@@ -596,7 +596,7 @@ export default function Stage1Identity({
                     <span className="flex items-center gap-2 text-foreground">
                       <MapPin className="size-3.5 text-brand shrink-0" />
                       <span className="font-medium">{r.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{r.type === 'city' ? 'شهر' : r.type === 'region' ? 'منطقه' : 'کشور'}</span>
+                      <span className="text-caption text-muted-foreground">{r.type === 'city' ? 'شهر' : r.type === 'region' ? 'منطقه' : 'کشور'}</span>
                     </span>
                     {selected
                       ? <CheckIcon className="size-4 text-emerald-600 shrink-0" />
@@ -684,7 +684,7 @@ export default function Stage1Identity({
                               className="flex flex-1 items-center justify-between text-start text-xs font-medium"
                             >
                               <span>{country.name}</span>
-                              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                              <span className="flex items-center gap-1 text-caption text-muted-foreground">
                                 {country.cities.length > 0 ? `${fa(country.cities.length)} شهر` : ''}
                                 <ChevronDown className={cn('size-3 transition-transform', cOpen && 'rotate-180')} />
                               </span>
@@ -743,7 +743,7 @@ export default function Stage1Identity({
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs font-bold leading-tight">{opt.label}</div>
-                  <div className="text-[10px] text-muted-foreground truncate mt-0.5">
+                  <div className="text-caption text-muted-foreground truncate mt-0.5">
                     {opt.id === 'air' ? 'پرواز داخلی یا خارجی' : opt.id === 'rail' ? 'قطار ۴ یا ۶ تخته و ۵ ستاره' : 'اتوبوس VIP تخت‌شو'}
                   </div>
                 </div>
@@ -848,7 +848,7 @@ export default function Stage1Identity({
           <label className="text-xs font-bold text-foreground">
             قیمت‌گذاری پایه و شفافیت ارزی / تومانی *
           </label>
-          <span className="text-[11px] text-muted-foreground">برای هر بزرگسال در اتاق دوتخته پایه</span>
+          <span className="text-caption text-muted-foreground">برای هر بزرگسال در اتاق دوتخته پایه</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -903,7 +903,7 @@ export default function Stage1Identity({
                 {capacityNum > 0 && priceNum > 0 ? formatToman(capacityNum * priceNum) : '—'}
               </span>
             </div>
-            <span className="text-[10px] text-muted-foreground pb-1.5">فقط برای حساب سرانگشتی؛ ذخیره نمی‌شود.</span>
+            <span className="text-caption text-muted-foreground pb-1.5">فقط برای حساب سرانگشتی؛ ذخیره نمی‌شود.</span>
           </div>
         </Collapsible>
       </div>
@@ -977,7 +977,7 @@ export default function Stage1Identity({
                 <button
                   type="button"
                   onClick={() => setShowBannerUrl(true)}
-                  className="text-[11px] font-bold text-brand hover:underline"
+                  className="text-caption font-bold text-brand hover:underline"
                 >
                   چسباندن لینک تصویر
                 </button>
@@ -993,7 +993,7 @@ export default function Stage1Identity({
                 placeholder="https://images.unsplash.com/..."
                 aria-label="لینک تصویر بنر"
               />
-              <p className="mt-1 text-[11px] text-muted-foreground">لینک تصویر باکیفیت و بدون واترمارک از Unsplash.</p>
+              <p className="mt-1 text-caption text-muted-foreground">لینک تصویر باکیفیت و بدون واترمارک از Unsplash.</p>
             </div>
           )}
         </Field>
@@ -1008,7 +1008,7 @@ export default function Stage1Identity({
               <p className="text-xs font-bold text-foreground">
                 بنر آمادهٔ «{destContent.name}» را بگذارم؟
               </p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
+              <p className="mt-0.5 text-caption text-muted-foreground">
                 از تصویر مقصد می‌آید؛ بعداً می‌توانید عوضش کنید.
               </p>
               <div className="mt-2 flex gap-2">
@@ -1064,7 +1064,7 @@ export default function Stage1Identity({
         </Field>
         {/* پیش‌نمایش واقعی متن — همان رندرری که روی سایت متن را چاپ می‌کند */}
         <div className="rounded-sm border border-border/70 bg-background p-4">
-          <p className="mb-2 text-[11px] font-bold text-muted-foreground">نمای واقعی متن در سایت</p>
+          <p className="mb-2 text-caption font-bold text-muted-foreground">نمای واقعی متن در سایت</p>
           <div className="text-xs leading-relaxed text-foreground">
             <RichText value={richFallback(data.descriptionRich, data.description)} />
           </div>
@@ -1075,7 +1075,7 @@ export default function Stage1Identity({
           <button
             type="button"
             onClick={() => setShowDescPreview(true)}
-            className="inline-flex items-center gap-1.5 text-[11px] font-bold text-brand hover:underline"
+            className="inline-flex items-center gap-1.5 text-caption font-bold text-brand hover:underline"
           >
             <Sparkles className="size-3.5" />
             شروع از متن «{destContent.name}»

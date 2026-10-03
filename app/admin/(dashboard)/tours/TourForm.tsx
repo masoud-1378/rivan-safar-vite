@@ -50,6 +50,7 @@ import { DOMESTIC_SLUGS, DOMESTIC_NAME_RE, guessVisaRequired } from '@/src/lib/d
 
 // 7 Modular Stage Components + ایستگاه پایانی (موج ۴: تجربه سفر شد مرحلهٔ ۷)
 import Stage1Identity from './stages/Stage1Identity';
+import { StageStepper } from './StageStepper';
 import Stage2Hotels from './stages/Stage2Hotels';
 import Stage3Itinerary from './stages/Stage3Itinerary';
 import { safeErrorMessage } from '@/src/lib/error-message';
@@ -141,14 +142,6 @@ export default function TourForm({
   const [showLivePreview, setShowLivePreview] = useState(false);
   const [touched, setTouched] = useState(false);
 
-  // موبایل درجه‌یک (موج ۳): تب‌های مرحله‌ها در موبایل چیدمان فشردهٔ دو ستونی‌اند
-  // و چیزی بیرون نمی‌زند؛ با عوض‌شدن مرحله، تب فعال همیشه به دید اسکرول می‌شود.
-  const stageNavRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    stageNavRef.current
-      ?.querySelector(`[data-stage-btn="${activeStage}"]`)
-      ?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
-  }, [activeStage]);
   // فاز B5 موج ۲: «مبنای قیمت» برای ایستگاه پایانی از تنظیم می‌آید، نه از ستون.
   const [priceNoteDefault, setPriceNoteDefault] = useState('');
   useEffect(() => {
@@ -574,7 +567,7 @@ export default function TourForm({
           <Badge variant={formData.publishStatus === 'published' ? 'success' : 'warning'}>
             {formData.publishStatus === 'published' ? 'منتشرشده' : 'پیش‌نویس'}
           </Badge>
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-caption text-muted-foreground">
             {formData.publishStatus === 'published'
               ? 'این تور روی سایت دیده می‌شود.'
               : 'پیش‌نویس روی سایت دیده نمی‌شود.'}
@@ -594,74 +587,23 @@ export default function TourForm({
                 <ExternalLink className="size-4" />
                 مشاهده در سایت
               </Button>
-              <span className="text-[11px] text-muted-foreground">پس از انتشار فعال می‌شود.</span>
+              <span className="text-caption text-muted-foreground">پس از انتشار فعال می‌شود.</span>
             </span>
           )
         ) : (
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-caption text-muted-foreground">
             برای مشاهده در سایت، اول آدرس اینترنتی (مرحلهٔ ۱) را وارد کنید.
           </span>
         )}
       </div>
 
-      {/* Step Navigation Header (۶ گام + ایستگاه پایانی) */}
-      <div ref={stageNavRef} className="rounded-sm border border-border bg-card p-2 sm:p-3">
-        <div className="grid grid-cols-2 sm:grid-cols-7 gap-2">
-          {STAGES.map((stage) => {
-            const Icon = stage.icon;
-            const isActive = activeStage === stage.id;
-            // تیک ایستگاه پایانی: وقتی همهٔ چک‌های گیت سبزند (همان readiness قلم ۲).
-            const isPassed = stage.id === 7 ? readiness.ready : stageDone[stage.id - 1];
-
-            return (
-              <button
-                key={stage.id}
-                type="button"
-                data-stage-btn={stage.id}
-                onClick={() => setActiveStage(stage.id)}
-                className={cn(
-                  "relative flex flex-col items-start gap-1 rounded-sm p-3 text-start transition-all border cursor-pointer",
-                  isActive
-                    ? "border-brand bg-brand/10"
-                    : isPassed
-                    ? "border-border/70 bg-secondary/30 hover:bg-secondary/60"
-                    : "border-transparent bg-transparent hover:bg-muted/40 opacity-70"
-                )}
-              >
-                <div className="flex w-full items-center justify-between">
-                  <div className={cn(
-                    "flex size-7 items-center justify-center rounded-sm text-xs font-bold",
-                    isActive 
-                      ? "bg-brand text-brand-foreground" 
-                      : isPassed 
-                      ? "bg-emerald-500/20 text-emerald-600" 
-                      : "bg-muted text-muted-foreground"
-                  )}>
-                    {isPassed ? <Check className="size-4" /> : fa(stage.id)}
-                  </div>
-                  <Icon className={cn("size-4", isActive ? "text-brand" : "text-muted-foreground")} />
-                </div>
-
-                <div className="mt-1">
-                  <div className={cn(
-                    "text-xs font-bold leading-tight line-clamp-1",
-                    isActive ? "text-foreground" : "text-foreground/80"
-                  )}>
-                    {stage.label}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground truncate hidden sm:block mt-0.5">
-                    {stage.description}
-                  </div>
-                </div>
-
-                {isActive && (
-                  <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-1 w-8 rounded-full bg-brand" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* استپر مراحل (موج ۵): موبایل/تبلت = نوار مرحلهٔ فعلی + شیت انتخاب؛ دسکتاپ = استپر افقی */}
+      <StageStepper
+        stages={STAGES}
+        activeStage={activeStage}
+        onSelect={(id) => setActiveStage(id)}
+        isPassed={(id) => (id === 7 ? readiness.ready : stageDone[id - 1])}
+      />
 
       {/* Main Content Area */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
@@ -870,7 +812,7 @@ export default function TourForm({
             <div className="sticky top-6 rounded-sm border border-border bg-card p-4 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
                 <span className="text-xs font-bold text-foreground">پیش‌نمایش کارت تور در سایت</span>
-                <span className="text-[11px] text-muted-foreground">مشاهده زنده</span>
+                <span className="text-caption text-muted-foreground">مشاهده زنده</span>
               </div>
 
               <div className="overflow-hidden rounded-sm border border-border/80 bg-background">
@@ -887,11 +829,11 @@ export default function TourForm({
 
                 <div className="p-3.5 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-brand">
+                    <span className="text-caption font-bold text-brand">
                       {formData.carrierName || formData.airline || 'هوایی'}
                     </span>
                     {formData.badge && (
-                      <span className="rounded-sm bg-brand/10 text-brand px-2 py-0.5 text-[10px] font-bold">
+                      <span className="rounded-sm bg-brand/10 text-brand px-2 py-0.5 text-caption font-bold">
                         {formData.badge}
                       </span>
                     )}
@@ -901,16 +843,16 @@ export default function TourForm({
                     {formData.title || 'عنوان تور…'}
                   </h4>
 
-                  <div className="text-[11px] text-muted-foreground flex items-center justify-between">
+                  <div className="text-caption text-muted-foreground flex items-center justify-between">
                     <span>{formData.duration || 'مدت اقامت نامشخص'}</span>
                     <span>{formData.origin ? `از ${formData.origin}` : 'مبدأ نامشخص'}</span>
                   </div>
 
                   <div className="border-t border-border/50 pt-2 flex items-baseline justify-between">
-                    <span className="text-[11px] text-muted-foreground">شروع قیمت از:</span>
+                    <span className="text-caption text-muted-foreground">شروع قیمت از:</span>
                     <div className="text-start font-bold text-foreground">
                       <span className="text-sm font-black">{faNumber(Number(formData.price) || 0)}</span>
-                      <span className="text-[10px] text-muted-foreground me-1">تومان</span>
+                      <span className="text-caption text-muted-foreground me-1">تومان</span>
                     </div>
                   </div>
                 </div>

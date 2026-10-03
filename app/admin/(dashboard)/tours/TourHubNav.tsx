@@ -113,7 +113,7 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
               <span>{tab.label}</span>
               {counts && counts[tab.id as keyof typeof counts] !== undefined && (
                 <span className={cn(
-                  "ms-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                  "ms-1 rounded-full px-1.5 py-0.5 text-caption font-bold",
                   isActive ? "bg-black/20 text-brand-foreground" : "bg-muted text-muted-foreground"
                 )}>
                   {counts[tab.id as keyof typeof counts]}

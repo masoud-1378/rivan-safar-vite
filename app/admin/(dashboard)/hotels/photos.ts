@@ -12,6 +12,27 @@ import {
   cleanStorageSlug,
   storagePathInBucket,
 } from '@/src/lib/upload-policy';
+import { assertRenderableImageUrl } from '@/src/lib/site-image-hosts';
+
+/**
+ * افزودن عکس هتل با لینک دستی (موج ۵): همان اعتباری که MediaField می‌سنجد؛
+ * ردیف media با همان source ساخته می‌شود تا فهرست یکدست بماند.
+ */
+export async function addHotelPhotoByLink(
+  slug: string,
+  nameFa: string,
+  url: string,
+): Promise<HotelPhoto> {
+  await requireAdmin(['owner', 'editor']);
+  assertRenderableImageUrl(url);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const [row] = await db
+    .insert(media)
+    .values({ url: url.trim(), altFa: `عکس ${nameFa}`, source: sourceFor(slug) })
+    .returning({ id: media.id, url: media.url, altFa: media.altFa });
+  return { id: row.id, url: row.url, altFa: row.altFa };
+}
 
 /**
  * عکس‌های هتل — کتابچه §۳ (فاز ۲): «آپلودر عکس هتل، عکس را ذخیره نمی‌کند».

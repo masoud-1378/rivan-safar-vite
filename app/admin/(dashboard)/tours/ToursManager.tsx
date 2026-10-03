@@ -319,7 +319,7 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
           <span className="truncate font-semibold text-foreground">{tour.title}</span>
         </span>
       </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-caption text-muted-foreground">
         {transportBadge(tour as TourRow)}
         {tour.badge === 'حرکت تضمین‌شده' && (
           <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-600 font-bold">
@@ -357,7 +357,7 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
         return (
           <div className="flex flex-col gap-1">
             <span className="font-semibold text-foreground">{tour.title}</span>
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-1.5 text-caption text-muted-foreground">
               {transportBadge(tour)}
               {tour.badge === 'حرکت تضمین‌شده' && (
                 <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-600 font-bold">
@@ -379,7 +379,7 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
           <span className={tour.destination ? 'text-foreground font-medium' : 'text-muted-foreground'}>
             {tour.destination || '—'}
           </span>
-          <span className="block text-[11px] text-muted-foreground">
+          <span className="block text-caption text-muted-foreground">
             از مبدأ:{' '}
             {tour.origin ? (
               <span className="text-foreground/80">{tour.origin}</span>

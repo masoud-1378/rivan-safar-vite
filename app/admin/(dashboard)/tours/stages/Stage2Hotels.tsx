@@ -131,7 +131,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }
             {hotel.name ? `هتل ${hotel.name}` : `بستهٔ اقامتی شماره ${fa(idx + 1)}`}
           </span>
           {hotel.hotelId && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-caption font-bold text-emerald-700">
               <Check className="size-3" />
               متصل به جدول هتل‌ها
             </span>
@@ -249,7 +249,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }
             نرخ‌های تفصیلی
           </span>
           <span className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-sm border border-brand/20 bg-brand/10 px-2 py-0.5 text-[11px] font-bold text-brand">
+            <span className="inline-flex items-center gap-1 rounded-sm border border-brand/20 bg-brand/10 px-2 py-0.5 text-caption font-bold text-brand">
               <Globe className="size-3" />
               روی سایت: {shownRate !== null ? `${faNumber(shownRate)} تومان` : '—'}
             </span>
@@ -266,7 +266,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }
               trigger={
                 <span className="flex flex-col items-start gap-1 text-start">
                   <span className="text-xs font-bold text-foreground">تنظیمات پیشرفته</span>
-                  <span className="text-[11px] font-normal text-muted-foreground">
+                  <span className="text-caption font-normal text-muted-foreground">
                     نوع رزرو هتل (گارانتی، نیم‌چارتر یا درخواستی) این‌جاست؛ فقط وقتی لازم است که نوع قراردادتان با هتل را بدانید. نرخ‌هایی که وارد کرده‌اید سر جایشان می‌مانند.
                   </span>
                 </span>
@@ -275,7 +275,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-bold text-foreground">نوع رزرو</span>
                 {hotel.hotelId && (
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">ویژهٔ این تور</span>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground">ویژهٔ این تور</span>
                 )}
               </div>
               <select
@@ -292,10 +292,10 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }
                 ))}
               </select>
               {bookingGuide && (
-                <p className="mt-1.5 text-[11px] text-muted-foreground">{bookingGuide}</p>
+                <p className="mt-1.5 text-caption text-muted-foreground">{bookingGuide}</p>
               )}
               {/* یافتهٔ ۸ مبتدی: توضیح هر سه گزینه، همیشه دیده می‌شود — نه فقط بعد از انتخاب. */}
-              <ul className="mt-2 space-y-1 text-[11px] text-muted-foreground">
+              <ul className="mt-2 space-y-1 text-caption text-muted-foreground">
                 {BOOKING_TYPE_OPTIONS.map((o) => (
                   <li key={o.value} className="flex gap-1.5">
                     <span className="shrink-0 font-bold text-foreground">{o.label}:</span>
@@ -310,7 +310,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }
             <div>
               <div className="mb-1.5 flex flex-wrap items-center justify-between gap-1">
                 <span className="text-xs font-bold text-foreground">{perPersonLabel}</span>
-                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1 text-caption text-muted-foreground">
                   <Eye className="size-3.5" />
                   این عدد روی سایت نمایش داده می‌شود
                 </span>
@@ -321,23 +321,23 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }
                 placeholder="۰"
               />
               {perPersonHint && (
-                <p className="mt-1.5 text-[11px] text-muted-foreground">{perPersonHint}</p>
+                <p className="mt-1.5 text-caption text-muted-foreground">{perPersonHint}</p>
               )}
-              <p className="mt-1.5 text-[11px] text-muted-foreground">
+              <p className="mt-1.5 text-caption text-muted-foreground">
                 همین نرخ برای «اتاق دوتخته» هم ذخیره می‌شود.
               </p>
             </div>
 
             {/* تفکیک نرخ اتاق‌ها */}
             <div className="space-y-1.5 pt-1">
-              <span className="text-[11px] text-muted-foreground">تفکیک نرخ اتاق‌ها (اختیاری)</span>
+              <span className="text-caption text-muted-foreground">تفکیک نرخ اتاق‌ها (اختیاری)</span>
               {/* یافتهٔ ۵ مبتدی: هر ورودی قیمت بگوید کجا دیده می‌شود. */}
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 هر کدام را پر کنید، در جدول قیمت همین هتل در صفحهٔ تور نمایش داده می‌شود؛ خالی بماند چیزی نشان داده نمی‌شود.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div className="rounded-sm bg-card p-3 border border-border/60 space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground">
+                  <div className="flex items-center gap-1.5 text-caption font-bold text-foreground">
                     <User className="size-3.5 text-muted-foreground" />
                     <span>اتاق یک‌تخته</span>
                   </div>
@@ -350,7 +350,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }
                 </div>
 
                 <div className="rounded-sm bg-card p-3 border border-border/60 space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground">
+                  <div className="flex items-center gap-1.5 text-caption font-bold text-foreground">
                     <Baby className="size-3.5 text-muted-foreground" />
                     <span>کودک با تخت (۶ تا ۱۲ سال)</span>
                   </div>
@@ -363,7 +363,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }
                 </div>
 
                 <div className="rounded-sm bg-card p-3 border border-border/60 space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground">
+                  <div className="flex items-center gap-1.5 text-caption font-bold text-foreground">
                     <Baby className="size-3.5 text-muted-foreground" />
                     <span>کودک بدون تخت (۲ تا ۶ سال)</span>
                   </div>
@@ -603,7 +603,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels, tr
                 className="size-4 shrink-0 cursor-pointer accent-brand"
               />
               <span className="text-xs font-bold text-foreground">فقط هتل‌های همین مقصد</span>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-caption text-muted-foreground">
                 ({fa(scopedHotels.length)} هتل)
               </span>
             </label>
@@ -641,7 +641,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels, tr
               ) : (
                 groupedResults.map(([city, items]) => (
                   <div key={city}>
-                    <div className="sticky top-0 bg-secondary/60 px-3 py-1.5 text-[11px] font-bold text-foreground">
+                    <div className="sticky top-0 bg-secondary/60 px-3 py-1.5 text-caption font-bold text-foreground">
                       {city}
                       <span className="ms-1.5 font-normal text-muted-foreground">({fa(items.length)})</span>
                     </div>
@@ -656,7 +656,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels, tr
                           <span className="flex items-center gap-2 text-foreground">
                             <Building2 className="size-3.5 text-blue-600 shrink-0" />
                             <span className="font-medium">{h.nameFa}</span>
-                            <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                            <span className="inline-flex items-center gap-0.5 text-caption text-muted-foreground">
                               <Star className="size-3 text-amber-500 fill-amber-500" />
                               {h.stars ?? '—'}
                             </span>

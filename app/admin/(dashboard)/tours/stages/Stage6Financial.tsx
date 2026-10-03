@@ -153,7 +153,7 @@ export default function Stage6Financial({ data, onChange, excludeTourId }: Stage
         {financialCheck && (
           <span
             className={cn(
-              'hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-sm border px-2.5 py-1.5 text-[11px] font-bold',
+              'hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-sm border px-2.5 py-1.5 text-caption font-bold',
               financialCheck.ok
                 ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600'
                 : 'border-amber-500/40 bg-amber-500/10 text-amber-600'
@@ -183,7 +183,7 @@ export default function Stage6Financial({ data, onChange, excludeTourId }: Stage
             <Table2 className="size-4 text-brand" />
             <span>جدول کنسلی پلکانی</span>
           </h4>
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-caption text-muted-foreground">
             پله‌ای کامل است که هر سه عددش وارد شده باشد ({fa(completeCount)} پلهٔ کامل)
           </span>
         </div>
@@ -199,7 +199,7 @@ export default function Stage6Financial({ data, onChange, excludeTourId }: Stage
               <Plus className="size-4" />
               درج الگوی پیشنهادی (قابل‌ویرایش)
             </Button>
-            <p className="mt-2 text-[11px] text-muted-foreground">
+            <p className="mt-2 text-caption text-muted-foreground">
               این الگو فقط یک نقطهٔ شروع است؛ هیچ‌کدام از عددهایش نهایی نیست و همه را می‌توانید عوض کنید.
             </p>
           </div>
@@ -208,7 +208,7 @@ export default function Stage6Financial({ data, onChange, excludeTourId }: Stage
         {tiers.length > 0 && (
           <>
             <div className="space-y-2">
-              <div className="hidden sm:grid sm:grid-cols-[1fr_1fr_1fr_44px] gap-2 px-1 text-[11px] font-bold text-muted-foreground">
+              <div className="hidden sm:grid sm:grid-cols-[1fr_1fr_1fr_44px] gap-2 px-1 text-caption font-bold text-muted-foreground">
                 <span>از چند روز مانده به حرکت</span>
                 <span>تا چند روز مانده به حرکت</span>
                 <span>درصد جریمه</span>
@@ -225,7 +225,7 @@ export default function Stage6Financial({ data, onChange, excludeTourId }: Stage
                     )}
                   >
                     <div>
-                      <label className="mb-1 block text-[11px] text-muted-foreground sm:hidden">از چند روز مانده به حرکت</label>
+                      <label className="mb-1 block text-caption text-muted-foreground sm:hidden">از چند روز مانده به حرکت</label>
                       <Input
                         type="number"
                         inputMode="numeric"
@@ -241,7 +241,7 @@ export default function Stage6Financial({ data, onChange, excludeTourId }: Stage
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-[11px] text-muted-foreground sm:hidden">تا چند روز مانده به حرکت</label>
+                      <label className="mb-1 block text-caption text-muted-foreground sm:hidden">تا چند روز مانده به حرکت</label>
                       <Input
                         type="number"
                         inputMode="numeric"
@@ -257,7 +257,7 @@ export default function Stage6Financial({ data, onChange, excludeTourId }: Stage
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-[11px] text-muted-foreground sm:hidden">درصد جریمه</label>
+                      <label className="mb-1 block text-caption text-muted-foreground sm:hidden">درصد جریمه</label>
                       <div className="relative">
                         <Input
                           type="number"
@@ -291,7 +291,7 @@ export default function Stage6Financial({ data, onChange, excludeTourId }: Stage
                       </button>
                     </div>
                     {!complete && (
-                      <p className="text-[11px] text-amber-600 sm:col-span-4">
+                      <p className="text-caption text-amber-600 sm:col-span-4">
                         این پله هنوز کامل نیست؛ هر سه عدد را وارد کنید تا در انتشار حساب شود.
                       </p>
                     )}
@@ -307,7 +307,7 @@ export default function Stage6Financial({ data, onChange, excludeTourId }: Stage
               <button
                 type="button"
                 onClick={() => setConfirmClearTiers(true)}
-                className="text-[11px] font-bold text-muted-foreground hover:text-destructive hover:underline"
+                className="text-caption font-bold text-muted-foreground hover:text-destructive hover:underline"
               >
                 پاک کردن همهٔ پله‌ها
               </button>
@@ -322,7 +322,7 @@ export default function Stage6Financial({ data, onChange, excludeTourId }: Stage
           <FileText className="size-4 text-brand" />
           <span>تکلیف پول در صورت رد ویزا</span>
         </h4>
-        <p className="text-[11px] text-muted-foreground leading-5">
+        <p className="text-caption text-muted-foreground leading-5">
           متن زیر فقط یک پیشنهاد برای شروع است؛ دقیقاً با همان قرارداد این تور بازنویسی‌اش کنید.
         </p>
         {visaSuggestion && !visaSuggestionOff && (

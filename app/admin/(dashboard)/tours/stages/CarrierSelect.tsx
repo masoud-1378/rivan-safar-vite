@@ -154,7 +154,7 @@ export default function CarrierSelect({ value, onChange }: CarrierSelectProps) {
             className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-sm border border-border bg-popover shadow-lg"
           >
             {filtered.length === 0 ? (
-              <p className="px-3 py-2.5 text-[11px] text-muted-foreground">
+              <p className="px-3 py-2.5 text-caption text-muted-foreground">
                 موردی در فهرست نیست؛ همین متن ذخیره می‌شود.
               </p>
             ) : (
@@ -176,7 +176,7 @@ export default function CarrierSelect({ value, onChange }: CarrierSelectProps) {
                       {c.nameFa}
                       {c.iataCode ? <span className="font-medium text-muted-foreground"> ({c.iataCode})</span> : null}
                     </span>
-                    <span className="block truncate text-[10px] text-muted-foreground">
+                    <span className="block truncate text-caption text-muted-foreground">
                       {[c.nameEn, c.country].filter(Boolean).join(' · ')}
                     </span>
                   </span>
