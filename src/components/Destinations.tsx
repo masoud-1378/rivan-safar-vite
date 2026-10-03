@@ -1,125 +1,56 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { ArrowLeft, Star } from 'lucide-react';
 import SmartImage from './SmartImage';
+import { useContent } from '@/src/lib/content-context';
+import type { Place } from '@/src/data/destinationsData';
+import { fa } from '@/lib/utils';
 
-/** نگاشت عنوان کارت به مسیر واقعی مقصد (سند ۰۳: لینک HTML واقعی) */
-const DESTINATION_PATHS: Record<string, string> = {
-  'تور استانبول': '/destination/turkey/istanbul',
-  'تور دبی': '/destination/uae/dubai',
-  'تور تایلند': '/destination/thailand',
-  'تور ترکیه': '/destination/turkey',
-  'تور کیش': '/destination/iran/kish',
-  'تور مشهد': '/destination/iran/mashhad',
-};
+interface WidgetCard {
+  id: string;
+  title: string;
+  image: string;
+  price: string;
+  badge: string;
+  toursCount: number;
+  path: string;
+}
 
-const domesticDestinations = [
-  {
-    id: 10,
-    title: 'تور کیش',
-    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop',
-    price: '۴٬۵۰۰٬۰۰۰',
-    badge: 'تفریحات دریایی',
-    toursCount: '۴۵',
-  },
-  {
-    id: 11,
-    title: 'تور مشهد',
-    image: 'https://images.unsplash.com/photo-1519817650390-64a93db51149?q=80&w=800&auto=format&fit=crop',
-    price: '۳٬۲۰۰٬۰۰۰',
-    badge: 'هتل نزدیک حرم',
-    toursCount: '۶۰',
-  },
-  {
-    id: 12,
-    title: 'تور قشم',
-    image: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?q=80&w=800&auto=format&fit=crop',
-    price: '۵٬۸۰۰٬۰۰۰',
-    badge: 'گشت جزیره هنگام',
-    toursCount: '۲۲',
-  },
-  {
-    id: 15,
-    title: 'تور چابهار',
-    image: 'https://images.unsplash.com/photo-1559494007-9f5847c49d94?q=80&w=800&auto=format&fit=crop',
-    price: '۸٬۵۰۰٬۰۰۰',
-    badge: 'گشت کوه‌های مریخی',
-    toursCount: '۱۴',
-  }
-];
-
-const destinations = [
-  {
-    id: 1,
-    title: 'تور استانبول',
-    image: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?q=80&w=800&auto=format&fit=crop',
-    price: '۱۴٬۵۰۰٬۰۰۰',
-    badge: 'پرواز ترکیش',
-    toursCount: '۱۸',
-  },
-  {
-    id: 2,
-    title: 'تور دبی',
-    image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=800&auto=format&fit=crop',
-    price: '۲۲٬۳۰۰٬۰۰۰',
-    badge: 'ویزا فوری',
-    toursCount: '۲۴',
-  },
-  {
-    id: 3,
-    title: 'تور تایلند',
-    image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=800&auto=format&fit=crop',
-    price: '۴۵٬۹۰۰٬۰۰۰',
-    badge: 'ترانسفر اختصاصی',
-    toursCount: '۱۲',
-  },
-  {
-    id: 4,
-    title: 'تور ارمنستان',
-    image: 'https://images.unsplash.com/photo-1559586616-361e18714958?q=80&w=800&auto=format&fit=crop',
-    price: '۱۱٬۲۰۰٬۰۰۰',
-    badge: 'گشت شهری رایگان',
-    toursCount: '۹',
-  },
-  {
-    id: 5,
-    title: 'تور گرجستان',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/4/45/View_of_Tbilisi_from_Tabori_Church_2023-10-08-2.jpg',
-    price: '۱۲٬۸۰۰٬۰۰۰',
-    badge: 'اقامت با صبحانه',
-    toursCount: '۱۵',
-  },
-  {
-    id: 6,
-    title: 'تور اسپانیا',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/a/af/Plaza_Mayor_De_Madrid_%28215862629%29_edited.jpeg',
-    price: '۹۸٬۰۰۰٬۰۰۰',
-    badge: 'اخذ ویزای شینگن',
-    toursCount: '۵',
-  },
-  {
-    id: 7,
-    title: 'تور فرانسه',
-    image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=800&auto=format&fit=crop',
-    price: '۱۰۵٬۰۰۰٬۰۰۰',
-    badge: 'راهنمای فارسی زبان',
-    toursCount: '۷',
-  },
-  {
-    id: 9,
-    title: 'تور ترکیه',
-    image: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=800&auto=format&fit=crop',
-    price: '۱۸٬۵۰۰٬۰۰۰',
-    badge: 'اقامت UALL',
-    toursCount: '۳۲',
-  }
-];
+/**
+ * ایراد ۱۹: کارت‌های «تورهای محبوب» از دیتابیس می‌آیند — فقط شهرهای دارای
+ * تور فعال، به ترتیب تعداد تور. قیمت و شمار تور هم واقعی‌اند، نه هاردکد.
+ * useContent هنگام قطعی DB خودش به دیتای استاتیک برمی‌گردد.
+ */
+function toCard(c: Place): WidgetCard {
+  return {
+    id: c.id,
+    title: `تور ${c.name}`,
+    image: c.image,
+    price: (c.startingPrice || '').trim(),
+    badge: c.parentCountryName || c.name,
+    toursCount: c.activeToursCount,
+    path: `/destination/${c.parentCountrySlug || c.slug}/${c.slug}`,
+  };
+}
 
 interface DestinationsProps {
   onNavigate?: (path: string) => void;
 }
 
 export default function Destinations({ onNavigate }: DestinationsProps) {
+  const { cities } = useContent();
+
+  // ایراد ۱۹: فقط شهرهای دارای تور فعال، پرتعدادترین‌ها اول.
+  const { foreignCards, domesticCards } = useMemo(() => {
+    const live = Object.values(cities)
+      .filter((c) => c.activeToursCount > 0)
+      .sort((a, b) => b.activeToursCount - a.activeToursCount);
+    return {
+      foreignCards: live.filter((c) => c.category !== 'domestic').slice(0, 8).map(toCard),
+      domesticCards: live.filter((c) => c.category === 'domestic').slice(0, 4).map(toCard),
+    };
+  }, [cities]);
+
   const handleNav = (path: string, e?: React.MouseEvent) => {
     if (e) e.preventDefault();
     if (onNavigate) {
@@ -130,7 +61,9 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
   return (
     <section className="section-standard bg-page-background relative overflow-hidden">
       <div className="container-main px-4 sm:px-6 lg:px-8 relative z-10">
-        
+
+        {foreignCards.length > 0 && (
+        <>
         {/* Foreign Tours Section Header */}
         <div className="mb-6 md:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
           <motion.h2 
@@ -159,7 +92,7 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
         <div 
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6"
         >
-          {destinations.map((dest, index) => (
+          {foreignCards.map((dest, index) => (
             <motion.div
               key={dest.id}
               initial={{ opacity: 0, y: 30 }}
@@ -176,8 +109,8 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
 
               {/* Main Card — لینک HTML واقعی به صفحه مقصد */}
               <a
-                href={DESTINATION_PATHS[dest.title] || '/destinations'}
-                onClick={(e) => handleNav(DESTINATION_PATHS[dest.title] || '/destinations', e)}
+                href={dest.path}
+                onClick={(e) => handleNav(dest.path, e)}
                 className="card-destination h-[220px] sm:h-auto sm:aspect-[4/5] w-full block"
               >
                 <SmartImage 
@@ -200,16 +133,22 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
                     {dest.title}
                   </h3>
                   <div className="card-destination-subtitle text-body-sm text-white/80 font-normal mb-3">
-                    {dest.toursCount} تور فعال
+                    {fa(dest.toursCount)} تور فعال
                   </div>
                   
                   <div className="card-destination-footer pt-3 border-t border-white/20 flex items-center justify-between">
                     <div>
-                      <div className="card-destination-price-label text-caption text-white/70">شروع از</div>
-                      <div className="flex items-baseline gap-1 whitespace-nowrap">
-                        <span className="card-destination-price-value text-body-lg sm:text-h3 font-extrabold text-white">{dest.price}</span>
-                        <span className="card-destination-price-label text-caption text-white/70 font-normal">تومان</span>
-                      </div>
+                      {dest.price ? (
+                        <>
+                          <div className="card-destination-price-label text-caption text-white/70">شروع از</div>
+                          <div className="flex items-baseline gap-1 whitespace-nowrap">
+                            <span className="card-destination-price-value text-body-lg sm:text-h3 font-extrabold text-white">{dest.price}</span>
+                            <span className="card-destination-price-label text-caption text-white/70 font-normal">تومان</span>
+                          </div>
+                        </>
+                      ) : (
+                        <span className="card-destination-price-value text-body-lg sm:text-h3 font-extrabold text-white">استعلام قیمت</span>
+                      )}
                     </div>
                     <div className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors shrink-0">
                       <svg className="w-4 h-4 rotate-180 text-white card-destination-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -222,7 +161,11 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
             </motion.div>
           ))}
         </div>
+        </>
+        )}
 
+        {domesticCards.length > 0 && (
+        <>
         {/* Domestic Tours Section Header */}
         <div className="mt-16 lg:mt-20 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
           <motion.h2 
@@ -251,7 +194,7 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
         <div 
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6"
         >
-          {domesticDestinations.map((dest, index) => (
+          {domesticCards.map((dest, index) => (
             <motion.div
               key={dest.id}
               initial={{ opacity: 0, y: 30 }}
@@ -268,8 +211,8 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
 
               {/* Main Card — لینک HTML واقعی به صفحه مقصد */}
               <a
-                href={DESTINATION_PATHS[dest.title] || '/destinations'}
-                onClick={(e) => handleNav(DESTINATION_PATHS[dest.title] || '/destinations', e)}
+                href={dest.path}
+                onClick={(e) => handleNav(dest.path, e)}
                 className="card-destination h-[220px] sm:h-auto sm:aspect-[4/5] w-full block"
               >
                 <SmartImage 
@@ -292,16 +235,22 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
                     {dest.title}
                   </h3>
                   <div className="card-destination-subtitle text-body-sm text-white/80 font-normal mb-3">
-                    {dest.toursCount} تور فعال
+                    {fa(dest.toursCount)} تور فعال
                   </div>
                   
                   <div className="card-destination-footer pt-3 border-t border-white/20 flex items-center justify-between">
                     <div>
-                      <div className="card-destination-price-label text-caption text-white/70">شروع از</div>
-                      <div className="flex items-baseline gap-1 whitespace-nowrap">
-                        <span className="card-destination-price-value text-body-lg sm:text-h3 font-extrabold text-white">{dest.price}</span>
-                        <span className="card-destination-price-label text-caption text-white/70 font-normal">تومان</span>
-                      </div>
+                      {dest.price ? (
+                        <>
+                          <div className="card-destination-price-label text-caption text-white/70">شروع از</div>
+                          <div className="flex items-baseline gap-1 whitespace-nowrap">
+                            <span className="card-destination-price-value text-body-lg sm:text-h3 font-extrabold text-white">{dest.price}</span>
+                            <span className="card-destination-price-label text-caption text-white/70 font-normal">تومان</span>
+                          </div>
+                        </>
+                      ) : (
+                        <span className="card-destination-price-value text-body-lg sm:text-h3 font-extrabold text-white">استعلام قیمت</span>
+                      )}
                     </div>
                     <div className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors shrink-0">
                       <svg className="w-4 h-4 rotate-180 text-white card-destination-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -314,6 +263,8 @@ export default function Destinations({ onNavigate }: DestinationsProps) {
             </motion.div>
           ))}
         </div>
+        </>
+        )}
       </div>
     </section>
   );

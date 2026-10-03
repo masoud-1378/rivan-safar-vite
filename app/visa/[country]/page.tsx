@@ -6,6 +6,13 @@ import { metadataFor, resolveSeo, breadcrumbJsonLd } from '../../seo-helpers';
 import { getCountries } from '@/src/lib/db-content';
 import { getContactInfo } from '@/src/lib/site-contact';
 
+/**
+ * ایراد ۲۲ (مستندسازی): محتوای صفحات /visa/* «تحریریه‌ایِ ثابت» است — نه از
+ * جدول مقصدهای کاتالوگ می‌آید نه از لندینگ‌های سئو. تغییر «ویزا لازم است؟»
+ * در پنل روی این صفحه‌ها اثری ندارد. اگر قرار است محتوای ویزا از کاتالوگ
+ * تغذیه شود، تصمیمش با مسعود است (نیازمند اتصال VisaGuidePage به رکورد مقصد).
+ */
+
 export const dynamic = 'force-dynamic';
 
 export async function generateStaticParams() {

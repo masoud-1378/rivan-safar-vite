@@ -185,12 +185,117 @@ export async function getDestinations(): Promise<Place[]> {
   }
 }
 
-/** یک بار خوانده می‌شود و هر دو فهرست از همان نتیجه ساخته می‌شوند. */
-let destinationsCache: Promise<Place[]> | null = null;
+/**
+ * کش مقصدها با سقف زمانی (ایراد ۲۰ اتصال پنل به سایت).
+ * پیش‌تر این کش ماژولی تا بازیافت اینستنس سرور هرگز تازه نمی‌شد و ویرایش
+ * مقصد در پنل ساعت‌ها روی سایت کهنه می‌ماند (و در تست زنده، مقصدِ تازه‌ساخته
+ * ۴۰۴ می‌داد چون کشِ قدیمی آن را نمی‌شناخت).
+ * حالا: حداکثر ۵ دقیقه کهنگی + ابطال فوری هنگام هر ذخیره/بایگانی در پنل
+ * (invalidateDestinationsCache از اکشن‌های places صدا زده می‌شود؛ پنل و سایت
+ * در همین پروسهٔ Next.js زندگی می‌کنند). روی چند اینستنس، سقف ۵ دقیقه
+ * کهنگیِ نهایی است.
+ */
+const DESTINATIONS_CACHE_TTL_MS = 5 * 60 * 1000;
+
+let destinationsCache: { at: number; promise: Promise<Place[]> } | null = null;
 
 export function getDestinationsOnce(): Promise<Place[]> {
-  if (!destinationsCache) destinationsCache = getDestinations();
-  return destinationsCache;
+  const now = Date.now();
+  if (!destinationsCache || now - destinationsCache.at > DESTINATIONS_CACHE_TTL_MS) {
+    destinationsCache = { at: now, promise: getDestinations() };
+  }
+  return destinationsCache.promise;
+}
+
+/** ابطال دستی کش مقصدها — اکشن‌های پنل پس از هر ذخیره/بایگانی صدا می‌زنند. */
+export function invalidateDestinationsCache(): void {
+  destinationsCache = null;
+}
+
+/* ------------------------------------------------------------------ */
+/* لینک‌های ناوبری دیتابیس‌محور (ایرادهای ۱۹ و ۲۳)                      */
+/* ------------------------------------------------------------------ */
+
+export interface NavDestinationLink {
+  name: string;
+  slug: string;
+  countrySlug: string;
+  category: Place['category'];
+  activeTours: number;
+  path: string;
+}
+
+export interface NavExhibitionLink {
+  name: string;
+  slug: string;
+  path: string;
+}
+
+export interface NavCountryLink {
+  name: string;
+  slug: string;
+  activeTours: number;
+  path: string;
+}
+
+export interface NavLinks {
+  countries: NavCountryLink[];
+  destinations: NavDestinationLink[];
+  exhibitions: NavExhibitionLink[];
+  /** نامک تورهای منتشرشده — برای غربال لینک‌های دستی /tour/* در منو. */
+  tourSlugs: string[];
+}
+
+/**
+ * لینک‌های ناوبری از دیتابیس، نه هاردکد.
+ * - مقصدها: فقط شهرهای دارای «تور فعال» (activeToursCount>0)؛ همان شمارش
+ *   خودکاری که صفحه‌ها استفاده می‌کنند. مرتب بر اساس تعداد تور.
+ * - نمایشگاه‌ها: فقط منتشرشده‌ها (گیت انتشار getExhibitions).
+ * خطا یا قطعی → آرایه‌های خالی؛ صداکننده به فالبک دستی برمی‌گردد.
+ */
+export async function getNavLinks(): Promise<NavLinks> {
+  const empty: NavLinks = { countries: [], destinations: [], exhibitions: [], tourSlugs: [] };
+  try {
+    const [places, exhibitions, tours] = await Promise.all([
+      getDestinationsOnce(),
+      getExhibitions(),
+      getTours(),
+    ]);
+    const countries = places
+      .filter((p) => p.type === 'country' && p.activeToursCount > 0)
+      .sort((a, b) => b.activeToursCount - a.activeToursCount || a.name.localeCompare(b.name, 'fa'))
+      .map((p) => ({
+        name: p.name,
+        slug: p.slug,
+        activeTours: p.activeToursCount,
+        path: `/destination/${p.slug}`,
+      }));
+    const destinations = places
+      .filter((p) => p.type === 'city' && p.activeToursCount > 0)
+      .sort((a, b) => b.activeToursCount - a.activeToursCount || a.name.localeCompare(b.name, 'fa'))
+      .map((p) => ({
+        name: p.name,
+        slug: p.slug,
+        countrySlug: p.parentCountrySlug || p.slug,
+        category: p.category,
+        activeTours: p.activeToursCount,
+        path: `/destination/${p.parentCountrySlug || p.slug}/${p.slug}`,
+      }));
+    const exhibitionLinks = Object.values(exhibitions).map((e) => ({
+      name: e.title,
+      slug: e.slug,
+      path: `/exhibition/${e.slug}`,
+    }));
+    return {
+      countries,
+      destinations,
+      exhibitions: exhibitionLinks,
+      tourSlugs: tours.map((t) => t.id),
+    };
+  } catch (error) {
+    console.error('[db-content] nav links read failed:', (error as Error).message);
+    return empty;
+  }
 }
 
 export async function getCountries(): Promise<Record<string, Place>> {

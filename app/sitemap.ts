@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/src/lib/siteConfig';
 import { getIndexableLandings, getDynamicIndexablePaths } from '@/src/data/seoLandings';
-import { getTours, getGuides, getExhibitions, getSeoLandings, normalizeLandingPath } from '@/src/lib/db-content';
+import { getTours, getGuides, getExhibitions, getSeoLandings, getDestinationsOnce, normalizeLandingPath } from '@/src/lib/db-content';
 
 /**
  * نقشه سایت داینامیک — لندینگ‌های published/index + مسیرهای داینامیک دارای داده واقعی.
@@ -32,10 +32,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // مسیرهای زنده از DB؛ خطا یا قطعی → همان مسیرهای استاتیک می‌ماند.
   const dbPaths: string[] = [];
   try {
-    const [tours, guides, exhibitions] = await Promise.all([
+    const [tours, guides, exhibitions, places] = await Promise.all([
       getTours(),
       getGuides(),
       getExhibitions(),
+      getDestinationsOnce(),
     ]);
     for (const t of tours) dbPaths.push(`/tour/${t.id}`);
     for (const g of Object.values(guides)) dbPaths.push(`/guide/${g.slug}`);
@@ -43,6 +44,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       dbPaths.push(`/exhibition/${s.slug}`);
       if (s.upcomingEdition?.editionSlug) {
         dbPaths.push(`/exhibition/${s.slug}/${s.upcomingEdition.editionSlug}`);
+      }
+    }
+    // ایراد ۲۲: مقصدهای تازه هم وارد sitemap می‌شوند — کشورها همیشه،
+    // شهرها فقط وقتی دست‌کم یک تور فعال دارند (صفحهٔ بدون تور محتوای نازک است).
+    for (const p of places) {
+      if (p.type === 'country') {
+        dbPaths.push(`/destination/${p.slug}`);
+      } else if (p.activeToursCount > 0) {
+        dbPaths.push(`/destination/${p.parentCountrySlug || p.slug}/${p.slug}`);
       }
     }
   } catch {

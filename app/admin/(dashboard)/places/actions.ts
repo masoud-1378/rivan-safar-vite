@@ -8,6 +8,7 @@ import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 import { isValidDestinationCategory } from './categories';
 import { assertRenderableImageUrl } from '@/src/lib/site-image-hosts';
+import { invalidateDestinationsCache } from '@/src/lib/db-content';
 
 export interface FaqItem {
   question: string;
@@ -128,6 +129,18 @@ export async function saveDestination(id: string | undefined | null, data: Desti
   // تصویر مقصد آدرس دستی است؛ باید همان هاست‌هایی باشد که سایت می‌تواند رندر کند.
   assertRenderableImageUrl(data.image || '');
 
+  // ایراد ۱۸: نامکِ قبلی را نگه می‌داریم تا اگر عوض شد، destination_slugs
+  // تورهای متصل هم به‌روز شود و تورها یتیم نمانند.
+  let previousSlug: string | null = null;
+  if (id) {
+    const [row] = await db
+      .select({ slug: siteDestinations.slug })
+      .from(siteDestinations)
+      .where(eq(siteDestinations.id, id))
+      .limit(1);
+    previousSlug = row?.slug ?? null;
+  }
+
   const values = {
     slug,
     name,
@@ -168,8 +181,30 @@ export async function saveDestination(id: string | undefined | null, data: Desti
     }
     throw e;
   }
+
+  // ایراد ۱۸: اگر نامک عوض شده، همان نامکِ تازه را در destination_slugs همهٔ
+  // تورهای متصل بنشان (وگرنه فهرست «تورهای فعال» صفحهٔ مقصد و شمارش خودکار
+  // می‌شکنند). updated_at تورها دست نمی‌خورد تا ترتیب ویجت‌ها به‌هم نریزد.
+  let updatedTours = 0;
+  const slugChanged = Boolean(previousSlug && previousSlug !== slug);
+  if (slugChanged && previousSlug) {
+    const tourRows = await db
+      .select({ id: siteTours.id, destinationSlugs: siteTours.destinationSlugs })
+      .from(siteTours)
+      .where(isNull(siteTours.deletedAt));
+    for (const t of tourRows) {
+      const slugs = asStringArray(t.destinationSlugs);
+      if (!slugs.includes(previousSlug)) continue;
+      const next = slugs.map((s) => (s === previousSlug ? slug : s));
+      await db.update(siteTours).set({ destinationSlugs: next }).where(eq(siteTours.id, t.id));
+      updatedTours += 1;
+    }
+  }
+
+  // ایراد ۲۰: کش ماژولی مقصدهای سایت را همین‌جا باطل کن تا تغییر بلافاصله دیده شود.
+  invalidateDestinationsCache();
   revalidatePath('/admin/places');
-  return { ok: true };
+  return { ok: true, slugChanged, updatedTours };
 }
 
 /** چند تورِ فعال این مقصد را در destinationSlugs دارند — برای هشدارِ پیش از بایگانی. */
@@ -182,6 +217,30 @@ export async function countDestinationTours(slug: string): Promise<number> {
     .from(siteTours)
     .where(and(isNull(siteTours.deletedAt), sql`${siteTours.destinationSlugs}::jsonb ? ${slug}`));
   return rows[0]?.n ?? 0;
+}
+
+/**
+ * شمار تورهای منتشرشدهٔ هر مقصد — برای ستون «وضعیت سایت» تب مقصدها (ایراد ۲۱).
+ * همان تعریف «منتشرشده» که getTours در db-content دارد: بایگانی‌نشده و
+ * (publish_status برابر 'published' یا خالیِ قدیمی‌تر از ستون).
+ */
+export async function getDestinationTourCounts(): Promise<Record<string, number>> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const rows = await db
+    .select({ publishStatus: siteTours.publishStatus, destinationSlugs: siteTours.destinationSlugs })
+    .from(siteTours)
+    .where(isNull(siteTours.deletedAt));
+  const counts: Record<string, number> = {};
+  for (const r of rows) {
+    const ps = r.publishStatus as string | null | undefined;
+    if (ps !== 'published' && ps != null && ps !== '') continue;
+    for (const s of asStringArray(r.destinationSlugs)) {
+      counts[s] = (counts[s] ?? 0) + 1;
+    }
+  }
+  return counts;
 }
 
 export async function deleteDestination(id: string) {
@@ -198,6 +257,8 @@ export async function deleteDestination(id: string) {
     entity: 'site_destinations',
     reasonFa: `بایگانی مقصد «${rows[0]?.name ?? id}»`,
   });
+  // ایراد ۲۰: بایگانی هم کش مقصدهای سایت را باطل می‌کند.
+  invalidateDestinationsCache();
   revalidatePath('/admin/places');
   return { ok: true };
 }

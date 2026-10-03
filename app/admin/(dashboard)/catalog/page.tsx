@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { countDestinations, listDestinations } from '../places/actions';
+import { countDestinations, listDestinations, getDestinationTourCounts } from '../places/actions';
 import { getSettingsMap } from '../settings/actions';
 import { countOrigins, listOriginsAdmin } from '../origins/actions';
 import { countHotels, listHotels } from '../hotels/actions';
@@ -42,8 +42,10 @@ export default async function AdminCatalogPage({
 }
 
 async function DestinationsTab({ settings }: { settings: Record<string, string> }) {
-  const destinations = await listDestinations();
-  return <CatalogManager initial={destinations} sectionSettings={settings} />;
+  // ایراد ۲۱: شمار تورهای منتشرشدهٔ هر مقصد هم کشیده می‌شود تا ستون
+  // «وضعیت سایت» قرارداد انتشار را به ادمین نشان بدهد.
+  const [destinations, tourCounts] = await Promise.all([listDestinations(), getDestinationTourCounts()]);
+  return <CatalogManager initial={destinations} sectionSettings={settings} tourCounts={tourCounts} />;
 }
 
 async function OriginsTab() {

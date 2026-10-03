@@ -52,7 +52,8 @@ export default function ExhibitionTours({ onNavigate }: ExhibitionToursProps) {
             تورهای نمایشگاهی
           </motion.h2>
           <motion.a
-            href="#exhibition-tours"
+            href="/exhibitions"
+            onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('/exhibitions'); }}
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
