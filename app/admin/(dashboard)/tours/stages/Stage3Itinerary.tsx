@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { AlertDialog } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/toast';
 import { cn, fa, faNumber } from '@/lib/utils';
 import type { TourItineraryDayItem, TourInput } from '../actions';
@@ -94,6 +95,10 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
       .map((item, idx) => ({ ...item, day: idx + 1 }));
     onChange({ itineraryDays: next });
   };
+
+  // دیالوگ تأیید حذف روز برنامه (C3-2): شماره/عنوان روز + پیامد شماره‌گذاری مجدد روز‌های بعدی.
+  const [confirmRemoveDay, setConfirmRemoveDay] = React.useState<number | null>(null);
+  const removeDayTarget = confirmRemoveDay === null ? undefined : itinerary[confirmRemoveDay];
 
   // Service helpers
   const [newIncluded, setNewIncluded] = React.useState('');
@@ -195,7 +200,7 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleRemoveDay(idx)}
+                  onClick={() => setConfirmRemoveDay(idx)}
                   className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 px-2 text-xs text-destructive/80 hover:text-destructive"
                 >
                   <Trash2 className="size-3.5" />
@@ -384,6 +389,17 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
           </div>
         </div>
       </div>
+
+      {/* دیالوگ تأیید حذف روز برنامه (C3-2): شماره/عنوان روز + پیامد شماره‌گذاری مجدد */}
+      <AlertDialog
+        open={removeDayTarget !== undefined}
+        onOpenChange={(open) => { if (!open) setConfirmRemoveDay(null); }}
+        title={removeDayTarget ? `روز ${fa(removeDayTarget.day)}${removeDayTarget.title ? ` «${removeDayTarget.title}»` : ''} حذف شود؟` : ''}
+        description="این روز برای همیشه حذف می‌شود و روز‌های بعدی یک شماره جلو کشیده می‌شوند؛ این کار قابل بازگشت نیست."
+        confirmText="حذف روز"
+        destructive
+        onConfirm={() => { if (confirmRemoveDay !== null) handleRemoveDay(confirmRemoveDay); }}
+      />
     </div>
   );
 }

@@ -64,8 +64,8 @@ export function validateDraft(input: {
   const errors: TourDraftErrors = {};
   if (input.title.trim().length < 2) errors.title = 'عنوان تور حداقل ۲ نویسه است.';
   else if (input.title.trim().length > TITLE_MAX) errors.title = `عنوان حداکثر ${TITLE_MAX} نویسه باشد.`;
-  if (!input.slug.trim()) errors.slug = 'نامک لازم است.';
-  else if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(input.slug.trim())) errors.slug = 'نامک فقط حروف کوچک انگلیسی، عدد و خط تیره.';
+  if (!input.slug.trim()) errors.slug = 'آدرس اینترنتی لازم است.';
+  else if (!/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(input.slug.trim())) errors.slug = 'آدرس اینترنتی فقط حروف کوچک انگلیسی، عدد، خط تیره و آندرلاین می‌پذیرد.';
   if (input.price === null || input.price <= 0) errors.price = 'قیمت پایه معتبر وارد کنید.';
   if (input.destinations === 0) errors.destinations = 'حداقل یک مقصد انتخاب کنید.';
   if (!input.origin) errors.origin = 'مبدأ حرکت را انتخاب کنید.';

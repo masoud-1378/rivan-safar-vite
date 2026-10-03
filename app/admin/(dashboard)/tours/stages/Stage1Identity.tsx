@@ -26,6 +26,7 @@ import { AmountInput } from '@/components/ui/amount-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible } from '@/components/ui/collapsible';
+import { AlertDialog } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/toast';
 import { cn, fa, formatToman } from '@/lib/utils';
 import { normalizeFaSearch } from '@/lib/persian';
@@ -100,10 +101,9 @@ export default function Stage1Identity({
   tree,
   origins,
 }: Stage1IdentityProps) {
-  const currentTransport = data.transportKind || (
-    /قطار|بن ریل|فدک|رجاء/i.test(data.airline) ? 'rail' :
-    /اتوبوس|زمینی|vip/i.test(data.airline) ? 'land' : 'air'
-  );
+  // قلم ۳ موج ۰: شیوهٔ حمل‌ونقل انتخاب صریح مدیر است — نه حدس regex از روی
+  // نام شرکت مجری، نه هیچ پیش‌فرض دیده‌شونده. تا انتخاب نشود هیچ دکمه‌ای فعال نیست.
+  const currentTransport = data.transportKind;
 
   const selectedSlugs = Array.isArray(data.destinationSlugs) ? data.destinationSlugs : [];
   const nameBySlug = new Map(tree.all.map((a) => [a.slug, a.name]));
@@ -143,6 +143,12 @@ export default function Stage1Identity({
       : Array.from(new Set([...selectedSlugs, ...slugs]));
     onChange({ destinationSlugs: next });
   };
+
+  // دیالوگ تأیید تیک قاره (B-15): زدن یا برداشتن تیک، کل قاره (ده‌ها مقصد) را
+  // یک‌جا اضافه یا کم می‌کند؛ پس هر دو مسیر دیالوگ دارند (mode: ‏add | ‏remove).
+  const [confirmRegion, setConfirmRegion] = useState<{ name: string; count: number; desc: string[]; mode: 'add' | 'remove' } | null>(null);
+  // دیالوگ قاره در حالت حذف (برداشتن تیک) است اگر mode برابر remove باشد.
+  const confirmRemoveRegion = confirmRegion !== null && confirmRegion.mode === 'remove';
 
   // عنوان که عوض شود، اگر نامک هنوز خودکار است (دستی ویرایش نشده و از قبل هم خالی بوده)،
   // با هر نویسه از روی عنوان بازسازی می‌شود؛ قانون «عنوان بعدی نامک موجود را عوض نکند» سر جایش است.
@@ -263,7 +269,7 @@ export default function Stage1Identity({
               dir="ltr"
               value={data.slug}
               error={errors.slug}
-              onChange={(e) => { setSlugAuto(false); onChange({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }); }}
+              onChange={(e) => { setSlugAuto(false); onChange({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '') }); }}
               placeholder="e.g. russia-moscow-stpetersburg-8d"
             />
           </Field>
@@ -436,7 +442,13 @@ export default function Stage1Identity({
             return (
               <div key={region.slug} className="rounded-sm border border-border/60">
                 <div className="flex items-center gap-2 p-2.5 bg-secondary/20">
-                  <CheckBox checked={allOn} onToggle={() => toggleMany(desc)} label={region.name} />
+                  <CheckBox
+                    checked={allOn}
+                    onToggle={() => {
+                      setConfirmRegion({ name: region.name, count: desc.length, desc, mode: allOn ? 'remove' : 'add' });
+                    }}
+                    label={region.name}
+                  />
                   <button
                     type="button"
                     onClick={() => setOpenRegions((p) => ({ ...p, [region.slug]: !open }))}
@@ -536,7 +548,9 @@ export default function Stage1Identity({
         <Field 
           label={
             currentTransport === 'air' ? 'نام ایرلاین یا خط هوایی' :
-            currentTransport === 'rail' ? 'نام قطار و شرکت ریلی' : 'نوع اتوبوس و شرکت حمل‌ونقل زمینی'
+            currentTransport === 'rail' ? 'نام قطار و شرکت ریلی' :
+            currentTransport === 'land' ? 'نوع اتوبوس و شرکت حمل‌ونقل زمینی' :
+            'نام شرکت مجری'
           }
           hint="در قرارداد رسمی و کارت تور به مسافر نمایش داده می‌شود"
         >
@@ -721,6 +735,19 @@ export default function Stage1Identity({
           className="w-full rounded-sm border border-input bg-background p-3 text-xs leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>
+
+      {/* دیالوگ تأیید تیک قاره (B-15): پیامد با تعداد واقعی مقصدهایی که اضافه یا کم می‌شود */}
+      <AlertDialog
+        open={confirmRegion !== null}
+        onOpenChange={(open) => { if (!open) setConfirmRegion(null); }}
+        title={confirmRegion ? (confirmRemoveRegion ? `«${confirmRegion.name}» از مقصدها حذف شود؟` : `«${confirmRegion.name}» به مقصدها اضافه شود؟`) : ''}
+        description={confirmRegion ? (confirmRemoveRegion
+          ? `با این کار ${fa(confirmRegion.count)} مقصد از این تور کم می‌شود.`
+          : `با این کار ${fa(confirmRegion.count)} مقصد (همهٔ کشورها و شهرهای ${confirmRegion.name}) یک‌جا به این تور اضافه می‌شود؛ هر کدام را بعداً می‌توانید جداگانه حذف کنید.`) : ''}
+        confirmText={confirmRegion ? `${confirmRemoveRegion ? 'حذف' : 'افزودن'} ${fa(confirmRegion.count)} مقصد` : ''}
+        destructive={confirmRemoveRegion}
+        onConfirm={() => { if (confirmRegion) toggleMany(confirmRegion.desc); }}
+      />
     </div>
   );
 }

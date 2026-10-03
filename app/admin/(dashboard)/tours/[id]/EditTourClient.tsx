@@ -14,7 +14,8 @@ interface Props {
   hotels: HotelPickerItem[];
 }
 
-/** پوستهٔ کلاینتی صفحهٔ ویرایش تور: بعد از ذخیره همان‌جا می‌ماند و تازه‌سازی می‌کند. */
+/** پوستهٔ کلاینتی صفحهٔ ویرایش تور: بعد از ذخیره همان‌جا می‌ماند و تازه‌سازی می‌کند؛
+ *  انصراف واقعاً به فهرست تورها برمی‌گردد تا دیالوگ «خارج می‌شوید؟» دروغ نگوید (D2). */
 export function EditTourClient({ tour, tree, origins, hotels }: Props) {
   const router = useRouter();
   return (
@@ -28,6 +29,7 @@ export function EditTourClient({ tour, tree, origins, hotels }: Props) {
       origins={origins}
       hotels={hotels}
       onDone={() => router.refresh()}
+      onCancel={() => router.push('/admin/tours')}
     />
   );
 }

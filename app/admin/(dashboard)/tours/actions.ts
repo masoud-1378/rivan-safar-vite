@@ -331,12 +331,12 @@ export async function saveTour(id: string | undefined | null, data: TourInput): 
   if (!db) return { ok: false, error: 'اتصال به دیتابیس برقرار نیست؛ چند دقیقه دیگر تلاش کنید.' };
   const slug = (data.slug || '').trim();
   const title = (data.title || '').trim();
-  if (!slug) return { ok: false, error: 'نامک (آدرس اینترنتی تور) لازم است.' };
+  if (!slug) return { ok: false, error: 'آدرس اینترنتی تور لازم است.' };
   // میز ۳ — ایراد ۱۰: نامک فارسی روی روت‌های سایت ۴۰۴ِ زنده می‌دهد؛ این‌جا رد می‌شود.
   try {
     assertLatinSlug(slug);
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'نامک معتبر نیست.' };
+    return { ok: false, error: e instanceof Error ? e.message : 'آدرس اینترنتی معتبر نیست.' };
   }
   if (title.length < 2) return { ok: false, error: 'عنوان تور لازم است.' };
   // بنر: آدرس دستی هم باید روی سایت باز شود، وگرنه پیش‌نمایش پنل دروغ می‌گوید.

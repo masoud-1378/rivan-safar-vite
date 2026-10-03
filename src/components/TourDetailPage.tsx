@@ -469,19 +469,10 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
             </div>
           )}
 
-          <div className="bg-surface-primary border border-border-default rounded-card p-6">
-            <h3 className="text-h4 font-bold text-text-heading mb-2">قوانین کودک و تخت اضافه</h3>
-            <p className="text-caption text-text-secondary leading-relaxed">
-              کودکان زیر ۲ سال (نوزاد) هزینه ناچیز بیمه و پرواز دارند. کودکان ۲ تا ۱۲ سال با تخت یا بدون تخت با تخفیف محاسبه می‌شود.
-            </p>
-          </div>
-
-          <div className="bg-surface-primary border border-border-default rounded-card p-6">
-            <h3 className="text-h4 font-bold text-text-heading mb-2">شرایط تغییر و کنسلی</h3>
-            <p className="text-caption text-text-secondary leading-relaxed">
-              کنسلی و تغییر تاریخ بر اساس ضوابط سازمان هواپیمایی کشوری و قوانین هتل طرف قرارداد محاسبه شده و در قرارداد رسمی قید می‌شود.
-            </p>
-          </div>
+          {/* موج ۰: کارت‌های «قوانین کودک و تخت اضافه» و «شرایط تغییر و کنسلی»
+              برداشته شدند — متن ثابت کلیشه‌ای بود و ممکن بود با قرارداد واقعی
+              تور نخواند. جای آن‌ها در موج ۳ با دادهٔ واقعی (جدول کنسلی و
+              قوانین واقعی کودک همین تور) پر می‌شود. */}
 
         </div>
       </section>

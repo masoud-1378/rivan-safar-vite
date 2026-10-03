@@ -48,6 +48,13 @@ export interface TourFormProps {
   editingId?: string | null;
   /** بعد از ذخیرهٔ موفق صدا زده می‌شود؛ برای تور تازه، شناسهٔ ساخته‌شده را می‌گیرد. */
   onDone: (id?: string | null) => void;
+  /**
+   * انصراف: از صفحه خارج می‌شود. از onDone جداست چون «ذخیره شد» و «انصراف»
+   * دو نیت متفاوت‌اند (D2): در ویرایش، ذخیره همان‌جا می‌ماند ولی انصراف
+   * واقعاً به فهرست تورها برمی‌گردد تا دیالوگ «خارج می‌شوید؟» دروغ نگوید.
+   * اگر داده نشود، همان onDone صدا زده می‌شود.
+   */
+  onCancel?: () => void;
   tree: DestinationTree;
   origins: OriginRow[];
   hotels: HotelPickerItem[];
@@ -92,6 +99,7 @@ export default function TourForm({
   initial,
   editingId,
   onDone,
+  onCancel,
   tree,
   origins,
   hotels,
@@ -141,11 +149,9 @@ export default function TourForm({
       excludedServices: Array.isArray(initial?.excludedServices) ? (initial.excludedServices as string[]) : [],
       hotelOptions: Array.isArray(initial?.hotelOptions) ? (initial.hotelOptions as any[]) : [],
       description: initial?.description || '',
-      // شیوهٔ سفر: اول از مقدار ذخیره‌شده (T9)؛ برای ردیف‌های قدیمیِ بی‌مقدار، همان حدس قبلی.
-      transportKind: initial?.transportKind || (
-        /قطار|بن ریل|فدک|رجاء/i.test(initial?.airline || '') ? 'rail' :
-        /اتوبوس|زمینی|vip/i.test(initial?.airline || '') ? 'land' : 'air'
-      ),
+      // قلم ۳ موج ۰: شیوهٔ سفر فقط از مقدار ذخیره‌شده می‌آید — هیچ حدس regex از
+      // روی نام ایرلاین و هیچ پیش‌فرض حدسی. تور تازه در مرحلهٔ ۱ صریح انتخاب می‌شود.
+      transportKind: initial?.transportKind,
       carrierName: initial?.airline || '',
       guaranteedDeparture: initial?.badge === 'حرکت تضمین‌شده',
       itineraryDays: Array.isArray(initial?.itineraryDays)
@@ -265,7 +271,7 @@ export default function TourForm({
     if (Object.keys(draftErrors).length > 0) {
       toast({
         title: 'اطلاعات تور ناقص است',
-        description: 'لطفاً فیلدهای الزامی مرحله اول (عنوان، نامک، مقصد و قیمت پایه) را کامل کنید.',
+        description: 'لطفاً فیلدهای الزامی مرحله اول (عنوان، آدرس اینترنتی، مقصد و قیمت پایه) را کامل کنید.',
         variant: 'error',
       });
       setActiveStage(1);
@@ -282,8 +288,8 @@ export default function TourForm({
         if (!slugCheck.unique) {
           setSlugConflict(true);
           toast({
-            title: 'نامک تکراری است',
-            description: 'این نامک انگلیسی قبلاً برای تور دیگری استفاده شده است.',
+            title: 'آدرس اینترنتی تکراری است',
+            description: 'این آدرس اینترنتی قبلاً برای تور دیگری استفاده شده است.',
             variant: 'error',
           });
           setActiveStage(1);
@@ -383,7 +389,7 @@ export default function TourForm({
           )
         ) : (
           <span className="text-[11px] text-muted-foreground">
-            برای پیش‌نمایش، اول نامک (مرحلهٔ ۱) را وارد کنید.
+            برای پیش‌نمایش، اول آدرس اینترنتی (مرحلهٔ ۱) را وارد کنید.
           </span>
         )}
       </div>
@@ -453,7 +459,7 @@ export default function TourForm({
             <Stage1Identity
               data={formData}
               onChange={updateFormData}
-              errors={slugConflict ? { ...errors, slug: 'این نامک قبلاً برای تور دیگری استفاده شده است.' } : errors}
+              errors={slugConflict ? { ...errors, slug: 'این آدرس اینترنتی قبلاً برای تور دیگری استفاده شده است.' } : errors}
               tree={tree}
               origins={origins}
             />
@@ -538,7 +544,7 @@ export default function TourForm({
                 size="sm"
                 onClick={() => {
                   if (dirty) setShowCancelConfirm(true);
-                  else onDone();
+                  else (onCancel ?? onDone)();
                 }}
                 className="h-11 flex-1 text-xs sm:h-8 sm:flex-none"
               >
@@ -662,7 +668,7 @@ export default function TourForm({
         description="تغییرات ذخیره‌نشده از دست می‌رود."
         confirmText="خارج شوید"
         cancelText="بازگشت"
-        onConfirm={() => { setShowCancelConfirm(false); onDone(); }}
+        onConfirm={() => { setShowCancelConfirm(false); (onCancel ?? onDone)(); }}
       />
     </div>
   );

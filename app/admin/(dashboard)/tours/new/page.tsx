@@ -13,7 +13,13 @@ interface Props {
   searchParams: Promise<{ duplicate?: string }>;
 }
 
-/** تور تازه؛ با ?duplicate=<slug> می‌شود از روی یک تور موجود کپی ساخت (همیشه پیش‌نویس). */
+/** تور تازه؛ با ?duplicate=<slug> می‌شود از روی یک تور موجود کپی ساخت (همیشه پیش‌نویس).
+ *
+ * (قلم ۳ موج ۰ — ایراد QA سایه) مسیر تکثیر دیگر initialِ بی‌صدا از روی
+ * `{ id, slug, ...rest }` نمی‌سازد؛ به‌جای آن تورِ مبدأ به‌صورت prop به
+ * NewTourClient می‌رسد و همان دیالوگ صریح DuplicateTourDialog باز می‌شود —
+ * قیمت بی‌صدا منتقل نمی‌شود و نشان «حرکت تضمین‌شده» به نسخهٔ تازه نمی‌رود.
+ */
 export default async function AdminTourNewPage({ searchParams }: Props) {
   const { duplicate } = await searchParams;
   const [tree, origins, hotels, source] = await Promise.all([
@@ -23,14 +29,9 @@ export default async function AdminTourNewPage({ searchParams }: Props) {
     duplicate ? getTourBySlug(duplicate).catch(() => null) : Promise.resolve(null),
   ]);
 
-  let initial: TourRow | null = null;
-  let duplicateTitle: string | null = null;
-  if (source) {
-    const { id: _id, slug: _slug, ...rest } = source;
-    // تکثیر همیشه پیش‌نویسِ در انتظار تأیید ظرفیت است — وضعیت منبع به ارث نمی‌رسد.
-    initial = { ...rest, id: '', slug: '', title: `${source.title} (تکثیر)`, publishStatus: 'draft', status: 'pending', statusLabel: 'در انتظار تأیید ظرفیت' };
-    duplicateTitle = source.title;
-  }
+  // اگر نامکِ تکراری پیدا نشد، صفحهٔ معمولِ تور تازه است — هیچ کپی بی‌صدایی.
+  const duplicateSource: TourRow | null = source ?? null;
+  const duplicateTitle = duplicateSource?.title ?? null;
 
   return (
     <div className="space-y-6">
@@ -48,7 +49,7 @@ export default async function AdminTourNewPage({ searchParams }: Props) {
           تور تازه همیشه به‌صورت پیش‌نویس ثبت می‌شود؛ وقتی آماده شد، دکمهٔ «انتشار» را بزن.
         </p>
       </div>
-      <NewTourClient initial={initial} tree={tree} origins={origins} hotels={hotels} />
+      <NewTourClient duplicateSource={duplicateSource} tree={tree} origins={origins} hotels={hotels} />
     </div>
   );
 }

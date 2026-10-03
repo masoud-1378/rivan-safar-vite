@@ -5,7 +5,8 @@ import { Copy, RefreshCw } from 'lucide-react';
 import { Dialog } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/input';
-import { faSlug } from '@/lib/utils';
+import { AmountInput } from '@/components/ui/amount-input';
+import { faSlug, formatToman } from '@/lib/utils';
 import { checkSlugUnique, saveTour, type TourRow } from './actions';
 import { useToast } from '@/components/ui/toast';
 import { DepartureDateField } from './DepartureDateField';
@@ -36,6 +37,9 @@ async function firstFreeSlug(base: string): Promise<string> {
  * - فیلد «تاریخ حرکت بعدی» همین‌جا گرفته می‌شود
  * - کپی همیشه به‌صورت پیش‌نویس ساخته می‌شود تا تور زنده‌ای اتفاقی منتشر نشود
  *   (publishStatus='draft' صریح؛ وضعیت ظرفیت کپی هم «در انتظار تأیید ظرفیت» است).
+ * - (قلم ۳ موج ۰) قیمتِ مبدأ دیده می‌شود و انتخابش صریح است («همین قیمت بماند» /
+ *   «خودم وارد می‌کنم»)؛ نشان «حرکت تضمین‌شده» به کپی منتقل نمی‌شود چون
+ *   ظرفیت نسخهٔ تازه «در انتظار تأیید» است — قول حقوقی را نمی‌شود بی‌صدا منتقل کرد.
  *
  * قرارداد اکشن‌ها (قلم ۳): تکثیر غیرمخرب است؛ این دیالوگ، دیالوگِ «تنظیمات»
  * است نه «تأیید ترسناک». دکمه‌اش هم از دکمهٔ بایگانی (مخرب) جداست.
@@ -54,6 +58,10 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
   const [titleError, setTitleError] = useState('');
   const [slugError, setSlugError] = useState('');
   const [busy, setBusy] = useState(false);
+  // قلم ۳ موج ۰: قیمتِ نسخهٔ تازه انتخاب صریح مدیر است، نه کپیِ بی‌صدای قیمت مبدأ.
+  const [priceMode, setPriceMode] = useState<'keep' | 'custom'>('keep');
+  const [customPrice, setCustomPrice] = useState<number | null>(null);
+  const [priceError, setPriceError] = useState('');
   // گشت (ایراد ۷): نگهبان کهنگی درخواست نامک — پاسخ‌های دیررسِ نویسه‌های قبلی
   // نباید نامکِ نویسهٔ آخر را بازنویسی کنند.
   const slugReq = useRef(0);
@@ -120,15 +128,27 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
       ok = false;
     }
     if (!cleanSlug) {
-      setSlugError('نامک لازم است.');
+      setSlugError('آدرس اینترنتی لازم است.');
       ok = false;
+    }
+    // قلم ۳ موج ۰: قیمت نسخهٔ تازه یا همان قیمت مبدأ است (انتخاب صریح) یا عددی
+    // که مدیر همین‌جا وارد می‌کند؛ قیمت نامعتبر، تکثیر را نگه می‌دارد.
+    let newPrice = tour.price;
+    if (priceMode === 'custom') {
+      const v = Number(customPrice) || 0;
+      if (v <= 0) {
+        setPriceError('قیمت معتبر وارد کنید.');
+        ok = false;
+      } else {
+        newPrice = v;
+      }
     }
     if (!ok) return;
     setBusy(true);
     try {
       const unique = await checkSlugUnique(cleanSlug);
       if (!unique.unique) {
-        setSlugError('این نامک قبلاً برای تور دیگری استفاده شده است.');
+        setSlugError('این آدرس اینترنتی قبلاً برای تور دیگری استفاده شده است.');
         setBusy(false);
         return;
       }
@@ -142,6 +162,10 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         // ظرفیت کپی نامشخص است — نه «تأییدشده».
         status: 'pending',
         statusLabel: 'در انتظار تأیید ظرفیت',
+        price: newPrice,
+        // قلم ۳ موج ۰: نشان «حرکت تضمین‌شده» قول حقوقی است؛ چون ظرفیت نسخهٔ
+        // تازه «در انتظار تأیید» است، خاموش می‌ماند و منتقل نمی‌شود.
+        badge: tour.badge === 'حرکت تضمین‌شده' ? '' : tour.badge,
       });
       // خطای قابل‌پیش‌بینی به‌صورت مقدار برمی‌گردد تا پیام واقعی‌اش در پروداکشن
       // پشت #441 گم نشود (ریشهٔ مشترک bugfix-441).
@@ -179,7 +203,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         if (!open) onClose();
       }}
       title="تکثیر تور"
-      description={`از «${tour.title}» یک نسخهٔ تازه می‌سازید. مبدأ و ویزا از تور اصلی حفظ می‌شوند و نسخهٔ تازه به‌صورت پیش‌نویس ساخته می‌شود.`}
+      description={`از «${tour.title}» یک نسخهٔ تازه می‌سازید. مبدأ و ویزا از تور اصلی حفظ می‌شوند؛ قیمت را همین‌جا انتخاب می‌کنید و نشان «حرکت تضمین‌شده» به نسخهٔ تازه منتقل نمی‌شود. نسخهٔ تازه به‌صورت پیش‌نویس ساخته می‌شود.`}
       footer={
         <>
           <Button size="md" disabled={busy} onClick={() => void submit()} className="gap-2">
@@ -205,7 +229,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         </Field>
         <div>
           <Field
-            label="نامک (آدرس اینترنتی)"
+            label="آدرس اینترنتی"
             htmlFor="dup-slug"
             hint="خودکار از عنوان ساخته می‌شود؛ اگر خواستید دستی عوضش کنید"
             error={slugError}
@@ -247,11 +271,58 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
             <dt className="text-muted-foreground">ویزا (حفظ می‌شود)</dt>
             <dd className="font-medium text-foreground">{tour.visaRequired ? 'لازم است' : 'لازم نیست'}</dd>
           </div>
+          {/* قلم ۳ موج ۰: قیمت مبدأ دیده می‌شود و انتخابش پایین صریح است؛
+              نشان «حرکت تضمین‌شده» هم به نسخهٔ تازه منتقل نمی‌شود. */}
+          <div className="flex items-center justify-between gap-2">
+            <dt className="text-muted-foreground">قیمت تور مبدأ</dt>
+            <dd className="font-medium text-foreground">{formatToman(tour.price)}</dd>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <dt className="text-muted-foreground">نشان «حرکت تضمین‌شده»</dt>
+            <dd className="font-medium text-foreground">به نسخهٔ تازه منتقل نمی‌شود</dd>
+          </div>
           <div className="flex items-center justify-between gap-2">
             <dt className="text-muted-foreground">وضعیت کپی</dt>
             <dd className="font-medium text-foreground">پیش‌نویس</dd>
           </div>
         </dl>
+        {/* قلم ۳ موج ۰: انتخاب صریح قیمت نسخهٔ تازه — دیگر کپیِ بی‌صدا نیست. */}
+        <fieldset>
+          <legend className="text-xs font-bold text-foreground">قیمت نسخهٔ تازه</legend>
+          <div className="mt-2 space-y-2">
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-sm border border-border/70 bg-card p-3 text-xs transition-colors hover:border-foreground/30">
+              <input
+                type="radio"
+                name="dup-price-mode"
+                checked={priceMode === 'keep'}
+                onChange={() => { setPriceMode('keep'); setPriceError(''); }}
+                className="size-4 shrink-0 cursor-pointer accent-brand"
+              />
+              <span className="font-medium text-foreground">همین قیمت بماند</span>
+            </label>
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-sm border border-border/70 bg-card p-3 text-xs transition-colors hover:border-foreground/30">
+              <input
+                type="radio"
+                name="dup-price-mode"
+                checked={priceMode === 'custom'}
+                onChange={() => setPriceMode('custom')}
+                className="size-4 shrink-0 cursor-pointer accent-brand"
+              />
+              <span className="font-medium text-foreground">خودم وارد می‌کنم</span>
+            </label>
+          </div>
+          {priceMode === 'custom' && (
+            <div className="mt-3">
+              <Field label="قیمت نسخهٔ تازه" error={priceError}>
+                <AmountInput
+                  value={customPrice}
+                  onChange={(v) => { setCustomPrice(v); setPriceError(''); }}
+                  placeholder="۰"
+                />
+              </Field>
+            </div>
+          )}
+        </fieldset>
       </div>
     </Dialog>
   );

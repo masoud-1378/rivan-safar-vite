@@ -23,6 +23,7 @@ import {
 import { Field, Input } from '@/components/ui/input';
 import { AmountInput } from '@/components/ui/amount-input';
 import { Button } from '@/components/ui/button';
+import { AlertDialog } from '@/components/ui/alert-dialog';
 import { cn, en, fa, faNumber } from '@/lib/utils';
 import { normalizeFaSearch } from '@/lib/persian';
 import type { HotelBookingType, TourHotelOptionItem, TourInput } from '../actions';
@@ -443,6 +444,13 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
     onChange({ hotelOptions: next });
   };
 
+  // دیالوگ تأیید حذف هتل (B-25): با نام هتل + جملهٔ پیامد، الگوی «بایگانی تور».
+  const [confirmRemoveHotel, setConfirmRemoveHotel] = useState<number | null>(null);
+  const removeTarget = confirmRemoveHotel === null ? undefined : hotels[confirmRemoveHotel];
+  const removeLabel = removeTarget
+    ? removeTarget.name || `بستهٔ اقامتی شماره ${fa(confirmRemoveHotel + 1)}`
+    : '';
+
   return (
     <div className="space-y-6">
       {/* Stage Header (T16: الگوی تک‌رنگ با لهجهٔ برند) — در موبایل ستونی و دکمه‌ها تمام‌عرض */}
@@ -553,12 +561,23 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
               hotel={hotel}
               idx={idx}
               onUpdate={(patch) => handleUpdateHotel(idx, patch)}
-              onRemove={() => handleRemoveHotel(idx)}
+              onRemove={() => setConfirmRemoveHotel(idx)}
               onUnlink={() => handleUnlinkHotel(idx)}
             />
           ))}
         </div>
       )}
+
+      {/* دیالوگ تأیید حذف هتل (B-25): نام هتل + پیامد حذف همهٔ نرخ‌ها، بدون بازگشت */}
+      <AlertDialog
+        open={removeTarget !== undefined}
+        onOpenChange={(open) => { if (!open) setConfirmRemoveHotel(null); }}
+        title={`«${removeLabel}» حذف شود؟`}
+        description="این هتل با همهٔ نرخ‌هایی که برایش وارد کرده‌اید برای همیشه حذف می‌شود و قابل بازگشت نیست."
+        confirmText="حذف هتل"
+        destructive
+        onConfirm={() => { if (confirmRemoveHotel !== null) handleRemoveHotel(confirmRemoveHotel); }}
+      />
     </div>
   );
 }

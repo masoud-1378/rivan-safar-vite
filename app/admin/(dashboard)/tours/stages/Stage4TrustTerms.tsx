@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Field, Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { AlertDialog } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 import type { TourTrustSpecsItem, TourInput } from '../actions';
@@ -76,6 +77,8 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
   };
 
   // بازنشانی مدارک بر اساس ویزا (X12): فهرست را به همان پیش‌فرض‌های ویزایی برمی‌گرداند.
+  // دیالوگ تأیید (C4-3): مدارک دستیِ تایپ‌شده با یک کلیک پاک می‌شود و راه برگشتی نیست.
+  const [confirmResetDocs, setConfirmResetDocs] = React.useState(false);
   const resetDocsToVisaDefaults = () => {
     const defaults = defaultDocsForVisa(!!data.visaRequired);
     updateTrust({ requiredDocs: defaults });
@@ -233,7 +236,7 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
             <span className="text-[11px] text-muted-foreground">پیشنهادهای سریع برای افزودن:</span>
             <button
               type="button"
-              onClick={resetDocsToVisaDefaults}
+              onClick={() => setConfirmResetDocs(true)}
               className="text-[11px] font-bold text-brand hover:underline"
             >
               بازنشانی مدارک بر اساس ویزا
@@ -299,6 +302,17 @@ export default function Stage4TrustTerms({ data, onChange }: Stage4TrustTermsPro
           ))}
         </div>
       </div>
+
+      {/* دیالوگ تأیید بازنشانی مدارک (C4-3): مدارک دستی پاک می‌شود، بدون بازگشت */}
+      <AlertDialog
+        open={confirmResetDocs}
+        onOpenChange={setConfirmResetDocs}
+        title="مدارک به حالت پیش‌فرض برگردد؟"
+        description="مدارک سفارشی که خودتان نوشته‌اید همه پاک می‌شود و فهرست به پیش‌فرض برمی‌گردد؛ این کار قابل بازگشت نیست."
+        confirmText="بازنشانی مدارک"
+        destructive
+        onConfirm={resetDocsToVisaDefaults}
+      />
     </div>
   );
 }

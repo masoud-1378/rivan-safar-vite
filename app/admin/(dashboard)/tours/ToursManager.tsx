@@ -25,15 +25,12 @@ interface ToursManagerProps {
 }
 
 /**
- * بج شیوهٔ سفر (T9): اول از ستون ذخیره‌شدهٔ transport_kind؛ برای ردیف‌های قدیمیِ
- * بی‌مقدار همان حدس regex قبلی روی خط هوایی، تا تور قدیمی بی‌بج نماند.
+ * بج شیوهٔ سفر (قلم ۳ موج ۰): فقط از ستون ذخیره‌شدهٔ transport_kind؛ حدس regex
+ * از روی نام ایرلاین حذف شد. ستون در دیتابیس notNull با پیش‌فرض 'air' است،
+ * پس ردیف قدیمی هم مقدار ذخیره‌شده دارد — این «air» حدس نیست، دیتاست.
  */
 function transportBadge(tour: TourRow) {
-  const kind =
-    tour.transportKind ||
-    (/قطار|بن ریل|فدک|رجاء/i.test(tour.airline || '') ? 'rail'
-      : /اتوبوس|زمینی|vip/i.test(tour.airline || '') ? 'land'
-      : 'air');
+  const kind = tour.transportKind;
   const carrier = tour.airline || 'پرواز';
   switch (kind) {
     case 'rail':
