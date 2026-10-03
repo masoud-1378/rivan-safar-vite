@@ -192,8 +192,10 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
     });
   };
 
+  // مرتب‌سازی ستون‌ها برداشته شده: فقط صفحهٔ جاری را مرتب می‌کرد و گمراه‌کننده بود؛
+  // تا مرتب‌سازی سروری نوشته شود همین‌جا می‌ماند.
   const columns: Column<LeadRow>[] = [
-    { key: 'fullName', header: 'نام', sortable: true, cell: (row) => <span className="font-semibold">{row.fullName}</span> },
+    { key: 'fullName', header: 'نام', cell: (row) => <span className="font-semibold">{row.fullName}</span> },
     {
       key: 'phone',
       header: 'تلفن',
@@ -204,7 +206,7 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
       ),
     },
     { key: 'tourContext', header: 'زمینه تور', cell: (row) => <span>{[row.tourContext, row.destinationHint].filter(Boolean).join(' — ') || '—'}</span> },
-    { key: 'createdAt', header: 'تاریخ', sortable: true, cell: (row) => <span className="whitespace-nowrap">{faDate(row.createdAt)}</span> },
+    { key: 'createdAt', header: 'تاریخ', cell: (row) => <span className="whitespace-nowrap">{faDate(row.createdAt)}</span> },
     {
       key: 'status',
       header: 'وضعیت',

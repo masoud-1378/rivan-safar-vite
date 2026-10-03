@@ -5,9 +5,16 @@ import { getDb } from '@/db/client';
 import { leadRequests, auditLogs } from '@/db/schema';
 import { and, desc, count, eq, ilike, inArray, isNotNull, like, ne, or } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
-import { LEAD_STATUS_FA } from './lead-status';
+import { LEAD_STATUSES, LEAD_STATUS_FA } from './lead-status';
 
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'won' | 'lost' | 'invalid';
+
+/** وضعیت باید از فهرست مجاز باشد؛ مقدار دستیِ بیرون از فهرست پذیرفته نیست. */
+function assertValidLeadStatus(status: string): asserts status is LeadStatus {
+  if (!(LEAD_STATUSES as string[]).includes(status)) {
+    throw new Error('وضعیت انتخاب‌شده معتبر نیست.');
+  }
+}
 
 // ستون‌های صریح (الگوی رفع خطای صفحهٔ لیدها): select همه‌ستونه روی
 // دیتابیسی که ستونی را ندارد می‌شکست؛ فقط همین‌ها خوانده می‌شوند.
@@ -119,6 +126,7 @@ export async function getLeadsPage(params: LeadsPageParams): Promise<LeadsPage> 
 
 export async function updateLeadStatus(id: string, status: LeadStatus, assignee?: string) {
   const session = await requireAdmin(['owner', 'editor']);
+  assertValidLeadStatus(status);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   await db
@@ -177,6 +185,7 @@ export async function bulkUpdateLeads(ids: string[], patch: { status?: LeadStatu
   if (patch.status === undefined && patch.assignee === undefined) {
     throw new Error('چیزی برای اعمال انتخاب نکرده‌اید.');
   }
+  if (patch.status !== undefined) assertValidLeadStatus(patch.status);
   await db
     .update(leadRequests)
     .set({

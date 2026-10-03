@@ -31,7 +31,7 @@ function toLeadRow(r: LeadsPage['rows'][number]) {
 export default async function AdminLeadsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; status?: string; q?: string }>;
+  searchParams: Promise<{ page?: string; status?: string; q?: string | string[] }>;
 }) {
   // احراز هویت بیرون از try می‌ماند تا خطای دسترسی قورت داده نشود.
   await requireAdmin(['owner', 'editor']);
@@ -40,7 +40,8 @@ export default async function AdminLeadsPage({
   const status: LeadStatus | 'all' = (
     rawStatus === 'all' || (LEAD_STATUSES as string[]).includes(rawStatus) ? rawStatus : 'all'
   ) as LeadStatus | 'all';
-  const query = (sp.q ?? '').trim();
+  // q آرایه‌ای (‎?q=a&q=b) صفحه را ۵۰۰ نمی‌کند؛ اولی برداشته می‌شود.
+  const query = ((Array.isArray(sp.q) ? sp.q[0] : sp.q) ?? '').trim();
 
   // الگوی dbDown داشبورد: اگر دیتابیس در دسترس نبود، به‌جای باندری خطا پیام روشن.
   let pageData: LeadsPage = { rows: [], total: 0, page: 1, pageSize: 20, pageCount: 1 };
