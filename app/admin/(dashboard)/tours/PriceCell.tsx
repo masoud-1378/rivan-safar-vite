@@ -83,7 +83,7 @@ export function PriceCell({ id, price, onSaved }: PriceCellProps) {
           {formatToman(price)}
           <Pencil className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
         </span>
-        <span className="text-caption text-muted-foreground">قیمتی که مشتری می‌بیند</span>
+        <span className="text-panel-caption text-muted-foreground">قیمتی که مشتری می‌بیند</span>
       </button>
     );
   }
@@ -91,7 +91,7 @@ export function PriceCell({ id, price, onSaved }: PriceCellProps) {
   return (
     <div
       ref={wrapRef}
-      className="min-w-44 space-y-1.5 py-1"
+      className="min-w-44 space-y-2 py-1"
       onKeyDown={(e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -116,11 +116,11 @@ export function PriceCell({ id, price, onSaved }: PriceCellProps) {
         min={0}
       />
       {error ? (
-        <p className="text-xs text-destructive" role="alert">
+        <p className="text-panel-caption text-destructive" role="alert">
           {error}
         </p>
       ) : (
-        <p className="text-caption text-muted-foreground">اینتر برای ذخیره، Esc برای انصراف</p>
+        <p className="text-panel-caption text-muted-foreground">اینتر برای ذخیره، Esc برای انصراف</p>
       )}
     </div>
   );

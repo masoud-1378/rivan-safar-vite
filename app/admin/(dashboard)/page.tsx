@@ -178,16 +178,16 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-6">
       {dbDown ? (
-        <div className="rounded-sm border border-warning/40 bg-warning/10 p-4 text-sm">
+        <div className="rounded-sm border border-warning/40 bg-warning/10 p-4 text-panel-body">
           اتصال به دیتابیس در این لحظه برقرار نشد؛ آمار صفر نمایش داده می‌شود. چند لحظه بعد صفحه را تازه کنید.
         </div>
       ) : null}
       {onboarding && !onboarding.completed ? <OnboardingWizard initial={onboarding} /> : null}
-      {/* قرارداد سربرگ صفحه‌ها (یافتهٔ ۲۲): کانتینر wrap با تیتر text-2xl و زیرتیتر muted. */}
+      {/* قرارداد سربرگ صفحه‌ها (یافتهٔ ۲۲): کانتینر wrap با تیتر text-panel-display و زیرتیتر muted. */}
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">داشبورد مدیریت</h1>
-          <p className="mt-1 text-sm text-muted-foreground">محتوا، تورها و درخواست‌های مشتری را از یکجا مدیریت کنید.</p>
+          <h1 className="text-panel-display">داشبورد مدیریت</h1>
+          <p className="mt-2 text-panel-body text-muted-foreground">محتوا، تورها و درخواست‌های مشتری را از یکجا مدیریت کنید.</p>
         </div>
         <Link href="/admin/leads" className={buttonClasses('outline', 'md', 'h-11 lg:h-10')}>
           <Inbox className="size-4" /> مشاهده درخواست‌ها <ArrowLeft className="size-4" />
@@ -199,13 +199,13 @@ export default async function AdminDashboard() {
       <div className="grid gap-6 xl:grid-cols-[1.35fr_1fr]">
         <Card className="p-5">
           <div className="mb-4 flex items-center justify-between">
-            <div><h2 className="font-semibold">دسترسی سریع</h2><p className="text-sm text-muted-foreground">بخش‌های اصلی محتوای سایت</p></div>
+            <div><h2 className="text-panel-heading">دسترسی سریع</h2><p className="mt-2 text-panel-body text-muted-foreground">بخش‌های اصلی محتوای سایت</p></div>
             <Badge variant="brand">زنده</Badge>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {quickLinks.map(({ href, label, value, icon: Icon }) => (
               <Link key={href} href={href} className="group flex items-center justify-between rounded-sm border border-border p-4 transition hover:border-brand hover:bg-accent/40">
-                <span className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-sm bg-accent text-brand"><Icon className="size-5" /></span><span><span className="block font-medium">{label}</span><span className="text-xs text-muted-foreground">{fa(value)} رکورد</span></span></span>
+                <span className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-sm bg-accent text-brand"><Icon className="size-5" /></span><span className="flex flex-col gap-1"><span className="text-panel-label">{label}</span><span className="text-panel-caption text-muted-foreground">{fa(value)} رکورد</span></span></span>
                 <ArrowLeft className="size-4 text-muted-foreground transition group-hover:-translate-x-1" />
               </Link>
             ))}
@@ -213,8 +213,8 @@ export default async function AdminDashboard() {
         </Card>
 
         <Card className="p-5">
-          <div className="mb-4"><h2 className="font-semibold">وضعیت سامانه</h2><p className="text-sm text-muted-foreground">مواردی که نیاز به توجه دارند</p></div>
-          <div className="space-y-3 text-sm">
+          <div className="mb-4"><h2 className="text-panel-heading">وضعیت سامانه</h2><p className="mt-2 text-panel-body text-muted-foreground">مواردی که نیاز به توجه دارند</p></div>
+          <div className="space-y-3 text-panel-body">
             <Link href="/admin/seo" className="flex items-center justify-between rounded-sm bg-accent/50 p-3 hover:bg-accent"><span>لندینگ‌های پیش‌نویس</span><Badge variant={Number(drafts) ? 'warning' : 'success'}>{fa(drafts)}</Badge></Link>
             {/* F5: تا تصمیم P4 نمای فیلترشده‌ای برای قیمت‌های رو به انقضا نیست؛ لینک گمراه‌کننده برداشته شد، ردیف می‌ماند. */}
             <div className="flex items-center justify-between rounded-sm bg-accent/50 p-3"><span>قیمت‌های رو به انقضا</span><Badge variant={Number(expiringPrices) ? 'warning' : 'success'}>{fa(expiringPrices)}</Badge></div>
@@ -226,22 +226,22 @@ export default async function AdminDashboard() {
       <Card className="p-5">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h2 className="font-semibold">روند درخواست‌های تماس</h2>
-            <p className="text-sm text-muted-foreground">درخواست‌های ثبت‌شده در {fa(30)} روز گذشته، بر پایه‌ی تاریخ شمسی</p>
+            <h2 className="text-panel-heading">روند درخواست‌های تماس</h2>
+            <p className="mt-2 text-panel-body text-muted-foreground">درخواست‌های ثبت‌شده در {fa(30)} روز گذشته، بر پایه‌ی تاریخ شمسی</p>
           </div>
-          <Link href="/admin/leads" className="text-sm font-medium text-brand hover:underline">همه‌ی درخواست‌ها</Link>
+          <Link href="/admin/leads" className="text-panel-label text-brand hover:underline">همه‌ی درخواست‌ها</Link>
         </div>
         {leadSeries.some((p) => p.value > 0) ? (
           <BarChart data={leadSeries} height={200} highlight={leadSeries.length - 1} />
         ) : (
-          <p className="py-12 text-center text-sm text-muted-foreground">در ۳۰ روز گذشته درخواستی ثبت نشده است.</p>
+          <p className="py-12 text-center text-panel-body text-muted-foreground">در ۳۰ روز گذشته درخواستی ثبت نشده است.</p>
         )}
       </Card>
 
       <Card className="overflow-hidden">
-        <div className="flex items-center justify-between border-b border-border p-5"><div><h2 className="font-semibold">آخرین درخواست‌های تماس</h2><p className="text-sm text-muted-foreground">پیگیری سریع درخواست‌های تازه</p></div><Link href="/admin/leads" className="text-sm font-medium text-brand hover:underline">مشاهده همه</Link></div>
+        <div className="flex items-center justify-between border-b border-border p-5"><div><h2 className="text-panel-heading">آخرین درخواست‌های تماس</h2><p className="mt-2 text-panel-body text-muted-foreground">پیگیری سریع درخواست‌های تازه</p></div><Link href="/admin/leads" className="text-panel-label text-brand hover:underline">مشاهده همه</Link></div>
         <div className="divide-y divide-border">
-          {recentLeads.length === 0 ? <p className="p-5 text-sm text-muted-foreground">هنوز درخواستی ثبت نشده است.</p> : recentLeads.map((lead) => <Link key={lead.id} href="/admin/leads" className="flex flex-wrap items-center justify-between gap-3 p-4 transition hover:bg-accent/40"><div><p className="font-medium">{lead.fullName}</p><p className="text-xs text-muted-foreground" dir="ltr">{fa(lead.phone)}</p></div><div className="text-end"><p className="text-sm">{lead.tourContext || lead.destinationHint || 'درخواست عمومی'}</p><p className="text-xs text-muted-foreground">{LEAD_STATUS_LABELS[lead.status] ?? lead.status}</p></div></Link>)}
+          {recentLeads.length === 0 ? <p className="p-5 text-panel-body text-muted-foreground">هنوز درخواستی ثبت نشده است.</p> : recentLeads.map((lead) => <Link key={lead.id} href="/admin/leads" className="flex flex-wrap items-center justify-between gap-3 p-4 transition hover:bg-accent/40"><div><p className="text-panel-label">{lead.fullName}</p><p className="text-panel-caption text-muted-foreground" dir="ltr">{fa(lead.phone)}</p></div><div className="text-end"><p className="text-panel-body">{lead.tourContext || lead.destinationHint || 'درخواست عمومی'}</p><p className="text-panel-caption text-muted-foreground">{LEAD_STATUS_LABELS[lead.status] ?? lead.status}</p></div></Link>)}
         </div>
       </Card>
     </div>

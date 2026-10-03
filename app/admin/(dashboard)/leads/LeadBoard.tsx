@@ -58,10 +58,10 @@ function DefRow({ label, children, hint }: { label: string; children: React.Reac
   return (
     <div className="flex items-start justify-between gap-3 py-2">
       <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        {hint ? <p className="mt-0.5 text-caption text-muted-foreground/70">{hint}</p> : null}
+        <p className="text-panel-caption text-muted-foreground">{label}</p>
+        {hint ? <p className="mt-1 text-panel-caption text-muted-foreground/70">{hint}</p> : null}
       </div>
-      <div className="text-start text-sm font-medium">{children}</div>
+      <div className="text-start text-panel-label">{children}</div>
     </div>
   );
 }
@@ -196,7 +196,7 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
   // مرتب‌سازی ستون‌ها برداشته شده: فقط صفحهٔ جاری را مرتب می‌کرد و گمراه‌کننده بود؛
   // تا مرتب‌سازی سروری نوشته شود همین‌جا می‌ماند.
   const columns: Column<LeadRow>[] = [
-    { key: 'fullName', header: 'نام', cell: (row) => <span className="font-semibold">{row.fullName}</span> },
+    { key: 'fullName', header: 'نام', cell: (row) => <span className="text-panel-label">{row.fullName}</span> },
     {
       key: 'phone',
       header: 'تلفن',
@@ -214,7 +214,7 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
       cell: (row) => (
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Badge variant={LEAD_STATUS_VARIANT[row.status]}>{LEAD_STATUS_FA[row.status]}</Badge>
-          <Select aria-label="تغییر وضعیت درخواست" value={row.status} disabled={pending} onChange={(event) => changeStatus(row.id, event.target.value as LeadStatus)} className="h-8 min-w-36 text-xs max-md:min-h-11" options={LEAD_STATUSES.map((status) => ({ value: status, label: LEAD_STATUS_FA[status] }))} />
+          <Select aria-label="تغییر وضعیت درخواست" value={row.status} disabled={pending} onChange={(event) => changeStatus(row.id, event.target.value as LeadStatus)} className="h-8 min-w-36 text-panel-caption max-md:min-h-11" options={LEAD_STATUSES.map((status) => ({ value: status, label: LEAD_STATUS_FA[status] }))} />
         </div>
       ),
     },
@@ -231,7 +231,7 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
             onCheckedChange={() => toggleOne(row.id)}
             aria-label={`انتخاب درخواست ${row.fullName}`}
           />
-          <span className="truncate font-semibold">{row.fullName}</span>
+          <span className="truncate text-panel-label">{row.fullName}</span>
         </span>
         <Badge variant={LEAD_STATUS_VARIANT[row.status]} className="shrink-0">
           {LEAD_STATUS_FA[row.status]}
@@ -241,9 +241,9 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
         <a href={`tel:${row.phone}`} dir="ltr" className="font-medium text-brand" onClick={(e) => e.stopPropagation()}>
           {fa(row.phone)}
         </a>
-        <span className="whitespace-nowrap text-xs text-muted-foreground">{faDate(row.createdAt)}</span>
+        <span className="whitespace-nowrap text-panel-caption text-muted-foreground">{faDate(row.createdAt)}</span>
       </div>
-      <p className="mt-1.5 text-xs text-muted-foreground">
+      <p className="mt-1.5 text-panel-caption text-muted-foreground">
         {[row.tourContext, row.destinationHint].filter(Boolean).join(' — ') || '—'}
       </p>
       <div className="mt-2.5" onClick={(e) => e.stopPropagation()}>
@@ -252,7 +252,7 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
           value={row.status}
           disabled={pending}
           onChange={(event) => changeStatus(row.id, event.target.value as LeadStatus)}
-          className="h-8 min-w-36 text-xs max-md:min-h-11"
+          className="h-8 min-w-36 text-panel-caption max-md:min-h-11"
           options={LEAD_STATUSES.map((status) => ({ value: status, label: LEAD_STATUS_FA[status] }))}
         />
       </div>
@@ -273,11 +273,11 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
 
   return (
     <div className="space-y-4">
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
+      {message ? <p className="text-panel-body text-muted-foreground">{message}</p> : null}
 
       {selected.size > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-brand/20 bg-brand/5 p-3">
-          <p className="text-sm font-bold">{fa(selected.size)} درخواست انتخاب‌شده</p>
+          <p className="text-panel-label font-bold">{fa(selected.size)} درخواست انتخاب‌شده</p>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setBulkStatus({ open: true, value: 'contacted' })} disabled={pending}>
               تغییر وضعیت گروهی
@@ -331,7 +331,7 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
           />
           {/* میز ۳ — ایراد ۲۵: صفحه‌بندی سروری؛ شمارش کل از سرور می‌آید. */}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-panel-body text-muted-foreground">
               همهٔ {fa(total)} درخواست · صفحهٔ {fa(page)} از {fa(pageCount)}
             </p>
             <div className="flex items-center gap-2">
@@ -363,36 +363,36 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
         {detail ? (
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-lg font-bold">{detail.fullName}</p>
+              <p className="text-panel-title">{detail.fullName}</p>
               <Badge variant={LEAD_STATUS_VARIANT[detail.status]}>{LEAD_STATUS_FA[detail.status]}</Badge>
             </div>
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-panel-body">
               <a href={`tel:${detail.phone}`} dir="ltr" className="font-medium text-brand">
                 {fa(detail.phone)}
               </a>
               <span className="text-muted-foreground">{faDate(detail.createdAt)}</span>
             </div>
-            <div className="my-3 border-t border-border" />
+            <div className="my-4 border-t border-border" />
             <div className="divide-y divide-border/60">
               <DefRow label="زمینه تور">
                 {[detail.tourContext, detail.destinationHint].filter(Boolean).join(' — ') || '—'}
               </DefRow>
               <DefRow label="مسیر منبع" hint="از کجای سایت آمده است">
-                <span dir="ltr" className="font-mono text-xs">{detail.sourcePath || '—'}</span>
+                <span dir="ltr" className="font-mono text-panel-caption">{detail.sourcePath || '—'}</span>
               </DefRow>
               <DefRow label="تعداد مسافر">{detail.passengers || '—'}</DefRow>
               <DefRow label="مسئول پیگیری">{detail.assignee || 'تعیین نشده'}</DefRow>
             </div>
             <div className="mt-3">
-              <p className="mb-1 text-xs text-muted-foreground">یادداشت</p>
-              <div className="rounded-sm border border-border bg-muted/40 p-3 text-sm leading-6">
+              <p className="mb-2 text-panel-caption text-muted-foreground">یادداشت</p>
+              <div className="rounded-sm border border-border bg-muted/40 p-3 text-panel-body leading-6">
                 {detail.notes || 'یادداشتی ثبت نشده است.'}
               </div>
             </div>
             {/* ۳-۱۰: یادداشت داخلی ادمین — قابل‌ویرایش، فقط در پنل */}
             <div className="mt-3">
-              <p className="mb-1 text-xs text-muted-foreground">یادداشت ادمین</p>
-              <p className="mb-1 text-caption text-muted-foreground/70">فقط تیم می‌بیند؛ روی سایت نمایش داده نمی‌شود.</p>
+              <p className="mb-2 text-panel-caption text-muted-foreground">یادداشت ادمین</p>
+              <p className="mb-2 text-panel-caption text-muted-foreground/70">فقط تیم می‌بیند؛ روی سایت نمایش داده نمی‌شود.</p>
               <Textarea
                 value={adminNoteDraft}
                 onChange={(e) => setAdminNoteDraft(e.target.value)}
@@ -441,17 +441,17 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
             />
           </Field>
           <div>
-            <p className="mb-1 text-xs text-muted-foreground">درخواست‌های انتخاب‌شده</p>
-            <ul className="max-h-32 space-y-1 overflow-auto text-sm">
+            <p className="mb-2 text-panel-caption text-muted-foreground">درخواست‌های انتخاب‌شده</p>
+            <ul className="max-h-32 space-y-1 overflow-auto text-panel-body">
               {selectedRows.slice(0, 5).map((r) => (
                 <li key={r.id} className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{r.fullName}</span>
-                  <span dir="ltr" className="text-xs text-muted-foreground">{r.phone}</span>
+                  <span className="text-panel-label">{r.fullName}</span>
+                  <span dir="ltr" className="text-panel-caption text-muted-foreground">{r.phone}</span>
                 </li>
               ))}
             </ul>
             {selectedRows.length > 5 ? (
-              <p className="mt-1 text-xs text-muted-foreground">و {fa(selectedRows.length - 5)} درخواست دیگر</p>
+              <p className="mt-1 text-panel-caption text-muted-foreground">و {fa(selectedRows.length - 5)} درخواست دیگر</p>
             ) : null}
           </div>
         </div>
@@ -490,17 +490,17 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
             </datalist>
           </Field>
           <div>
-            <p className="mb-1 text-xs text-muted-foreground">درخواست‌های انتخاب‌شده</p>
-            <ul className="max-h-32 space-y-1 overflow-auto text-sm">
+            <p className="mb-2 text-panel-caption text-muted-foreground">درخواست‌های انتخاب‌شده</p>
+            <ul className="max-h-32 space-y-1 overflow-auto text-panel-body">
               {selectedRows.slice(0, 5).map((r) => (
                 <li key={r.id} className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{r.fullName}</span>
-                  <span dir="ltr" className="text-xs text-muted-foreground">{r.phone}</span>
+                  <span className="text-panel-label">{r.fullName}</span>
+                  <span dir="ltr" className="text-panel-caption text-muted-foreground">{r.phone}</span>
                 </li>
               ))}
             </ul>
             {selectedRows.length > 5 ? (
-              <p className="mt-1 text-xs text-muted-foreground">و {fa(selectedRows.length - 5)} درخواست دیگر</p>
+              <p className="mt-1 text-panel-caption text-muted-foreground">و {fa(selectedRows.length - 5)} درخواست دیگر</p>
             ) : null}
           </div>
         </div>

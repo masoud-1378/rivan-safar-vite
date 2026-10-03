@@ -85,8 +85,8 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
             <Compass className="size-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-foreground">تورها</h2>
-            <p className="text-xs text-muted-foreground">همه‌چیز تورها یکجا: لیست تورها، درخواست‌های رزرو، مقصدها، مبدأهای حرکت (هوایی، زمینی، ریلی) و هتل‌ها</p>
+            <h2 className="text-panel-heading font-bold text-foreground">تورها</h2>
+            <p className="text-panel-caption text-muted-foreground">همه‌چیز تورها یکجا: لیست تورها، درخواست‌های رزرو، مقصدها، مبدأهای حرکت (هوایی، زمینی، ریلی) و هتل‌ها</p>
           </div>
         </div>
       </div>
@@ -103,7 +103,7 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
               href={tab.href}
               className={cn(
                 // موبایل‌اول: تارگت لمسی ۴۴px.
-                "group relative flex min-h-11 items-center gap-2 rounded-sm px-3.5 py-2.5 text-xs font-semibold transition-all cursor-pointer",
+                "group relative flex min-h-11 items-center gap-2 rounded-sm px-3.5 py-2.5 text-panel-caption font-semibold transition-all cursor-pointer",
                 isActive
                   ? "bg-brand text-brand-foreground"
                   : "bg-secondary/40 text-muted-foreground hover:bg-secondary hover:text-foreground border border-border/50"
@@ -113,7 +113,7 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
               <span>{tab.label}</span>
               {counts && counts[tab.id as keyof typeof counts] !== undefined && (
                 <span className={cn(
-                  "ms-1 rounded-full px-1.5 py-0.5 text-caption font-bold",
+                  "ms-1 rounded-full px-1.5 py-0.5 text-panel-caption font-bold",
                   isActive ? "bg-black/20 text-brand-foreground" : "bg-muted text-muted-foreground"
                 )}>
                   {counts[tab.id as keyof typeof counts]}

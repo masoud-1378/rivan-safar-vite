@@ -316,10 +316,10 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
             onCheckedChange={() => toggleSelected(tour.id)}
             aria-label={`انتخاب تور ${tour.title}`}
           />
-          <span className="truncate font-semibold text-foreground">{tour.title}</span>
+          <span className="truncate text-panel-label text-foreground">{tour.title}</span>
         </span>
       </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-caption text-muted-foreground">
+      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-panel-caption text-muted-foreground">
         {transportBadge(tour as TourRow)}
         {tour.badge === 'حرکت تضمین‌شده' && (
           <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-600 font-bold">
@@ -327,8 +327,8 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
           </span>
         )}
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">
-        <span className="font-medium text-foreground">{tour.destination || '—'}</span>
+      <p className="mt-2 text-panel-caption text-muted-foreground">
+        <span className="text-foreground">{tour.destination || '—'}</span>
         <span className="block">از مبدأ: {tour.origin || '—'} · {tour.typeLabel || '—'}</span>
         <span className="block">تاریخ حرکت: {(tour.closestDeparture as string) || '—'}</span>
       </p>
@@ -356,8 +356,8 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
       cell: (tour) => {
         return (
           <div className="flex flex-col gap-1">
-            <span className="font-semibold text-foreground">{tour.title}</span>
-            <div className="flex items-center gap-1.5 text-caption text-muted-foreground">
+            <span className="text-panel-label text-foreground">{tour.title}</span>
+            <div className="flex items-center gap-1.5 text-panel-caption text-muted-foreground">
               {transportBadge(tour)}
               {tour.badge === 'حرکت تضمین‌شده' && (
                 <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-600 font-bold">
@@ -375,11 +375,11 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
       sortable: true,
       // قلم ۵ (میز T1): مبدأ خالی «—» خاکستری نشان داده می‌شود، نه سلول خالی.
       cell: (tour) => (
-        <div className="text-xs">
-          <span className={tour.destination ? 'text-foreground font-medium' : 'text-muted-foreground'}>
+        <div className="text-panel-caption">
+          <span className={tour.destination ? 'text-foreground' : 'text-muted-foreground'}>
             {tour.destination || '—'}
           </span>
-          <span className="block text-caption text-muted-foreground">
+          <span className="block text-panel-caption text-muted-foreground">
             از مبدأ:{' '}
             {tour.origin ? (
               <span className="text-foreground/80">{tour.origin}</span>
@@ -430,14 +430,14 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
 
   return (
     <div className="admin-enter space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-foreground">تورها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول تورها — قیمت پایه را می‌توانید مستقیم از جدول ویرایش کنید</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="tours" title="تنظیمات تورها" tabs={['general']} values={sectionSettings} /><Link href="/admin/tours/new"><Button className="h-11 lg:h-10"><Plus />افزودن تور جدید</Button></Link></div></div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-panel-display text-foreground">تورها</h1><p className="mt-2 text-panel-body text-muted-foreground">مدیریت مستقیم جدول تورها — قیمت پایه را می‌توانید مستقیم از جدول ویرایش کنید</p></div><div className="flex items-center gap-2"><SectionSettingsDialog sectionKey="tours" title="تنظیمات تورها" tabs={['general']} values={sectionSettings} /><Link href="/admin/tours/new"><Button className="h-11 lg:h-10"><Plus />افزودن تور جدید</Button></Link></div></div>
       {/* موج ۲، تیم هاب: خطای خواندن دیتابیس با «فهرست خالی» نقاب نمی‌شود —
           پیام صادقانه + دکمهٔ تلاش دوباره. رفتار موفق هیچ فرقی نمی‌کند. */}
       {loadError ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-3 p-10 text-center">
-            <p className="text-base font-bold text-foreground">نتوانستیم تورها را بخوانیم</p>
-            <p className="max-w-md text-sm text-muted-foreground">
+            <p className="text-panel-title text-foreground">نتوانستیم تورها را بخوانیم</p>
+            <p className="max-w-md text-panel-body text-muted-foreground">
               خطایی در خواندن از دیتابیس رخ داد؛ این فهرست خالی نیست، فقط نتوانستیم نمایشش بدهیم.
             </p>
             <Button onClick={() => window.location.reload()} className="max-md:min-h-11">
@@ -446,23 +446,23 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
           </CardContent>
         </Card>
       ) : (
-      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">تورها ({fa(tours.length)})</h2><DataTable rows={visible} columns={columns} rowKey={(tour) => tour.id} searchKeys={['title', 'destination', 'typeLabel']} searchPlaceholder="جست‌وجوی عنوان، مقصد یا نوع تور…" selection={{ selected, onToggle: toggleSelected, onTogglePage: togglePageSelected }} mobileCard={tourCard} toolbar={<><Select aria-label="فیلتر وضعیت فروش" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} options={[{ value: 'all', label: 'همه وضعیت‌ها' }, ...statusOptions]} className="h-9 w-40 max-md:min-h-11 max-md:text-base" /><Select aria-label="فیلتر انتشار" value={publishFilter} onChange={(e) => setPublishFilter(e.target.value as 'all' | 'draft' | 'published')} options={[{ value: 'all', label: 'همه' }, { value: 'draft', label: 'پیش‌نویس' }, { value: 'published', label: 'منتشرشده' }]} className="h-9 w-40 max-md:min-h-11 max-md:text-base" /></>} emptyTitle={statusFilter === 'all' && publishFilter === 'all' ? 'توری ثبت نشده است' : 'توری با این فیلتر پیدا نشد'} emptyDescription={statusFilter === 'all' && publishFilter === 'all' ? 'برای شروع، تور جدیدی اضافه کنید.' : 'فیلترها را عوض کنید یا جست‌وجو را پاک کنید.'} emptyAction={statusFilter === 'all' && publishFilter === 'all' ? { label: 'ساخت اولین تور', onClick: () => { window.location.href = '/admin/tours/new'; } } : undefined} /></CardContent></Card>
+      <Card><CardContent className="p-5"><h2 className="mb-4 text-panel-heading">تورها ({fa(tours.length)})</h2><DataTable rows={visible} columns={columns} rowKey={(tour) => tour.id} searchKeys={['title', 'destination', 'typeLabel']} searchPlaceholder="جست‌وجوی عنوان، مقصد یا نوع تور…" selection={{ selected, onToggle: toggleSelected, onTogglePage: togglePageSelected }} mobileCard={tourCard} toolbar={<><Select aria-label="فیلتر وضعیت فروش" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} options={[{ value: 'all', label: 'همه وضعیت‌ها' }, ...statusOptions]} className="h-9 w-40 max-md:min-h-11 max-md:text-base" /><Select aria-label="فیلتر انتشار" value={publishFilter} onChange={(e) => setPublishFilter(e.target.value as 'all' | 'draft' | 'published')} options={[{ value: 'all', label: 'همه' }, { value: 'draft', label: 'پیش‌نویس' }, { value: 'published', label: 'منتشرشده' }]} className="h-9 w-40 max-md:min-h-11 max-md:text-base" /></>} emptyTitle={statusFilter === 'all' && publishFilter === 'all' ? 'توری ثبت نشده است' : 'توری با این فیلتر پیدا نشد'} emptyDescription={statusFilter === 'all' && publishFilter === 'all' ? 'برای شروع، تور جدیدی اضافه کنید.' : 'فیلترها را عوض کنید یا جست‌وجو را پاک کنید.'} emptyAction={statusFilter === 'all' && publishFilter === 'all' ? { label: 'ساخت اولین تور', onClick: () => { window.location.href = '/admin/tours/new'; } } : undefined} /></CardContent></Card>
       )}
       {/* نوار عملیات گروهی (T15): فقط وقتی انتخابی هست دیده می‌شود */}
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-sm border border-brand/20 bg-brand/5 p-3">
-          <span className="text-xs font-bold text-foreground">{fa(selected.size)} تور انتخاب‌شده</span>
+          <span className="text-panel-caption font-bold text-foreground">{fa(selected.size)} تور انتخاب‌شده</span>
           <span className="mx-1 h-5 w-px bg-border" aria-hidden="true" />
-          <Button size="sm" onClick={() => setBulkAction('publish')} className="text-xs">
+          <Button size="sm" onClick={() => setBulkAction('publish')} className="text-panel-caption">
             انتشار
           </Button>
-          <Button size="sm" variant="outline" onClick={() => setBulkAction('unpublish')} className="text-xs">
+          <Button size="sm" variant="outline" onClick={() => setBulkAction('unpublish')} className="text-panel-caption">
             لغو انتشار
           </Button>
-          <Button size="sm" variant="outline" onClick={() => setBulkAction('archive')} className="text-xs text-destructive hover:text-destructive">
+          <Button size="sm" variant="outline" onClick={() => setBulkAction('archive')} className="text-panel-caption text-destructive hover:text-destructive">
             بایگانی
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())} className="text-xs">
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())} className="text-panel-caption">
             لغو انتخاب
           </Button>
         </div>
@@ -486,16 +486,16 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
             : 'بایگانی گروهی'
           }
           description={
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <ul className="list-disc space-y-0.5 ps-4 text-start">
                 {selectedTours.slice(0, 5).map((t) => (
                   <li key={t.id}>{t.title}</li>
                 ))}
               </ul>
               {selectedTours.length > 5 && (
-                <p className="text-xs text-muted-foreground">و {fa(selectedTours.length - 5)} تور دیگر</p>
+                <p className="text-panel-caption text-muted-foreground">و {fa(selectedTours.length - 5)} تور دیگر</p>
               )}
-              <p className="pt-1 text-xs font-bold text-foreground">
+              <p className="pt-1 text-panel-caption font-bold text-foreground">
                 {bulkAction === 'publish'
                   ? 'تورهایی که کامل‌اند منتشر می‌شوند و روی سایت دیده می‌شوند؛ تورهای ناقص منتشر نمی‌شوند.'
                   : bulkAction === 'unpublish'
@@ -538,7 +538,7 @@ export default function ToursManager({ initial, sectionSettings, loadError = fal
           </>
         }
       >
-        <ul className="list-disc space-y-1 ps-5 text-sm text-foreground">
+        <ul className="list-disc space-y-1 ps-5 text-panel-body text-foreground">
           {(blockedPublish?.missing ?? []).map((m) => (
             <li key={m}>{m}</li>
           ))}

@@ -24,8 +24,8 @@ export default function CatalogTabs({
   return (
     <div className="admin-enter space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">کاتالوگ</h1>
-        <p className="mt-1 text-sm text-muted-foreground">مقصدها، مبدأها و هتل‌ها؛ همه در یک صفحه</p>
+        <h1 className="text-panel-display text-foreground">کاتالوگ</h1>
+        <p className="mt-2 text-panel-body text-muted-foreground">مقصدها، مبدأها و هتل‌ها؛ همه در یک صفحه</p>
       </div>
       <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="بخش‌های کاتالوگ">
         {TABS.map((t) => {
@@ -39,7 +39,7 @@ export default function CatalogTabs({
               aria-selected={active}
               title={t.desc}
               className={cn(
-                'group flex items-center gap-2 rounded-sm px-4 py-2.5 text-sm font-semibold transition-colors',
+                'group flex items-center gap-2 rounded-sm px-4 py-2.5 text-panel-label font-semibold transition-colors',
                 active
                   ? 'bg-brand text-brand-foreground'
                   : 'border border-border/60 bg-secondary/40 text-muted-foreground hover:bg-secondary hover:text-foreground',
@@ -49,7 +49,7 @@ export default function CatalogTabs({
               <span>{t.label}</span>
               <span
                 className={cn(
-                  'ms-1 rounded-full px-1.5 py-0.5 text-caption font-bold',
+                  'ms-1 rounded-full px-1.5 py-0.5 text-panel-caption font-bold',
                   active ? 'bg-black/20 text-brand-foreground' : 'bg-muted text-muted-foreground',
                 )}
               >

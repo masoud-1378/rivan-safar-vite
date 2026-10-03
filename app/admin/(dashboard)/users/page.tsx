@@ -15,8 +15,8 @@ export default async function AdminUsersPage() {
     // ویراستار با آدرس مستقیم این‌جا می‌آید؛ به‌جای کرش #441، پیام روشن بده.
     return (
       <div className="admin-enter mx-auto max-w-lg py-16 text-center">
-        <h1 className="text-xl font-bold text-foreground">دسترسی ندارید</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <h1 className="text-panel-title text-foreground">دسترسی ندارید</h1>
+        <p className="mt-2 text-panel-body text-muted-foreground">
           بخش مدیریت کاربران فقط برای مالک پنل است.
         </p>
       </div>

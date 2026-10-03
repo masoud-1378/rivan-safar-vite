@@ -58,8 +58,8 @@ export default function ArchiveManager({ groups, isOwner }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">بایگانی</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-panel-display">بایگانی</h1>
+        <p className="mt-2 text-panel-body text-muted-foreground">
           {total === 0
             ? 'هرچه از پنل بایگانی شود، این‌جا می‌آید و می‌توان آن را برگرداند.'
             : `${fa(total)} رکورد بایگانی‌شده؛ بازیابی هرکدام آن را به جای خودش برمی‌گرداند.`}
@@ -67,7 +67,7 @@ export default function ArchiveManager({ groups, isOwner }: Props) {
       </div>
 
       {error && (
-        <div className="rounded-sm border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div className="rounded-sm border border-destructive/40 bg-destructive/10 px-4 py-3 text-panel-body text-destructive">
           {error}
         </div>
       )}
@@ -82,16 +82,16 @@ export default function ArchiveManager({ groups, isOwner }: Props) {
           .filter((g) => g.rows.length > 0)
           .map((g) => (
             <section key={g.key} aria-label={g.label}>
-              <h2 className="mb-3 text-base font-semibold">
-                {g.label} <span className="text-sm font-normal text-muted-foreground">({fa(g.rows.length)})</span>
+              <h2 className="mb-4 text-panel-heading">
+                {g.label} <span className="text-panel-body text-muted-foreground">({fa(g.rows.length)})</span>
               </h2>
               <Card className="divide-y">
                 {g.rows.map((r) => (
                   <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                     <div className="min-w-0 flex-1 basis-48">
-                      <p className="truncate font-medium">{r.title}</p>
-                      {r.subtitle && <p className="truncate text-xs text-muted-foreground">{r.subtitle}</p>}
-                      <p className="text-xs text-muted-foreground">
+                      <p className="truncate text-panel-label">{r.title}</p>
+                      {r.subtitle && <p className="truncate text-panel-caption text-muted-foreground">{r.subtitle}</p>}
+                      <p className="text-panel-caption text-muted-foreground">
                         بایگانی‌شده در {formatJalali(new Date(r.archivedAt))}
                       </p>
                     </div>

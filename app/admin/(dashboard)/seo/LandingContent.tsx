@@ -256,19 +256,19 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
     : [];
 
   if (loading) {
-    return <p className="p-6 text-center text-sm text-muted-foreground">در حال بارگذاری…</p>;
+    return <p className="p-6 text-center text-panel-body text-muted-foreground">در حال بارگذاری…</p>;
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-sm font-semibold text-foreground">چک‌لیست انتشار «{titleFa}»</h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h3 className="text-panel-label font-semibold text-foreground">چک‌لیست انتشار «{titleFa}»</h3>
+        <p className="mt-1 text-panel-caption text-muted-foreground">
           انتشار فقط وقتی ممکن است که هر ۶ شرط زیر سبز باشد.
         </p>
-        <ul className="mt-3 space-y-1.5">
+        <ul className="mt-3 space-y-2">
           {checks.map((c) => (
-            <li key={c.label} className="flex items-center gap-2 text-sm">
+            <li key={c.label} className="flex items-center gap-2 text-panel-body">
               <span
                 className={`grid size-5 place-items-center rounded-full ${c.ok ? 'bg-success/15 text-success' : 'bg-muted text-muted-foreground'}`}
               >
@@ -280,7 +280,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
         </ul>
         {gate && !gate.canPublish ? (
           <Alert variant="warning" title="هنوز آمادهٔ انتشار نیست" className="mt-3">
-            <ul className="mt-1 list-disc space-y-0.5 pe-4 text-xs">
+            <ul className="mt-1 list-disc space-y-0.5 pe-4 text-panel-caption">
               {gate.reasons.map((r) => (
                 <li key={r}>{r}</li>
               ))}
@@ -323,11 +323,11 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
         </div>
         {showPreview && (
           <div className="mt-4 space-y-6 rounded-md border border-border bg-card p-6" dir="rtl">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-panel-caption text-muted-foreground">
               پیش‌نمایش متن — همان‌طور که روی سایت دیده می‌شود.
             </p>
             {sections.length === 0 && (
-              <p className="text-sm text-muted-foreground">هنوز بلوکی نیست.</p>
+              <p className="text-panel-body text-muted-foreground">هنوز بلوکی نیست.</p>
             )}
             {sections.map((raw, idx) => {
               const f = readItem('section', raw);
@@ -339,7 +339,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
               if (!heading.trim() && (typeof body === 'string' ? !body.trim() : false)) return null;
               return (
                 <article key={idx} className="space-y-2">
-                  {heading.trim() && <h2 className="text-base font-bold">{heading}</h2>}
+                  {heading.trim() && <h2 className="text-panel-heading font-bold">{heading}</h2>}
                   <RichText value={body} />
                 </article>
               );
@@ -349,24 +349,24 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
       </div>
 
       <div className="border-t border-border pt-5">
-        <h3 className="text-sm font-semibold text-foreground">لینک‌های داخلی</h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h3 className="text-panel-label font-semibold text-foreground">لینک‌های داخلی</h3>
+        <p className="mt-1 text-panel-caption text-muted-foreground">
           برای لینک ورودی، مبدأ را یک لندینگ دیگر و مقصد را همین صفحه انتخاب کنید.
         </p>
         {links.length === 0 ? (
-          <p className="mt-3 rounded-sm border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+          <p className="mt-3 rounded-sm border border-dashed border-border p-4 text-center text-panel-body text-muted-foreground">
             هنوز لینکی ثبت نشده است.
           </p>
         ) : (
           <ul className="mt-3 space-y-2">
             {links.map((l) => (
-              <li key={l.id} className="flex items-center justify-between gap-2 rounded-sm border border-border p-3 text-sm">
+              <li key={l.id} className="flex items-center justify-between gap-2 rounded-sm border border-border p-3 text-panel-body">
                 <span className="flex min-w-0 items-center gap-1.5">
                   <Link2 className="size-4 shrink-0 text-muted-foreground" />
                   <span className="truncate">
                     <span className="text-muted-foreground">{landingName(l.fromLandingId) ?? l.fromPath ?? '—'}</span>
                     <span className="mx-1 text-muted-foreground">←</span>
-                    <span dir="ltr" className="font-mono text-xs">{l.toPath}</span>
+                    <span dir="ltr" className="font-mono text-panel-caption">{l.toPath}</span>
                     <span className="text-muted-foreground"> («{l.anchorFa}»)</span>
                   </span>
                 </span>
@@ -417,18 +417,18 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
       </div>
 
       <div className="border-t border-border pt-5">
-        <h3 className="text-sm font-semibold text-foreground">لینک‌های ورودی به این صفحه</h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h3 className="text-panel-label font-semibold text-foreground">لینک‌های ورودی به این صفحه</h3>
+        <p className="mt-1 text-panel-caption text-muted-foreground">
           فقط‌خواندنی — همین‌ها هستند که چک «دست‌کم یک لینک ورودی» گیت را سبز می‌کنند.
         </p>
         {inLinks.length === 0 ? (
-          <p className="mt-3 rounded-sm border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+          <p className="mt-3 rounded-sm border border-dashed border-border p-4 text-center text-panel-body text-muted-foreground">
             هنوز لینک ورودی‌ای به این صفحه ثبت نشده است.
           </p>
         ) : (
           <ul className="mt-3 space-y-2">
             {inLinks.map((l) => (
-              <li key={l.id} className="flex items-center gap-2 rounded-sm border border-border p-3 text-sm">
+              <li key={l.id} className="flex items-center gap-2 rounded-sm border border-border p-3 text-panel-body">
                 <Link2 className="size-4 shrink-0 text-muted-foreground" />
                 <span className="min-w-0 truncate">
                   <span className="text-muted-foreground">{landingName(l.fromLandingId) ?? l.fromPath ?? '—'}</span>

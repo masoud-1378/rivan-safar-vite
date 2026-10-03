@@ -88,15 +88,15 @@ export default function SectionSettingsDialog({
       >
         <div className="max-h-[60vh] space-y-5 overflow-y-auto">
           {defs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">تنظیمی برای این بخش تعریف نشده است.</p>
+            <p className="text-panel-body text-muted-foreground">تنظیمی برای این بخش تعریف نشده است.</p>
           ) : (
             defs.map((d) => (
               <div key={d.key}>
-                <p className="text-sm font-semibold">{d.label}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{d.hint}</p>
+                <p className="text-panel-label">{d.label}</p>
+                <p className="mt-1 text-panel-caption text-muted-foreground">{d.hint}</p>
                 <div className="mt-2">
                   {d.kind === 'boolean' ? (
-                    <div className="flex items-center gap-2.5 text-sm">
+                    <div className="flex items-center gap-2.5 text-panel-body">
                       <Switch
                         checked={(local[d.key] ?? d.defaultValue) === 'true'}
                         disabled={pending}

@@ -33,8 +33,8 @@ export default async function AdminTourEditPage({ params }: Props) {
         ]}
       />
       <div>
-        <h1 className="text-2xl font-bold text-foreground">ویرایش تور</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{tour.title}</p>
+        <h1 className="text-panel-display text-foreground">ویرایش تور</h1>
+        <p className="mt-2 text-panel-body text-muted-foreground">{tour.title}</p>
       </div>
       <EditTourClient tour={tour} tree={tree} origins={origins} hotels={hotels} />
     </div>

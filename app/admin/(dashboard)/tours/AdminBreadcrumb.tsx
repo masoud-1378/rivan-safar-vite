@@ -11,7 +11,7 @@ export interface Crumb {
  */
 export function AdminBreadcrumb({ items }: { items: Crumb[] }) {
   return (
-    <nav aria-label="بردکرامب" dir="rtl" className="flex items-center gap-1 text-sm">
+    <nav aria-label="بردکرامب" dir="rtl" className="flex items-center gap-1 text-panel-body">
       <ol className="flex items-center gap-1">
         {items.map((item, i) => {
           const isLast = i === items.length - 1;

@@ -309,7 +309,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
           <button
             type="button"
             onClick={rebuildSlugFromTitle}
-            className="mt-1.5 inline-flex items-center gap-1 text-caption font-bold text-brand hover:underline"
+            className="mt-1.5 inline-flex items-center gap-1 text-panel-caption font-bold text-brand hover:underline"
           >
             <RefreshCw className="size-3" />
             بازسازی خودکار از عنوان
@@ -337,7 +337,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
             onReject={() => setDismissedSafeDate(true)}
           />
         )}
-        <dl className="space-y-1.5 rounded-sm border border-border/70 bg-muted/40 p-3 text-xs">
+        <dl className="space-y-2 rounded-sm border border-border/70 bg-muted/40 p-3 text-panel-caption">
           <div className="flex items-center justify-between gap-2">
             <dt className="text-muted-foreground">مبدأ (حفظ می‌شود)</dt>
             <dd className="font-medium text-foreground">{tour.origin || '—'}</dd>
@@ -363,9 +363,9 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
         </dl>
         {/* قلم ۳ موج ۰: انتخاب صریح قیمت نسخهٔ تازه — دیگر کپیِ بی‌صدا نیست. */}
         <fieldset>
-          <legend className="text-xs font-bold text-foreground">قیمت کپی</legend>
+          <legend className="text-panel-caption font-bold text-foreground">قیمت کپی</legend>
           <div className="mt-2 space-y-2">
-            <label className="flex cursor-pointer items-center gap-2.5 rounded-sm border border-border/70 bg-card p-3 text-xs transition-colors hover:border-foreground/30">
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-sm border border-border/70 bg-card p-3 text-panel-caption transition-colors hover:border-foreground/30">
               <input
                 type="radio"
                 name="dup-price-mode"
@@ -375,7 +375,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
               />
               <span className="font-medium text-foreground">همین قیمت بماند</span>
             </label>
-            <label className="flex cursor-pointer items-center gap-2.5 rounded-sm border border-border/70 bg-card p-3 text-xs transition-colors hover:border-foreground/30">
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-sm border border-border/70 bg-card p-3 text-panel-caption transition-colors hover:border-foreground/30">
               <input
                 type="radio"
                 name="dup-price-mode"

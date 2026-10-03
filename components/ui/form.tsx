@@ -92,7 +92,7 @@ export function useForm<T extends Record<string, unknown>>({ initial, schema = {
 export function FormField({ label, htmlFor, error, hint, required, className, children }: { label: React.ReactNode; htmlFor?: string; error?: string; hint?: React.ReactNode; required?: boolean; className?: string; children: React.ReactNode }) {
   const msgId = htmlFor ? `${htmlFor}-msg` : undefined;
   return (
-    <div className={cn("space-y-1.5", className)}>
+    <div className={cn("space-y-2", className)}>
       <label htmlFor={htmlFor} className="text-panel-label text-foreground/90">
         {label}
         {required && <span className="ms-1 text-destructive">*</span>}

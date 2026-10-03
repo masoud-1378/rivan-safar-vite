@@ -78,7 +78,7 @@ export default function CatalogManager({ initial, tourCounts = {} }: { initial: 
   const CATEGORY_LABELS: Record<string, string> = { ...Object.fromEntries(DESTINATION_CATEGORIES.map((c) => [c.value, c.label])), region: 'منطقه' };
   const TYPE_LABELS: Record<string, string> = { city: 'شهر', country: 'کشور', region: 'منطقه' };
   const columns: Column<DestinationRow>[] = [
-    { key: 'name', header: 'نام', sortable: true, cell: (destination) => <span className="font-semibold">{destination.name}</span> },
+    { key: 'name', header: 'نام', sortable: true, cell: (destination) => <span className="text-panel-label">{destination.name}</span> },
     { key: 'type', header: 'نوع', sortable: true, cell: (destination) => TYPE_LABELS[destination.type] ?? destination.type ?? '—' },
     { key: 'category', header: 'دسته‌بندی', sortable: true, cell: (destination) => (destination.category ? (CATEGORY_LABELS[destination.category] ?? destination.category) : '—') },
     // گیت انتشار مقصد (قلم ۳ موج ۱): وضعیت انتشار با همان قرارداد بصری تورها.
@@ -89,8 +89,8 @@ export default function CatalogManager({ initial, tourCounts = {} }: { initial: 
     { key: 'slug', header: 'وضعیت سایت', cell: (destination) => {
       const n = tourCounts[destination.slug] ?? 0;
       return n > 0
-        ? <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">فعال روی سایت · {fa(n)} تور</span>
-        : <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">بدون تور فعال</span>;
+        ? <span className="text-panel-caption font-semibold text-emerald-700 dark:text-emerald-400">فعال روی سایت · {fa(n)} تور</span>
+        : <span className="text-panel-caption font-semibold text-amber-600 dark:text-amber-400">بدون تور فعال</span>;
     } },
     { key: 'id', header: 'عملیات', className: 'w-56', cell: (destination) => <div className="flex flex-wrap gap-1">
       {destination.publishStatus === 'published'
@@ -104,13 +104,13 @@ export default function CatalogManager({ initial, tourCounts = {} }: { initial: 
 
   return (
     <div className="admin-enter space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-foreground">مکان‌ها و مقصدها</h1><p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول مقصدها</p></div><div className="flex items-center gap-2"><Button className="h-11 lg:h-10" onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن مقصد جدید</Button></div></div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-panel-display text-foreground">مکان‌ها و مقصدها</h1><p className="mt-2 text-panel-body text-muted-foreground">مدیریت مستقیم جدول مقصدها</p></div><div className="flex items-center gap-2"><Button className="h-11 lg:h-10" onClick={() => { setEditing(null); setShowForm(true); }}><Plus />افزودن مقصد جدید</Button></div></div>
       {showForm || editing ? <DestinationForm key={editing?.id ?? 'new'} initial={editing} editingId={editing?.id ?? null} onDone={reload} countries={countries} /> : null}
       {/* گیت انتشار جدا برای مقصد (قلم ۳ موج ۱، تصمیم ۶): فقط «منتشرشده»ها روی سایت دیده می‌شوند. */}
-      <p className="rounded-sm border border-border bg-muted/30 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+      <p className="rounded-sm border border-border bg-muted/30 px-4 py-3 text-panel-caption leading-relaxed text-muted-foreground">
         گیت انتشار مقصد: فقط مقصدهای «منتشرشده» روی سایت دیده می‌شوند. انتشار نیازمند نام، کشور/ناحیه و دست‌کم توضیح یا تصویر است؛ «لغو انتشار» مقصد را از سایت پنهان می‌کند ولی از فهرست حذف نمی‌کند.
       </p>
-      <Card><CardContent className="p-5"><h2 className="mb-3 text-base font-semibold">مقصدها ({fa(destinations.length)})</h2><DataTable rows={destinations} columns={columns} rowKey={(destination) => destination.id} searchKeys={['name', 'nameEn', 'type', 'category']} searchPlaceholder="جست‌وجوی نام، نوع یا دسته‌بندی…" emptyTitle="مقصدی ثبت نشده است" emptyDescription="برای شروع، مقصد جدیدی اضافه کنید." emptyAction={destinations.length === 0 ? { label: 'افزودن اولین مقصد', onClick: () => { setEditing(null); setShowForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); } } : undefined} /></CardContent></Card>
+      <Card><CardContent className="p-5"><h2 className="mb-4 text-panel-heading">مقصدها ({fa(destinations.length)})</h2><DataTable rows={destinations} columns={columns} rowKey={(destination) => destination.id} searchKeys={['name', 'nameEn', 'type', 'category']} searchPlaceholder="جست‌وجوی نام، نوع یا دسته‌بندی…" emptyTitle="مقصدی ثبت نشده است" emptyDescription="برای شروع، مقصد جدیدی اضافه کنید." emptyAction={destinations.length === 0 ? { label: 'افزودن اولین مقصد', onClick: () => { setEditing(null); setShowForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); } } : undefined} /></CardContent></Card>
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => { if (!open) { setDeleting(null); setUsage(null); setUsageFailed(false); } }} title="بایگانی مقصد" description={deleting ? (<span className="block space-y-2"><span className="block">مقصد «{deleting.name}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.</span>{usageFailed ? <span className="block font-medium text-destructive">شمارش ارجاع‌ها ناموفق بود؛ با احتیاط بایگانی کنید.</span> : null}{usage !== null && usage > 0 ? <span className="block font-medium text-amber-600 dark:text-amber-400">این مقصد در {fa(usage)} تور استفاده شده است؛ آن تورها سر جایشان می‌مانند و فقط این مقصد از دسترس خارج می‌شود.</span> : null}</span>) : ''} confirmText="بایگانی مقصد" destructive onConfirm={onDelete} />
       <AlertDialog
         open={Boolean(publishing)}

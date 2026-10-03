@@ -72,7 +72,7 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
             {pending ? 'در حال ورود…' : 'شروع با دادهٔ نمونه'}
           </Button>
           {hasAnyData ? (
-            <p className="mt-1 max-w-60 text-caption leading-5 text-warning">
+            <p className="mt-1 max-w-60 text-panel-caption leading-5 text-warning">
               داده‌ای در پنل هست؛ «دادهٔ نمونه» فقط نمونه‌های گمشدهٔ خودش را کامل می‌کند و به داده‌های شما دست نمی‌زند.
             </p>
           ) : null}
@@ -155,9 +155,9 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Rocket className="size-5 text-primary" />
-            <h2 className="text-base font-bold text-foreground">راه‌اندازی در ۵ قدم</h2>
+            <h2 className="text-panel-heading font-bold text-foreground">راه‌اندازی در ۵ قدم</h2>
           </div>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-panel-body text-muted-foreground">
             {fa(doneCount)} از {fa(5)} قدم
           </span>
         </div>
@@ -177,15 +177,15 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
             >
               <div className="flex min-w-0 items-start gap-3">
                 <span
-                  className={`grid size-8 shrink-0 place-items-center rounded-full text-sm font-bold ${
+                  className={`grid size-8 shrink-0 place-items-center rounded-full text-panel-label font-bold ${
                     step.done ? 'bg-success text-success-foreground' : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   {step.done ? <Check className="size-4" /> : fa(i + 1)}
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">{step.title}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{step.description}</p>
+                  <p className="text-panel-label font-semibold text-foreground">{step.title}</p>
+                  <p className="mt-1 text-panel-caption text-muted-foreground">{step.description}</p>
                 </div>
               </div>
               <div className="w-full sm:w-auto sm:shrink-0">{step.action}</div>

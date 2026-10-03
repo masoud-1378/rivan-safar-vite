@@ -148,7 +148,7 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
           value={u.role}
           disabled={pending}
           onChange={(e) => run(async () => { await setUserRole(u.id, e.target.value as 'owner' | 'editor'); }, 'نقش به‌روزرسانی شد.')}
-          className="h-8 text-xs"
+          className="h-8 text-panel-caption"
           options={ROLE_OPTIONS}
         />
       ),
@@ -157,7 +157,7 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
     {
       key: 'createdAt',
       header: 'تاریخ ایجاد',
-      cell: (u) => <span className="text-xs text-muted-foreground">{formatJalali(new Date(u.createdAt))} · {faTime(new Date(u.createdAt))}</span>,
+      cell: (u) => <span className="text-panel-caption text-muted-foreground">{formatJalali(new Date(u.createdAt))} · {faTime(new Date(u.createdAt))}</span>,
     },
     {
       key: 'id',
@@ -180,8 +180,8 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
   return (
     <div className="admin-enter space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">مدیریت کاربران پنل</h1>
-        <p className="mt-1 text-sm text-muted-foreground">فقط مالک می‌تواند کاربر بسازد، نقش را تغییر دهد، غیرفعال یا بایگانی کند.</p>
+        <h1 className="text-panel-display text-foreground">مدیریت کاربران پنل</h1>
+        <p className="mt-2 text-panel-body text-muted-foreground">فقط مالک می‌تواند کاربر بسازد، نقش را تغییر دهد، غیرفعال یا بایگانی کند.</p>
       </div>
 
       <Card>
@@ -247,7 +247,7 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="mt-1.5 w-fit px-2 text-xs text-muted-foreground"
+                className="mt-1.5 w-fit px-2 text-panel-caption text-muted-foreground"
                 onClick={() => {
                   setPassword(generateStrongPassword());
                   if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
@@ -269,7 +269,7 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
                   options={ROLE_OPTIONS}
                 />
               </Field>
-              <div className="mt-2 space-y-1.5 rounded-field border border-border bg-muted/40 p-3 text-xs leading-6 text-muted-foreground">
+              <div className="mt-2 space-y-2 rounded-field border border-border bg-muted/40 p-3 text-panel-caption leading-6 text-muted-foreground">
                 <p>
                   <strong className="text-foreground">مالک:</strong>
                   {' '}دسترسی کامل؛ از جمله مدیریت کاربران، حذف لندینگ‌های سئو، حذف دائمی از بایگانی، حالت تعمیرات و اجرای دادهٔ نمونه.
@@ -291,7 +291,7 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
 
       <Card>
         <CardContent className="p-5">
-          <h2 className="mb-3 text-base font-semibold">کاربران ({fa(users.length)})</h2>
+          <h2 className="mb-4 text-panel-heading">کاربران ({fa(users.length)})</h2>
           <DataTable
             rows={users}
             columns={columns}

@@ -26,7 +26,7 @@ export function Accordion({ items, multiple, defaultOpen = [], className }: Acco
         const isOpen = open.includes(it.id);
         return (
           <div key={it.id}>
-            <h3 className="font-heading">
+            <h3 className="text-panel-heading">
               <button
                 type="button"
                 aria-expanded={isOpen}

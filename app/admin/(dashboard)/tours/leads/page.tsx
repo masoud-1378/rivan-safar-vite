@@ -65,7 +65,7 @@ export default async function TourLeadsPage({
   return (
     <div className="admin-enter space-y-6">
       {dbDown ? (
-        <div className="rounded-sm border border-warning/40 bg-warning/10 p-4 text-sm">
+        <div className="rounded-sm border border-warning/40 bg-warning/10 p-4 text-panel-body">
           اتصال به دیتابیس در این لحظه برقرار نشد؛ فهرست درخواست‌ها بارگذاری نشد. چند لحظه بعد صفحه را تازه کنید.
         </div>
       ) : null}
@@ -73,8 +73,8 @@ export default async function TourLeadsPage({
 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">درخواست‌های رزرو و استعلام تور</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-panel-display text-foreground">درخواست‌های رزرو و استعلام تور</h1>
+          <p className="mt-2 text-panel-body text-muted-foreground">
             درخواست‌های ثبت‌شده توسط مسافران برای تورهای اختصاصی.
           </p>
         </div>

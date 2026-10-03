@@ -63,14 +63,14 @@ export default async function AdminLeadsPage({
   return (
     <div className="admin-enter space-y-6">
       {dbDown ? (
-        <div className="rounded-sm border border-warning/40 bg-warning/10 p-4 text-sm">
+        <div className="rounded-sm border border-warning/40 bg-warning/10 p-4 text-panel-body">
           اتصال به دیتابیس در این لحظه برقرار نشد؛ فهرست درخواست‌ها بارگذاری نشد. چند لحظه بعد صفحه را تازه کنید.
         </div>
       ) : null}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">درخواست‌های تماس</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-panel-display text-foreground">درخواست‌های تماس</h1>
+          <p className="mt-2 text-panel-body text-muted-foreground">
             جدیدترین درخواست‌های ثبت‌شده در سایت؛ تغییر وضعیت، پیگیری را مشخص می‌کند.
           </p>
         </div>

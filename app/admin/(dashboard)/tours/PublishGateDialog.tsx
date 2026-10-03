@@ -38,9 +38,9 @@ export function MissingChecksDialog({ open, onOpenChange, missing, onGoToStage }
             className="flex items-start justify-between gap-3 rounded-sm border border-border bg-card p-3"
           >
             <div className="min-w-0 space-y-1">
-              <div className="text-xs font-bold text-foreground">{check.label}</div>
-              <div className="text-xs text-muted-foreground">{check.message}</div>
-              <div className="text-caption text-muted-foreground">
+              <div className="text-panel-caption font-bold text-foreground">{check.label}</div>
+              <div className="text-panel-caption text-muted-foreground">{check.message}</div>
+              <div className="text-panel-caption text-muted-foreground">
                 مرحلهٔ {fa(check.stageId)} · {STAGE_SHORT_TITLES[check.stageId] ?? ''}
               </div>
             </div>
@@ -48,7 +48,7 @@ export function MissingChecksDialog({ open, onOpenChange, missing, onGoToStage }
               type="button"
               variant="outline"
               size="sm"
-              className="shrink-0 text-xs"
+              className="shrink-0 text-panel-caption"
               onClick={() => {
                 onOpenChange(false);
                 onGoToStage(check.stageId);

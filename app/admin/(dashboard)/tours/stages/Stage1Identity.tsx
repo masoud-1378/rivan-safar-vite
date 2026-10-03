@@ -428,6 +428,23 @@ export default function Stage1Identity({
               className="font-medium max-md:text-base"
             />
           </Field>
+          {/* پیش‌نمایش زندهٔ نامک: با هر نویسهٔ عنوان به‌روز می‌شود؛ تا وقتی دستی
+              ویرایش نشده، خودکار است. ویرایش دستی همان بخش «پیشرفته» است. */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1" aria-live="polite">
+            <span className="text-panel-caption text-muted-foreground">
+              آدرس اینترنتی{slugAuto ? ' (خودکار)' : ' (دستی)'}:
+            </span>
+            <span dir="ltr" className="text-panel-caption text-foreground/80">
+              {typeof window !== 'undefined' ? window.location.host : 'rivansafar.ir'}/tour/{data.slug || '…'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setAdvancedOpen(true)}
+              className="text-panel-caption font-bold text-brand hover:underline"
+            >
+              ویرایش
+            </button>
+          </div>
         </div>
       </div>
 

@@ -213,8 +213,8 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">هتل‌ها</h1>
-          <p className="mt-1 text-sm text-muted-foreground">مدیریت مستقیم جدول اقامتگاه‌ها</p>
+          <h1 className="text-panel-display text-foreground">هتل‌ها</h1>
+          <p className="mt-2 text-panel-body text-muted-foreground">مدیریت مستقیم جدول اقامتگاه‌ها</p>
         </div>
         <Button className="h-11 lg:h-10" onClick={startCreate}>
           <Plus />
@@ -223,7 +223,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
       </div>
       <Card>
         <CardContent className="p-5">
-          <h2 className="mb-3 text-base font-semibold">هتل‌ها ({fa(initial.length)})</h2>
+          <h2 className="mb-4 text-panel-heading">هتل‌ها ({fa(initial.length)})</h2>
           <DataTable
             rows={initial}
             columns={columns}
@@ -268,11 +268,11 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
           </Field>
           {editing ? (
             <div className="space-y-2">
-              <span className="text-sm font-medium">عکس‌ها</span>
+              <span className="text-panel-label">عکس‌ها</span>
               {photosLoading ? (
-                <p className="text-xs text-muted-foreground">در حال بارگذاری…</p>
+                <p className="text-panel-caption text-muted-foreground">در حال بارگذاری…</p>
               ) : photos.length === 0 ? (
-                <p className="text-xs text-muted-foreground">هنوز عکسی ثبت نشده است.</p>
+                <p className="text-panel-caption text-muted-foreground">هنوز عکسی ثبت نشده است.</p>
               ) : (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {photos.map((p) => (
@@ -281,7 +281,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
                       <button
                         type="button"
                         onClick={() => setDeletingPhoto(p.id)}
-                        className="flex min-h-[44px] w-full items-center justify-center gap-1.5 text-xs text-destructive hover:bg-destructive/5"
+                        className="flex min-h-[44px] w-full items-center justify-center gap-1.5 text-panel-caption text-destructive hover:bg-destructive/5"
                       >
                         <Trash2 className="size-4" />
                         حذف
@@ -298,7 +298,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
               />
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground">پس از ثبت هتل می‌توانید عکس اضافه کنید.</p>
+            <p className="text-panel-caption text-muted-foreground">پس از ثبت هتل می‌توانید عکس اضافه کنید.</p>
           )}
         </div>
       </Dialog>

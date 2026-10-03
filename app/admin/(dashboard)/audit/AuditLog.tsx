@@ -96,7 +96,7 @@ export default function AuditLog({ logs, page, totalPages, total, filters }: { l
     title: `${ACTION_LABELS[l.action] ?? l.action} — ${ENTITY_LABELS[l.entity] ?? l.entity}`,
     description: (
       <span className="flex flex-wrap items-center gap-2">
-        <span dir="ltr" className="font-mono text-caption">{l.actor}</span>
+        <span dir="ltr" className="font-mono text-panel-caption">{l.actor}</span>
         {l.reasonFa ? <span>{l.reasonFa}</span> : null}
       </span>
     ),
@@ -106,8 +106,8 @@ export default function AuditLog({ logs, page, totalPages, total, filters }: { l
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">گزارش تغییرات</h1>
-          <p className="mt-1 text-sm text-muted-foreground">تمام عملیات حساس مدیریتی ثبت‌شده‌اند. مجموع {fa(total)} رویداد.</p>
+          <h1 className="text-panel-display text-foreground">گزارش تغییرات</h1>
+          <p className="mt-2 text-panel-body text-muted-foreground">تمام عملیات حساس مدیریتی ثبت‌شده‌اند. مجموع {fa(total)} رویداد.</p>
         </div>
         <SegmentedControl
           value={view}
@@ -167,17 +167,17 @@ export default function AuditLog({ logs, page, totalPages, total, filters }: { l
                 {logs.map((l) => (
                   <div key={l.id} className="rounded-sm border border-border bg-card p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="whitespace-nowrap text-xs text-muted-foreground">
+                      <span className="whitespace-nowrap text-panel-caption text-muted-foreground">
                         {formatJalali(new Date(l.createdAt))} · {faTime(new Date(l.createdAt))}
                       </span>
                       <Badge variant="secondary">{ACTION_LABELS[l.action] ?? l.action}</Badge>
                     </div>
-                    <p className="mt-1.5 text-sm font-medium">{ENTITY_LABELS[l.entity] ?? l.entity}</p>
-                    <p dir="ltr" className="mt-0.5 text-start font-mono text-caption text-muted-foreground">
+                    <p className="mt-1.5 text-panel-label">{ENTITY_LABELS[l.entity] ?? l.entity}</p>
+                    <p dir="ltr" className="mt-1 text-start font-mono text-panel-caption text-muted-foreground">
                       {l.actor}
                     </p>
-                    {l.reasonFa ? <p className="mt-1.5 text-xs text-muted-foreground">{l.reasonFa}</p> : null}
-                    <p dir="ltr" className="mt-1 text-start font-mono text-caption text-muted-foreground/70">
+                    {l.reasonFa ? <p className="mt-1.5 text-panel-caption text-muted-foreground">{l.reasonFa}</p> : null}
+                    <p dir="ltr" className="mt-1 text-start font-mono text-panel-caption text-muted-foreground/70">
                       {l.entityId}
                     </p>
                   </div>
@@ -205,7 +205,7 @@ export default function AuditLog({ logs, page, totalPages, total, filters }: { l
                         <TableCell dir="ltr" className="font-medium">{l.actor}</TableCell>
                         <TableCell><Badge variant="secondary">{ACTION_LABELS[l.action] ?? l.action}</Badge></TableCell>
                         <TableCell className="text-muted-foreground">{ENTITY_LABELS[l.entity] ?? l.entity}</TableCell>
-                        <TableCell dir="ltr" className="font-mono text-xs text-muted-foreground">{l.entityId}</TableCell>
+                        <TableCell dir="ltr" className="font-mono text-panel-caption text-muted-foreground">{l.entityId}</TableCell>
                         <TableCell className="max-w-xs truncate text-muted-foreground">{l.reasonFa || '—'}</TableCell>
                       </TableRow>
                     ))}

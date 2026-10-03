@@ -129,8 +129,8 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">مبدأها</h1>
-          <p className="mt-1 text-sm text-muted-foreground">فهرست مبدأهای فرم تورساز؛ فقط در پنل استفاده می‌شود و صفحه‌ای در سایت ندارد</p>
+          <h1 className="text-panel-display text-foreground">مبدأها</h1>
+          <p className="mt-2 text-panel-body text-muted-foreground">فهرست مبدأهای فرم تورساز؛ فقط در پنل استفاده می‌شود و صفحه‌ای در سایت ندارد</p>
         </div>
         <Button className="h-11 lg:h-10" onClick={startCreate}>
           <Plus />
@@ -139,7 +139,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
       </div>
       <Card>
         <CardContent className="p-5">
-          <h2 className="mb-3 text-base font-semibold">مبدأها ({fa(initial.length)})</h2>
+          <h2 className="mb-4 text-panel-heading">مبدأها ({fa(initial.length)})</h2>
           <DataTable
             rows={initial}
             columns={columns}

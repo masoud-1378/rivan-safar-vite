@@ -24,7 +24,7 @@ function SettingField({ def, value, onChange, disabled, error }: { def: SettingD
           onCheckedChange={(checked) => onChange(checked ? 'true' : 'false')}
           aria-label={def.label}
         />
-        <span className="text-sm">{value === 'true' ? 'فعال' : 'غیرفعال'}</span>
+        <span className="text-panel-body">{value === 'true' ? 'فعال' : 'غیرفعال'}</span>
       </div>
     );
   }
@@ -76,7 +76,7 @@ function PhoneDisplaySync({
   if (displayTrimmed === suggestion || dismissed === suggestion) return null;
   return (
     <div className="rounded-sm border border-dashed border-brand/30 bg-brand/5 px-3 py-2">
-      <p className="text-caption text-foreground">
+      <p className="text-panel-caption text-foreground">
         {displayTrimmed
           ? `قالب نمایشی («${displayTrimmed}») با شمارهٔ اصلی هم‌خوان نیست. `
           : 'برای این شماره هنوز قالب نمایشی نوشته نشده است. '}
@@ -86,14 +86,14 @@ function PhoneDisplaySync({
         <button
           type="button"
           onClick={() => onApply(suggestion)}
-          className="text-caption font-bold text-brand hover:underline"
+          className="text-panel-caption font-bold text-brand hover:underline"
         >
           اعمال شود
         </button>
         <button
           type="button"
           onClick={() => setDismissed(suggestion)}
-          className="text-caption text-muted-foreground hover:underline"
+          className="text-panel-caption text-muted-foreground hover:underline"
         >
           نه، همین بماند
         </button>
@@ -154,11 +154,11 @@ export default function SettingsPage({ initial, role }: { initial: Record<string
   return (
     <div className="admin-enter space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">تنظیمات سایت</h1>
-        <p className="mt-1 text-sm text-muted-foreground">تنظیمات مرکزی که در کل سایت، سئو و پنل استفاده می‌شوند. هر تغییر در گزارش تغییرات ثبت می‌شود.</p>
+        <h1 className="text-panel-display">تنظیمات سایت</h1>
+        <p className="mt-2 text-panel-body text-muted-foreground">تنظیمات مرکزی که در کل سایت، سئو و پنل استفاده می‌شوند. هر تغییر در گزارش تغییرات ثبت می‌شود.</p>
       </div>
       {savedFlash ? (
-        <p className="rounded-sm border border-success/40 bg-success/10 px-3 py-2 text-sm text-success">
+        <p className="rounded-sm border border-success/40 bg-success/10 px-3 py-2 text-panel-body text-success">
           همهٔ تغییرات ذخیره شد.
         </p>
       ) : null}
@@ -200,8 +200,8 @@ export default function SettingsPage({ initial, role }: { initial: Record<string
                       <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
                         <div>
                           {/* ST1: کلید فقط در tooltip برچسب، نه در نما. */}
-                          <p className="text-sm font-semibold" title={`کلید: ${d.key}`}>{d.label}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">{d.hint}</p>
+                          <p className="text-panel-label font-semibold" title={`کلید: ${d.key}`}>{d.label}</p>
+                          <p className="mt-1 text-panel-caption text-muted-foreground">{d.hint}</p>
                         </div>
                         <div className="min-w-0">
                           <SettingField

@@ -28,15 +28,15 @@ export function SmartSuggestion({
 }: SmartSuggestionProps) {
   return (
     <div className="rounded-sm border border-brand/25 bg-brand/5 p-3">
-      <p className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+      <p className="flex items-center gap-1.5 text-panel-caption font-bold text-foreground">
         <Sparkles className="size-3.5 shrink-0 text-brand" />
         <span>{title}</span>
       </p>
       {description ? (
-        <p className="mt-1 text-caption leading-relaxed text-muted-foreground">{description}</p>
+        <p className="mt-2 text-panel-caption leading-relaxed text-muted-foreground">{description}</p>
       ) : null}
       <div className="mt-2 flex gap-2">
-        <Button type="button" size="sm" onClick={onAccept} className="text-xs">
+        <Button type="button" size="sm" onClick={onAccept} className="text-panel-caption">
           {acceptText}
         </Button>
         <Button
@@ -44,7 +44,7 @@ export function SmartSuggestion({
           size="sm"
           variant="ghost"
           onClick={onReject}
-          className="text-xs text-muted-foreground"
+          className="text-panel-caption text-muted-foreground"
         >
           {rejectText}
         </Button>

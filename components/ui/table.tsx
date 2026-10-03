@@ -22,7 +22,7 @@ export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTa
   return <th className={cn("h-10 px-3 text-start align-middle font-medium", className)} {...props} />;
 }
 export function TableCell({ className, numeric, ...props }: React.TdHTMLAttributes<HTMLTableCellElement> & { numeric?: boolean }) {
-  return <td className={cn("px-3 py-2.5 align-middle", numeric && "tabular-nums", className)} {...props} />;
+  return <td className={cn("px-3 py-3 align-middle", numeric && "tabular-nums", className)} {...props} />;
 }
 export function TableCaption({ className, ...props }: React.HTMLAttributes<HTMLTableCaptionElement>) {
   return <caption className={cn("mt-3 text-panel-caption text-muted-foreground", className)} {...props} />;

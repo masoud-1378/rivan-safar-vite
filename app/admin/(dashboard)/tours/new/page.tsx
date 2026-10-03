@@ -42,10 +42,10 @@ export default async function AdminTourNewPage({ searchParams }: Props) {
         ]}
       />
       <div>
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-panel-display text-foreground">
           {duplicateTitle ? `کپی تور «${duplicateTitle}»` : 'تور تازه'}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 text-panel-body text-muted-foreground">
           تور تازه همیشه به‌صورت پیش‌نویس ثبت می‌شود؛ وقتی آماده شد، دکمهٔ «انتشار» را بزنید.
         </p>
       </div>

@@ -110,9 +110,9 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
   };
 
   const columns: Column<LandingRow>[] = [
-    { key: 'titleFa', header: 'عنوان فارسی', sortable: true, cell: (l) => <span className="line-clamp-1 font-medium">{l.titleFa}</span> },
-    { key: 'queryOwner', header: 'کد یکتای صفحه', sortable: true, cell: (l) => <span dir="ltr" className="font-mono text-xs text-muted-foreground">{l.queryOwner}</span> },
-    { key: 'urlPath', header: 'مسیر', sortable: true, cell: (l) => <span dir="ltr" className="font-mono text-xs text-muted-foreground">{l.urlPath}</span> },
+    { key: 'titleFa', header: 'عنوان فارسی', sortable: true, cell: (l) => <span className="line-clamp-1 text-panel-label">{l.titleFa}</span> },
+    { key: 'queryOwner', header: 'کد یکتای صفحه', sortable: true, cell: (l) => <span dir="ltr" className="font-mono text-panel-caption text-muted-foreground">{l.queryOwner}</span> },
+    { key: 'urlPath', header: 'مسیر', sortable: true, cell: (l) => <span dir="ltr" className="font-mono text-panel-caption text-muted-foreground">{l.urlPath}</span> },
     { key: 'workflow', header: 'وضعیت', sortable: true, cell: (l) => <Badge variant={WORKFLOW_MAP[(l.workflow ?? 'draft') as Workflow]?.variant ?? 'secondary'}>{WORKFLOW_MAP[(l.workflow ?? 'draft') as Workflow]?.label ?? l.workflow}</Badge> },
     { key: 'indexStatus', header: 'نمایش در گوگل', cell: (l) => <Badge variant={l.indexStatus === 'index' ? 'success' : 'warning'}>{l.indexStatus === 'index' ? 'باشد' : 'نباشد'}</Badge> },
     {
@@ -126,7 +126,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
             value={l.workflow ?? 'draft'}
             disabled={pending}
             onChange={(event) => handleWorkflow(l.id, event.target.value as Workflow)}
-            className="h-8 min-w-36 text-xs"
+            className="h-8 min-w-36 text-panel-caption"
             options={WORKFLOW_OPTIONS}
           />
           <Button variant="ghost" size="sm" className="max-md:min-h-11" onClick={() => setEditing(l)} disabled={pending}>
@@ -150,8 +150,8 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
     <div className="admin-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">مدیریت لندینگ‌ها</h1>
-          <p className="mt-1 text-sm text-muted-foreground">مدیریت صفحات سئو، چک‌لیست انتشار و کنترل ایندکس.</p>
+          <h1 className="text-panel-display text-foreground">مدیریت لندینگ‌ها</h1>
+          <p className="mt-2 text-panel-body text-muted-foreground">مدیریت صفحات سئو، چک‌لیست انتشار و کنترل ایندکس.</p>
         </div>
         <div className="flex items-center gap-2">
           <SectionSettingsDialog sectionKey="seo" title="تنظیمات سئو" tabs={['seo']} values={sectionSettings} />
@@ -174,7 +174,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
 
       <Card>
         <CardContent className="p-5">
-          <h2 className="mb-3 text-base font-semibold">لیست لندینگ‌ها ({fa(data.length)})</h2>
+          <h2 className="mb-4 text-panel-heading">لیست لندینگ‌ها ({fa(data.length)})</h2>
           <DataTable
             rows={data}
             columns={columns}

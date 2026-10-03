@@ -88,10 +88,10 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
             className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-sm px-3 py-2 text-start transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-bold text-foreground">
+              <span className="block truncate text-panel-label font-bold text-foreground">
                 {active.label}
               </span>
-              <span className="mt-0.5 block text-caption text-muted-foreground">
+              <span className="mt-1 block text-panel-caption text-muted-foreground">
                 مرحلهٔ {fa(active.id)} از {fa(stages.length)}
               </span>
               {/* نوار پیشرفت مراحل */}
@@ -114,7 +114,7 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
               </span>
             </span>
             <span
-              className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-xs font-bold text-brand-foreground"
+              className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-panel-caption font-bold text-brand-foreground"
               aria-hidden
             >
               {fa(active.id)}
@@ -155,16 +155,16 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
                   )}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold text-foreground">
+                    <span className="block truncate text-panel-label font-bold text-foreground">
                       {stage.label}
                     </span>
-                    <span className="block truncate text-caption text-muted-foreground">
+                    <span className="block truncate text-panel-caption text-muted-foreground">
                       {stage.description}
                     </span>
                   </span>
                   <span
                     className={cn(
-                      'grid size-9 shrink-0 place-items-center rounded-full text-xs font-bold',
+                      'grid size-9 shrink-0 place-items-center rounded-full text-panel-caption font-bold',
                       current
                         ? 'bg-brand text-brand-foreground'
                         : passed
@@ -219,7 +219,7 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
                     />
                     <span
                       className={cn(
-                        'grid size-7 place-items-center rounded-full text-xs font-bold',
+                        'grid size-7 place-items-center rounded-full text-panel-caption font-bold',
                         current
                           ? 'bg-brand text-brand-foreground'
                           : passed
@@ -233,7 +233,7 @@ export function StageStepper({ stages, activeStage, onSelect, isPassed }: StageS
                   </span>
                   <span
                     className={cn(
-                      'block truncate text-xs font-bold leading-tight',
+                      'block truncate text-panel-caption font-bold leading-tight',
                       current ? 'text-foreground' : 'text-foreground/80'
                     )}
                   >

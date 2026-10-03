@@ -62,7 +62,7 @@ export function AdminNavHeader() {
           className="h-10 w-auto max-w-full"
         />
         <div className="min-w-0">
-          <p className="truncate text-xs text-muted-foreground">مرکز مدیریت محتوا</p>
+          <p className="truncate text-panel-caption text-muted-foreground">مرکز مدیریت محتوا</p>
         </div>
       </div>
       <AdminCommand />
@@ -104,8 +104,8 @@ export function AdminNavFooter({ email, role }: { email: string; role: 'owner' |
       <div className="flex items-center gap-2">
         <Avatar name={email || 'مدیر پنل'} size="sm" />
         <div className="min-w-0">
-          <p className="truncate text-xs font-medium" dir="ltr">{email}</p>
-          <p className="text-caption text-muted-foreground">{role === 'owner' ? 'مالک سامانه' : 'ویراستار'}</p>
+          <p className="truncate text-panel-caption" dir="ltr">{email}</p>
+          <p className="text-panel-caption text-muted-foreground">{role === 'owner' ? 'مالک سامانه' : 'ویراستار'}</p>
         </div>
       </div>
       <AdminSignOut />

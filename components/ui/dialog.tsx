@@ -81,7 +81,7 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
           <div className="flex items-start justify-between gap-4">
             <div>
               {title && <h2 id={titleId} className="text-panel-title">{title}</h2>}
-              {description && <p id={descId} className="mt-1 text-panel-body text-muted-foreground">{description}</p>}
+              {description && <p id={descId} className="mt-2 text-panel-body text-muted-foreground">{description}</p>}
             </div>
             {role === "dialog" && (
               <button type="button" aria-label="بستن" onClick={() => onOpenChange(false)} className="-me-1 -mt-1 flex size-8 min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-control text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:min-h-8 sm:min-w-8">

@@ -25,7 +25,7 @@ export function Alert({ variant = "info", title, icon, className, children, ...p
       <Icon className={cn("mt-0.5 size-4 shrink-0", s.iconColor)} />
       <div className="min-w-0">
         {title && <p className={cn("font-semibold", variant !== "info" && s.iconColor)}>{title}</p>}
-        {children && <div className={cn("text-foreground/80", title && "mt-0.5")}>{children}</div>}
+        {children && <div className={cn("text-foreground/80", title && "mt-1")}>{children}</div>}
       </div>
     </div>
   );
