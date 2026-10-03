@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useTransition, useEffect } from 'react';
+import React, { useState, useMemo, useTransition, useEffect, useRef } from 'react';
 import { 
   Compass, 
   Building2, 
@@ -136,22 +136,112 @@ export default function TourForm({
   // انصراف با فرم کثیف (T11): قبل از خروج، دیالوگ «تغییرات ذخیره‌نشده از دست می‌رود».
   const [dirty, setDirty] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  // یافتهٔ ۱۴ مبتدی: خروج از ویزارد از هر مسیری (سایدبار/بستن تب/رفرش) با دادهٔ
-  // ذخیره‌نشده باید هشدار بدهد — نه فقط دکمهٔ «انصراف». سایدبار لینک معمولی است
-  // پس beforeunload آن را هم می‌گیرد؛ برای ناوبری SPA (پالت فرمان) پرچم سراسری.
+  // یافتهٔ ۱۴ مبتدی (رفع ریشه‌ای، ۱۴۰۵/۰۷/۱۱): گشت زنده نشان داد beforeunload به‌تنهایی
+  // برای خروج از سایدبار کافی نیست؛ پس نگهبان سه‌لایه شد:
+  //  ۱) شنوندهٔ capture روی کلیک لینک‌های داخلی (سایدبار، بردکرامب، …) وقتی فرم
+  //     کثیف است → جلوی ناوبری گرفته می‌شود و دیالوگ سفارشی (نه native) باز می‌شود؛
+  //     دیالوگ سفارشی هم برای کاربر واقعی دیده می‌شود هم در گشت خودکار.
+  //  ۲) نگهبان دکمهٔ برگشت مرورگر: با کثیف‌شدن فرم یک ورودی نگهبان در history گذاشته
+  //     می‌شود؛ popstate آن را می‌گیرد و دیالوگ می‌پرسد.
+  //  ۳) beforeunload برای بستن تب/رفرش سر جایش می‌ماند.
+  // ناوبری SPA پالت فرمان هم از قبل با پرچم سراسری __tourFormDirty نگهبانی می‌شود.
+  const dirtyRef = useRef(false);
+  const suppressUnloadRef = useRef(false); // خروج تأییدشده: beforeunload شلیک نکند
+  const guardPushedRef = useRef(false); // ورودی نگهبان history گذاشته شده؟
+  const allowBackRef = useRef(false); // خروج با دکمهٔ برگشت تأیید شده
+  const pendingHrefRef = useRef<string | null>(null); // لینکی که در انتظار تأیید خروج است
+  const pendingAfterPopRef = useRef<(() => void) | null>(null); // بعد از برداشتن نگهبان از history
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    dirtyRef.current = dirty;
     (window as unknown as { __tourFormDirty?: boolean }).__tourFormDirty = dirty;
-    if (!dirty) return;
-    const handler = (e: BeforeUnloadEvent) => {
+
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (suppressUnloadRef.current || !dirtyRef.current) return;
       e.preventDefault();
+      e.returnValue = '';
     };
-    window.addEventListener('beforeunload', handler);
+
+    // کلیک روی لینک داخلی وقتی فرم کثیف است: ناوبری (چه full چه SPA) را نگه دار.
+    const onClickCapture = (e: MouseEvent) => {
+      if (!dirtyRef.current || suppressUnloadRef.current) return;
+      if (e.defaultPrevented || e.button !== 0) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      const anchor = target?.closest?.('a[href]') as HTMLAnchorElement | null | undefined;
+      if (!anchor) return;
+      const href = anchor.getAttribute('href') || '';
+      if (!href || href.startsWith('#')) return;
+      if (anchor.hasAttribute('download')) return;
+      if ((anchor.getAttribute('target') || '').toLowerCase() === '_blank') return;
+      let url: URL;
+      try {
+        url = new URL(href, window.location.href);
+      } catch {
+        return;
+      }
+      if (url.origin !== window.location.origin) return;
+      if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
+      e.preventDefault();
+      e.stopPropagation();
+      pendingHrefRef.current = url.href;
+      setShowExitConfirm(true);
+    };
+
+    const onPopState = () => {
+      // ناوبریِ بعد از ذخیره/انصراف که اول نگهبان را از history برمی‌دارد.
+      if (pendingAfterPopRef.current) {
+        const go = pendingAfterPopRef.current;
+        pendingAfterPopRef.current = null;
+        guardPushedRef.current = false;
+        go();
+        return;
+      }
+      if (!dirtyRef.current) return;
+      if (allowBackRef.current) {
+        allowBackRef.current = false;
+        return;
+      }
+      // برگشت مرورگر با فرم کثیف: بمان و بپرس.
+      window.history.pushState({ __tourFormGuard: true }, '', window.location.href);
+      guardPushedRef.current = true;
+      pendingHrefRef.current = null;
+      setShowExitConfirm(true);
+    };
+
+    window.addEventListener('beforeunload', onBeforeUnload);
+    document.addEventListener('click', onClickCapture, true);
+    window.addEventListener('popstate', onPopState);
+    // با کثیف‌شدن فرم، ورودی نگهبان برای دکمهٔ برگشت مرورگر.
+    if (dirty && !guardPushedRef.current) {
+      window.history.pushState({ __tourFormGuard: true }, '', window.location.href);
+      guardPushedRef.current = true;
+    }
     return () => {
-      window.removeEventListener('beforeunload', handler);
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      document.removeEventListener('click', onClickCapture, true);
+      window.removeEventListener('popstate', onPopState);
       (window as unknown as { __tourFormDirty?: boolean }).__tourFormDirty = false;
     };
   }, [dirty]);
+
+  // خروجِ تأییدشده از فرم (بعد از ذخیرهٔ موفق یا تأیید انصراف): اول ورودی نگهبان
+  // را از history برمی‌داریم تا دکمهٔ برگشت بعداً گیر نکند، بعد ناوبری انجام می‌شود.
+  const leaveForm = (go: () => void) => {
+    dirtyRef.current = false;
+    (window as unknown as { __tourFormDirty?: boolean }).__tourFormDirty = false;
+    setDirty(false);
+    const state = window.history.state as { __tourFormGuard?: boolean } | null;
+    if (guardPushedRef.current && state?.__tourFormGuard) {
+      guardPushedRef.current = false;
+      pendingAfterPopRef.current = go;
+      window.history.back();
+    } else {
+      guardPushedRef.current = false;
+      go();
+    }
+  };
   // گیت انتشار (موج ۱، قلم ۲): دیالوگ ناقصی‌ها / دیالوگ تأیید انتشار.
   const [missingChecks, setMissingChecks] = useState<PublishCheck[] | null>(null);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
@@ -412,8 +502,7 @@ export default function TourForm({
           }
         }
         // ذخیره موفق شد — دیگر «تغییر ذخیره‌نشده» نیست (هشدار خروج بی‌مورد ندهد).
-        setDirty(false);
-        onDone(res.id);
+        leaveForm(() => onDone(res.id));
       } catch (err: unknown) {
         // خطای واقعاً غیرمنتظره: در پروداکشن err.message همان «Minified React error #441»
         // است و به کاربر چیزی نمی‌گوید؛ پس پیام عمومی نشان بده و جزئیات را لاگ کن.
@@ -769,7 +858,32 @@ export default function TourForm({
         description="تغییرات ذخیره‌نشده از دست می‌رود."
         confirmText="خارج شوید"
         cancelText="بازگشت"
-        onConfirm={() => { setShowCancelConfirm(false); (onCancel ?? onDone)(); }}
+        onConfirm={() => { setShowCancelConfirm(false); leaveForm(() => (onCancel ?? onDone)()); }}
+      />
+
+      {/* یافتهٔ ۱۴ مبتدی: خروج از لینک داخلی یا دکمهٔ برگشت مرورگر با فرم کثیف. */}
+      <AlertDialog
+        open={showExitConfirm}
+        onOpenChange={(open) => { if (!open) { setShowExitConfirm(false); pendingHrefRef.current = null; } }}
+        title="بدون ذخیره خارج می‌شوید؟"
+        description="تغییرات ذخیره‌نشدهٔ این تور از دست می‌رود."
+        confirmText="خارج شوید"
+        cancelText="بمانید"
+        onConfirm={() => {
+          const href = pendingHrefRef.current;
+          pendingHrefRef.current = null;
+          if (href) {
+            // خروج تأییدشده از راه لینک داخلی: همان ناوبری کامل لینک.
+            suppressUnloadRef.current = true;
+            guardPushedRef.current = false;
+            window.location.assign(href);
+          } else {
+            // خروج تأییدشده با دکمهٔ برگشت مرورگر.
+            allowBackRef.current = true;
+            guardPushedRef.current = false;
+            window.history.back();
+          }
+        }}
       />
 
       {/* گیت انتشار (موج ۱، قلم ۲): ناقصی‌ها با ارجاع به مرحلهٔ مربوط، تأیید با نام تور */}
