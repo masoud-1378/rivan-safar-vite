@@ -219,7 +219,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
                   onOpenChange={setNewCountryAdvancedOpen}
                   className="rounded-sm border border-border bg-muted/20 p-3 sm:col-span-2"
                 >
-                  <Field label="نامک" hint="خودکار از نام ساخته می‌شود؛ معمولاً لازم نیست دست بزنید" error={newCountryError}>
+                  <Field label="نامک" hint="خودکار از نام ساخته می‌شود؛ فقط حروف انگلیسی، عدد، خط تیره و آندرلاین" error={newCountryError}>
                     <Input
                       dir="ltr"
                       value={newCountrySlug}
@@ -337,7 +337,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
         >
           <Field
             label="نامک"
-            hint="آدرس اینترنتی این مقصد در سایت؛ خودکار از نام فارسی ساخته می‌شود و معمولاً لازم نیست دست بزنید"
+            hint="آدرس اینترنتی این مقصد در سایت؛ فقط حروف انگلیسی، عدد، خط تیره و آندرلاین"
             error={slugError}
           >
             <Input

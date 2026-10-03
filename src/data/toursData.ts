@@ -68,7 +68,16 @@ export interface TourItem {
   airline: string;
   includedServices: string[];
   excludedServices: string[];
-  hotelOptions: Array<{ name: string; stars: number; board: string; pricePerPerson: string }>;
+  hotelOptions: Array<{
+    name: string;
+    stars: number;
+    board: string;
+    pricePerPerson: string;
+    /** شناسهٔ رکورد هتل در کاتالوگ (snapshot لحظهٔ افزودن)؛ هتل دستیِ آزاد null است. */
+    hotelId?: string | null;
+    /** عکس هتل از جدول media؛ خالی یعنی عکسی ثبت نشده. */
+    photoUrl?: string;
+  }>;
   description: string;
 }
 

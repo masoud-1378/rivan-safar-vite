@@ -258,7 +258,7 @@ export default function Stage1Identity({
           </Field>
         </div>
         <div className="md:col-span-4">
-          <Field label="آدرس اینترنتی تور *" hint="از روی عنوان خودکار ساخته می‌شود؛ اگر لازم بود خودتان تغییرش دهید">
+          <Field label="آدرس اینترنتی تور *" hint="از روی عنوان خودکار ساخته می‌شود؛ فقط حروف انگلیسی، عدد و خط تیره">
             <Input
               dir="ltr"
               value={data.slug}

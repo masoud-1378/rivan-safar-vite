@@ -237,7 +237,7 @@ export default function ExhibitionForm({
       {/* E4: فیلدهای کم‌کاربرد در بخش تاشوی «تکمیلی» */}
       <Collapsible trigger="تکمیلی" openLabel="بستن بخش تکمیلی" className="rounded-sm border border-border bg-muted/20 p-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="نامک انگلیسی" htmlFor="ex-slug" hint="خودکار از عنوان فارسی ساخته می‌شود؛ فقط اگر لازم بود تغییرش دهید." error={slugError}>
+          <Field label="نامک انگلیسی" htmlFor="ex-slug" hint="خودکار از عنوان فارسی ساخته می‌شود؛ فقط حروف انگلیسی، عدد، خط تیره و آندرلاین." error={slugError}>
             <Input id="ex-slug" value={slug} onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); setSlugError(undefined); }} className="text-start" dir="ltr" placeholder="e.g. gitex-2025" />
           </Field>
           <Field label="عنوان انگلیسی" htmlFor="ex-title-en">

@@ -7,6 +7,7 @@ import { desc, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 import { assertRenderableImageUrl } from '@/src/lib/site-image-hosts';
+import { assertLatinSlug } from '@/src/lib/slug-format';
 
 export type ExhibitionStatus = 'draft' | 'review' | 'published' | 'paused' | 'archived';
 
@@ -97,6 +98,8 @@ export async function saveExhibition(id: string | null | undefined, data: Exhibi
   const slug = (data.slug || '').trim();
   const titleFa = (data.titleFa || '').trim();
   if (!slug) throw new Error('نامک (slug) لازم است.');
+  // میز ۳ — ایراد ۱۰: نامک فارسی روی روت‌های سایت ۴۰۴ِ زنده می‌دهد؛ این‌جا رد می‌شود.
+  assertLatinSlug(slug);
   if (titleFa.length < 2) throw new Error('عنوان نمایشگاه لازم است.');
   // تصویر نمایشگاه آدرس دستی است؛ باید همان هاست‌هایی باشد که سایت می‌تواند رندر کند.
   assertRenderableImageUrl(data.image || '');

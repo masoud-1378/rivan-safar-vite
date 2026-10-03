@@ -12,6 +12,7 @@ import { submitLead } from '../../app/actions/lead';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import { fa } from '@/lib/utils';
+import { formatHotelStarsRange } from '@/lib/hotel-stars';
 import {
   liveExtras, isDomesticTour, faDateTime, boardLabel,
   transportLabel, transportSpecLabel,
@@ -174,7 +175,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 </div>
                 <div>
                   <span className="text-text-muted block mb-0.5">درجه هتل‌ها:</span>
-                  <span className="text-text-heading font-bold">{tour.hotelStars ? `${tour.hotelStars} ستاره و بالاتر` : '—'}</span>
+                  <span className="text-text-heading font-bold">{formatHotelStarsRange((tour.hotelOptions ?? []).map((o) => o.stars), tour.hotelStars)}</span>
                 </div>
               </div>
 
@@ -326,7 +327,13 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                     <tr key={idx} className="hover:bg-surface-secondary/40 transition-colors">
                       <td className="py-4 px-4 sm:px-6 font-bold text-text-heading">
                         <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-text-muted" />
+                          {opt.photoUrl ? (
+                            <span className="relative h-11 w-16 shrink-0 overflow-hidden rounded-sm">
+                              <SmartImage src={opt.photoUrl} alt={opt.name} />
+                            </span>
+                          ) : (
+                            <Building2 className="w-4 h-4 text-text-muted" />
+                          )}
                           <span>{opt.name}</span>
                         </div>
                       </td>

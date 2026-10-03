@@ -5,6 +5,11 @@ import { getDb } from '@/db/client';
 import { media } from '@/db/schema';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { and, desc, eq, isNull } from 'drizzle-orm';
+import {
+  ALLOWED_IMAGE_EXTS,
+  IMAGE_UPLOAD_BUCKET,
+  assertUploadImage,
+} from '@/src/lib/upload-policy';
 
 /**
  * عکس‌های هتل — کتابچه §۳ (فاز ۲): «آپلودر عکس هتل، عکس را ذخیره نمی‌کند».
@@ -16,7 +21,7 @@ import { and, desc, eq, isNull } from 'drizzle-orm';
  * - پیش‌نمایش از URL عمومی واقعی سرو می‌شود، نه رشتهٔ نمایشی.
  */
 
-const BUCKET = 'hotel-photos';
+const BUCKET = IMAGE_UPLOAD_BUCKET;
 const MAX_BYTES = 5 * 1024 * 1024;
 
 export interface HotelPhoto {
@@ -65,19 +70,21 @@ export async function uploadHotelPhoto(
 ): Promise<HotelPhoto> {
   await requireAdmin(['owner', 'editor']);
   const file = formData.get('photo');
-  if (!(file instanceof File) || file.size === 0) throw new Error('فایلی انتخاب نشده است.');
-  if (!file.type.startsWith('image/')) throw new Error('فقط فایل تصویری مجاز است.');
-  if (file.size > MAX_BYTES) throw new Error('حجم عکس نباید از ۵ مگابایت بیشتر باشد.');
+  // قرارداد مشترک آپلود تصویر (میز ۳ — ایراد ۲۷): همان سیاست بنر تور؛
+  // SVG هم از روی پسوند هم از روی content-type رد می‌شود (ریسک XSS ذخیره‌شده).
+  assertUploadImage(file as File);
+  const f = file as File;
 
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   const sb = serviceClient();
   await ensureBucket(sb);
 
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().slice(0, 8);
+  // پسوند این‌جا حتماً معتبر است (assertUploadImage ردش کرده) — همان را برای مسیر فایل برمی‌داریم.
+  const ext = (f.name.split('.').pop() || '').toLowerCase();
   const path = `${slug}/${crypto.randomUUID()}.${ext}`;
-  const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, file, {
-    contentType: file.type,
+  const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, f, {
+    contentType: f.type,
     upsert: false,
   });
   if (uploadError) throw new Error('آپلود عکس ناموفق بود.');

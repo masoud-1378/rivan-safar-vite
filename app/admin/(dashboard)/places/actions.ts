@@ -8,6 +8,7 @@ import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 import { isValidDestinationCategory } from './categories';
 import { assertRenderableImageUrl } from '@/src/lib/site-image-hosts';
+import { assertLatinSlug } from '@/src/lib/slug-format';
 
 export interface FaqItem {
   question: string;
@@ -107,6 +108,8 @@ export async function saveDestination(id: string | undefined | null, data: Desti
   const slug = (data.slug || '').trim().toLowerCase();
   const name = (data.name || '').trim();
   if (!slug) throw new Error('نامک (slug) لازم است.');
+  // میز ۳ — ایراد ۱۰: نامک فارسی روی روت‌های سایت ۴۰۴ِ زنده می‌دهد؛ این‌جا رد می‌شود.
+  assertLatinSlug(slug);
   if (name.length < 2) throw new Error('نام مقصد لازم است.');
   // ۲-۱۲: گارد سمت سرور؛ دسته‌بندیِ خالی یعنی «هنوز انتخاب نشده» (جریان افزودن
   // کشور تازه)، ولی مقدارِ پرِ خارج از شش‌تایی پذیرفته نیست.

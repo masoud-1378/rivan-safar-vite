@@ -74,6 +74,51 @@ function restToTour(r: Row): TourItem {
   };
 }
 
+/**
+ * فرادادهٔ هتل‌های کاتالوگ برای رندر سایت (میز ۳ — ایراد ۱۱ و ۱۲):
+ * - archived: هتل بایگانی‌شده (deleted_at) نباید روی تور منتشرشده دیده شود.
+ * - photoUrl: اولین عکس ثبت‌شدهٔ هتل در جدول media (source = 'hotel:<slug>').
+ *
+ * یک‌بار برای همهٔ تورها خوانده می‌شود؛ خطا → نقشهٔ خالی (رفتار قبلی می‌ماند).
+ */
+async function getHotelMeta(): Promise<Map<string, { archived: boolean; photoUrl: string }>> {
+  const empty = new Map<string, { archived: boolean; photoUrl: string }>();
+  try {
+    const rest = getRest();
+    if (!rest) return empty;
+    const [accRes, mediaRes] = await Promise.all([
+      rest.from('accommodations').select('id, slug, deleted_at'),
+      rest.from('media').select('source, url').like('source', 'hotel:%').is('deleted_at', null).order('created_at', { ascending: false }),
+    ]);
+    if (accRes.error) throw accRes.error;
+    if (mediaRes.error) throw mediaRes.error;
+    const slugById = new Map<string, string>();
+    const archivedIds = new Set<string>();
+    for (const r of (accRes.data as Row[]) ?? []) {
+      const id = str(r.id);
+      if (!id) continue;
+      slugById.set(id, str(r.slug));
+      if (r.deleted_at != null) archivedIds.add(id);
+    }
+    // اولین عکس هر هتل (تازه‌ترین، چون نزولی مرتب شده).
+    const photoBySlug = new Map<string, string>();
+    for (const m of (mediaRes.data as Row[]) ?? []) {
+      const source = str(m.source);
+      const slug = source.startsWith('hotel:') ? source.slice('hotel:'.length) : '';
+      const url = str(m.url);
+      if (slug && url && !photoBySlug.has(slug)) photoBySlug.set(slug, url);
+    }
+    const meta = new Map<string, { archived: boolean; photoUrl: string }>();
+    for (const [id, slug] of slugById) {
+      meta.set(id, { archived: archivedIds.has(id), photoUrl: photoBySlug.get(slug) ?? '' });
+    }
+    return meta;
+  } catch (error) {
+    console.error('[db-content] hotel meta read failed:', (error as Error).message);
+    return empty;
+  }
+}
+
 export async function getTours(): Promise<TourItem[]> {
   try {
     const rest = getRest();
@@ -85,7 +130,31 @@ export async function getTours(): Promise<TourItem[]> {
       .order('created_at', { ascending: true });
     if (error) throw error;
     if (!data || data.length === 0) return SAMPLE_TOURS;
+    const hotelMeta = await getHotelMeta();
     const tours = (data as Row[]).map(restToTour);
+    // میز ۳ — ایراد ۱۲: گزینه‌ای که به هتل بایگانی‌شده اشاره می‌کند روی سایت
+    // دیده نمی‌شود (snapshot لحظهٔ افزودن، ولی بایگانی تصمیمِ تازهٔ مدیر است).
+    // هتل دستیِ آزاد (hotelId خالی) دست نمی‌خورد.
+    for (const t of tours) {
+      const options = Array.isArray(t.hotelOptions) ? t.hotelOptions : [];
+      const kept = options.filter((o) => {
+        const hotelId = (o as { hotelId?: string | null }).hotelId;
+        if (!hotelId) return true;
+        return !hotelMeta.get(hotelId)?.archived;
+      });
+      if (kept.length !== options.length) {
+        t.hotelOptions = kept;
+        // درجهٔ نمایشی از ترکیبِ باقی‌مانده حساب می‌شود، نه سقفِ قدیمی.
+        t.hotelStars = kept.reduce((m, o) => Math.max(m, Number(o.stars) || 0), 0);
+      }
+      // میز ۳ — ایراد ۱۱: عکس هتل (اگر ثبت شده) به گزینه می‌چسبد تا جدول
+      // هتل‌های صفحهٔ تور بندانگشتی نشان دهد.
+      for (const o of t.hotelOptions) {
+        const hotelId = (o as { hotelId?: string | null }).hotelId;
+        const photo = hotelId ? hotelMeta.get(hotelId)?.photoUrl : undefined;
+        if (photo) (o as { photoUrl?: string }).photoUrl = photo;
+      }
+    }
     // گیت انتشار تور (مایگریشن 0011): فقط «منتشرشده»ها روی سایت دیده می‌شوند.
     // ردیف‌های قدیمی‌تر از ستون publish_status (undefined) منتشرشده حساب می‌شوند
     // تا پیش از اجرای مایگریشن، رفتار سایت عوض نشود.
