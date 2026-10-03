@@ -176,7 +176,7 @@ const mobileNavData = [
 /* منوی دیتابیس‌محور (ایرادهای ۱۹ و ۲۳)                                 */
 /* ------------------------------------------------------------------ */
 
-/** حالت «زنده» یعنی لینک‌های DB واقعاً رسیده‌اند؛ وگرنه همان هاردکد بالا. */
+/** حالت «زنده» یعنی لینک‌های DB واقعاً رسیده‌اند؛ دادهٔ خالی → هاردکد بالا؛ قطعی DB → دیتای استاتیک پشتیبان. */
 function isNavLive(navLinks?: NavLinks): navLinks is NavLinks {
   return Boolean(navLinks && navLinks.destinations.length > 0);
 }
@@ -209,7 +209,7 @@ function buildForeignColumns(navLinks?: NavLinks) {
   if (!isNavLive(navLinks)) return foreignToursData;
   const liveSlugs = new Set(navLinks.tourSlugs);
   const countrySlugs = new Set(navLinks.countries.map((c) => c.slug));
-  return foreignToursData
+  const columns = foreignToursData
     .map((col) => {
       const category = FOREIGN_COLUMN_CATEGORIES[col.title];
       const destLinks = category
@@ -228,6 +228,8 @@ function buildForeignColumns(navLinks?: NavLinks) {
       return { ...col, links: [...destLinks, ...products], path };
     })
     .filter((col) => col.links.length > 0);
+  // مثل حالت داخلی: اگر هیچ ستونی لینک زنده نداشت، به هاردکد برمی‌گردیم تا منو خالی نماند.
+  return columns.length > 0 ? columns : foreignToursData;
 }
 
 /** ستون‌های «تورهای داخلی» — در حالت زنده یک فهرست یکپارچه از DB. */

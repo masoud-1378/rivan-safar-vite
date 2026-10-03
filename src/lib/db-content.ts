@@ -119,7 +119,11 @@ async function getHotelMeta(): Promise<Map<string, { archived: boolean; photoUrl
   }
 }
 
-export async function getTours(): Promise<TourItem[]> {
+/**
+ * با `cache()` ری‌اکت: در یک ریکوئست یک‌بار خوانده می‌شود (مثلاً layout هم
+ * getNavLinks را می‌خواهد هم getToursِ داخلش را) — فراخوانی REST تکراری نه.
+ */
+export const getTours = cache(async (): Promise<TourItem[]> => {
   try {
     const rest = getRest();
     if (!rest) return SAMPLE_TOURS;
@@ -163,7 +167,7 @@ export async function getTours(): Promise<TourItem[]> {
     console.error('[db-content] tours read failed:', (error as Error).message);
     return SAMPLE_TOURS;
   }
-}
+});
 
 export async function getTour(slug: string): Promise<TourItem | null> {
   const all = await getTours();
@@ -321,8 +325,10 @@ export interface NavLinks {
  *   خودکاری که صفحه‌ها استفاده می‌کنند. مرتب بر اساس تعداد تور.
  * - نمایشگاه‌ها: فقط منتشرشده‌ها (گیت انتشار getExhibitions).
  * خطا یا قطعی → آرایه‌های خالی؛ صداکننده به فالبک دستی برمی‌گردد.
+ * با `cache()` ری‌اکت: در یک ریکوئست یک‌بار خوانده می‌شود (layout، هدر و
+ * فوتر هر سه از همین می‌خوانند) — فراخوانی REST تکراری نه.
  */
-export async function getNavLinks(): Promise<NavLinks> {
+export const getNavLinks = cache(async (): Promise<NavLinks> => {
   const empty: NavLinks = { countries: [], destinations: [], exhibitions: [], tourSlugs: [] };
   try {
     const [places, exhibitions, tours] = await Promise.all([
@@ -365,7 +371,7 @@ export async function getNavLinks(): Promise<NavLinks> {
     console.error('[db-content] nav links read failed:', (error as Error).message);
     return empty;
   }
-}
+});
 
 export async function getCountries(): Promise<Record<string, Place>> {
   const all = await getDestinationsOnce();

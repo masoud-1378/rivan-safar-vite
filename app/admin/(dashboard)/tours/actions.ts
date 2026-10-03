@@ -60,6 +60,14 @@ export interface TourConsultantSpecItem {
   emergencyPhone?: string;
 }
 
+/**
+ * ورودی ذخیرهٔ تور.
+ *
+ * نکتهٔ آگاهانه (ایراد ۸، میز ۱): فیلد `features` عمداً این‌جا نیست — در هیچ
+ * مرحلهٔ ویزارد ورودی نداشت و هیچ‌جای سایت رندر نمی‌شد. ستون دیتابیس
+ * (`site_tours.features`) و نگاشت `db-content` دست‌نخورده ماندند تا داده‌های
+ * قدیمی حفظ شوند؛ پس اگر دنبالش گشتی، حذفش اشتباه نیست، تصمیم است.
+ */
 export interface TourInput {
   slug: string;
   title: string;

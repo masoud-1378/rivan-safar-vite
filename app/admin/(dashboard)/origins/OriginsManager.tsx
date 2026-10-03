@@ -175,7 +175,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
           <Field label="نام مبدأ" error={nameError} hint="همین نام در فهرست «مبدأ» فرم تورساز می‌آید؛ مبدأها صفحه‌ای در سایت ندارند">
             <Input value={name} onChange={(e) => { setName(e.target.value); setNameError(undefined); }} placeholder="مثل تهران" />
           </Field>
-          <Field label="نوع" hint="شهر، کشور یا قاره/ناحیه؛ فقط برای مرتب‌بودن فهرست در همین پنل است">
+          <Field label="نوع" hint="شهر، کشور یا قاره/ناحیه؛ فقط برای مرتب‌ماندن فهرست در همین پنل است">
             <Select
               value={type}
               onChange={(e) => setType(e.target.value)}
@@ -186,7 +186,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
               ]}
             />
           </Field>
-          <Field label="والد" hint="اختیاری؛ فقط برای مرتب‌بودن فهرست در همین پنل است">
+          <Field label="والد" hint="اختیاری؛ فقط برای مرتب‌ماندن فهرست در همین پنل است">
             <Select
               value={parentSlug}
               onChange={(e) => setParentSlug(e.target.value)}
