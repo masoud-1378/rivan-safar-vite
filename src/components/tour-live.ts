@@ -7,6 +7,7 @@
  * کرش نمی‌کند — پس قبل و بعد از تغییر بسته A کار می‌کند.
  */
 import type { TourItem } from '../data/toursData';
+import type { Place } from '../data/destinationsData';
 import { faSlug, en } from '@/lib/utils';
 
 /** فیلدهای زنده تورساز (از app/admin/(dashboard)/tours/actions.ts، خطوط ۳۲–۵۰). */
@@ -18,9 +19,24 @@ export interface TourLiveExtras {
     title?: string;
     city?: string;
     description?: string;
+    /** متن غنی همان روز (کلید description_rich داخل آبجکت روز). */
+    descriptionRich?: unknown;
     activityType?: string;
     meals?: string;
   }>;
+  /** متن غنی توضیحات تور (ستون description_rich، مایگریشن 0030). */
+  descriptionRich?: unknown;
+  /** «سوالات پرتکرار» سطح تور (ستون faqs، مایگریشن 0030). */
+  faqs?: Array<{
+    question?: string;
+    answer?: string;
+    /** پاسخ غنی (کلید answer_rich داخل آبجکت؛ قرارداد تیم داده). */
+    answer_rich?: unknown;
+    /** تحمل دادهٔ آزمایشی قدیمی با کلید camelCase. */
+    answerRich?: unknown;
+  }>;
+  /** «چرا همین تور» (ستون why_this_tour، مایگریشن 0030). */
+  whyThisTourRich?: unknown;
   trustSpecs?: {
     returnGuarantee?: string;
     cityTax?: string;
@@ -35,6 +51,17 @@ export interface TourLiveExtras {
     phone?: string;
     audioUrl?: string;
     emergencyPhone?: string;
+  } | null;
+  /** بلوک مالی واقعی (مایگریشن 0027): جدول کنسلی پلکانی، بند رد ویزا، پیش‌پرداخت. */
+  financialSpecs?: {
+    cancellationTiers?: Array<{
+      fromDays?: number | null;
+      toDays?: number | null;
+      penaltyPercent?: number | null;
+    }>;
+    visaRejectionNote?: string;
+    depositAmount?: string;
+    depositDeadline?: string;
   } | null;
 }
 
@@ -125,4 +152,90 @@ export function normalizeMobile(input: string): string {
 /** اعتبارسنجی موبایل ایرانی (مهارت iran-validation): ۰۹ + ۹ رقم. */
 export function isValidMobile(input: string): boolean {
   return /^(?:\+98|0098|0)?9\d{9}$/.test(normalizeMobile(input));
+}
+
+/* ------------------------------------------------------------------ */
+/* موج ۱ قلم ۱ — نمایش دادهٔ دفن‌شده                                    */
+/* ------------------------------------------------------------------ */
+
+/** یک ردیف از تفکیک نرخ هتل: لیبل + مقدار آمادهٔ نمایش (رشتهٔ ذخیره‌شده). */
+export interface HotelPriceRow {
+  label: string;
+  value: string;
+}
+
+type HotelOptionLike = {
+  pricePerPerson?: string | null;
+  priceDouble?: string | null;
+  priceSingle?: string | null;
+  priceChildWithBed?: string | null;
+  priceChildNoBed?: string | null;
+};
+
+/**
+ * تفکیک نرخ اتاق‌های هتل از دادهٔ تورساز (مرحلهٔ ۲).
+ * فقط فیلدهای پر و متمایز برمی‌گردند: مقدار خالی نمایش داده نمی‌شود و مقداری
+ * که با نرخ پایه یکی است تکرار نمی‌شود (پنل هنگام خالی‌بودن، نرخ دوتخته را
+ * در pricePerPerson کپی می‌کند؛ نمایش دوباره‌اش اطلاعات تازه‌ای نیست).
+ * اگر هیچ‌کدام پر نباشند، آرایهٔ خالی → صفحه مثل قبل فقط pricePerPerson را
+ * همان‌جا که بود نشان می‌دهد و چیزی حدس زده نمی‌شود.
+ */
+export function hotelPriceRows(opt: HotelOptionLike): HotelPriceRow[] {
+  const rows: HotelPriceRow[] = [];
+  const base = (opt.priceDouble || opt.pricePerPerson || '').trim();
+  const seen = new Set<string>();
+  const push = (label: string, raw?: string | null) => {
+    const value = (raw || '').trim();
+    if (!value || seen.has(value)) return;
+    seen.add(value);
+    rows.push({ label, value });
+  };
+  push('هر نفر در اتاق دوتخته', base);
+  push('هر نفر در اتاق یک‌تخته', opt.priceSingle);
+  push('کودک با تخت (۶ تا ۱۲ سال)', opt.priceChildWithBed);
+  push('کودک بدون تخت (۲ تا ۶ سال)', opt.priceChildNoBed);
+  return rows;
+}
+
+/**
+ * لیبل فارسی نوع رزرو هتل (همان واژه‌های تورساز مرحلهٔ ۲).
+ * مقدار ناشناخته/خالی → null یعنی روی صفحه چیزی نشان داده نمی‌شود.
+ */
+export function bookingTypeLabel(bookingType?: string | null): string | null {
+  switch ((bookingType || '').toLowerCase()) {
+    case 'guarantee': return 'گارانتی';
+    case 'semi_charter': return 'نیم‌چارتر';
+    case 'on_request': return 'درخواستی';
+    default: return null;
+  }
+}
+
+/**
+ * پیدا کردن رکورد مقصد برای بخش «اطلاعات کاربردی مقصد».
+ * اول از destinationSlugs (دقیق‌ترین)، با اولویت شهر ← کشور ← ناحیه؛
+ * اگر هیچ‌کدام در فهرست مقصدها نبود → null (بخش رندر نمی‌شود، حدس نه).
+ */
+export function findDestinationPlace(
+  tour: TourItem,
+  places: Record<string, Place>,
+): Place | null {
+  const rank = (p: Place): number =>
+    p.type === 'city' ? 0 : p.type === 'country' ? 1 : 2;
+  const slugs = Array.isArray(tour.destinationSlugs) ? tour.destinationSlugs : [];
+  const candidates = slugs
+    .map((s) => places[s])
+    .filter((p): p is Place => !!p)
+    .sort((a, b) => rank(a) - rank(b));
+  return candidates[0] ?? null;
+}
+
+/** آیا رکورد مقصد دست‌کم یک فیلد کاربردی برای نمایش دارد؟ */
+export function hasDestinationInfo(p: Place): boolean {
+  return !!(
+    (p.currency && p.currency.trim()) ||
+    (p.bestSeason && p.bestSeason.trim()) ||
+    (p.flightDuration && p.flightDuration.trim()) ||
+    (p.visaType && p.visaType.trim()) ||
+    (p.travelTips && p.travelTips.some((t) => t && t.trim()))
+  );
 }

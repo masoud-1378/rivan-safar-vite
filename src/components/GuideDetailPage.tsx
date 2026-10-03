@@ -7,11 +7,27 @@ import {
 import { type GuideItem } from '../data/guidesData';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
+import { RichText } from '@/components/ui/rich-editor/RichText';
+import {
+  faqRichAnswer,
+  isRichEmpty,
+  normalizeRichValue,
+  richFallback,
+  richToPlainText,
+  type JSONContent,
+} from '@/lib/rich-text';
 import SmartImage from './SmartImage';
 
 interface GuideDetailPageProps {
   guideSlug: string;
   onNavigate: (path: string) => void;
+}
+
+/** متن تختِ خوانا از نسخهٔ غنی — برای JSON-LD و جاهایی که رشته لازم است. */
+function richPlain(rich: JSONContent | string | null | undefined, plain: string): string {
+  const json = normalizeRichValue(rich ?? null);
+  if (json && !isRichEmpty(json)) return richToPlainText(json);
+  return plain;
 }
 
 export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPageProps) {
@@ -100,9 +116,9 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
             {guide.title}
           </h1>
 
-          <p className="text-body font-medium text-text-secondary leading-relaxed mb-4">
-            {guide.summary}
-          </p>
+          <div className="text-body font-medium text-text-secondary leading-relaxed mb-4">
+            <RichText value={richFallback(guide.summaryRich, guide.summary)} />
+          </div>
 
           {(guide.author || guide.reviewer) && (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-text-muted mb-6">
@@ -121,9 +137,9 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
               <Sparkles className="w-4 h-4 text-brand-orange" />
               <span>خلاصه و نتیجه‌گیری سریع برای مسافر</span>
             </div>
-            <p className="text-body-sm text-text-primary leading-relaxed">
-              {guide.directAnswer}
-            </p>
+            <div className="text-body-sm text-text-primary leading-relaxed">
+              <RichText value={richFallback(guide.directAnswerRich, guide.directAnswer)} />
+            </div>
           </div>
         </div>
       </section>
@@ -151,9 +167,9 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
                 <h2 className="text-h3 font-bold text-text-heading border-s-4 border-brand-orange ps-3">
                   {sec.heading}
                 </h2>
-                <p className="text-body text-text-secondary leading-relaxed">
-                  {sec.content}
-                </p>
+                <div className="text-body text-text-secondary leading-relaxed">
+                  <RichText value={richFallback(sec.contentRich, sec.content)} />
+                </div>
 
                 {sec.checkpoints && sec.checkpoints.length > 0 && (
                   <ul className="space-y-2 pt-2 ps-2">
@@ -168,6 +184,23 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
               </div>
             ))}
           </div>
+
+          {/* پرسش‌های متداول — پاسخ‌ها می‌توانند متن غنی باشند */}
+          {guide.faqs.length > 0 && (
+            <div className="bg-surface-primary border border-border-default rounded-card p-6 md:p-8">
+              <h2 className="text-h3 font-bold text-text-heading mb-5">پرسش‌های متداول</h2>
+              <div className="space-y-5">
+                {guide.faqs.map((f, idx) => (
+                  <div key={idx} className="space-y-1.5">
+                    <h3 className="text-body font-bold text-text-heading">{f.question}</h3>
+                    <div className="text-body-sm text-text-secondary leading-relaxed">
+                      <RichText value={richFallback(faqRichAnswer(f), f.answer)} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Money Page CTA: قدم بعدی تجاری */}
           {moneyPagePath && (

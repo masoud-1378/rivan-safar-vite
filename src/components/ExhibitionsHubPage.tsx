@@ -8,6 +8,7 @@ import { type ExhibitionSeries } from '../data/exhibitionsData';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
 import SmartImage from './SmartImage';
+import TourListItem from './TourListItem';
 
 interface ExhibitionsHubPageProps {
   onNavigate: (path: string) => void;
@@ -19,6 +20,10 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
   const [selectedIndustry, setSelectedIndustry] = useState<string>('all');
 
   const allExhibitions = Object.values(exhibitions);
+
+  // ایراد ۲۴: تورهای واقعیِ نوع «نمایشگاهی» — همان‌هایی که ویجت صفحهٔ اصلی
+  // نشان می‌دهد (فقط منتشرشده‌ها، چون tours کانتکست گیت انتشار را رد کرده).
+  const exhibitionTours = useMemo(() => tours.filter((t) => t.type === 'exhibition'), [tours]);
 
   // چیپ‌های صنعت از داده زنده (نه هاردکد)
   const industries = useMemo(() => {
@@ -69,6 +74,41 @@ export default function ExhibitionsHubPage({ onNavigate }: ExhibitionsHubPagePro
           </div>
         </div>
       </section>
+
+      {/* ---------------- Exhibition Tours (ایراد ۲۴) ---------------- */}
+      {/* تورهای واقعیِ نوع «نمایشگاهی» — تا منوی «تورهای نمایشگاهی» به صفحه‌ای
+          بیاید که واقعاً تور دارد، نه فقط رویداد. */}
+      {exhibitionTours.length > 0 && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="text-right mb-6">
+            <h2 className="text-h2 text-text-heading font-bold mb-1.5">
+              تورهای نمایشگاهی فعال
+            </h2>
+            <p className="text-body-sm text-text-secondary">
+              تورهای آمادهٔ رزروی که برای همین رویدادها برنامه‌ریزی شده‌اند.
+            </p>
+          </div>
+          <div className="space-y-4">
+            {exhibitionTours.map((tour) => (
+              <TourListItem
+                key={tour.id}
+                id={tour.id}
+                title={tour.title}
+                image={tour.image}
+                duration={tour.duration}
+                badge={tour.badge}
+                visaRequired={tour.visaRequired}
+                price={tour.formattedPrice}
+                pricePending={tour.status === 'pending'}
+                closestDeparture={tour.closestDeparture}
+                origin={tour.origin}
+                href={`/tour/${tour.id}`}
+                onClick={() => onNavigate(`/tour/${tour.id}`)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ---------------- Upcoming Exhibition Series Cards ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">

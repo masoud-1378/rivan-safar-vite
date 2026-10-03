@@ -6,6 +6,7 @@ import { metadataFor, resolveSeo, breadcrumbJsonLd } from '../../seo-helpers';
 import { getLiveContent, getGuides } from '@/src/lib/db-content';
 import { getContactInfo } from '@/src/lib/site-contact';
 import type { GuideItem } from '@/src/data/guidesData';
+import { faqRichAnswer, isRichEmpty, normalizeRichValue, richToPlainText } from '@/lib/rich-text';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,13 +29,18 @@ export function generateMetadata({
 
 function faqJsonLd(guide?: GuideItem | null) {
   if (!guide || guide.faqs.length === 0) return null;
+  const plain = (f: GuideItem['faqs'][number]): string => {
+    const json = normalizeRichValue(faqRichAnswer(f) ?? null);
+    if (json && !isRichEmpty(json)) return richToPlainText(json);
+    return f.answer;
+  };
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: guide.faqs.map((f) => ({
       '@type': 'Question',
       name: f.question,
-      acceptedAnswer: { '@type': 'Answer', text: f.answer },
+      acceptedAnswer: { '@type': 'Answer', text: plain(f) },
     })),
   };
 }

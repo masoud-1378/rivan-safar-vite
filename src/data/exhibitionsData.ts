@@ -1,3 +1,5 @@
+import type { JSONContent } from '@/lib/rich-text';
+
 export interface ExhibitionSeries {
   id: string;
   slug: string;
@@ -13,6 +15,11 @@ export interface ExhibitionSeries {
   industrySlug: string;
   heroTagline: string;
   description: string;
+  /** توضیحات کامل غنی (ستون description_rich) — خوانش نمایشی اول از این می‌آید. */
+  descriptionRich?: JSONContent | string | null;
+  /** سئو (ستون‌های meta_title/meta_description). */
+  metaTitle?: string;
+  metaDescription?: string;
   image: string;
   upcomingEdition: {
     editionSlug: string;
@@ -27,7 +34,12 @@ export interface ExhibitionSeries {
   };
   servicesIncluded: string[];
   businessTips: string[];
-  faqs: Array<{ question: string; answer: string }>;
+  faqs: Array<{
+    question: string;
+    answer: string;
+    /** پاسخ غنی (کلید answer_rich داخل آبجکت). */
+    answerRich?: JSONContent | string | null;
+  }>;
 }
 
 export const EXHIBITION_SERIES: Record<string, ExhibitionSeries> = {

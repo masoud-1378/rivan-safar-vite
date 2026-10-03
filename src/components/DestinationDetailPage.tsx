@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Phone, MapPin, Globe, Calendar, Clock, ShieldCheck, ChevronLeft, CheckCircle2, FileText, ArrowLeft, HelpCircle, Check, Send, AlertCircle } from 'lucide-react';
+import { Phone, MapPin, Globe, Calendar, Clock, ShieldCheck, ChevronLeft, CheckCircle2, FileText, ArrowLeft, HelpCircle, Check, Send, AlertCircle, Coins, BookOpen } from 'lucide-react';
 import { type Place } from '../data/destinationsData';
+import { RichText } from '@/components/ui/rich-editor/RichText';
+import { faqRichAnswer, richFallback } from '@/lib/rich-text';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
 import { safeCreateLead } from '../lib/lead-submit-safe';
@@ -54,6 +56,26 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
 
   // Alternative destinations
   const alternativeCities = Object.values(cities).filter(c => c.slug !== city.slug && c.category === city.category).slice(0, 3);
+
+  // ایراد ۱۶: فیلدهای «بهترین فصل / مدت پرواز / واحد پول» که در پنل پر می‌شدند
+  // ولی هیچ‌جا رندر نمی‌شدند — این‌جا در بخش «اطلاعات کاربردی» می‌آیند.
+  const practicalInfo = [
+    city.bestSeason?.trim()
+      ? { icon: <Calendar className="w-5 h-5" />, label: 'بهترین فصل سفر', value: city.bestSeason.trim() }
+      : null,
+    city.flightDuration?.trim()
+      ? { icon: <Clock className="w-5 h-5" />, label: 'مدت پرواز', value: city.flightDuration.trim() }
+      : null,
+    city.currency?.trim()
+      ? { icon: <Coins className="w-5 h-5" />, label: 'واحد پول', value: city.currency.trim() }
+      : null,
+  ].flatMap((x) => (x === null ? [] : [x]));
+
+  // ایراد ۱۶: «راهنماهای مرتبط» فقط به راهنماهای منتشرشده لینک می‌شود —
+  // کانتکست guides همین‌جا فقط منتشرشده‌ها را دارد (گیت انتشار getGuides).
+  const relatedGuides = (city.relatedGuides ?? [])
+    .map((slug) => guides[slug])
+    .filter((g): g is NonNullable<typeof g> => Boolean(g));
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,9 +146,9 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
               <h1 className="text-h1 text-text-heading font-extrabold mb-3">
                 تور {city.name}؛ تاریخ‌ها، قیمت و شرایط سفر
               </h1>
-              <p className="text-body text-text-secondary leading-relaxed mb-6">
-                {city.description}
-              </p>
+              <div className="text-body text-text-secondary leading-relaxed mb-6">
+                <RichText value={richFallback(city.descriptionRich, city.description)} />
+              </div>
 
               {/* Price & Basis Card */}
               <div className="p-4 bg-surface-secondary rounded-card border border-border-default/80 mb-6 text-start">
@@ -178,6 +200,28 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
           </div>
         </div>
       </section>
+
+      {/* ---------------- Practical Travel Info (ایراد ۱۶) ---------------- */}
+      {practicalInfo.length > 0 && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="text-right mb-6">
+            <h2 className="text-h2 text-text-heading font-bold mb-1.5">
+              اطلاعات کاربردی سفر به {city.name}
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {practicalInfo.map((item) => (
+              <div key={item.label} className="bg-surface-primary border border-border-default rounded-card p-5 text-right">
+                <div className="flex items-center gap-2 mb-2 text-brand-orange">
+                  {item.icon}
+                  <h3 className="text-body font-bold text-text-heading">{item.label}</h3>
+                </div>
+                <p className="text-body-sm text-text-secondary leading-relaxed">{item.value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ---------------- Active Tours List ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
@@ -292,10 +336,51 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                   <HelpCircle className="w-4 h-4 text-brand-orange" />
                   <span>{faq.question}</span>
                 </h4>
-                <p className="text-body-sm text-text-secondary leading-relaxed ms-6">
-                  {faq.answer}
-                </p>
+                <div className="text-body-sm text-text-secondary leading-relaxed ms-6">
+                  <RichText value={richFallback(faqRichAnswer(faq), faq.answer)} />
+                </div>
               </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ---------------- Related Guides (ایراد ۱۶) ---------------- */}
+      {relatedGuides.length > 0 && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-compact">
+          <div className="text-right mb-6">
+            <h3 className="text-h3 text-text-heading font-bold">راهنماهای مرتبط با {city.name}</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {relatedGuides.map((guide) => (
+              <a
+                key={guide.slug}
+                href={`/guide/${guide.slug}`}
+                onClick={(e) => { e.preventDefault(); onNavigate(`/guide/${guide.slug}`); }}
+                className="group bg-surface-primary border border-border-default rounded-card overflow-hidden hover:shadow-card hover:-translate-y-0.5 transition-all cursor-pointer text-right"
+              >
+                {guide.heroImage && (
+                  <div className="aspect-[16/9] overflow-hidden relative">
+                    <SmartImage src={guide.heroImage} alt={guide.title} className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                  </div>
+                )}
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-2 text-brand-orange">
+                    <BookOpen className="w-4 h-4" />
+                    <span className="text-caption font-bold">{guide.categoryLabel || 'راهنمای سفر'}</span>
+                  </div>
+                  <h4 className="text-body font-bold text-text-heading mb-1.5 group-hover:text-brand-orange transition-colors">
+                    {guide.title}
+                  </h4>
+                  {guide.summary && (
+                    <p className="text-body-sm text-text-secondary leading-relaxed line-clamp-2">{guide.summary}</p>
+                  )}
+                  <span className="inline-flex items-center gap-1 mt-3 text-caption font-bold text-brand-orange">
+                    خواندن راهنما
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                  </span>
+                </div>
+              </a>
             ))}
           </div>
         </section>

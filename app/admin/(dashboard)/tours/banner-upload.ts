@@ -3,28 +3,30 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getDb } from '@/db/client';
 import { media } from '@/db/schema';
+import { and, eq, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
+import {
+  IMAGE_UPLOAD_BUCKET,
+  IMAGE_UPLOAD_MAX_BYTES,
+  assertUploadImage,
+  cleanStorageSlug,
+  storagePathInBucket,
+} from '@/src/lib/upload-policy';
 
 /**
  * بنر تور (T6) — الگوی آپلود عکس هتل (app/admin/(dashboard)/hotels/photos.ts):
  * باکت همان `hotel-photos` است (قابل استفادهٔ مجدد)؛ ردیف متادیتا با
  * `source = 'tour:<slug>'` در جدول media ثبت می‌شود تا از عکس‌های هتل جدا بماند.
  * URL عمومی برگردانده می‌شود و در فیلد image تور می‌نشیند.
+ *
+ * سیاست فرمت/حجم از قرارداد مشترک `src/lib/upload-policy.ts` می‌آید
+ * (میز ۳ — ایراد ۲۷: همان قانونِ رد SVG که آپلودر هتل هم از آن می‌خواند).
  */
 
-const BUCKET = 'hotel-photos';
-const MAX_BYTES = 5 * 1024 * 1024;
-// F4: allowlist پسوند — فقط فرمت‌های عکسیِ امن (بستن ریسک SVG).
-const ALLOWED_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-// SEC-06: contentType هرگز از file.type (قابل جعل) خوانده نمی‌شود؛ از پسوند
-// تأییدشدهٔ بالا مشتق می‌شود.
-const EXT_MIME: Record<string, string> = {
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  png: 'image/png',
-  webp: 'image/webp',
-  gif: 'image/gif',
-};
+const BUCKET = IMAGE_UPLOAD_BUCKET;
+const MAX_BYTES = IMAGE_UPLOAD_MAX_BYTES;
+/** بنرها همیشه زیر این پیشوند می‌نشینند؛ پاک‌سازی فقط همین‌جا را لمس می‌کند. */
+const BANNER_PREFIX = 'tours/';
 
 function serviceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -48,26 +50,24 @@ export async function uploadTourBanner(
   slug: string,
   title: string,
   formData: FormData,
-): Promise<{ url: string }> {
+): Promise<{ url: string; mediaId: string | null }> {
   await requireAdmin(['owner', 'editor']);
   const file = formData.get('photo');
-  if (!(file instanceof File) || file.size === 0) throw new Error('فایلی انتخاب نشده است.');
-  if (!file.type.startsWith('image/')) throw new Error('فقط فایل تصویری مجاز است.');
-  if (file.size > MAX_BYTES) throw new Error('حجم عکس نباید از ۵ مگابایت بیشتر باشد.');
+  // قرارداد مشترک آپلود تصویر (ایراد ۲۷): فرمت/حجم/SVG همین‌جا سنجیده می‌شود.
+  await assertUploadImage(file as File);
+  const f = file as File;
 
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   const sb = serviceClient();
   await ensureBucket(sb);
 
-  const cleanSlug = (slug || 'tour').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'tour';
-  const ext = (file.name.split('.').pop() || '').toLowerCase();
-  if (!ALLOWED_EXTS.includes(ext)) {
-    throw new Error('فرمت عکس مجاز نیست؛ فقط jpg، png، webp یا gif.');
-  }
-  const path = `tours/${cleanSlug}/${crypto.randomUUID()}.${ext}`;
-  const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, file, {
-    contentType: EXT_MIME[ext],
+  const cleanSlug = cleanStorageSlug(slug, 'tour');
+  // پسوند این‌جا حتماً معتبر است (assertUploadImage ردش کرده).
+  const ext = (f.name.split('.').pop() || '').toLowerCase();
+  const path = `${BANNER_PREFIX}${cleanSlug}/${crypto.randomUUID()}.${ext}`;
+  const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, f, {
+    contentType: f.type,
     upsert: false,
   });
   if (uploadError) throw new Error('بنر آپلود نشد.');
@@ -75,10 +75,48 @@ export async function uploadTourBanner(
   const {
     data: { publicUrl },
   } = sb.storage.from(BUCKET).getPublicUrl(path);
-  await db.insert(media).values({
-    url: publicUrl,
-    altFa: `بنر تور ${title || cleanSlug}`,
-    source: `tour:${cleanSlug}`,
-  });
-  return { url: publicUrl };
+  const [row] = await db
+    .insert(media)
+    .values({
+      url: publicUrl,
+      altFa: `بنر تور ${title || cleanSlug}`,
+      source: `tour:${cleanSlug}`,
+    })
+    .returning({ id: media.id });
+  return { url: publicUrl, mediaId: row?.id ?? null };
+}
+
+/**
+ * پاک‌سازی بنر جایگزین‌شده (میز ۳ — ایراد ۲۶).
+ *
+ * وقتی بنر تور با موفقیت عوض و ذخیره شد، فایل قبلی در باکت یتیم می‌ماند.
+ * این تابع فقط وقتی صدا زده می‌شود که رکورد تور دیگر به آدرس قبلی اشاره
+ * نکند (یعنی در saveTour، بعد از ثبت image تازه) و با احتیاط کامل:
+ * - فقط همین باکت (`hotel-photos`)، فقط همین پیشوند (`tours/`)
+ * - فقط آدرس‌هایی که واقعاً URL عمومی استوریج همین پروژه‌اند
+ * - ردیف‌های media همان آدرس هم بایگانی منطقی می‌شوند
+ * اگر حذف فایل از استوریج نشد، بایگانی منطقیِ ردیف کافی است (دیگر جایی نمایش داده نمی‌شود).
+ */
+export async function cleanupReplacedBanner(oldUrl: string): Promise<void> {
+  const path = storagePathInBucket(oldUrl, BUCKET, BANNER_PREFIX);
+  if (!path) return;
+  const db = getDb();
+  if (!db) return;
+  try {
+    const sb = serviceClient();
+    await sb.storage.from(BUCKET).remove([path]);
+  } catch {
+    /* نادیده — بایگانی منطقی کافی است */
+  }
+  try {
+    const rows = await db
+      .select({ id: media.id })
+      .from(media)
+      .where(and(eq(media.url, (oldUrl || '').trim()), isNull(media.deletedAt)));
+    for (const r of rows) {
+      await db.update(media).set({ deletedAt: new Date() }).where(eq(media.id, r.id));
+    }
+  } catch {
+    /* نادیده */
+  }
 }

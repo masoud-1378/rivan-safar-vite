@@ -84,17 +84,13 @@ export const siteTours = pgTable(
     nights: integer('nights').notNull(),
     closestDeparture: varchar('closest_departure', { length: 120 }).notNull(),
     price: numeric('price', { precision: 15, scale: 0 }).notNull(),
-    formattedPrice: varchar('formatted_price', { length: 60 }).notNull(),
-    priceNote: varchar('price_note', { length: 260 }).notNull(),
     status: varchar('status', { length: 60 }).notNull(), // 'confirmed' | 'pending' | 'updating' | 'full' — وضعیت ظرفیت، نه انتشار
     statusLabel: varchar('status_label', { length: 120 }).notNull(),
     // گیت انتشار تور (مایگریشن 0011): 'draft' = پیش‌نویس (پنهان از سایت)، 'published' = منتشرشده (زنده روی سایت)
     publishStatus: publishStatusEnum('publish_status').notNull().default('draft'),
     image: text('image').notNull(),
     badge: varchar('badge', { length: 120 }),
-    features: jsonb('features').default('[]').notNull(), // string[]
     visaRequired: boolean('visa_required').default(false).notNull(),
-    hotelStars: integer('hotel_stars').notNull(),
     airline: varchar('airline', { length: 120 }).notNull(),
     includedServices: jsonb('included_services').default('[]').notNull(), // string[]
     excludedServices: jsonb('excluded_services').default('[]').notNull(), // string[]
@@ -103,6 +99,17 @@ export const siteTours = pgTable(
     itineraryDays: jsonb('itinerary_days').default('[]').notNull(),
     trustSpecs: jsonb('trust_specs'),
     consultantSpec: jsonb('consultant_spec'),
+    // بلوک مالی واقعی (موج ۳، مایگریشن 0027): جدول کنسلی پلکانی، بند رد ویزا،
+    // پیش‌پرداخت و مهلت تسویه — nullable تا تورهای قدیمی و کد قدیمی main بی‌صدا رد شوند.
+    financialSpecs: jsonb('financial_specs'),
+    // مشخصات پرواز (موج ۳، مایگریشن 0028): فعلاً فقط در state فرم زنده است؛
+    // ستون آماده است تا وقتی ذخیره‌سازی در saveTour وصل شد جایش باشد.
+    flightDetails: jsonb('flight_details'),
+    // موج ۴ (مایگریشن 0034): تورلیدر هر حرکت — nullable؛ تور بی‌لیدر معتبر است.
+    leaderId: uuid('leader_id'),
+    // موج ۴ (مایگریشن 0034): گالری واقعی تور — آرایهٔ [{url, caption}]؛
+    // خالی یعنی «گالری نداریم»، نه پلیس‌هولدر.
+    gallery: jsonb('gallery').default('[]'),
     deletedAt: timestamp('deleted_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -135,12 +142,15 @@ export const siteDestinations = pgTable(
     startingPrice: varchar('starting_price', { length: 160 }).notNull(),
     startingPriceNote: varchar('starting_price_note', { length: 300 }).notNull(),
     lastVerifiedAt: varchar('last_verified_at', { length: 160 }).notNull(),
-    activeToursCount: integer('active_tours_count').default(0).notNull(),
     popularDistricts: jsonb('popular_districts').default('[]').notNull(), // string[]
     keyHighlights: jsonb('key_highlights').default('[]').notNull(), // string[]
     travelTips: jsonb('travel_tips').default('[]').notNull(), // string[]
     faqs: jsonb('faqs').default('[]').notNull(), // Array<{ question, answer }>
     relatedGuides: jsonb('related_guides').default('[]').notNull(), // string[]
+    // گیت انتشار مقصد (مایگریشن 0023، قلم ۳ موج ۱): 'draft' = پیش‌نویس
+    // (پنهان از سایت)، 'published' = منتشرشده (زنده روی سایت) — همان enum
+    // آمادهٔ publish_status که مایگریشن 0011 برای تورها ساخت.
+    publishStatus: publishStatusEnum('publish_status').notNull().default('draft'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
     deletedAt: timestamp('deleted_at'),
@@ -205,6 +215,11 @@ export const carriers = pgTable('carriers', {
   id: uuid('id').primaryKey().defaultRandom(),
   slug: varchar('slug', { length: 120 }).notNull(),
   nameFa: varchar('name_fa', { length: 160 }).notNull(),
+  // موج ۳ (مایگریشن 0029_seed_carriers): نام انگلیسی، کد یاتا و کشور — همه
+  // nullable تا ردیف‌های قدیمی (اگر بودند) بی‌صدا رد شوند.
+  nameEn: varchar('name_en', { length: 160 }),
+  iataCode: varchar('iata_code', { length: 10 }),
+  country: varchar('country', { length: 80 }),
   kind: varchar('kind', { length: 40 }).notNull().default('airline'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -545,4 +560,36 @@ export const loginAttempts = pgTable('login_attempts', {
   ip: varchar('ip', { length: 64 }).notNull().default('unknown'),
   succeeded: boolean('succeeded').notNull().default(false),
   attemptedAt: timestamp('attempted_at').defaultNow().notNull(),
+});
+
+/**
+ * موج ۴ (مایگریشن 0034): تورلیدرها — نام، عکس، سابقه در مسیر، زبان‌ها و
+ * نحوهٔ همراهی گروه. لیدر هر حرکت عوض می‌شود، پس جدول جداست و تور فقط
+ * به یکی اشاره می‌کند (leader_id)؛ نزدیک تاریخ حرکت پر/عوض می‌شود.
+ */
+export const tourLeaders = pgTable('tour_leaders', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 160 }).notNull(),
+  photo: text('photo'),
+  bio: text('bio'),
+  languages: varchar('languages', { length: 240 }),
+  joinMode: varchar('join_mode', { length: 40 }).notNull().default('from_origin'), // 'from_origin' | 'at_destination'
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/**
+ * موج ۴ (مایگریشن 0034): نظر مسافران هر تور — فقط is_visible=true روی
+ * سایت دیده می‌شود. حذف تور، نظرهایش را هم می‌برد (cascade).
+ */
+export const tourReviews = pgTable('tour_reviews', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tourId: uuid('tour_id')
+    .notNull()
+    .references(() => siteTours.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 120 }).notNull(),
+  rating: integer('rating').notNull(), // ۱ تا ۵ (چک در دیتابیس)
+  text: text('text').notNull(),
+  isVisible: boolean('is_visible').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });

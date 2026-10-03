@@ -10,10 +10,24 @@ import {
   siteSettings,
   auditLogs,
 } from '@/db/schema';
-import { desc, eq, and, isNull } from 'drizzle-orm';
+import { desc, eq, and, isNull, sql } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
+import { normalizeLandingPath } from '@/src/lib/db-content';
+import { checkColumnsExist } from '@/lib/column-guard';
+import {
+  cleanRichValue,
+  normalizeRichValue,
+  richFromPlainText,
+  type JSONContent,
+} from '@/lib/rich-text';
+import {
+  findRouteCollision,
+  nextLandingPathCandidate,
+  type PathCollision,
+} from '@/src/lib/landing-path';
 import { fa } from '@/lib/utils';
+import type { AppDb } from '@/db/client';
 
 export interface LandingInput {
   queryOwner: string;
@@ -24,7 +38,115 @@ export interface LandingInput {
   h1Fa: string;
   workflow?: 'draft' | 'review' | 'published' | 'paused' | 'archived';
   indexStatus?: 'index' | 'noindex';
-  nextReviewAt?: string;
+}
+
+/** نتیجهٔ «نیازمند تأیید»: آدرس با روت سایت یا لندینگ دیگری تصادم دارد. */
+export interface LandingNeedsConfirm {
+  needsConfirm: true;
+  /** نزدیک‌ترین آدرس آزاد پیشنهادی، مثل /tours-2 */
+  suggestedPath: string;
+  collision: PathCollision;
+}
+
+export type CreateLandingResult =
+  | { id: string; finalPath: string }
+  | LandingNeedsConfirm
+  // ریشهٔ #441: خطای قابل‌پیش‌بینی به‌صورت مقدار برمی‌گردد، نه throw —
+  // در پروداکشن پیامِ throw به کلاینت نمی‌رسد و فقط «Minified React error #441» دیده می‌شود.
+  | { ok: false; error: string };
+
+export type UpdateLandingResult =
+  | { ok: true; demotedToDraft: boolean; finalPath?: string }
+  | LandingNeedsConfirm
+  // ریشهٔ #441: خطای قابل‌پیش‌بینی (مثل گیت انتشار) به‌صورت مقدار برمی‌گردد، نه throw.
+  | { ok: false; error: string };
+
+/** سقف تلاش برای پیدا کردن آدرس آزاد / تلاش مجدد پس از race. */
+const MAX_PATH_ATTEMPTS = 50;
+
+/**
+ * خطای یکتایی 23505 را به ستون درگیر نگاشت می‌کند.
+ * درایور postgres نام ایندکس را در constraint و گاهی فقط در message می‌آورد؛
+ * هر دو خوانده می‌شود تا نگاشت گم نشود.
+ */
+function uniquenessTarget(e: unknown): 'url' | 'query' | null {
+  if (!(e instanceof Error) || !('code' in e)) return null;
+  if ((e as { code?: string }).code !== '23505') return null;
+  const hay = [
+    (e as { constraint?: string }).constraint,
+    (e as { constraint_name?: string }).constraint_name,
+    e.message,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  if (hay.includes('query')) return 'query';
+  if (hay.includes('url')) return 'url';
+  return null;
+}
+
+/** آیا آدرس نرمال‌شده را لندینگ فعال دیگری (غیر از excludeId) گرفته است؟ عنوانش را برمی‌گرداند. */
+async function landingPathTaken(
+  db: AppDb,
+  path: string,
+  excludeId?: string,
+): Promise<string | null> {
+  const clean = normalizeLandingPath(path);
+  const rows = await db
+    .select({ id: seoLandings.id, urlPath: seoLandings.urlPath, titleFa: seoLandings.titleFa })
+    .from(seoLandings)
+    .where(isNull(seoLandings.deletedAt))
+    .limit(5000);
+  const hit = rows.find(
+    (r) => r.id !== excludeId && normalizeLandingPath(r.urlPath) === clean,
+  );
+  return hit ? hit.titleFa : null;
+}
+
+/**
+ * نزدیک‌ترین آدرس آزاد: نه با روت سایت تصادم دارد، نه لندینگ فعال دیگری آن را دارد.
+ * مقایسه با آدرس نرمال‌شده انجام می‌شود تا «/foo/» و «/foo» یکی حساب شوند.
+ */
+async function findFreeLandingPath(
+  db: AppDb,
+  base: string,
+  excludeId?: string,
+): Promise<string> {
+  const rows = await db
+    .select({ id: seoLandings.id, urlPath: seoLandings.urlPath })
+    .from(seoLandings)
+    .where(isNull(seoLandings.deletedAt))
+    .limit(5000);
+  const taken = new Set(
+    rows
+      .filter((r) => r.id !== excludeId)
+      .map((r) => normalizeLandingPath(r.urlPath)),
+  );
+  let candidate = normalizeLandingPath(base);
+  for (let i = 0; i < MAX_PATH_ATTEMPTS; i++) {
+    if (!findRouteCollision(candidate) && !taken.has(candidate)) return candidate;
+    candidate = nextLandingPathCandidate(candidate);
+  }
+  throw new Error('آدرس آزادی نزدیک این آدرس پیدا نشد؛ آدرس دیگری بنویسید.');
+}
+
+/** سازندهٔ نتیجهٔ needsConfirm برای هر دو اکشن ساخت و ویرایش. */
+async function needsConfirmFor(
+  db: AppDb,
+  requested: string,
+  excludeId: string | undefined,
+  takenTitle: string | null,
+  routeHit: PathCollision | null,
+): Promise<LandingNeedsConfirm> {
+  const collision: PathCollision = routeHit ?? {
+    kind: 'landing',
+    route: requested,
+    reason: `لندینگ دیگری («${takenTitle}») همین آدرس را دارد. دو صفحه نمی‌توانند یک آدرس داشته باشند.`,
+  };
+  return {
+    needsConfirm: true as const,
+    suggestedPath: await findFreeLandingPath(db, requested, excludeId),
+    collision,
+  };
 }
 
 export async function listLandings() {
@@ -32,6 +154,25 @@ export async function listLandings() {
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   return db.select().from(seoLandings).where(isNull(seoLandings.deletedAt)).orderBy(desc(seoLandings.updatedAt)).limit(200);
+}
+
+/**
+ * نگهبان ستون `body_fa_rich` بلوک‌های لندینگ (مایگریشن 0030، هنوز اجرا نشده).
+ * الگوی مصوب «نگهبان + اطلاع» (lib/column-guard.ts): خواندن/نوشتن متن غنی
+ * فقط وقتی انجام می‌شود که ستون واقعاً در دیتابیس باشد؛ فرم کنار فیلد اطلاع
+ * صادقانه نشان می‌دهد تا هیچ ویرایشی بی‌صدا گم نشود.
+ */
+async function blockRichColReady(db: AppDb): Promise<boolean> {
+  const { ready } = await checkColumnsExist(db, 'content_blocks', ['body_fa_rich']);
+  return ready;
+}
+
+/** وضعیت ستون برای فرم (سمت کلاینت): false یعنی اطلاع «فعلاً اعمال نمی‌شود». */
+export async function checkLandingBlockRichCol(): Promise<boolean> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) return false;
+  return blockRichColReady(db);
 }
 
 export async function getLanding(id: string) {
@@ -45,6 +186,17 @@ export async function getLanding(id: string) {
     .from(contentBlocks)
     .where(eq(contentBlocks.landingId, id))
     .orderBy(contentBlocks.blockOrder);
+  // متن غنی بلوک‌ها (ستون body_fa_rich) فقط وقتی خوانده می‌شود که ستون باشد —
+  // در drizzle schema نیست (db/schema.ts دست نمی‌خورد)، پس با SQL خام.
+  const richById = new Map<string, JSONContent | null>();
+  if (await blockRichColReady(db)) {
+    const res = await db.execute(sql`
+      select id, body_fa_rich from content_blocks where landing_id = ${id}::uuid
+    `);
+    for (const row of res as unknown as Array<{ id: string; body_fa_rich: unknown }>) {
+      richById.set(row.id, normalizeRichValue(row.body_fa_rich as JSONContent | string | null | undefined));
+    }
+  }
   const links = await db
     .select()
     .from(seoInternalLinks)
@@ -55,7 +207,12 @@ export async function getLanding(id: string) {
     .select()
     .from(seoInternalLinks)
     .where(eq(seoInternalLinks.toPath, rows[0].urlPath));
-  return { ...rows[0], blocks, links, inLinks };
+  return {
+    ...rows[0],
+    blocks: blocks.map((b) => ({ ...b, bodyFaRich: richById.get(b.id) ?? null })),
+    links,
+    inLinks,
+  };
 }
 
 async function audit(actor: string, action: string, entity: string, entityId: string, reasonFa: string) {
@@ -64,48 +221,112 @@ async function audit(actor: string, action: string, entity: string, entityId: st
   await db.insert(auditLogs).values({ actor, action, entity, entityId, reasonFa });
 }
 
-export async function createLanding(input: LandingInput) {
+/**
+ * ساخت لندینگ — دو مرحله‌ای در برابر تصادم آدرس:
+ * ۱) اول آدرسِ خواسته‌شده سنجیده می‌شود؛ اگر با روت سایت یا لندینگ دیگری
+ *    تصادم داشت و پرچم confirmed نیامده بود، بدون این‌که چیزی ذخیره شود
+ *    needsConfirm برمی‌گردد تا فرم دیالوگ هشدار نشان بدهد.
+ * ۲) با confirmed=true سرور دوباره می‌سنجد (شاید بین دو ارسال چیزی عوض شده)
+ *    و نزدیک‌ترین آدرس آزاد را ذخیره می‌کند.
+ * آدرس همیشه نرمال‌شده ذخیره می‌شود تا قید یکتای url_path دقیقاً همان چیزی را
+ * بگیرد که getSeoLandingByPath مقایسه می‌کند؛ و درج در حلقهٔ race-safe است:
+ * اگر هم‌زمان کس دیگری همان آدرس را گرفت (23505)، شماره یکی زیاد می‌شود.
+ */
+export async function createLanding(
+  input: LandingInput,
+  opts?: { confirmed?: boolean },
+): Promise<CreateLandingResult> {
   const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   if (!input.queryOwner.trim() || !input.urlPath.trim() || !input.titleFa.trim() || !input.h1Fa.trim()) {
-    throw new Error('فیلدهای ضروری: کد یکتای صفحه، مسیر URL، عنوان سئو، تیتر صفحه');
+    // ریشهٔ #441: این خطا قابل‌پیش‌بینی است؛ throw در پروداکشن پیامش را از دست می‌دهد.
+    return { ok: false, error: 'فیلدهای ضروری: کد یکتای صفحه، مسیر URL، عنوان سئو، تیتر صفحه' };
   }
+  const requested = normalizeLandingPath(input.urlPath.trim());
+
+  // گام ۱ — سنجش تصادم، پیش از هر نوشتن.
+  const routeHit = findRouteCollision(requested);
+  const takenTitle = routeHit ? null : await landingPathTaken(db, requested);
+  if ((routeHit || takenTitle) && !opts?.confirmed) {
+    return needsConfirmFor(db, requested, undefined, takenTitle, routeHit);
+  }
+  // گام ۲ — در حالت تأییدشده، نزدیک‌ترین آدرس آزادِ «همین لحظه» برداشته می‌شود.
+  const startPath = opts?.confirmed ? await findFreeLandingPath(db, requested) : requested;
+
   // ساخت همیشه پیش‌نویس است؛ انتشار فقط از مسیر بازبینی با گیت کامل انجام می‌شود.
-  const [row] = await db
-    .insert(seoLandings)
-    .values({
-      queryOwner: input.queryOwner.trim(),
-      urlPath: input.urlPath.trim(),
-      canonicalPath: input.urlPath.trim(),
-      pageType: input.pageType || 'landing',
-      titleFa: input.titleFa.trim(),
-      metaDescriptionFa: input.metaDescriptionFa?.trim() || null,
-      h1Fa: input.h1Fa.trim(),
-      workflow: 'draft',
-      indexStatus: input.indexStatus || 'noindex',
-      nextReviewAt: input.nextReviewAt ? new Date(input.nextReviewAt) : null,
-    })
-    .returning({ id: seoLandings.id });
-  revalidatePath('/admin/seo');
-  return { id: row.id };
+  let candidate = startPath;
+  for (let attempt = 0; attempt < MAX_PATH_ATTEMPTS; attempt++) {
+    try {
+      const [row] = await db
+        .insert(seoLandings)
+        .values({
+          queryOwner: input.queryOwner.trim(),
+          urlPath: candidate,
+          canonicalPath: candidate,
+          pageType: input.pageType || 'landing',
+          titleFa: input.titleFa.trim(),
+          metaDescriptionFa: input.metaDescriptionFa?.trim() || null,
+          h1Fa: input.h1Fa.trim(),
+          workflow: 'draft',
+          indexStatus: input.indexStatus || 'noindex',
+        })
+        .returning({ id: seoLandings.id });
+      revalidatePath('/admin/seo');
+      return { id: row.id, finalPath: candidate };
+    } catch (e) {
+      // race: هم‌زمان لندینگ دیگری همین آدرس را گرفته — با سنجش کاملِ دوباره
+      // (روت + جدول) جلو می‌رویم تا کاندیدِ بعدی حتماً قابل سرو باشد.
+      if (uniquenessTarget(e) === 'url') {
+        candidate = await findFreeLandingPath(db, nextLandingPathCandidate(candidate));
+        continue;
+      }
+      if (uniquenessTarget(e) === 'query') {
+        // ریشهٔ #441: قابل‌پیش‌بینی است؛ به‌صورت مقدار برگردان، نه throw.
+        return { ok: false, error: 'این کد یکتای صفحه قبلاً ثبت شده است.' };
+      }
+      throw e;
+    }
+  }
+  // ریشهٔ #441: اتمام تلاش‌ها قابل‌پیش‌بینی است؛ به‌صورت مقدار برگردان، نه throw.
+  return { ok: false, error: 'آدرس آزادی نزدیک این آدرس پیدا نشد؛ آدرس دیگری بنویسید.' };
 }
 
-export async function updateLanding(id: string, input: Partial<LandingInput>) {
+/**
+ * ویرایش لندینگ — اگر آدرس عوض شده باشد، همان فلو دو مرحله‌ای تصادمِ
+ * createLanding را می‌رود: اول سنجش؛ اگر تصادم بود و confirmed نیامده بود،
+ * needsConfirm برمی‌گردد و هیچ فیلدی ذخیره نمی‌شود.
+ */
+export async function updateLanding(
+  id: string,
+  input: Partial<LandingInput>,
+  opts?: { confirmed?: boolean },
+): Promise<UpdateLandingResult> {
   const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   // یافتهٔ ۱۲: شناسهٔ ناموجود دیگر بی‌صدا ok نمی‌گیرد.
+  // ریشهٔ #441: قابل‌پیش‌بینی است؛ به‌صورت مقدار برگردان، نه throw.
   const current = await db.select().from(seoLandings).where(eq(seoLandings.id, id)).limit(1);
-  if (!current[0]) throw new Error('لندینگ یافت نشد.');
+  if (!current[0]) return { ok: false, error: 'لندینگ یافت نشد.' };
   const wasPublished = current[0].workflow === 'published';
-  const urlPathChanged = input.urlPath != null && input.urlPath.trim() !== current[0].urlPath;
+  // مقایسه با آدرس نرمال‌شده: «/foo/» و «/foo» تغییر مسیر حساب نمی‌شوند.
+  const requestedPath = input.urlPath?.trim() ? normalizeLandingPath(input.urlPath.trim()) : null;
+  const urlPathChanged = requestedPath != null && requestedPath !== normalizeLandingPath(current[0].urlPath);
+
+  // سنجش تصادمِ آدرس تازه، پیش از هر نوشتن (خودِ لندینگ از رقابت کنار است).
+  let savePath: string | undefined;
+  if (urlPathChanged && requestedPath) {
+    const routeHit = findRouteCollision(requestedPath);
+    const takenTitle = routeHit ? null : await landingPathTaken(db, requestedPath, id);
+    if ((routeHit || takenTitle) && !opts?.confirmed) {
+      return needsConfirmFor(db, requestedPath, id, takenTitle, routeHit);
+    }
+    savePath = opts?.confirmed ? await findFreeLandingPath(db, requestedPath, id) : requestedPath;
+  }
+
   const data: Record<string, unknown> = { updatedAt: new Date() };
   if (input.queryOwner) data.queryOwner = input.queryOwner.trim();
-  if (input.urlPath) {
-    data.urlPath = input.urlPath.trim();
-    data.canonicalPath = input.urlPath.trim();
-  }
   if (input.pageType) data.pageType = input.pageType;
   if (input.titleFa) data.titleFa = input.titleFa.trim();
   if (input.metaDescriptionFa !== undefined) data.metaDescriptionFa = input.metaDescriptionFa?.trim() || null;
@@ -115,28 +336,40 @@ export async function updateLanding(id: string, input: Partial<LandingInput>) {
     // لندینگ از قبل published است (حذف گیت‌شکنِ بلوک/لینک خودش به draft برمی‌گرداند).
     if (input.workflow === 'published' && !wasPublished) {
       const gate = await checkQualityGate(id);
-      if (!gate.canPublish) throw new Error('شرایط انتشار کامل نیست: ' + gate.reasons.join(' '));
+      // ریشهٔ #441: رد گیت قابل‌پیش‌بینی است؛ به‌صورت مقدار برگردان، نه throw.
+      if (!gate.canPublish) return { ok: false, error: 'شرایط انتشار کامل نیست: ' + gate.reasons.join(' ') };
     }
     data.workflow = input.workflow;
   }
   if (input.indexStatus) data.indexStatus = input.indexStatus;
-  if (input.nextReviewAt !== undefined) data.nextReviewAt = input.nextReviewAt ? new Date(input.nextReviewAt) : null;
   // یافتهٔ ۴: تغییر مسیر لندینگ منتشرشده، لینک‌های ورودی‌اش را یتیم می‌کند —
   // سرور آن را به پیش‌نویس برمی‌گرداند (فرم هم پیشاپیش هشدار می‌دهد).
   const demotedToDraft = urlPathChanged && wasPublished;
   if (demotedToDraft) data.workflow = 'draft';
-  if (Object.keys(data).length <= 1) return { ok: true, demotedToDraft: false };
-  try {
-    await db.update(seoLandings).set(data).where(eq(seoLandings.id, id));
-  } catch (e) {
-    // یافتهٔ ۵: خطای یکتایی مسیر/کد یکتا به پیام فارسی.
-    if (e instanceof Error && 'code' in e && (e as { code?: string }).code === '23505') {
-      const constraint = (e as { constraint_name?: string }).constraint_name ?? '';
-      if (constraint.includes('url')) throw new Error('این مسیر URL قبلاً برای لندینگ دیگری ثبت شده است.');
-      if (constraint.includes('query')) throw new Error('این کد یکتای صفحه قبلاً ثبت شده است.');
-      throw new Error('این نام قبلاً ثبت شده');
+  if (Object.keys(data).length <= 1 && !savePath) return { ok: true, demotedToDraft: false };
+  // به‌روزرسانی race-safe برای آدرس: اگر بین سنجش و ذخیره، لندینگ دیگری همان
+  // آدرس را گرفت (23505 روی ایندکس url)، نزدیک‌ترین آدرس آزاد بعدی برداشته می‌شود.
+  for (let attempt = 0; attempt < MAX_PATH_ATTEMPTS; attempt++) {
+    try {
+      const patch: Record<string, unknown> = { ...data };
+      if (savePath) {
+        patch.urlPath = savePath;
+        patch.canonicalPath = savePath;
+      }
+      await db.update(seoLandings).set(patch).where(eq(seoLandings.id, id));
+      break;
+    } catch (e) {
+      const target = uniquenessTarget(e);
+      if (target === 'url' && savePath && attempt < MAX_PATH_ATTEMPTS - 1) {
+        savePath = await findFreeLandingPath(db, nextLandingPathCandidate(savePath), id);
+        continue;
+      }
+      // یافتهٔ ۵: خطای یکتایی مسیر/کد یکتا به پیام فارسی.
+      // ریشهٔ #441: قابل‌پیش‌بینی است؛ به‌صورت مقدار برگردان، نه throw.
+      if (target === 'url') return { ok: false, error: 'این مسیر URL قبلاً برای لندینگ دیگری ثبت شده است.' };
+      if (target === 'query') return { ok: false, error: 'این کد یکتای صفحه قبلاً ثبت شده است.' };
+      throw e;
     }
-    throw e;
   }
   // بازبینی مجدد: ویرایش فیلدهای گیت‌حساس (مثلاً پاک‌شدن متا) روی لندینگ
   // منتشرشده نباید آن را گیت‌شکسته و منتشر رها کند.
@@ -145,7 +378,7 @@ export async function updateLanding(id: string, input: Partial<LandingInput>) {
     if (await demoteIfGateBroken(id)) demoted = true;
   }
   revalidatePath('/admin/seo');
-  return { ok: true, demotedToDraft: demoted };
+  return { ok: true, demotedToDraft: demoted, finalPath: savePath };
 }
 
 export async function deleteLanding(id: string) {
@@ -273,7 +506,7 @@ export async function deleteBlock(id: string) {
  */
 export async function replaceBlocks(
   landingId: string,
-  blocks: Array<{ blockKind: string; bodyFa: string; blockOrder: number }>,
+  blocks: Array<{ blockKind: string; bodyFa: string; bodyFaRich?: JSONContent | null; blockOrder: number }>,
 ) {
   const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
@@ -284,16 +517,31 @@ export async function replaceBlocks(
     .where(eq(seoLandings.id, landingId))
     .limit(1);
   if (!exists[0]) throw new Error('لندینگ یافت نشد.');
+  // ستون body_fa_rich در drizzle schema نیست (db/schema.ts دست نمی‌خورد)؛
+  // اگر ستون در دیتابیس باشد، درج با SQL خام انجام می‌شود، وگرنه همان مسیر
+  // قدیمی — متن تخت جاری در body_fa می‌نشیند و فرم کنار بلوک‌ها صادقانه
+  // می‌گوید قالب‌بندی فعلاً ذخیره نمی‌شود (متن ساده می‌ماند).
+  const richReady = await blockRichColReady(db);
   await db.transaction(async (tx) => {
     await tx.delete(contentBlocks).where(eq(contentBlocks.landingId, landingId));
     let order = 1;
     for (const b of blocks) {
-      await tx.insert(contentBlocks).values({
-        landingId,
-        blockKind: b.blockKind,
-        bodyFa: b.bodyFa,
-        blockOrder: b.blockOrder || order,
-      });
+      const blockOrder = b.blockOrder || order;
+      if (richReady) {
+        const rich = cleanRichValue(b.bodyFaRich ?? null);
+        await tx.execute(sql`
+          insert into content_blocks (landing_id, block_kind, body_fa, body_fa_rich, block_order)
+          values (${landingId}::uuid, ${b.blockKind}, ${b.bodyFa},
+                  ${rich ? JSON.stringify(rich) : null}::jsonb, ${blockOrder})
+        `);
+      } else {
+        await tx.insert(contentBlocks).values({
+          landingId,
+          blockKind: b.blockKind,
+          bodyFa: b.bodyFa,
+          blockOrder,
+        });
+      }
       order += 1;
     }
   });
@@ -410,11 +658,17 @@ export async function checkQualityGate(landingId: string): Promise<QualityCheck>
   };
 }
 
-export async function setLandingWorkflow(id: string, workflow: 'draft' | 'review' | 'published' | 'paused' | 'archived') {
+/** ریشهٔ #441: خطای قابل‌پیش‌بینی (گیت انتشار) به‌صورت مقدار برمی‌گردد، نه throw. */
+export type SetLandingWorkflowResult = { ok: true } | { ok: false; error: string };
+
+export async function setLandingWorkflow(
+  id: string,
+  workflow: 'draft' | 'review' | 'published' | 'paused' | 'archived',
+): Promise<SetLandingWorkflowResult> {
   await requireAdmin(['owner', 'editor']);
   if (workflow === 'published') {
     const gate = await checkQualityGate(id);
-    if (!gate.canPublish) throw new Error('Gate انتشار پاس نشد: ' + gate.reasons.join(' '));
+    if (!gate.canPublish) return { ok: false, error: 'شرایط انتشار کامل نیست: ' + gate.reasons.join(' ') };
   }
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');

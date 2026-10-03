@@ -1,60 +1,41 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
 import TourCard from './TourCard';
+import { useContent } from '@/src/lib/content-context';
+import type { TourItem } from '@/src/data/toursData';
 
 interface ExhibitionToursProps {
   onNavigate?: (path: string) => void;
 }
 
-const exhibitionTours = [
-  {
-    id: 'japan-tech',
-    title: 'تور نمایشگاهی ژاپن',
-    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800&auto=format&fit=crop',
-    price: '۲۵۰٬۰۰۰٬۰۰۰',
-    duration: '۷ شب و ۸ روز',
-    country: 'ژاپن',
-    hotelStars: 5,
-    badge: 'نمایشگاه تکنولوژی',
-    visaRequired: true,
-  },
-  {
-    id: 'istanbul-sep',
-    title: 'تور نمایشگاهی استانبول',
-    image: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?q=80&w=800&auto=format&fit=crop',
-    price: '۳۵٬۰۰۰٬۰۰۰',
-    duration: '۳ شب و ۴ روز',
-    country: 'ترکیه',
-    hotelStars: 4,
-    badge: 'نمایشگاه صنعت',
-    visaRequired: false,
-  },
-  {
-    id: 'germany-med',
-    title: 'تور نمایشگاهی آلمان',
-    image: 'https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?q=80&w=800&auto=format&fit=crop',
-    price: '۱۲۰٬۰۰۰٬۰۰۰',
-    duration: '۵ شب و ۶ روز',
-    country: 'آلمان',
-    hotelStars: 4,
-    badge: 'نمایشگاه پزشکی',
-    visaRequired: true,
-  },
-  {
-    id: 'canton-fair',
-    title: 'تور نمایشگاهی کانتون فیر',
-    image: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?q=80&w=800&auto=format&fit=crop',
-    price: '۱۸۰٬۰۰۰٬۰۰۰',
-    duration: '۶ شب و ۷ روز',
-    country: 'چین',
-    hotelStars: 5,
-    badge: 'کانتون فیر چین',
-    visaRequired: true,
-  }
-];
+/** تعداد کارت‌های ویجت؛ با گرید ۴ستونهٔ طرح هم‌خوان است. */
+const MAX_CARDS = 4;
+
+const updatedAtMs = (t: TourItem): number => {
+  const ms = Date.parse(t.updatedAt);
+  return Number.isFinite(ms) ? ms : 0;
+};
 
 export default function ExhibitionTours({ onNavigate }: ExhibitionToursProps) {
+  const { tours } = useContent();
+
+  // سلکتور محصولی: تورهایی که ادمین در پنل نوعشان را «نمایشگاهی» ثبت کرده.
+  // گیت انتشار همین‌جا اعمال شده: useContent فقط تورهای «منتشرشده» و
+  // بایگانی‌نشده را می‌دهد (فیلتر publish_status در getTours از db-content).
+  const exhibitionTours = useMemo(
+    () =>
+      tours
+        .filter((t) => t.type === 'exhibition')
+        .sort((a, b) => updatedAtMs(b) - updatedAtMs(a))
+        .slice(0, MAX_CARDS),
+    [tours],
+  );
+
+  // اگر هیچ تور نمایشگاهیِ منتشرشده‌ای نیست، سکشن اصلاً رندر نمی‌شود
+  // (به‌جای کارت فیک، سکشن خالی یا لینک ۴۰۴).
+  if (exhibitionTours.length === 0) return null;
+
   return (
     <section className="section-standard bg-surface-primary relative overflow-hidden">
       <div className="container-main px-4 sm:px-6 lg:px-8 relative z-10">
@@ -72,6 +53,7 @@ export default function ExhibitionTours({ onNavigate }: ExhibitionToursProps) {
           </motion.h2>
           <motion.a
             href="/exhibitions"
+            onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('/exhibitions'); }}
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -96,11 +78,13 @@ export default function ExhibitionTours({ onNavigate }: ExhibitionToursProps) {
                 title={tour.title}
                 image={tour.image}
                 duration={tour.duration}
-                country={tour.country}
+                destination={tour.destination}
                 hotelStars={tour.hotelStars}
                 badge={tour.badge}
                 visaRequired={tour.visaRequired}
-                price={tour.price}
+                transportKind={tour.transportKind}
+                tourType={tour.type}
+                price={tour.formattedPrice || undefined}
                 onClick={() => onNavigate ? onNavigate(`/tour/${tour.id}`) : undefined}
                 href={`/tour/${tour.id}`}
               />

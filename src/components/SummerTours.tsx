@@ -1,63 +1,50 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
 import TourCard from './TourCard';
+import { useContent } from '@/src/lib/content-context';
+import type { TourItem } from '@/src/data/toursData';
 
 interface SummerToursProps {
   onNavigate?: (path: string) => void;
 }
 
-const summerTours = [
-  {
-    id: 'istanbul-sep',
-    title: 'تور استانبول',
-    duration: '۳ شب و ۴ روز',
-    country: 'ترکیه',
-    hotelStars: 4,
-    image: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?q=80&w=800&auto=format&fit=crop',
-    price: '۲۵٬۵۰۰٬۰۰۰',
-    visaFree: true,
-  },
-  {
-    id: 'paris-rome',
-    title: 'تور پاریس و رم',
-    duration: '۷ شب و ۸ روز',
-    country: 'فرانسه',
-    hotelStars: 4,
-    image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=800&auto=format&fit=crop',
-    price: '۹۵٬۰۰۰٬۰۰۰',
-    visaFree: false,
-    visaRequired: true,
-  },
-  {
-    id: 'kish-island',
-    title: 'تور کیش',
-    duration: '۳ شب و ۴ روز',
-    country: 'ایران',
-    hotelStars: 5,
-    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop',
-    price: '۸٬۹۰۰٬۰۰۰',
-    visaFree: true,
-  },
-  {
-    id: 'dubai-autumn',
-    title: 'تور دبی',
-    duration: '۴ شب و ۵ روز',
-    country: 'امارات',
-    hotelStars: 4,
-    image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=800&auto=format&fit=crop',
-    price: '۳۲٬۰۰۰٬۰۰۰',
-    visaFree: false,
-    visaRequired: true,
-  }
-];
+/** تعداد کارت‌های ویجت؛ با گرید ۴ستونهٔ طرح هم‌خوان است. */
+const MAX_CARDS = 4;
+
+const updatedAtMs = (t: TourItem): number => {
+  const ms = Date.parse(t.updatedAt);
+  return Number.isFinite(ms) ? ms : 0;
+};
 
 export default function SummerTours({ onNavigate }: SummerToursProps) {
+  const { tours } = useContent();
+
+  // سلکتور: تازه‌ترین تورهای «منتشرشده» به‌جز نمایشگاهی‌ها.
+  // چرا همین؟ در اسکیمای تور هیچ فیلد فصل/تگی نیست و «تاریخ حرکت» هم متن
+  // آزاد است؛ پس پارس «تابستان» از روی داده حدسِ شکننده می‌شد. صادقانه‌ترین
+  // سلکتورِ بدون-حدس، تازگی انتشار است. نمایشگاهی‌ها هم ویجت خودشان را
+  // دارند و این‌جا تکرار نمی‌شوند.
+  // گیت انتشار همین‌جا اعمال شده: useContent فقط تورهای «منتشرشده» و
+  // بایگانی‌نشده را می‌دهد (فیلتر publish_status در getTours از db-content).
+  const summerTours = useMemo(
+    () =>
+      tours
+        .filter((t) => t.type !== 'exhibition')
+        .sort((a, b) => updatedAtMs(b) - updatedAtMs(a))
+        .slice(0, MAX_CARDS),
+    [tours],
+  );
+
+  // اگر هیچ تور منتشرشده‌ای نیست، سکشن اصلاً رندر نمی‌شود
+  // (به‌جای کارت فیک، سکشن خالی یا لینک ۴۰۴).
+  if (summerTours.length === 0) return null;
+
   return (
     <section className="section-standard bg-surface-primary relative overflow-hidden">
       <div className="container-main px-4 sm:px-6 lg:px-8 relative z-10">
         
-        {/* Section Header */}
+        {/* Section Header — تیتر عمداً فصل‌خنثی است: سلکتور «تازه‌ترین» است نه «تابستان». */}
         <div className="mb-8 text-center">
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
@@ -66,7 +53,7 @@ export default function SummerTours({ onNavigate }: SummerToursProps) {
             transition={{ duration: 0.6 }}
             className="text-h2 text-text-heading"
           >
-            بهترین تورهای تابستان ۱۴۰۵
+            تازه‌ترین تورها
           </motion.h2>
           <motion.p
              initial={{ opacity: 0, y: 20 }}
@@ -75,7 +62,7 @@ export default function SummerTours({ onNavigate }: SummerToursProps) {
              transition={{ duration: 0.6, delay: 0.1 }}
              className="text-text-secondary mt-2 text-body-sm max-w-subtitle mx-auto"
           >
-            تورهای فعال تابستان را با تاریخ حرکت، هتل و قیمت پایه مقایسه کنید
+            تورهای فعال را با تاریخ حرکت، هتل و قیمت پایه مقایسه کنید
           </motion.p>
         </div>
 
@@ -93,11 +80,13 @@ export default function SummerTours({ onNavigate }: SummerToursProps) {
                 title={tour.title}
                 image={tour.image}
                 duration={tour.duration}
-                country={tour.country}
+                destination={tour.destination}
                 hotelStars={tour.hotelStars}
-                price={tour.price}
-                visaFree={tour.visaFree}
+                badge={tour.badge}
                 visaRequired={tour.visaRequired}
+                transportKind={tour.transportKind}
+                tourType={tour.type}
+                price={tour.formattedPrice || undefined}
                 onClick={() => onNavigate ? onNavigate(`/tour/${tour.id}`) : undefined}
                 href={`/tour/${tour.id}`}
               />
@@ -111,7 +100,7 @@ export default function SummerTours({ onNavigate }: SummerToursProps) {
             href="/tours"
             className="text-link text-btn"
           >
-            <span>مشاهده همهٔ تورهای تابستان</span>
+            <span>مشاهده همهٔ تورها</span>
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1 transition-transform" />
           </a>
         </div>

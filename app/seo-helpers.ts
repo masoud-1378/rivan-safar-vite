@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import { SITE_URL } from '@/src/lib/siteConfig';
+import { getSiteUrl } from '@/src/lib/site-contact';
 import { resolveRoute, type BreadcrumbItem } from '@/src/data/siteRegistry';
 import { findLandingByPath } from '@/src/data/seoLandings';
 import { SAMPLE_TOURS, type TourItem } from '@/src/data/toursData';
 import { COUNTRIES, CITIES } from '@/src/data/destinationsData';
 import { GUIDES } from '@/src/data/guidesData';
 import { EXHIBITION_SERIES } from '@/src/data/exhibitionsData';
-import { getTour, getGuide, getExhibition, getCountries, getCities } from '@/src/lib/db-content';
+import { getTour, getGuide, getExhibition, getSeoLandingByPath, getCountries, getCities } from '@/src/lib/db-content';
 import { isIndexingEnabled } from '@/src/lib/site-contact';
 
 export interface ResolvedSeo {
@@ -135,6 +136,12 @@ export function resolveSeo(path: string): ResolvedSeo {
  * تا موجودیت‌های فقط-DB متای اختصاصی بگیرند.
  * اگر در DB نبود، به رجیستری استاتیک (همان resolveSeo) برمی‌گردد.
  *
+ * لندینگ سئو (ایراد ۱ اتصال پنل به سایت): جدول seo_landings منبع حقیقت است
+ * و بر همه‌چیز مقدم است — اگر لندینگ «منتشرشده»ای دقیقاً روی همین مسیر بود،
+ * titleFa/metaDescriptionFa/canonical/robots از رکورد DB می‌آید؛ چه مسیر
+ * تازه‌ای باشد (روت [...landingPath] رندرش می‌کند) چه روی یک صفحهٔ موجود
+ * (متای همان صفحه بازنویسی می‌شود). نبودِ رکورد → همان fallback استاتیک.
+ *
  * قانون robots: «شناخته‌شده در DB یا استاتیک» — رکورد منتشرشده‌ای که در DB هست
  * دیگر noindex,nofollow نمی‌گیرد، حتی اگر در دیتای استاتیک نباشد.
  * (ریسک ۲ طرح: این رکوردهای تازه از محرومیت ایندکس خارج می‌شوند.)
@@ -151,6 +158,19 @@ export async function resolveSeoLive(path: string): Promise<ResolvedSeo> {
   let seo: ResolvedSeo = fallback;
 
   try {
+    // لندینگ DB اول: تصمیم پنل بر هر متای دیگری مقدم است.
+    const dbLanding = await getSeoLandingByPath(route.canonicalPath);
+    if (dbLanding) {
+      return {
+        ...fallback,
+        title: dbLanding.titleFa,
+        description: dbLanding.metaDescriptionFa || fallback.description,
+        canonicalPath: dbLanding.canonicalPath || route.canonicalPath,
+        robots:
+          dbLanding.indexStatus === 'index' ? 'index,follow' : 'noindex,nofollow',
+        breadcrumbs: [{ name: 'خانه', url: '/' }, { name: dbLanding.h1Fa }],
+      };
+    }
     if (route.type === 'tour_detail') {
       const tour = await getTour(route.params.tourSlug);
       if (tour) {
@@ -188,37 +208,32 @@ export async function resolveSeoLive(path: string): Promise<ResolvedSeo> {
         };
       }
     } else if (route.type === 'country') {
-      // QA1-02: کشورهای فقط-DB هم متای اختصاصی می‌گیرند.
-      const country = (await getCountries())[route.params.countrySlug];
-      if (country) {
-        seo = {
+      // ایراد ۲۲: متای کشورها هم از DB می‌آید، نه فقط دیتای استاتیک.
+      const countries = await getCountries();
+      const c = countries[route.params.countrySlug];
+      if (c) {
+        return {
           ...fallback,
-          title: `تور ${country.name}؛ تاریخ‌ها، قیمت و شرایط سفر · ریوان سفر`,
-          description: `${country.description.slice(0, 140)}…`,
+          title: `تور ${c.name}؛ تاریخ‌ها، قیمت و شرایط سفر · ریوان سفر`,
+          description: c.description && c.description.length > 140 ? `${c.description.slice(0, 140)}…` : c.description || fallback.description,
           robots: 'index,follow',
-          breadcrumbs: withCrumb(`تور ${country.name}`),
+          breadcrumbs: withCrumb(`تور ${c.name}`),
         };
       }
     } else if (route.type === 'destination_city') {
-      // QA1-02: شهرهای فقط-DB هم متای اختصاصی می‌گیرند.
-      const cities = await getCities();
+      // ایراد ۲۲: متای شهرها هم از DB می‌آید، نه فقط دیتای استاتیک.
+      const [cities, countries] = await Promise.all([getCities(), getCountries()]);
       const city = cities[route.params.placeSlug];
       if (city) {
-        const allCountries = await getCountries();
-        const country =
-          allCountries[route.params.countrySlug] ??
-          (city.parentCountrySlug ? allCountries[city.parentCountrySlug] : undefined);
         const crumbs = withCrumb(`تور ${city.name}`);
+        const country = city.parentCountrySlug ? countries[city.parentCountrySlug] : undefined;
         if (country && crumbs.length >= 3) {
-          crumbs[crumbs.length - 2] = {
-            name: `تور ${country.name}`,
-            url: `/destination/${country.slug}`,
-          };
+          crumbs[crumbs.length - 2] = { name: `تور ${country.name}`, url: `/destination/${country.slug}` };
         }
-        seo = {
+        return {
           ...fallback,
           title: `تور ${city.name}؛ تاریخ‌ها، قیمت و شرایط سفر · ریوان سفر`,
-          description: `${city.description.slice(0, 140)}…`,
+          description: city.description && city.description.length > 140 ? `${city.description.slice(0, 140)}…` : city.description || fallback.description,
           robots: 'index,follow',
           breadcrumbs: crumbs,
         };
@@ -249,11 +264,13 @@ export async function resolveSeoLive(path: string): Promise<ResolvedSeo> {
   return seo;
 }
 
-export function toMetadata(seo: ResolvedSeo): Metadata {
+export async function toMetadata(seo: ResolvedSeo): Promise<Metadata> {
+  // ایراد ۲۸: دامنهٔ canonical از تنظیم site.url می‌آید.
+  const siteUrl = await getSiteUrl();
   const canonical =
     seo.canonicalPath === '/'
-      ? SITE_URL
-      : `${SITE_URL}${seo.canonicalPath}`;
+      ? siteUrl
+      : `${siteUrl}${seo.canonicalPath}`;
   return {
     title: seo.title,
     description: seo.description,
@@ -276,6 +293,8 @@ export function toMetadata(seo: ResolvedSeo): Metadata {
 }
 
 export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
+  // نکته: URLهای JSON-LD عمداً روی SITE_URL (env) می‌مانند؛
+  // تنظیم site.url فقط canonical، نقشهٔ سایت و متادیتای پایه را می‌گرداند (ایراد ۲۸).
   if (!items || items.length === 0) return null;
   return {
     '@context': 'https://schema.org',
@@ -340,6 +359,18 @@ export function tourJsonLd(tour: TourItem | null | undefined) {
       priceValidUntil: undefined,
       seller: { '@type': 'Organization', name: 'ریوان سفر' },
     },
+    // موج ۴: امتیاز تجمیعی نظرهای تأییدشده — فقط وقتی نظر واقعی هست.
+    ...(tour.ratingSummary && tour.ratingSummary.count > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: tour.ratingSummary.avg,
+            reviewCount: tour.ratingSummary.count,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
   };
 }
 

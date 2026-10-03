@@ -8,6 +8,11 @@ import { EXHIBITION_SERIES, type ExhibitionSeries } from '@/src/data/exhibitions
 
 export interface ContentValue {
   tours: TourItem[];
+  /**
+   * قلم ۴ موج ۱: 'empty' یعنی مدیر انتخاب کرده وقتی هیچ تور منتشرشده‌ای نیست
+   * صفحه خالی بماند — در این حالت جایگزینیِ خودکارِ تور نمونه اعمال نمی‌شود.
+   */
+  toursFallback?: 'sample' | 'empty';
   countries: Record<string, Place>;
   cities: Record<string, Place>;
   guides: Record<string, GuideItem>;
@@ -32,7 +37,14 @@ export function ContentProvider({
   children: ReactNode;
 }) {
   const merged: ContentValue = {
-    tours: value?.tours && value.tours.length > 0 ? value.tours : STATIC_CONTENT.tours,
+    // قلم ۴ موج ۱: فهرست خالی فقط وقتی با تور نمونه جایگزین می‌شود که مدیر
+    // «صفحه خالی» را انتخاب نکرده باشد (toursFallback === 'empty').
+    tours:
+      value?.tours && value.tours.length > 0
+        ? value.tours
+        : value?.toursFallback === 'empty'
+          ? []
+          : STATIC_CONTENT.tours,
     countries:
       value?.countries && Object.keys(value.countries).length > 0
         ? value.countries

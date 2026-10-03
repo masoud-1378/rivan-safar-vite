@@ -95,6 +95,10 @@ export function AdminPaletteProvider({ ownerOnly, children }: { ownerOnly: boole
   }, [term, open]);
 
   const go = (href: string) => {
+    // یافتهٔ ۱۴ مبتدی: اگر ویزارد تور دادهٔ ذخیره‌نشده دارد، بی‌هشدار نرو.
+    if (typeof window !== 'undefined' && (window as unknown as { __tourFormDirty?: boolean }).__tourFormDirty) {
+      if (!window.confirm('تغییرات ذخیره‌نشده از دست می‌رود. خارج می‌شوی؟')) return;
+    }
     setOpen(false);
     setTerm('');
     router.push(href);

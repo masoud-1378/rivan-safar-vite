@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { 
   Building2, 
   Plus, 
   Trash2, 
   Star, 
   UtensilsCrossed, 
-  Users, 
   User, 
   Baby, 
   Info,
@@ -23,15 +22,19 @@ import {
 import { Field, Input } from '@/components/ui/input';
 import { AmountInput } from '@/components/ui/amount-input';
 import { Button } from '@/components/ui/button';
+import { AlertDialog } from '@/components/ui/alert-dialog';
+import { Collapsible } from '@/components/ui/collapsible';
 import { cn, en, fa, faNumber } from '@/lib/utils';
 import { normalizeFaSearch } from '@/lib/persian';
-import type { HotelBookingType, TourHotelOptionItem, TourInput } from '../actions';
+import type { HotelBookingType, TourHotelOptionItem, TourInput, DestinationTree } from '../actions';
 import type { HotelPickerItem } from '../../hotels/actions';
 
 interface Stage2HotelsProps {
   data: TourInput;
   onChange: (fields: Partial<TourInput>) => void;
   hotels: HotelPickerItem[];
+  /** درخت مقصدها — برای فیلتر «فقط هتل‌های همین مقصد» (موج ۱، قلم ۶). */
+  tree: DestinationTree;
 }
 
 const BOARD_OPTIONS = [
@@ -43,12 +46,26 @@ const BOARD_OPTIONS = [
   { value: 'RO', label: 'فقط اتاق بدون پذیرایی (RO)' },
 ];
 
+/**
+ * برچسب فارسی نوع پذیرایی هتل — برای پیشنهاد «وعده‌ها از هتل» در مرحلهٔ ۳
+ * (موج ۱، قلم ۶). متن همان برچسبِ دیده‌شده در همین مرحله است؛ حدسی در کار نیست.
+ */
+export function boardDisplayLabel(board?: string | null): string {
+  const code = (board || 'BB').toUpperCase();
+  return BOARD_OPTIONS.find((b) => b.value === code)?.label ?? code;
+}
+
+/** متن وعده برای فیلد «وعده‌های غذایی» روزها: برچسب، بدون کد لاتین داخل پرانتز. */
+export function boardMealsText(board?: string | null): string {
+  return boardDisplayLabel(board).replace(/\s*\([A-Z]+\)\s*$/, '').trim();
+}
+
 // کتابچه §۳ (فاز ۲، قلم ۷): سه نوع رزرو — هر کدام زیرفیلد نرخ خودش را نشان می‌دهد.
 // مقدار ذخیره‌شده کد لاتین است؛ برچسب فارسی در UI.
-const BOOKING_TYPE_OPTIONS: Array<{ value: HotelBookingType; label: string }> = [
-  { value: 'guarantee', label: 'گارانتی' },
-  { value: 'semi_charter', label: 'نیم‌چارتر' },
-  { value: 'on_request', label: 'درخواستی' },
+const BOOKING_TYPE_OPTIONS: Array<{ value: HotelBookingType; label: string; desc: string }> = [
+  { value: 'guarantee', label: 'گارانتی', desc: 'اتاق‌ها از قبل خریداری شده؛ نرخ تا پایان قرارداد ثابت می‌ماند.' },
+  { value: 'semi_charter', label: 'نیم‌چارتر', desc: 'بخشی از ظرفیت رزرو شده؛ با پر شدن ممکن است نرخ تغییر کند.' },
+  { value: 'on_request', label: 'درخواستی', desc: 'رزرو موقع درخواست مسافر استعلام می‌شود؛ قیمت نهایی آن‌موقع مشخص می‌شود.' },
 ];
 
 /** آیا هتل دست‌کم یک نرخ دارد؟ (برای حالت پیش‌فرض آکاردئون، T7) */
@@ -69,29 +86,15 @@ interface HotelCardProps {
   onUpdate: (patch: Partial<TourHotelOptionItem>) => void;
   onRemove: () => void;
   onUnlink: () => void;
+  /** پیشنهادهای «شهر هتل» — فقط datalist؛ هیچ‌چیز خودکار پر نمی‌شود. */
+  citySuggestions: string[];
 }
 
-function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps) {
+function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink, citySuggestions }: HotelCardProps) {
   // پیش‌فرض هوشمند آکاردئون (T7): هتل بی‌نرخ باز، هتل بانرخ بسته.
   const [open, setOpen] = useState(() => !hotelHasRates(hotel));
-  const [copiedFromDouble, setCopiedFromDouble] = useState(false);
-  const copyDoneRef = useRef(false);
 
-  const toggle = () => {
-    const next = !open;
-    setOpen(next);
-    // پیش‌فرض هوشمند (T7): اولین باز شدن؛ «هر نفر» خالی و «دوتخته» پر → کپی یک‌طرفه.
-    if (
-      next &&
-      !copyDoneRef.current &&
-      !(hotel.pricePerPerson || '').trim() &&
-      (hotel.priceDouble || '').trim()
-    ) {
-      copyDoneRef.current = true;
-      onUpdate({ pricePerPerson: hotel.priceDouble });
-      setCopiedFromDouble(true);
-    }
-  };
+  const toggle = () => setOpen((v) => !v);
 
   // نشان زندهٔ سربرگ آکاردئون: «نرخ هر نفر» وگرنه «دوتخته»، وگرنه خط تیره.
   const shownRate = priceNumber(hotel.pricePerPerson) ?? priceNumber(hotel.priceDouble);
@@ -161,7 +164,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
         <div className="md:col-span-5">
           <Field label="نام کامل هتل *" hint="مثال: Hilton Bosphorus Istanbul">
-            <Input
+            <Input className="max-md:text-base"
               value={hotel.name || ''}
               onChange={(e) => onUpdate({ name: e.target.value })}
               placeholder="نام هتل…"
@@ -199,7 +202,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
             <select
               value={hotel.board || 'BB'}
               onChange={(e) => onUpdate({ board: e.target.value })}
-              className="w-full rounded-sm border border-input bg-background px-3 py-2 text-xs font-medium"
+              className="w-full rounded-sm border border-input bg-background px-3 py-2 text-xs max-md:text-base max-md:min-h-11 font-medium"
             >
               {BOARD_OPTIONS.map((b) => (
                 <option key={b.value} value={b.value}>
@@ -207,6 +210,28 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
                 </option>
               ))}
             </select>
+          </Field>
+        </div>
+      </div>
+
+      {/* شهر هتل (موج ۳، فیلدهای دامنه‌ای): فقط پیشنهاد تایپی از مقصدهای همین
+          تور + فرزندهای مستقیمشان — هیچ‌چیز خودکار پر نمی‌شود. */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div className="md:col-span-5">
+          <Field label="شهر هتل" hint="شهری که این هتل در آن قرار دارد">
+            <Input className="max-md:text-base"
+              value={hotel.city || ''}
+              onChange={(e) => onUpdate({ city: e.target.value })}
+              placeholder="مثلاً: استانبول"
+              list={citySuggestions.length > 0 ? `hotel-city-${idx}` : undefined}
+            />
+            {citySuggestions.length > 0 && (
+              <datalist id={`hotel-city-${idx}`}>
+                {citySuggestions.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            )}
           </Field>
         </div>
       </div>
@@ -234,7 +259,19 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
 
         {open && (
           <div className="rounded-sm border border-border/60 bg-secondary/20 p-4 space-y-4">
-            <div>
+            {/* نوع رزرو — فیلد فنی (پولیش موج ۲، تیم پیشرفتهٔ تاشو): پشت «پیشرفته»
+                و به‌صورت پیش‌فرض بسته. داده (bookingType) و برچسب/راهنمای نرخ‌ها
+                سر جایشان می‌مانند؛ فقط دیده‌شدن جابه‌جا شده است. */}
+            <Collapsible
+              trigger={
+                <span className="flex flex-col items-start gap-1 text-start">
+                  <span className="text-xs font-bold text-foreground">تنظیمات پیشرفته</span>
+                  <span className="text-[11px] font-normal text-muted-foreground">
+                    نوع رزرو هتل (گارانتی، نیم‌چارتر یا درخواستی) این‌جاست؛ فقط وقتی لازم است که نوع قراردادتان با هتل را بدانید. نرخ‌هایی که وارد کرده‌اید سر جایشان می‌مانند.
+                  </span>
+                </span>
+              }
+            >
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-bold text-foreground">نوع رزرو</span>
                 {hotel.hotelId && (
@@ -244,7 +281,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
               <select
                 value={hotel.bookingType ?? ''}
                 onChange={(e) => onUpdate({ bookingType: (e.target.value || undefined) as HotelBookingType | undefined })}
-                className="w-full max-w-60 rounded-sm border border-input bg-background px-3 py-2 text-xs font-medium"
+                className="w-full max-w-60 rounded-sm border border-input bg-background px-3 py-2 text-xs max-md:text-base max-md:min-h-11 font-medium"
                 aria-label="نوع رزرو هتل"
               >
                 <option value="">انتخاب کنید…</option>
@@ -257,9 +294,19 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
               {bookingGuide && (
                 <p className="mt-1.5 text-[11px] text-muted-foreground">{bookingGuide}</p>
               )}
-            </div>
+              {/* یافتهٔ ۸ مبتدی: توضیح هر سه گزینه، همیشه دیده می‌شود — نه فقط بعد از انتخاب. */}
+              <ul className="mt-2 space-y-1 text-[11px] text-muted-foreground">
+                {BOOKING_TYPE_OPTIONS.map((o) => (
+                  <li key={o.value} className="flex gap-1.5">
+                    <span className="shrink-0 font-bold text-foreground">{o.label}:</span>
+                    <span>{o.desc}</span>
+                  </li>
+                ))}
+              </ul>
+            </Collapsible>
 
-            {/* نرخ هر نفر — همان عددی که روی سایت نمایش داده می‌شود */}
+            {/* نرخ هر نفر — تک‌ورودی (موج ۲، تیم تکراری‌ها): همان یک عدد برای هر دو
+                کلید pricePerPerson و priceDouble نوشته می‌شود؛ خوانندهٔ سایت به هر دو تکیه می‌کند. */}
             <div>
               <div className="mb-1.5 flex flex-wrap items-center justify-between gap-1">
                 <span className="text-xs font-bold text-foreground">{perPersonLabel}</span>
@@ -268,42 +315,33 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
                   این عدد روی سایت نمایش داده می‌شود
                 </span>
               </div>
-              <AmountInput
-                value={priceNumber(hotel.pricePerPerson)}
-                onChange={(v) => onUpdate({ pricePerPerson: v == null ? '' : String(v) })}
+              <AmountInput inputClassName="max-md:text-base"
+                value={priceNumber(hotel.pricePerPerson) ?? priceNumber(hotel.priceDouble)}
+                onChange={(v) => onUpdate({ pricePerPerson: v == null ? '' : String(v), priceDouble: v == null ? '' : String(v) })}
                 placeholder="۰"
               />
               {perPersonHint && (
                 <p className="mt-1.5 text-[11px] text-muted-foreground">{perPersonHint}</p>
               )}
-              {copiedFromDouble && (
-                <p className="mt-1.5 text-[11px] text-muted-foreground">از نرخ اتاق دوتخته کپی شد؛ می‌توانید تغییرش دهید.</p>
-              )}
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                همین نرخ برای «اتاق دوتخته» هم ذخیره می‌شود.
+              </p>
             </div>
 
             {/* تفکیک نرخ اتاق‌ها */}
             <div className="space-y-1.5 pt-1">
               <span className="text-[11px] text-muted-foreground">تفکیک نرخ اتاق‌ها (اختیاری)</span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="rounded-sm bg-card p-3 border border-border/60 space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground">
-                    <Users className="size-3.5 text-muted-foreground" />
-                    <span>اتاق دوتخته *</span>
-                  </div>
-                  <AmountInput
-                    value={priceNumber(hotel.priceDouble)}
-                    onChange={(v) => onUpdate({ priceDouble: v == null ? '' : String(v) })}
-                    placeholder="۰"
-                    words={false}
-                  />
-                </div>
-
+              {/* یافتهٔ ۵ مبتدی: هر ورودی قیمت بگوید کجا دیده می‌شود. */}
+              <p className="text-[11px] text-muted-foreground">
+                هر کدام را پر کنید، در جدول قیمت همین هتل در صفحهٔ تور نمایش داده می‌شود؛ خالی بماند چیزی نشان داده نمی‌شود.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div className="rounded-sm bg-card p-3 border border-border/60 space-y-1.5">
                   <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground">
                     <User className="size-3.5 text-muted-foreground" />
                     <span>اتاق یک‌تخته</span>
                   </div>
-                  <AmountInput
+                  <AmountInput inputClassName="max-md:text-base"
                     value={priceNumber(hotel.priceSingle)}
                     onChange={(v) => onUpdate({ priceSingle: v == null ? '' : String(v) })}
                     placeholder="۰"
@@ -316,7 +354,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
                     <Baby className="size-3.5 text-muted-foreground" />
                     <span>کودک با تخت (۶ تا ۱۲ سال)</span>
                   </div>
-                  <AmountInput
+                  <AmountInput inputClassName="max-md:text-base"
                     value={priceNumber(hotel.priceChildWithBed)}
                     onChange={(v) => onUpdate({ priceChildWithBed: v == null ? '' : String(v) })}
                     placeholder="۰"
@@ -329,7 +367,7 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
                     <Baby className="size-3.5 text-muted-foreground" />
                     <span>کودک بدون تخت (۲ تا ۶ سال)</span>
                   </div>
-                  <AmountInput
+                  <AmountInput inputClassName="max-md:text-base"
                     value={priceNumber(hotel.priceChildNoBed)}
                     onChange={(v) => onUpdate({ priceChildNoBed: v == null ? '' : String(v) })}
                     placeholder="۰"
@@ -342,24 +380,69 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
         )}
       </div>
 
-      {/* Location & Transfer note */}
-      <Field label="موقعیت هتل یا نکته ترانسفر" hint="مثال: واقع در میدان تقسیم، فاصله ۵ دقیقه تا مترو، استخر روباز دارد">
-        <Input
-          value={hotel.locationNote || ''}
-          onChange={(e) => onUpdate({ locationNote: e.target.value })}
-          placeholder="فاصله تا مراکز مهم یا ویژگی ممتاز هتل…"
-          className="text-xs"
-        />
-      </Field>
     </div>
   );
 }
 
-export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: Stage2HotelsProps) {
+export default function Stage2Hotels({ data, onChange, hotels: catalogHotels, tree }: Stage2HotelsProps) {
   const hotels: TourHotelOptionItem[] = Array.isArray(data.hotelOptions) ? data.hotelOptions : [];
   const [showHotelPicker, setShowHotelPicker] = useState(false);
   const [hotelQuery, setHotelQuery] = useState('');
   const pickerRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * فیلتر «فقط هتل‌های همین مقصد» (موج ۱، قلم ۶ — فرصت ۲-۱ ممیزی هوشمندسازی):
+   * وقتی مقصد ست شده، پیش‌فرض روشن است و با یک کلیک خاموش می‌شود.
+   * دامنه = مقصدهای انتخاب‌شده + زیرمجموعه‌هایشان در درخت (مثلاً با انتخاب
+   * «ترکیه»، هتل‌های «استانبول» هم می‌آیند)؛ فقط تطبیق دقیق اسلاگ، بدون حدس.
+   */
+  const destSlugs = useMemo(
+    () => (Array.isArray(data.destinationSlugs) ? data.destinationSlugs.filter((s) => (s || '').trim()) : []),
+    [data.destinationSlugs]
+  );
+  const destScope = useMemo(() => {
+    if (destSlugs.length === 0) return null;
+    const children = new Map<string, string[]>();
+    for (const a of tree?.all ?? []) {
+      if (!a.parent) continue;
+      const arr = children.get(a.parent);
+      if (arr) arr.push(a.slug);
+      else children.set(a.parent, [a.slug]);
+    }
+    const out = new Set<string>(destSlugs);
+    const stack = [...destSlugs];
+    while (stack.length > 0) {
+      const s = stack.pop() as string;
+      for (const c of children.get(s) ?? []) {
+        if (!out.has(c)) {
+          out.add(c);
+          stack.push(c);
+        }
+      }
+    }
+    return out;
+  }, [tree, destSlugs]);
+  // پیش‌فرضِ دیده‌شونده: مقصد که ست باشد، فیلتر از اول روشن است.
+  const [destOnly, setDestOnly] = useState(() => destSlugs.length > 0);
+
+  /**
+   * پیشنهادهای «شهر هتل» (موج ۳، فیلدهای دامنه‌ای): نام مقصدهای همین تور +
+   * فرزندهای مستقیمشان در درخت مقصدها — فقط پیشنهاد تایپی (datalist)؛
+   * هیچ‌چیز خودکار پر نمی‌شود (قانون طلایی: حدس ممنوع).
+   */
+  const citySuggestions = useMemo(() => {
+    const bySlug = new Map((tree?.all ?? []).map((a) => [a.slug, (a.name || '').trim()]));
+    const out: string[] = [];
+    const push = (slug: string) => {
+      const name = bySlug.get(slug) || '';
+      if (name && !out.includes(name)) out.push(name);
+    };
+    for (const s of destSlugs) {
+      push(s);
+      for (const a of tree?.all ?? []) if (a.parent === s) push(a.slug);
+    }
+    return out;
+  }, [tree, destSlugs]);
 
   // گشت (ایراد ۵): باز شدن پنل باید غیرقابل‌چشم‌پوشی باشد — دکمه حالت فعال می‌گیرد،
   // پنل به دید اسکرول می‌شود و جست‌وجو فوکوس می‌گیرد تا «هیچ اتفاقی نیفتاد» تکرار نشود.
@@ -388,7 +471,6 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
         priceSingle: '',
         priceChildWithBed: '',
         priceChildNoBed: '',
-        locationNote: '',
       },
     ];
     onChange({ hotelOptions: next });
@@ -410,7 +492,6 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
         priceSingle: '',
         priceChildWithBed: '',
         priceChildNoBed: '',
-        locationNote: '',
       },
     ];
     onChange({ hotelOptions: next });
@@ -428,9 +509,30 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
   };
 
   const catalogQuery = normalizeFaSearch(hotelQuery);
+  // فهرست پایهٔ پیکر: با فیلتر مقصدی فقط هتل‌هایی که placeSlugشان در دامنهٔ
+  // مقصدهای همین تور است؛ هتل بی‌شهر (placeSlug خالی) در حالت فیلتر نمی‌آید.
+  const scopedHotels = useMemo(
+    () =>
+      destOnly && destScope
+        ? catalogHotels.filter((h) => h.placeSlug && destScope.has(h.placeSlug))
+        : catalogHotels,
+    [catalogHotels, destOnly, destScope]
+  );
   const catalogResults = catalogQuery
-    ? catalogHotels.filter((h) => normalizeFaSearch(h.nameFa).includes(catalogQuery)).slice(0, 30)
-    : catalogHotels.slice(0, 30);
+    ? scopedHotels.filter((h) => normalizeFaSearch(h.nameFa).includes(catalogQuery)).slice(0, 30)
+    : scopedHotels.slice(0, 30);
+  // گروه‌بندی با سرفصل شهر (فرصت ۲-۱): فهرست ۵۰۰تاییِ پشت‌سرهم، بزرگ‌ترین عامل
+  // «قاطی‌کردن» فرم بود؛ حالا هم در حالت فیلتر و هم در حالت همه، شهر سرفصل دارد.
+  const groupedResults = useMemo(() => {
+    const map = new Map<string, HotelPickerItem[]>();
+    for (const h of catalogResults) {
+      const key = h.cityName || 'شهر ثبت‌نشده';
+      const arr = map.get(key);
+      if (arr) arr.push(h);
+      else map.set(key, [h]);
+    }
+    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], 'fa'));
+  }, [catalogResults]);
 
   const handleUpdateHotel = (index: number, patch: Partial<TourHotelOptionItem>) => {
     const next = [...hotels];
@@ -443,6 +545,13 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
     onChange({ hotelOptions: next });
   };
 
+  // دیالوگ تأیید حذف هتل (B-25): با نام هتل + جملهٔ پیامد، الگوی «بایگانی تور».
+  const [confirmRemoveHotel, setConfirmRemoveHotel] = useState<number | null>(null);
+  const removeTarget = confirmRemoveHotel === null ? undefined : hotels[confirmRemoveHotel];
+  const removeLabel = removeTarget
+    ? removeTarget.name || `بستهٔ اقامتی شماره ${fa(confirmRemoveHotel + 1)}`
+    : '';
+
   return (
     <div className="space-y-6">
       {/* Stage Header (T16: الگوی تک‌رنگ با لهجهٔ برند) — در موبایل ستونی و دکمه‌ها تمام‌عرض */}
@@ -452,7 +561,7 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
             <Building2 className="size-5" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm font-bold text-foreground">مرحله دوم: ماتریس هتل‌ها و ظرفیت اتاق‌ها</h3>
+            <h3 className="text-sm font-bold text-foreground">مرحله دوم: هتل‌ها و قیمت اتاق‌ها</h3>
             <p className="text-xs text-muted-foreground">
               تعریف بسته‌های اقامتی، ستاره هتل، نوع پذیرایی (صبحانه بوفه، همه‌چیز شامل و…) و تفکیک شفاف قیمت اتاق ۲تخته، ۱تخته و کودکان
             </p>
@@ -483,12 +592,28 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
       {/* انتخاب هتل از جدول ثبت‌شده‌ها: نام و ستاره از رکورد پر می‌شود؛ قیمت همان‌جا دستی (ویژهٔ این تور) */}
       {showHotelPicker && (
         <div ref={pickerRef} className="rounded-sm border border-border bg-card p-4 space-y-3">
+          {/* فیلتر «فقط هتل‌های همین مقصد» (موج ۱، قلم ۶): پیش‌فرضِ دیده‌شونده و
+              قابل‌خاموش؛ برداشتن تیک یعنی «همهٔ هتل‌ها». */}
+          {destScope && (
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-sm border border-brand/20 bg-brand/5 px-3 py-2.5">
+              <input
+                type="checkbox"
+                checked={destOnly}
+                onChange={(e) => setDestOnly(e.target.checked)}
+                className="size-4 shrink-0 cursor-pointer accent-brand"
+              />
+              <span className="text-xs font-bold text-foreground">فقط هتل‌های همین مقصد</span>
+              <span className="text-[11px] text-muted-foreground">
+                ({fa(scopedHotels.length)} هتل)
+              </span>
+            </label>
+          )}
           <div className="relative">
             <Input
               value={hotelQuery}
               onChange={(e) => setHotelQuery(e.target.value)}
               placeholder="نام هتل را بنویسید…"
-              className="ps-9 text-xs"
+              className="ps-9 text-xs max-md:text-base"
             />
             <Search className="size-4 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
           </div>
@@ -496,31 +621,51 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
             <p className="text-xs text-muted-foreground text-center py-3">
               هنوز هتلی در جدول ثبت نشده است؛ از «افزودن هتل جدید» به‌صورت دستی وارد کنید.
             </p>
+          ) : destOnly && scopedHotels.length === 0 ? (
+            <div className="py-3 text-center">
+              <p className="text-xs text-muted-foreground">
+                برای این مقصد هتلی ثبت نشده است.
+              </p>
+              <button
+                type="button"
+                onClick={() => setDestOnly(false)}
+                className="mt-2 text-xs font-bold text-brand hover:underline"
+              >
+                نمایش همهٔ هتل‌ها
+              </button>
+            </div>
           ) : (
-            <div className="max-h-64 overflow-y-auto rounded-sm border border-border/60 divide-y divide-border/40">
+            <div className="max-h-64 overflow-y-auto rounded-sm border border-border/60">
               {catalogResults.length === 0 ? (
                 <p className="px-3 py-4 text-xs text-muted-foreground text-center">چیزی پیدا نشد.</p>
               ) : (
-                catalogResults.map((h) => (
-                  <button
-                    key={h.id}
-                    type="button"
-                    onClick={() => handleAddHotelFromTable(h)}
-                    className="flex w-full items-center justify-between px-3 py-2.5 text-xs transition-colors hover:bg-accent/40 min-h-11"
-                  >
-                    <span className="flex items-center gap-2 text-foreground">
-                      <Building2 className="size-3.5 text-blue-600 shrink-0" />
-                      <span className="font-medium">{h.nameFa}</span>
-                      {h.cityName ? (
-                        <span className="text-[10px] text-muted-foreground">({h.cityName})</span>
-                      ) : null}
-                      <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                        <Star className="size-3 text-amber-500 fill-amber-500" />
-                        {h.stars ?? '—'}
-                      </span>
-                    </span>
-                    <Plus className="size-4 text-muted-foreground shrink-0" />
-                  </button>
+                groupedResults.map(([city, items]) => (
+                  <div key={city}>
+                    <div className="sticky top-0 bg-secondary/60 px-3 py-1.5 text-[11px] font-bold text-foreground">
+                      {city}
+                      <span className="ms-1.5 font-normal text-muted-foreground">({fa(items.length)})</span>
+                    </div>
+                    <div className="divide-y divide-border/40">
+                      {items.map((h) => (
+                        <button
+                          key={h.id}
+                          type="button"
+                          onClick={() => handleAddHotelFromTable(h)}
+                          className="flex w-full items-center justify-between px-3 py-2.5 text-xs transition-colors hover:bg-accent/40 min-h-11"
+                        >
+                          <span className="flex items-center gap-2 text-foreground">
+                            <Building2 className="size-3.5 text-blue-600 shrink-0" />
+                            <span className="font-medium">{h.nameFa}</span>
+                            <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                              <Star className="size-3 text-amber-500 fill-amber-500" />
+                              {h.stars ?? '—'}
+                            </span>
+                          </span>
+                          <Plus className="size-4 text-muted-foreground shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))
               )}
             </div>
@@ -553,12 +698,24 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
               hotel={hotel}
               idx={idx}
               onUpdate={(patch) => handleUpdateHotel(idx, patch)}
-              onRemove={() => handleRemoveHotel(idx)}
+              onRemove={() => setConfirmRemoveHotel(idx)}
               onUnlink={() => handleUnlinkHotel(idx)}
+              citySuggestions={citySuggestions}
             />
           ))}
         </div>
       )}
+
+      {/* دیالوگ تأیید حذف هتل (B-25): نام هتل + پیامد حذف همهٔ نرخ‌ها، بدون بازگشت */}
+      <AlertDialog
+        open={removeTarget !== undefined}
+        onOpenChange={(open) => { if (!open) setConfirmRemoveHotel(null); }}
+        title={`«${removeLabel}» حذف شود؟`}
+        description="این هتل با همهٔ نرخ‌هایی که برایش وارد کرده‌اید برای همیشه حذف می‌شود و قابل بازگشت نیست."
+        confirmText="حذف هتل"
+        destructive
+        onConfirm={() => { if (confirmRemoveHotel !== null) handleRemoveHotel(confirmRemoveHotel); }}
+      />
     </div>
   );
 }

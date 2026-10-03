@@ -9,7 +9,18 @@ import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
 import BlockEditor, { cleanBlocks, readItem, validateBlocks } from '@/components/ui/block-editor';
+import { RichText, type JSONContent } from '@/components/ui/rich-editor';
+import { ColumnNotice, useColumnGuard } from '@/components/ui/column-guard';
 import {
+  cleanRichValue,
+  isRichEmpty,
+  normalizeRichValue,
+  richFallback,
+  richFromPlainText,
+  richToPlainText,
+} from '@/lib/rich-text';
+import {
+  checkLandingBlockRichCol,
   checkQualityGate,
   createLink,
   deleteLink,
@@ -34,17 +45,44 @@ interface LinkRow {
   anchorFa: string;
 }
 
-function blockToValue(bodyFa: string | null): unknown {
-  if (!bodyFa) return { heading: '', content: '' };
-  try {
-    const parsed = JSON.parse(bodyFa) as Record<string, unknown>;
-    if (parsed && typeof parsed === 'object' && ('heading' in parsed || 'content' in parsed)) {
-      return parsed;
+/**
+ * تبدیل ردیف content_blocks به آیتم فرم. متن غنی ستون `body_fa_rich` زیر
+ * کلید `content_rich` در حافظهٔ فرم می‌نشیند تا BlockEditor (حالت rich) همان
+ * را بخواند/بنویسد؛ موقع ذخیره دوباره جدا می‌شود.
+ *
+ * یافتهٔ QA لندینگ‌ها: `content_rich` از همان شروع مقدار اولیهٔ ویرایشگر را
+ * می‌گیرد (همان منطق richInitial: اول نسخهٔ غنی، اگر نبود متن تخت قدیمی) تا
+ * ذخیره همیشه نسخهٔ «جاری» ویرایشگر را ببیند، نه حافظهٔ کهنهٔ لحظهٔ باز شدن
+ * فرم را. این یعنی: بلوک دست‌نخورده با اولین ذخیره به قالب تازه می‌رود
+ * (تصمیم مسعود)، و متن تازه‌تایپ‌شده حتی وقتی ستون `body_fa_rich` نیست
+ * هم تخت می‌ماند و گم نمی‌شود.
+ */
+function blockToValue(bodyFa: string | null, bodyFaRich: JSONContent | null): unknown {
+  let base: Record<string, unknown>;
+  let content = '';
+  if (!bodyFa) {
+    base = { heading: '', content: '' };
+  } else {
+    try {
+      const parsed = JSON.parse(bodyFa) as Record<string, unknown>;
+      if (parsed && typeof parsed === 'object' && ('heading' in parsed || 'content' in parsed)) {
+        base = { ...parsed };
+        content = String(parsed.content ?? '');
+      } else {
+        // بدنهٔ قدیمیِ متن ساده
+        base = { heading: '', content: bodyFa };
+        content = bodyFa;
+      }
+    } catch {
+      // بدنهٔ قدیمیِ متن ساده
+      base = { heading: '', content: bodyFa };
+      content = bodyFa;
     }
-  } catch {
-    // بدنهٔ قدیمیِ متن ساده
   }
-  return { heading: '', content: bodyFa };
+  const rich = normalizeRichValue(bodyFaRich);
+  const contentRich =
+    rich && !isRichEmpty(rich) ? rich : content.trim() ? richFromPlainText(content.trim()) : null;
+  return { ...base, content_rich: contentRich };
 }
 
 export default function LandingContent({ landingId, titleFa, urlPath, landings }: LandingContentProps) {
@@ -54,6 +92,10 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
   const [gate, setGate] = useState<Awaited<ReturnType<typeof checkQualityGate>> | null>(null);
   const [loading, setLoading] = useState(true);
   const [blocksError, setBlocksError] = useState<string | undefined>();
+  // نگهبان ستون body_fa_rich (الگوی «نگهبان + اطلاع»): تا مایگریشن 0030 اجرا
+  // نشده، متن غنی ذخیره نمی‌شود و همین‌جا صادقانه می‌گوییم.
+  const richReady = useColumnGuard(checkLandingBlockRichCol);
+  const [showPreview, setShowPreview] = useState(false);
   // فرم لینک تازه
   const [fromSel, setFromSel] = useState<string>(landingId);
   const [fromPathCustom, setFromPathCustom] = useState('');
@@ -67,7 +109,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
     try {
       const data = await getLanding(landingId);
       if (!data) return;
-      setSections(data.blocks.map((b) => blockToValue(b.bodyFa)));
+      setSections(data.blocks.map((b) => blockToValue(b.bodyFa, (b.bodyFaRich ?? null) as JSONContent | null)));
       setLinks(
         data.links.map((l) => ({
           id: l.id,
@@ -88,8 +130,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
       );
       setGate(await checkQualityGate(landingId));
     } catch (e) {
-      toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در بارگذاری.') });
-    } finally {
+      toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در بارگذاری.') });    } finally {
       setLoading(false);
     }
   };
@@ -116,9 +157,20 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
           landingId,
           clean.map((s, i) => {
             const f = readItem('section', s);
+            const heading = String(f.heading ?? '');
+            // یافتهٔ QA لندینگ‌ها: متن تخت همیشه از نسخهٔ «جاری» ویرایشگر غنی
+            // استخراج می‌شود (richToPlainText)، نه از حافظهٔ کهنهٔ فرم. با این کار:
+            // ۱) وقتی ستون body_fa_rich نیست، متن تازه‌تایپ‌شده تخت
+            //    در body_fa می‌ماند و گم نمی‌شود؛
+            // ۲) پاک‌کردن کامل متن واقعی می‌شود — دیگر از متن کهنه بک‌فیل
+            //    نمی‌کنیم و متن مرده زنده نمی‌شود؛
+            // ۳) body_fa برای کد قدیمی main همیشه متن جاری را نشان می‌دهد.
+            const bodyFaRich = cleanRichValue(f.contentRich as JSONContent | null);
+            const plain = bodyFaRich ? richToPlainText(bodyFaRich) : '';
             return {
               blockKind: 'section',
-              bodyFa: JSON.stringify({ heading: String(f.heading ?? ''), content: String(f.content ?? '') }),
+              bodyFa: JSON.stringify({ heading, content: plain }),
+              bodyFaRich,
               blockOrder: i + 1,
             };
           }),
@@ -130,8 +182,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
         }
         await load();
       } catch (e) {
-        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در ذخیره بلوک‌ها.') });
-      }
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در ذخیره بلوک‌ها.') });      }
     });
   };
 
@@ -166,8 +217,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
         toast({ variant: 'success', title: 'لینک داخلی ثبت شد.' });
         await load();
       } catch (e) {
-        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در ثبت لینک.') });
-      }
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در ثبت لینک.') });      }
     });
   };
 
@@ -182,8 +232,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
         }
         await load();
       } catch (e) {
-        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در حذف لینک.') });
-      }
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در حذف لینک.') });      }
     });
   };
 
@@ -249,19 +298,54 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
         <BlockEditor
           kind="section"
           title="بلوک‌های محتوا"
-          hint="هر بلوک یک تیتر و یک متن دارد؛ به همان ترتیب نمایش داده می‌شوند."
+          hint="هر بلوک یک تیتر و یک متن غنی دارد؛ به همان ترتیب نمایش داده می‌شوند. جدول، لیست، نقل‌قول، عکس با زیرنویس و دکمهٔ تماس هم داخل متن می‌آید."
           value={sections}
           onChange={(next) => {
             setSections(next);
             setBlocksError(undefined);
           }}
           error={blocksError}
+          sectionBodyEditor="rich"
         />
-        <div className="mt-3">
+        {richReady === false && (
+          <ColumnNotice>
+            ستون متن غنی هنوز در دیتابیس ساخته نشده؛ قالب‌بندی فعلاً ذخیره
+            نمی‌شود، ولی متن ساده می‌ماند و چیزی گم نمی‌شود.
+          </ColumnNotice>
+        )}
+        <div className="mt-3 flex gap-2">
           <Button onClick={saveBlocks} disabled={pending}>
             {pending ? 'در حال ذخیره…' : 'ذخیره بلوک‌ها'}
           </Button>
+          <Button variant="outline" type="button" onClick={() => setShowPreview((v) => !v)}>
+            {showPreview ? 'بستن پیش‌نمایش' : 'پیش‌نمایش متن'}
+          </Button>
         </div>
+        {showPreview && (
+          <div className="mt-4 space-y-6 rounded-md border border-border bg-card p-6" dir="rtl">
+            <p className="text-xs text-muted-foreground">
+              پیش‌نمایش متن — همان‌طور که روی سایت دیده می‌شود.
+            </p>
+            {sections.length === 0 && (
+              <p className="text-sm text-muted-foreground">هنوز بلوکی نیست.</p>
+            )}
+            {sections.map((raw, idx) => {
+              const f = readItem('section', raw);
+              const heading = String(f.heading ?? '');
+              const body = richFallback(
+                f.contentRich as JSONContent | string | null,
+                String(f.content ?? ''),
+              );
+              if (!heading.trim() && (typeof body === 'string' ? !body.trim() : false)) return null;
+              return (
+                <article key={idx} className="space-y-2">
+                  {heading.trim() && <h2 className="text-base font-bold">{heading}</h2>}
+                  <RichText value={body} />
+                </article>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="border-t border-border pt-5">

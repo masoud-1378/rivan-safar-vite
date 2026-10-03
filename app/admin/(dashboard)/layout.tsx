@@ -6,6 +6,7 @@ import AdminHeader from './AdminHeader';
 import AdminProviders from './AdminProviders';
 import { AdminPaletteProvider } from './AdminCommand';
 import '@/src/index.css';
+import '@/components/ui/rich-editor/rich-editor.css';
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   let role: 'owner' | 'editor' = 'editor';

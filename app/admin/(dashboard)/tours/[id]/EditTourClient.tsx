@@ -2,19 +2,21 @@
 
 import { useRouter } from 'next/navigation';
 import TourForm from '../TourForm';
-import type { TourRow } from '../actions';
+import type { TourRow, TourRichFields } from '../actions';
 import type { DestinationTree } from '../actions';
 import type { OriginRow } from '../actions';
 import type { HotelPickerItem } from '../../hotels/actions';
 
 interface Props {
-  tour: TourRow;
+  /** ردیف تور + فیلدهای غنی/سئو (از getTourById می‌آید). */
+  tour: TourRow & Partial<TourRichFields>;
   tree: DestinationTree;
   origins: OriginRow[];
   hotels: HotelPickerItem[];
 }
 
-/** پوستهٔ کلاینتی صفحهٔ ویرایش تور: بعد از ذخیره همان‌جا می‌ماند و تازه‌سازی می‌کند. */
+/** پوستهٔ کلاینتی صفحهٔ ویرایش تور: بعد از ذخیره همان‌جا می‌ماند و تازه‌سازی می‌کند؛
+ *  انصراف واقعاً به فهرست تورها برمی‌گردد تا دیالوگ «خارج می‌شوید؟» دروغ نگوید (D2). */
 export function EditTourClient({ tour, tree, origins, hotels }: Props) {
   const router = useRouter();
   return (
@@ -28,6 +30,7 @@ export function EditTourClient({ tour, tree, origins, hotels }: Props) {
       origins={origins}
       hotels={hotels}
       onDone={() => router.refresh()}
+      onCancel={() => router.push('/admin/tours')}
     />
   );
 }

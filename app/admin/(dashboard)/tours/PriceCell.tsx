@@ -16,8 +16,7 @@ interface PriceCellProps {
 
 /**
  * قلم ۱ بخش ۲ کتابچه: ویرایش در جای «قیمت پایه» در همان جدول.
- * کلیک ← تایپ ← Enter. زیر قیمت نوشته شده که همین قیمت تومانی است که مشتری می‌بیند
- * (بخش ارزی فقط شفافیت داخلی است و روی سایت نمایش داده نمی‌شود).
+ * کلیک ← تایپ ← Enter. زیر قیمت نوشته شده که همین قیمت تومانی است که مشتری می‌بیند.
  */
 export function PriceCell({ id, price, onSaved }: PriceCellProps) {
   const [editing, setEditing] = useState(false);
@@ -107,7 +106,7 @@ export function PriceCell({ id, price, onSaved }: PriceCellProps) {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) void commit();
       }}
     >
-      <AmountInput
+      <AmountInput inputClassName="max-md:text-base"
         value={value}
         onChange={(v) => {
           setValue(v);
@@ -121,7 +120,7 @@ export function PriceCell({ id, price, onSaved }: PriceCellProps) {
           {error}
         </p>
       ) : (
-        <p className="text-[11px] text-muted-foreground">Enter برای ذخیره، Esc برای انصراف</p>
+        <p className="text-[11px] text-muted-foreground">اینتر برای ذخیره، Esc برای انصراف</p>
       )}
     </div>
   );

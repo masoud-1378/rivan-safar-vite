@@ -31,6 +31,8 @@ export function AlertDialog({ open, onOpenChange, title, description, confirmTex
           <Button
             variant={destructive ? "destructive" : "default"}
             disabled={busy}
+            // موبایل‌اول: تارگت لمسی ۴۴px در موبایل.
+            className="max-md:min-h-11"
             onClick={async () => {
               setBusy(true);
               try { await onConfirm(); onOpenChange(false); } finally { setBusy(false); }
@@ -38,7 +40,7 @@ export function AlertDialog({ open, onOpenChange, title, description, confirmTex
           >
             {busy ? "لطفاً صبر کنید…" : confirmText}
           </Button>
-          <Button variant="outline" data-autofocus onClick={() => onOpenChange(false)}>{cancelText}</Button>
+          <Button variant="outline" data-autofocus onClick={() => onOpenChange(false)} className="max-md:min-h-11">{cancelText}</Button>
         </>
       }
     />

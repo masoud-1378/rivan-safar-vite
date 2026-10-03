@@ -1,3 +1,5 @@
+import type { JSONContent } from '@/lib/rich-text';
+
 /** یک روز از برنامهٔ سفر (آینهٔ ساختاری TourItineraryDayItem در پنل) */
 export interface TourItineraryDay {
   day: number;
@@ -6,6 +8,16 @@ export interface TourItineraryDay {
   description: string;
   activityType: 'guided' | 'free' | 'transit' | 'departure' | string;
   meals?: string;
+  /** متن غنی همان روز (کلید description_rich داخل آبجکت روز)؛ خالی یعنی متن تخت. */
+  descriptionRich?: JSONContent | string | null;
+}
+
+/** یک قلم «سوالات پرتکرار» سطح تور (آینهٔ ساختاری TourFaqItem در پنل) */
+export interface TourFaq {
+  question: string;
+  answer: string;
+  /** پاسخ غنی (کلید answer_rich داخل آبجکت؛ قرارداد تیم داده). */
+  answerRich?: JSONContent | string | null;
 }
 
 /** سپر اعتماد / مدارک و هزینه‌ها (آینهٔ ساختاری TourTrustSpecsItem در پنل) */
@@ -18,6 +30,25 @@ export interface TourTrustSpecs {
   requiredDocs?: string[];
 }
 
+/** یک پله از جدول کنسلی پلکانی (آینهٔ ساختاری TourCancellationTier در پنل) */
+export interface TourCancellationTier {
+  fromDays?: number | null;
+  toDays?: number | null;
+  penaltyPercent?: number | null;
+}
+
+/**
+ * بلوک مالی واقعی (آینهٔ ساختاری TourFinancialSpecsItem در پنل، مایگریشن 0027).
+ * ستون ممکن است هنوز روی دیتابیس واقعی نباشد؛ در این صورت undefined می‌ماند
+ * و هیچ‌چیز نمی‌شکند (دسترسی دفاعی در restToTour).
+ */
+export interface TourFinancialSpecs {
+  cancellationTiers?: TourCancellationTier[];
+  visaRejectionNote?: string;
+  depositAmount?: string;
+  depositDeadline?: string;
+}
+
 /** مشخصات کارشناس تور (آینهٔ ساختاری TourConsultantSpecItem در پنل) */
 export interface TourConsultantSpec {
   name?: string;
@@ -25,6 +56,25 @@ export interface TourConsultantSpec {
   phone?: string;
   audioUrl?: string;
   emergencyPhone?: string;
+}
+
+/** یک پلهٔ جدول کنسلی پلکانی (آینهٔ ساختاری TourCancellationTier در پنل) */
+export interface TourCancellationTier {
+  fromDays?: number | null;
+  toDays?: number | null;
+  penaltyPercent?: number | null;
+}
+
+/**
+ * بلوک مالی واقعی تور (آینهٔ ساختاری TourFinancialSpecsItem در پنل — موج ۳).
+ * همه اختیاری‌اند؛ خالی = خالی. فقط پله‌های «کامل» (هر سه عدد واقعی) روی
+ * سایت نمایش داده می‌شوند — پلهٔ ناقص هرگز.
+ */
+export interface TourFinancialSpecs {
+  cancellationTiers?: TourCancellationTier[];
+  visaRejectionNote?: string;
+  depositAmount?: string;
+  depositDeadline?: string;
 }
 
 export interface TourItem {
@@ -59,17 +109,86 @@ export interface TourItem {
   trustSpecs?: TourTrustSpecs | null;
   /** مشخصات کارشناس تور (مایگریشن 0007)؛ خام از jsonb */
   consultantSpec?: TourConsultantSpec | null;
+  /**
+   * بلوک مالی واقعی (مایگریشن 0027)؛ خام از jsonb. ستون ممکن است هنوز روی
+   * دیتابیس واقعی نباشد؛ در این صورت undefined می‌ماند و هیچ‌چیز نمی‌شکند
+   * (دسترسی دفاعی در restToTour).
+   */
+  financialSpecs?: TourFinancialSpecs | null;
+  /**
+   * متن غنی توضیحات تور (ستون description_rich، مایگریشن 0030)؛ خام از jsonb.
+   * ستون ممکن است هنوز روی دیتابیس واقعی نباشد؛ در این صورت undefined می‌ماند
+   * و متن تختِ description چاپ می‌شود (دسترسی دفاعی در restToTour).
+   */
+  descriptionRich?: JSONContent | string | null;
+  /**
+   * «سوالات پرتکرار» سطح تور (ستون faqs، مایگریشن 0030)؛ خام از jsonb.
+   * ستون ممکن است هنوز نباشد؛ خالی یعنی بخش FAQ نمایش داده نمی‌شود.
+   */
+  faqs?: TourFaq[];
+  /**
+   * «چرا همین تور» (ستون why_this_tour، مایگریشن 0030)؛ سند JSON تایپ‌تپ.
+   * ستون ممکن است هنوز نباشد؛ خالی یعنی بخش نمایش داده نمی‌شود.
+   */
+  whyThisTourRich?: JSONContent | string | null;
   updatedAt: string;
   image: string;
   badge?: string;
-  features: string[];
+  /** ستون دیتابیس در مایگریشن 0024 حذف شد (بی‌خواننده بود)؛ فقط دادهٔ استاتیک قدیمی */
+  features?: string[];
   visaRequired: boolean;
   hotelStars: number;
   airline: string;
   includedServices: string[];
   excludedServices: string[];
-  hotelOptions: Array<{ name: string; stars: number; board: string; pricePerPerson: string }>;
+  hotelOptions: Array<{
+    name: string;
+    stars: number;
+    board: string;
+    pricePerPerson: string;
+    /** شناسهٔ رکورد هتل در کاتالوگ (snapshot لحظهٔ افزودن)؛ هتل دستیِ آزاد null است. */
+    hotelId?: string | null;
+    /** عکس هتل از جدول media؛ خالی یعنی عکسی ثبت نشده. */
+    photoUrl?: string;
+    /**
+     * تفکیک نرخ اتاق‌ها (تورساز مرحلهٔ ۲ — actions.ts). خالی یعنی مدیر ثبت
+     * نکرده و روی سایت نمایش داده نمی‌شود (قانون: هیچ حدس بی‌صدایی).
+     */
+    priceDouble?: string;
+    priceSingle?: string;
+    priceChildWithBed?: string;
+    priceChildNoBed?: string;
+    /** نوع رزرو هتل (گارانتی/نیم‌چارتر/درخواستی)؛ خالی یعنی ثبت نشده. */
+    bookingType?: 'guarantee' | 'semi_charter' | 'on_request' | string;
+    /** یادداشت موقعیت/ترانسفر هتل؛ فعلاً روی صفحهٔ تور نمایش داده نمی‌شود. */
+    locationNote?: string;
+  }>;
   description: string;
+  /**
+   * موج ۴ — تورلیدر این حرکت (مایگریشن 0034). undefined یعنی لیدر ثبت نشده
+   * و بخش روی سایت نمایش داده نمی‌شود.
+   */
+  leader?: {
+    name: string;
+    photo?: string;
+    bio?: string;
+    languages?: string;
+    /** 'from_origin' = از مبدأ همراه گروه؛ 'at_destination' = در مقصد می‌پیوندد */
+    joinMode?: string;
+  } | null;
+  /** شناسهٔ داخلی لیدر (برای اتصال)؛ روی سایت نمایش داده نمی‌شود. */
+  leaderId?: string;
+  /**
+   * موج ۴ — گالری عکس واقعی (ستون gallery). خالی یعنی بخش نمایش داده نمی‌شود.
+   */
+  gallery?: Array<{ url: string; caption?: string }>;
+  /**
+   * موج ۴ — نظرهای تأییدشدهٔ مسافران (فقط is_visible). خالی یعنی بخش
+   * نمایش داده نمی‌شود.
+   */
+  reviews?: Array<{ name: string; rating: number; text: string; createdAt?: string }>;
+  /** میانگین و تعداد نظرها — برای نمایش و JSON-LD. */
+  ratingSummary?: { avg: number; count: number };
 }
 
 export const SAMPLE_TOURS: TourItem[] = [

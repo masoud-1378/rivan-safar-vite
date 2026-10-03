@@ -40,7 +40,7 @@ export function DepartureDateField({
             onChange(e.target.value);
           }}
           placeholder={placeholder}
-          className="grow"
+          className="grow max-md:text-base"
         />
         <DatePicker
           clearable

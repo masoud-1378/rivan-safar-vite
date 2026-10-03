@@ -19,9 +19,13 @@ import TourListItem from './TourListItem';
 
 interface ToursPageProps {
   onGoHome?: () => void;
+  /** ایراد ۲۸: از تنظیمات پنل (tours.page_size)؛ پیش‌فرض ۱۲. */
+  initialPageSize?: number;
+  /** ایراد ۲۸: از تنظیمات پنل (tours.default_sort)؛ پیش‌فرض 'default'. */
+  initialSort?: string;
 }
 
-export default function ToursPage({ onGoHome }: ToursPageProps) {
+export default function ToursPage({ onGoHome, initialPageSize, initialSort }: ToursPageProps) {
   const contact = useContact();
   const { tours, countries, cities, guides, exhibitions } = useContent();
   const router = useRouter();
@@ -44,8 +48,8 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
   const [airlineFilter, setAirlineFilter] = useState<string>('all');
   const [showMoreFilters, setShowMoreFilters] = useState<boolean>(false);
 
-  // Sorting
-  const [sortBy, setSortBy] = useState<string>('default');
+  // Sorting — مقدار اولیه از تنظیمات پنل (tours.default_sort) می‌آید.
+  const [sortBy, setSortBy] = useState<string>(initialSort ?? 'default');
 
   // Comparison
   const [comparedTourIds, setComparedTourIds] = useState<string[]>([]);
@@ -132,8 +136,8 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
   // FAQ Accordion
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  // Pagination / Load More
-  const [visibleCount, setVisibleCount] = useState<number>(12);
+  // Pagination / Load More — تعداد اولیه از تنظیمات پنل (tours.page_size) می‌آید.
+  const [visibleCount, setVisibleCount] = useState<number>(initialPageSize ?? 12);
 
   // Destination Search Dropdown
   const [showDestDropdown, setShowDestDropdown] = useState<boolean>(false);
@@ -584,8 +588,25 @@ export default function ToursPage({ onGoHome }: ToursPageProps) {
 
           {/* ---------------- 10 & 11. Tour Cards Results Grid ---------------- */}
           <main className="lg:col-span-9">
-            
-            {filteredTours.length > 0 ? (
+
+            {tours.length === 0 ? (
+              /* قلم ۴ موج ۱: حالت خالیِ «همه پیش‌نویس» — مدیر «صفحه خالی بماند» را
+                 انتخاب کرده؛ این پیامِ فیلتر نیست، پس دکمهٔ «پاک‌کردن فیلترها» ندارد. */
+              <div className="bg-surface-primary rounded-card border border-border-default p-8 text-center max-w-xl mx-auto">
+                <Phone className="w-12 h-12 text-brand-orange mx-auto mb-3 opacity-80" />
+                <h3 className="text-h3 text-text-heading mb-2">در حال حاضر توری برای نمایش وجود ندارد</h3>
+                <p className="text-body-sm text-text-secondary leading-relaxed mb-6">
+                  تورهای تازه به‌زودی اضافه می‌شوند. برای مشاوره و انتخاب تور مناسب، با کارشناس ریوان سفر در تماس باشید.
+                </p>
+                <a
+                  href={contact.phoneHref}
+                  className="btn btn-primary btn-medium text-btn inline-flex items-center gap-2"
+                >
+                  <Phone className="w-4 h-4" />
+                  تماس با کارشناس
+                </a>
+              </div>
+            ) : filteredTours.length > 0 ? (
               <div className="flex flex-col gap-4 sm:gap-5 pt-2 pb-6">
                 {filteredTours.slice(0, visibleCount).map((tour) => (
                   <TourListItem

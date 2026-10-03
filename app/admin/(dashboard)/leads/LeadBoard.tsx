@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Search } from 'lucide-react';
 import { bulkUpdateLeads, updateLeadAdminNotes, updateLeadStatus, type LeadStatus } from './actions';
 import { LEAD_STATUSES, LEAD_STATUS_FA, LEAD_STATUS_VARIANT } from './lead-status';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +34,18 @@ export interface LeadRow {
   createdAt: string;
 }
 
+interface LeadBoardProps {
+  initial: LeadRow[];
+  variant?: 'general' | 'tour';
+  pageSize: number;
+  /** میز ۳ — ایراد ۲۵: صفحه‌بندی سروری؛ فیلتر/جست‌وجو/صفحه از URL می‌آیند. */
+  total: number;
+  page: number;
+  pageCount: number;
+  status: LeadStatus | 'all';
+  query: string;
+}
+
 function faDate(iso: string) {
   try {
     return new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
@@ -52,8 +66,9 @@ function DefRow({ label, children, hint }: { label: string; children: React.Reac
   );
 }
 
-export function LeadBoard({ initial, variant = 'general', pageSize = 8 }: { initial: LeadRow[]; variant?: 'general' | 'tour'; pageSize?: number }) {
-  const [filter, setFilter] = useState<LeadStatus | 'all'>('all');
+export function LeadBoard({ initial, variant = 'general', pageSize, total, page, pageCount, status, query }: LeadBoardProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -68,7 +83,31 @@ export function LeadBoard({ initial, variant = 'general', pageSize = 8 }: { init
     setAdminNoteDraft(detail?.adminNotes ?? '');
   }, [detail?.id]);
 
-  const rows = initial.filter((row) => filter === 'all' || row.status === filter).map((row) => ({ ...row })) as (LeadRow & Record<string, unknown>)[];
+  // میز ۳ — ایراد ۲۵: فیلتر وضعیت، جست‌وجو و صفحه در URL می‌نشینند تا
+  // سرور روی کل دیتا اعمالشان کند؛ لینک‌پذیر و با رفرش ماندگار.
+  const go = (patch: { status?: LeadStatus | 'all'; q?: string; page?: number }) => {
+    const params = new URLSearchParams();
+    const nextStatus = patch.status ?? status;
+    const nextQ = (patch.q ?? query).trim();
+    const nextPage = patch.page ?? 1;
+    if (nextStatus !== 'all') params.set('status', nextStatus);
+    if (nextQ) params.set('q', nextQ);
+    if (nextPage > 1) params.set('page', String(nextPage));
+    const qs = params.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
+  };
+
+  // جست‌وجوی سروری با debounce؛ با هر تغییر، صفحه به ۱ برمی‌گردد.
+  const [q, setQ] = useState(query);
+  useEffect(() => {
+    if (q.trim() === query.trim()) return;
+    const timer = setTimeout(() => go({ q: q.trim(), page: 1 }), 500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
+
+  const hasFilter = status !== 'all' || query.trim() !== '';
+  const rows = initial.map((row) => ({ ...row })) as (LeadRow & Record<string, unknown>)[];
 
   const assigneeOptions = [...new Set(initial.map((r) => r.assignee).filter((a): a is string => Boolean(a)))];
 
@@ -154,8 +193,10 @@ export function LeadBoard({ initial, variant = 'general', pageSize = 8 }: { init
     });
   };
 
+  // مرتب‌سازی ستون‌ها برداشته شده: فقط صفحهٔ جاری را مرتب می‌کرد و گمراه‌کننده بود؛
+  // تا مرتب‌سازی سروری نوشته شود همین‌جا می‌ماند.
   const columns: Column<LeadRow>[] = [
-    { key: 'fullName', header: 'نام', sortable: true, cell: (row) => <span className="font-semibold">{row.fullName}</span> },
+    { key: 'fullName', header: 'نام', cell: (row) => <span className="font-semibold">{row.fullName}</span> },
     {
       key: 'phone',
       header: 'تلفن',
@@ -166,7 +207,7 @@ export function LeadBoard({ initial, variant = 'general', pageSize = 8 }: { init
       ),
     },
     { key: 'tourContext', header: 'زمینه تور', cell: (row) => <span>{[row.tourContext, row.destinationHint].filter(Boolean).join(' — ') || '—'}</span> },
-    { key: 'createdAt', header: 'تاریخ', sortable: true, cell: (row) => <span className="whitespace-nowrap">{faDate(row.createdAt)}</span> },
+    { key: 'createdAt', header: 'تاریخ', cell: (row) => <span className="whitespace-nowrap">{faDate(row.createdAt)}</span> },
     {
       key: 'status',
       header: 'وضعیت',
@@ -219,16 +260,15 @@ export function LeadBoard({ initial, variant = 'general', pageSize = 8 }: { init
   );
 
   // L2/L3: متن خالی دوحالته + حالت آموزشی صفحهٔ لیدهای تور.
-  const isTourEmpty = variant === 'tour' && initial.length === 0;
-  const emptyTitle = isTourEmpty
-    ? 'هنوز درخواست تور ثبت نشده است'
-    : filter !== 'all'
-      ? 'با این فیلتر چیزی پیدا نشد'
+  const emptyTitle = hasFilter
+    ? 'با این فیلتر چیزی پیدا نشد'
+    : variant === 'tour'
+      ? 'هنوز درخواست تور ثبت نشده است'
       : 'هنوز درخواستی ثبت نشده است';
-  const emptyDescription = isTourEmpty
-    ? 'درخواست‌هایی که از صفحه‌های تور ثبت می‌شوند این‌جا می‌آیند. درخواست‌های عمومی سایت در «درخواست‌های تماس» است.'
-    : filter !== 'all'
-      ? 'فیلتر وضعیت را عوض کنید یا جست‌وجو را پاک کنید.'
+  const emptyDescription = hasFilter
+    ? 'فیلتر وضعیت را عوض کنید یا جست‌وجو را پاک کنید.'
+    : variant === 'tour'
+      ? 'درخواست‌هایی که از صفحه‌های تور ثبت می‌شوند این‌جا می‌آیند. درخواست‌های عمومی سایت در «درخواست‌های تماس» است.'
       : 'درخواست‌های ثبت‌شده در سایت این‌جا می‌آیند؛ با تغییر وضعیت، روند پیگیری مشخص می‌شود.';
 
   return (
@@ -260,25 +300,49 @@ export function LeadBoard({ initial, variant = 'general', pageSize = 8 }: { init
             columns={columns}
             rowKey={(row) => row.id}
             pageSize={pageSize}
-            searchKeys={['fullName', 'phone', 'tourContext', 'destinationHint']}
-            searchPlaceholder="جست‌وجوی نام، تلفن یا مقصد…"
             emptyTitle={emptyTitle}
             emptyDescription={emptyDescription}
             onRowClick={(row) => setDetail(row)}
             selection={selection}
             mobileCard={leadCard}
             toolbar={
-              <div className="w-48">
-                <Select
-                  aria-label="فیلتر وضعیت درخواست‌ها"
-                  value={filter}
-                  onChange={(event) => setFilter(event.target.value as LeadStatus | 'all')}
-                  className="h-9 max-md:min-h-11"
-                  options={[{ value: 'all', label: 'همه وضعیت‌ها' }, ...LEAD_STATUSES.map((status) => ({ value: status, label: LEAD_STATUS_FA[status] }))]}
-                />
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="w-56">
+                  <Input
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="جست‌وجوی نام، تلفن یا مقصد…"
+                    startAddon={<Search className="size-4" />}
+                    className="h-9 max-md:min-h-11"
+                    aria-label="جست‌وجو در همهٔ درخواست‌ها"
+                  />
+                </div>
+                <div className="w-48">
+                  <Select
+                    aria-label="فیلتر وضعیت درخواست‌ها"
+                    value={status}
+                    onChange={(event) => go({ status: event.target.value as LeadStatus | 'all', page: 1 })}
+                    className="h-9 max-md:min-h-11"
+                    options={[{ value: 'all', label: 'همه وضعیت‌ها' }, ...LEAD_STATUSES.map((status) => ({ value: status, label: LEAD_STATUS_FA[status] }))]}
+                  />
+                </div>
               </div>
             }
           />
+          {/* میز ۳ — ایراد ۲۵: صفحه‌بندی سروری؛ شمارش کل از سرور می‌آید. */}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+            <p className="text-sm text-muted-foreground">
+              همهٔ {fa(total)} درخواست · صفحهٔ {fa(page)} از {fa(pageCount)}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => go({ page: page - 1 })}>
+                قبلی
+              </Button>
+              <Button variant="outline" size="sm" disabled={page >= pageCount} onClick={() => go({ page: page + 1 })}>
+                بعدی
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

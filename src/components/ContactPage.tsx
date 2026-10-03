@@ -106,6 +106,18 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
               >
                 {contact.phoneDisplay}
               </a>
+              {contact.phoneSecondary.trim() !== '' && (
+                <div className="mt-3 pt-3 border-t border-border-default/70">
+                  <span className="text-caption text-text-muted block mb-1">تلفن اضطراری</span>
+                  <a
+                    href={`tel:${contact.phoneSecondary.replace(/[^\d]/g, '')}`}
+                    className="text-body font-bold text-text-heading hover:text-brand-orange transition-colors font-mono"
+                    dir="ltr"
+                  >
+                    {contact.phoneSecondary}
+                  </a>
+                </div>
+              )}
             </div>
 
             {/* Address Card */}

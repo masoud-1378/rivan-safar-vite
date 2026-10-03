@@ -36,14 +36,14 @@ const TABS = [
     label: 'درخواست‌های رزرو تور',
     href: '/admin/tours/leads',
     icon: Inbox,
-    desc: 'متقاضیان و درخواست‌های اختصاصی تورها',
+    desc: 'درخواست‌های ثبت‌نام و مشاورهٔ تورها',
   },
   {
     id: 'places',
     label: 'مقصدها و شهرها',
     href: '/admin/catalog?tab=destinations',
     icon: MapPinned,
-    desc: 'کشورها، شهرها و درخت مقاصد',
+    desc: 'کشورها، شهرها و فهرست مقصدها',
   },
   {
     id: 'origins',
@@ -57,7 +57,7 @@ const TABS = [
     label: 'هتل‌ها',
     href: '/admin/catalog?tab=hotels',
     icon: Building2,
-    desc: 'بانک هتل‌ها، ستاره و امکانات اقامتی',
+    desc: 'فهرست هتل‌ها، ستاره و امکانات',
   },
 ];
 
@@ -86,7 +86,7 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
           </div>
           <div>
             <h2 className="text-base font-bold text-foreground">تورها</h2>
-            <p className="text-xs text-muted-foreground">مدیریت متمرکز تورها، رزروها، مقاصد، مبدأهای حرکت (هوایی، زمینی) و هتل‌های طرف قرارداد</p>
+            <p className="text-xs text-muted-foreground">همه‌چیز تورها یکجا: لیست تورها، درخواست‌های رزرو، مقصدها، مبدأهای حرکت (هوایی، زمینی، ریلی) و هتل‌ها</p>
           </div>
         </div>
       </div>
@@ -102,7 +102,8 @@ export default function TourHubNav({ counts }: TourHubNavProps) {
               key={tab.id}
               href={tab.href}
               className={cn(
-                "group relative flex items-center gap-2 rounded-sm px-3.5 py-2.5 text-xs font-semibold transition-all cursor-pointer",
+                // موبایل‌اول: تارگت لمسی ۴۴px.
+                "group relative flex min-h-11 items-center gap-2 rounded-sm px-3.5 py-2.5 text-xs font-semibold transition-all cursor-pointer",
                 isActive
                   ? "bg-brand text-brand-foreground"
                   : "bg-secondary/40 text-muted-foreground hover:bg-secondary hover:text-foreground border border-border/50"

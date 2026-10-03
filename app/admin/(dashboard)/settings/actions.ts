@@ -92,3 +92,77 @@ export async function getPublicSettings(): Promise<Record<string, string>> {
     return build([]);
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* قلم ۴ موج ۱ (تصمیم ۴، ۱۴۰۵/۰۷/۱۱): جواب مدیر به سؤال «همه پیش‌نویس»     */
+/* ------------------------------------------------------------------ */
+
+const ALL_DRAFT_FALLBACK_KEY = 'tours.all_draft_fallback';
+
+export type AllDraftFallbackAnswer = 'sample' | 'empty';
+
+/**
+ * جواب ذخیره‌شدهٔ مدیر. null یعنی هنوز جوابی ثبت نشده (ردیف نیست یا مقدارش
+ * 'unanswered' است) — در این حالت پنل همان لحظه از مدیر می‌پرسد، نه این‌که
+ * حدس بزند. عمداً از withDefaults استفاده نمی‌شود چون پیش‌فرض 'unanswered'
+ * هم یعنی «پرسیده نشده».
+ */
+export async function getAllDraftFallbackAnswer(): Promise<AllDraftFallbackAnswer | null> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const rows = await db
+    .select({ settingValue: siteSettings.settingValue })
+    .from(siteSettings)
+    .where(eq(siteSettings.settingKey, ALL_DRAFT_FALLBACK_KEY))
+    .limit(1);
+  const v = rows[0]?.settingValue;
+  return v === 'sample' || v === 'empty' ? v : null;
+}
+
+/**
+ * ثبت جواب مدیر به سؤال «همه پیش‌نویس». فقط دو مقدار مجاز است؛
+ * 'unanswered' از این مسیر ست نمی‌شود (ریست از صفحهٔ تنظیمات ممکن است).
+ */
+export async function setAllDraftFallbackAnswer(
+  answer: AllDraftFallbackAnswer,
+): Promise<{ ok: true }> {
+  if (answer !== 'sample' && answer !== 'empty') {
+    throw new Error('پاسخ نامعتبر است.');
+  }
+  const session = await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const existing = await db
+    .select({ settingKey: siteSettings.settingKey })
+    .from(siteSettings)
+    .where(eq(siteSettings.settingKey, ALL_DRAFT_FALLBACK_KEY))
+    .limit(1);
+  if (existing.length === 0) {
+    await db
+      .insert(siteSettings)
+      .values({ settingKey: ALL_DRAFT_FALLBACK_KEY, settingValue: answer });
+  } else {
+    await db
+      .update(siteSettings)
+      .set({ settingValue: answer, updatedAt: new Date() })
+      .where(eq(siteSettings.settingKey, ALL_DRAFT_FALLBACK_KEY));
+  }
+  await db.insert(auditLogs).values({
+    actor: session.email,
+    action: 'settings.update',
+    entity: 'site_settings',
+    entityId: ALL_DRAFT_FALLBACK_KEY,
+    reasonFa:
+      answer === 'sample'
+        ? 'انتخاب مدیر: وقتی هیچ توری منتشر نیست، تور نمونه نمایش داده شود'
+        : 'انتخاب مدیر: وقتی هیچ توری منتشر نیست، صفحه خالی بماند',
+  });
+  revalidatePath('/admin/tours');
+  revalidatePath('/admin/settings');
+  revalidatePath('/tours');
+  revalidatePath('/tours/domestic');
+  revalidatePath('/tours/foreign');
+  revalidatePath('/');
+  return { ok: true };
+}

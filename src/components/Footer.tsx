@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useContact } from '@/src/lib/contact-context';
+import type { NavLinks } from '@/src/lib/db-content';
 import {
   Phone,
   Clock,
@@ -78,12 +79,27 @@ const BADGES = [
 
 interface FooterProps {
   onNavigate?: (path: string) => void;
+  /** لینک‌های دیتابیس‌محور از RootLayout؛ نبودش یعنی فالبک هاردکد. */
+  navLinks?: NavLinks;
 }
 
-export default function Footer({ onNavigate }: FooterProps) {
+export default function Footer({ onNavigate, navLinks }: FooterProps) {
   const contact = useContact();
   // Mobile accordion state (all closed by default or multiple openable)
   const [openAccordions, setOpenAccordions] = useState<Record<number, boolean>>({});
+
+  // ایراد ۱۹: «مقصدهای محبوب» از DB می‌آید — فقط شهرهای دارای تور فعال،
+  // به ترتیب تعداد تور. قطعی DB → همان هاردکد قبلی.
+  const footerGroups = useMemo(() => {
+    if (!navLinks || navLinks.destinations.length === 0) return FOOTER_GROUPS;
+    const popular = navLinks.destinations.slice(0, 5).map((d) => ({
+      label: `تور ${d.name}`,
+      path: d.path,
+    }));
+    return FOOTER_GROUPS.map((group) =>
+      group.title === 'مقصدهای محبوب' ? { ...group, links: popular } : group,
+    );
+  }, [navLinks]);
 
   const toggleAccordion = (index: number) => {
     setOpenAccordions(prev => ({ ...prev, [index]: !prev[index] }));
@@ -115,10 +131,10 @@ export default function Footer({ onNavigate }: FooterProps) {
               </div>
               <div className="flex flex-col">
                 <span className="text-[22px] font-extrabold text-white leading-none">
-                  ریوان سفر
+                  {contact.brand}
                 </span>
                 <span className="text-caption text-brand-orange font-medium mt-1">
-                  آژانس مسافرتی و گردشگری
+                  {contact.tagline}
                 </span>
               </div>
             </div>
@@ -199,7 +215,7 @@ export default function Footer({ onNavigate }: FooterProps) {
 
           {/* Desktop View (4 columns) */}
           <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {FOOTER_GROUPS.map((group, idx) => (
+            {footerGroups.map((group, idx) => (
               <div key={idx} className="space-y-4">
                 <h3 className="text-h4 text-white">
                   {group.title}
@@ -223,7 +239,7 @@ export default function Footer({ onNavigate }: FooterProps) {
 
           {/* Mobile View (Accordions) */}
           <div className="md:hidden space-y-1">
-            {FOOTER_GROUPS.map((group, idx) => {
+            {footerGroups.map((group, idx) => {
               const isOpen = !!openAccordions[idx];
               return (
                 <div key={idx} className="border-b border-border-on-dark last:border-b-0">

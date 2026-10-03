@@ -52,7 +52,6 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
         h1Fa: editing.h1Fa,
         workflow: (editing.workflow ?? 'draft') as LandingFormInitial['workflow'],
         indexStatus: (editing.indexStatus ?? 'noindex') as LandingFormInitial['indexStatus'],
-        nextReviewAt: editing.nextReviewAt ? new Date(editing.nextReviewAt) : null,
       }
     : null;
 
@@ -60,8 +59,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
     try {
       setData(await listLandings());
     } catch (e) {
-      toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در بارگذاری لندینگ‌ها.') });
-    }
+      toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در بارگذاری لندینگ‌ها.') });    }
   });
 
   const onDelete = () => {
@@ -73,27 +71,41 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
         setDeleting(null);
         refresh();
       } catch (e) {
-        toast({ variant: 'error', title: safeErrorMessage(e, 'حذف انجام نشد؛ دوباره تلاش کنید.') });
-      }
+        toast({ variant: 'error', title: safeErrorMessage(e, 'حذف انجام نشد؛ دوباره تلاش کنید.') });      }
     });
   };
 
   const handleWorkflow = (id: string, workflow: Workflow) => {
+    // ریشهٔ B-۹ (بخش کمبوباکس): تغییر اول در UI اعمال می‌شود تا اگر ذخیره
+    // شکست خورد، با برگشتِ مقدار + پیام خطا «دیده» شود — نه بی‌صدا.
+    // برگشت فقط همین سطر را به مقدارِ خودشِ پیش از این تغییر برمی‌گرداند،
+    // نه کل جدول را به اسنپ‌شاتِ قدیمی (وگرنه تغییر هم‌زمانِ سطر دیگر را پاک می‌کرد).
+    const prevWorkflow = (data.find((r) => r.id === id)?.workflow ?? 'draft') as Workflow;
+    setData((rows) => rows.map((r) => (r.id === id ? { ...r, workflow } : r)));
+    const rollback = () =>
+      setData((rows) => rows.map((r) => (r.id === id ? { ...r, workflow: prevWorkflow } : r)));
     startTransition(async () => {
       try {
         if (workflow === 'published') {
           const check = await checkQualityGate(id);
           if (!check.canPublish) {
             setGateIssues(check.reasons);
+            rollback();
             return;
           }
         }
-        await setLandingWorkflow(id, workflow);
+        // ریشهٔ #441: گیتِ ردشده به‌صورت مقدار می‌آید؛ همان پیام فارسی را نشان بده.
+        // (پروژه strict:false است؛ !wfResult.ok باریک‌سازی نمی‌کند، پس === false)
+        const wfResult = await setLandingWorkflow(id, workflow);
+        if (wfResult.ok === false) {
+          rollback();
+          toast({ variant: 'error', title: wfResult.error });
+          return;
+        }
         toast({ variant: 'success', title: `وضعیت به «${WORKFLOW_MAP[workflow].label}» تغییر کرد.` });
         refresh();
       } catch (e) {
-        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در تغییر وضعیت.') });
-      }
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در تغییر وضعیت.') });      }
     });
   };
 

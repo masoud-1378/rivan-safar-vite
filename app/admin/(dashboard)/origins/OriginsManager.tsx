@@ -14,8 +14,6 @@ import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
 import { safeErrorMessage } from '@/src/lib/error-message';
 
-const TYPE_LABEL: Record<string, string> = { region: 'قاره/ناحیه', country: 'کشور', city: 'شهر' };
-
 export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<OriginRow | null>(null);
@@ -29,7 +27,6 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
     countOriginTours(origin.slug, origin.nameFa).then(setUsage).catch(() => { setUsage(null); setUsageFailed(true); });
   };
   const [name, setName] = useState('');
-  const [type, setType] = useState('city');
   const [parentSlug, setParentSlug] = useState('');
   const [nameError, setNameError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
@@ -40,7 +37,6 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
   const startCreate = () => {
     setEditing(null);
     setName('');
-    setType('city');
     setParentSlug('');
     setNameError(undefined);
     setOpen(true);
@@ -49,7 +45,6 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
   const startEdit = (o: OriginRow) => {
     setEditing(o);
     setName(o.nameFa);
-    setType(o.type);
     setParentSlug(o.parentSlug);
     setNameError(undefined);
     setOpen(true);
@@ -62,7 +57,8 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
     }
     startTransition(async () => {
       try {
-        await saveOrigin({ id: editing?.id, slug: editing?.slug ?? '', nameFa: name.trim(), type, parentSlug });
+        // «نوع» دیگر در UI نیست (فاز ۳ موج ۲): مقدار قبلی حفظ می‌شود، تازه‌ها «شهر».
+        await saveOrigin({ id: editing?.id, slug: editing?.slug ?? '', nameFa: name.trim(), type: editing?.type ?? 'city', parentSlug });
         setOpen(false);
         reload();
       } catch (e) {
@@ -105,7 +101,6 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
   const childCount = deleting ? initial.filter((o) => o.parentSlug === deleting.slug).length : 0;
   const columns: Column<OriginRow>[] = [
     { key: 'nameFa', header: 'نام', sortable: true, cell: (o) => <span className="font-semibold">{o.nameFa}</span> },
-    { key: 'type', header: 'نوع', sortable: true, cell: (o) => TYPE_LABEL[o.type] ?? o.type },
     { key: 'parentSlug', header: 'والد', cell: (o) => (o.parentSlug ? parentName(o.parentSlug) : '—') },
     {
       key: 'id',
@@ -135,7 +130,7 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">مبدأها</h1>
-          <p className="mt-1 text-sm text-muted-foreground">شهرهای مبدأ حرکت تورها با ساختار سلسله‌مراتبی</p>
+          <p className="mt-1 text-sm text-muted-foreground">فهرست مبدأهای فرم تورساز؛ فقط در پنل استفاده می‌شود و صفحه‌ای در سایت ندارد</p>
         </div>
         <Button className="h-11 lg:h-10" onClick={startCreate}>
           <Plus />
@@ -173,21 +168,10 @@ export default function OriginsManager({ initial }: { initial: OriginRow[] }) {
         }
       >
         <div className="space-y-4">
-          <Field label="نام مبدأ" error={nameError} hint="همین نام در فهرست مبدأهای فرم تور و روی سایت دیده می‌شود">
+          <Field label="نام مبدأ" error={nameError} hint="همین نام در فهرست «مبدأ» فرم تورساز می‌آید؛ مبدأها صفحه‌ای در سایت ندارند">
             <Input value={name} onChange={(e) => { setName(e.target.value); setNameError(undefined); }} placeholder="مثل تهران" />
           </Field>
-          <Field label="نوع" hint="شهر، کشور یا قاره/ناحیه؛ ترتیب نمایش در درخت مبدأها">
-            <Select
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              options={[
-                { value: 'city', label: 'شهر' },
-                { value: 'country', label: 'کشور' },
-                { value: 'region', label: 'قاره/ناحیه' },
-              ]}
-            />
-          </Field>
-          <Field label="والد" hint="اختیاری؛ مشخص می‌کند این مبدأ زیر کدام والد در درخت سایت می‌نشیند">
+          <Field label="والد" hint="اختیاری؛ فقط برای مرتب‌ماندن فهرست در همین پنل است">
             <Select
               value={parentSlug}
               onChange={(e) => setParentSlug(e.target.value)}

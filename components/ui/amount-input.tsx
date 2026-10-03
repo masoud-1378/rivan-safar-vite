@@ -19,6 +19,8 @@ export interface AmountInputProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /** کلاس اضافی برای <input> داخلی (مثلاً max-md:text-base ضدزوم iOS). */
+  inputClassName?: string;
   id?: string;
 }
 
@@ -34,7 +36,7 @@ export function shortAmount(n: number) {
  * after the number, and the amount spelled out underneath so nobody pays
  * ۱۲٬۵۰۰٬۰۰۰ when they meant ۱٬۲۵۰٬۰۰۰. The value is a plain number.
  */
-export function AmountInput({ value, defaultValue = null, onChange, unit = "تومان", min, max, words = true, quick, placeholder = "۰", disabled, className, id }: AmountInputProps) {
+export function AmountInput({ value, defaultValue = null, onChange, unit = "تومان", min, max, words = true, quick, placeholder = "۰", disabled, className, inputClassName, id }: AmountInputProps) {
   const [internal, setInternal] = React.useState<number | null>(defaultValue);
   const amount = value === undefined ? internal : value;
   const tooLow = amount !== null && min !== undefined && amount < min;
@@ -68,7 +70,7 @@ export function AmountInput({ value, defaultValue = null, onChange, unit = "تو
           value={amount === null ? "" : faNumber(amount)}
           onChange={(e) => type(e.target.value)}
           placeholder={placeholder}
-          className="h-full min-w-0 flex-1 bg-transparent text-sm font-medium tabular-nums outline-none placeholder:text-muted-foreground/50 disabled:cursor-not-allowed"
+          className={cn("h-full min-w-0 flex-1 bg-transparent text-sm font-medium tabular-nums outline-none placeholder:text-muted-foreground/50 disabled:cursor-not-allowed", inputClassName)}
           aria-invalid={invalid ? true : undefined}
           aria-describedby={id ? `${id}-words` : undefined}
         />

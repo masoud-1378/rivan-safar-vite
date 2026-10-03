@@ -144,6 +144,11 @@ export interface HotelPickerItem {
   stars: number | null;
   /** همیشه null — قیمت در سطح کاتالوگ تعریف نشده است. */
   defaultPrice: null;
+  /**
+   * اسلاگ مقصدِ هتل (شهر/کشور در site_destinations) — برای فیلتر «فقط هتل‌های
+   * همین مقصد» در مرحلهٔ ۲ تورساز (موج ۱، قلم ۶). خالی یعنی شهری ثبت نشده.
+   */
+  placeSlug: string;
 }
 
 export async function listHotelsForPicker(): Promise<HotelPickerItem[]> {
@@ -167,5 +172,6 @@ export async function listHotelsForPicker(): Promise<HotelPickerItem[]> {
     cityName: (r.placeSlug && cityBySlug.get(r.placeSlug)) || '',
     stars: r.stars,
     defaultPrice: null,
+    placeSlug: r.placeSlug ?? '',
   }));
 }

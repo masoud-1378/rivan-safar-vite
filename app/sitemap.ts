@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
-import { SITE_URL } from '@/src/lib/siteConfig';
+import { getSiteUrl } from '@/src/lib/site-contact';
 import { getIndexableLandings, getDynamicIndexablePaths } from '@/src/data/seoLandings';
-import { getTours, getGuides, getExhibitions, getCountries } from '@/src/lib/db-content';
+import { getTours, getGuides, getExhibitions, getSeoLandings, getDestinationsOnce, getCountries, normalizeLandingPath } from '@/src/lib/db-content';
 
 // P1-12: سایت‌مپ باید هر درخواست تازه ساخته شود تا گیت لانچ و آیتم‌های تازه
 // بدون دیپلوی در آن اعمال شوند.
@@ -9,60 +9,76 @@ export const dynamic = 'force-dynamic';
 
 /**
  * نقشه سایت داینامیک — لندینگ‌های published/index + مسیرهای داینامیک دارای داده واقعی.
- *
- * P1-14: مسیرهای موجودیتی (تور/راهنما/نمایشگاه/ویزا) از DB خوانده می‌شوند؛
- * getTours/getGuides/getExhibitions خودشان فقط رکوردهای منتشرشده را
- * برمی‌گردانند (گیت انتشار ردیف ۱-۱). دیتای استاتیک فقط فالبکِ قطعی کاملِ
- * خواندن DB است (وقتی هیچ‌کدام از گترها پاسخی ندهند) — نه مکمل مسیرهای DB.
- *
- * P1-15: هاب‌ها (/destinations ،/exhibitions ،/guides) و صفحات اعتمادی
- * (/about ،/contact ،/licenses ،/terms ،/privacy) هم در سایت‌مپ هستند.
+ * ردیف ۱-۳: مسیرهای تور/راهنما/نمایشگاهِ منتشرشدهٔ DB هم به خروجی اضافه می‌شوند
+ * (نه فقط دیتای استاتیک)؛ getTours/getGuides/getExhibitions خودشان فقط
+ * رکوردهای منتشرشده را برمی‌گردانند (گیت انتشار ردیف ۱-۱).
+ * ایراد ۱: لندینگ‌های سئو از جدول seo_landings می‌آیند (منبع حقیقت)؛
+ * آرایهٔ استاتیک فقط فالبکِ قطعی DB است.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const landingPaths = getIndexableLandings().map((l) => l.urlPath);
+  // ایراد ۲۸: دامنهٔ پایهٔ نقشهٔ سایت از تنظیم site.url می‌آید.
+  const siteUrl = await getSiteUrl();
+  // مسیرهای استاتیک هم نرمالایز می‌شوند تا /x و /x/ هر دو نیایند.
+  const staticLandingPaths = getIndexableLandings().map((l) =>
+    normalizeLandingPath(l.urlPath),
+  );
+  const staticDynamicPaths = getDynamicIndexablePaths().map(normalizeLandingPath);
 
-  // P1-15 — هاب‌ها و صفحات اعتمادی (ثابت و همیشه زنده)
-  const hubPaths = [
-    '/destinations',
-    '/exhibitions',
-    '/guides',
-    '/about',
-    '/contact',
-    '/licenses',
-    '/terms',
-    '/privacy',
-  ];
-
-  // مسیرهای موجودیتی زنده از DB؛ خطای کاملِ خواندن → فالبک استاتیک.
-  let entityPaths: string[] = [];
+  // لندینگ‌های زنده از DB (منتشرشده + index)؛ خطا یا قطعی → همان استاتیک می‌ماند.
+  const dbLandingPaths: string[] = [];
   try {
-    const [tours, guides, exhibitions, countries] = await Promise.all([
+    const landings = await getSeoLandings();
+    for (const l of landings) {
+      if (l.indexStatus === 'index') dbLandingPaths.push(normalizeLandingPath(l.urlPath));
+    }
+  } catch {
+    // getSeoLandings خودش خطا را می‌بلعد و [] برمی‌گرداند؛ این catch اطمینان مضاعف است.
+  }
+
+  // مسیرهای زنده از DB؛ خطا یا قطعی → همان مسیرهای استاتیک می‌ماند.
+  const dbPaths: string[] = [];
+  try {
+    const [tours, guides, exhibitions, places] = await Promise.all([
       getTours(),
       getGuides(),
       getExhibitions(),
-      getCountries(),
+      getDestinationsOnce(),
     ]);
-    for (const t of tours) entityPaths.push(`/tour/${t.id}`);
-    for (const g of Object.values(guides)) entityPaths.push(`/guide/${g.slug}`);
+    for (const t of tours) dbPaths.push(`/tour/${t.id}`);
+    for (const g of Object.values(guides)) dbPaths.push(`/guide/${g.slug}`);
     for (const s of Object.values(exhibitions)) {
-      entityPaths.push(`/exhibition/${s.slug}`);
+      dbPaths.push(`/exhibition/${s.slug}`);
       if (s.upcomingEdition?.editionSlug) {
-        entityPaths.push(`/exhibition/${s.slug}/${s.upcomingEdition.editionSlug}`);
+        dbPaths.push(`/exhibition/${s.slug}/${s.upcomingEdition.editionSlug}`);
       }
     }
     // ویزا گیت انتشار ندارد (هم‌خوان با صفحهٔ /visa/[country])؛ فهرست زنده کشورها.
-    for (const c of Object.keys(countries)) entityPaths.push(`/visa/${c}`);
+    try {
+      const countries = await getCountries();
+      for (const c of Object.keys(countries)) dbPaths.push(`/visa/${c}`);
+    } catch {
+      // بی‌صدا رد می‌شود؛ بقیهٔ مسیرها می‌مانند.
+    }
+    // ایراد ۲۲: مقصدهای تازه هم وارد sitemap می‌شوند — کشورها همیشه،
+    // شهرها فقط وقتی دست‌کم یک تور فعال دارند (صفحهٔ بدون تور محتوای نازک است).
+    for (const p of places) {
+      if (p.type === 'country') {
+        dbPaths.push(`/destination/${p.slug}`);
+      } else if (p.activeToursCount > 0) {
+        dbPaths.push(`/destination/${p.parentCountrySlug || p.slug}/${p.slug}`);
+      }
+    }
   } catch {
-    // DB در دسترس نیست → همان مسیرهای استاتیک قبلی می‌ماند.
-    entityPaths = getDynamicIndexablePaths();
+    // getTours/getGuides/getExhibitions خودشان fallback استاتیک دارند؛
+    // این catch فقط برای اطمینان مضاعف است.
   }
 
   const paths = Array.from(
-    new Set([...landingPaths, ...hubPaths, ...entityPaths]),
+    new Set([...staticLandingPaths, ...dbLandingPaths, ...staticDynamicPaths, ...dbPaths]),
   );
 
   return paths.map((p) => ({
-    url: p === '/' ? `${SITE_URL}/` : `${SITE_URL}${p}`,
+    url: p === '/' ? `${siteUrl}/` : `${siteUrl}${p}`,
     changeFrequency: 'weekly',
     priority: p === '/' ? 1 : p.split('/').filter(Boolean).length <= 1 ? 0.8 : 0.6,
   }));

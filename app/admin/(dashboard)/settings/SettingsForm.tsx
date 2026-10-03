@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { Fragment, useMemo, useState, useTransition } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { fa } from '@/lib/utils';
 import { updateSettings } from './actions';
+import { suggestPhoneDisplay } from '@/src/lib/tour-format';
 import { SETTINGS_REGISTRY, SETTING_TABS, type SettingDef } from '@/src/lib/settings';
 
 function SettingField({ def, value, onChange, disabled, error }: { def: SettingDef; value: string; onChange: (v: string) => void; disabled: boolean; error?: string }) {
@@ -51,6 +52,53 @@ function SettingField({ def, value, onChange, disabled, error }: { def: SettingD
         onChange={(e) => onChange(e.target.value)}
       />
     </Field>
+  );
+}
+
+/**
+ * همگام‌سازی «نمایش تلفن» با «تلفن اصلی» (موج ۲، تیم تکراری‌ها).
+ * قالب نمایشی فقط «پیشنهاد» می‌شود — با دکمهٔ اعمال/رد، نه بی‌صدا؛
+ * و اگر با شماره ناهمگام شد، هشدارِ دیده‌شونده می‌آید (نه خطای ذخیره).
+ */
+function PhoneDisplaySync({
+  phone,
+  display,
+  onApply,
+}: {
+  phone: string;
+  display: string;
+  onApply: (v: string) => void;
+}) {
+  const [dismissed, setDismissed] = useState<string | null>(null);
+  const suggestion = suggestPhoneDisplay(phone);
+  if (!suggestion) return null;
+  const displayTrimmed = display.trim();
+  if (displayTrimmed === suggestion || dismissed === suggestion) return null;
+  return (
+    <div className="rounded-sm border border-dashed border-brand/30 bg-brand/5 px-3 py-2">
+      <p className="text-[11px] text-foreground">
+        {displayTrimmed
+          ? `قالب نمایشی («${displayTrimmed}») با شمارهٔ اصلی هم‌خوان نیست. `
+          : 'برای این شماره هنوز قالب نمایشی نوشته نشده است. '}
+        پیشنهاد: «{suggestion}»
+      </p>
+      <div className="mt-1.5 flex gap-3">
+        <button
+          type="button"
+          onClick={() => onApply(suggestion)}
+          className="text-[11px] font-bold text-brand hover:underline"
+        >
+          اعمال شود
+        </button>
+        <button
+          type="button"
+          onClick={() => setDismissed(suggestion)}
+          className="text-[11px] text-muted-foreground hover:underline"
+        >
+          نه، همین بماند
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -148,32 +196,44 @@ export default function SettingsPage({ initial, role }: { initial: Record<string
                 </CardHeader>
                 <CardContent className="space-y-5">
                   {(tabDefs.get(t.id) ?? []).map((d) => (
-                    <div key={d.key} className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
-                      <div>
-                        {/* ST1: کلید فقط در tooltip برچسب، نه در نما. */}
-                        <p className="text-sm font-semibold" title={`کلید: ${d.key}`}>{d.label}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">{d.hint}</p>
+                    <Fragment key={d.key}>
+                      <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
+                        <div>
+                          {/* ST1: کلید فقط در tooltip برچسب، نه در نما. */}
+                          <p className="text-sm font-semibold" title={`کلید: ${d.key}`}>{d.label}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{d.hint}</p>
+                        </div>
+                        <div className="min-w-0">
+                          <SettingField
+                            def={d}
+                            value={values[d.key] ?? d.defaultValue}
+                            disabled={pending}
+                            error={fieldErrors[d.key]}
+                            onChange={(v) => {
+                              setValues((prev) => ({ ...prev, [d.key]: v }));
+                              // F7: با اولین تغییر بعدی، بنر «همهٔ تغییرات ذخیره شد.» پاک می‌شود.
+                              setSavedFlash(false);
+                              setFieldErrors((prev) => {
+                                if (!prev[d.key]) return prev;
+                                const next = { ...prev };
+                                delete next[d.key];
+                                return next;
+                              });
+                            }}
+                          />
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <SettingField
-                          def={d}
-                          value={values[d.key] ?? d.defaultValue}
-                          disabled={pending}
-                          error={fieldErrors[d.key]}
-                          onChange={(v) => {
-                            setValues((prev) => ({ ...prev, [d.key]: v }));
-                            // F7: با اولین تغییر بعدی، بنر «همهٔ تغییرات ذخیره شد.» پاک می‌شود.
+                      {d.key === 'business.phone_display' && (
+                        <PhoneDisplaySync
+                          phone={values['business.phone'] ?? ''}
+                          display={values['business.phone_display'] ?? ''}
+                          onApply={(v) => {
+                            setValues((prev) => ({ ...prev, 'business.phone_display': v }));
                             setSavedFlash(false);
-                            setFieldErrors((prev) => {
-                              if (!prev[d.key]) return prev;
-                              const next = { ...prev };
-                              delete next[d.key];
-                              return next;
-                            });
                           }}
                         />
-                      </div>
-                    </div>
+                      )}
+                    </Fragment>
                   ))}
                 </CardContent>
               </Card>

@@ -8,7 +8,7 @@ export type CatalogTabId = 'destinations' | 'origins' | 'hotels';
 
 const TABS: Array<{ id: CatalogTabId; label: string; href: string; icon: typeof MapPinned; desc: string }> = [
   { id: 'destinations', label: 'مقصدها', href: '/admin/catalog?tab=destinations', icon: MapPinned, desc: 'کشورها و شهرهای مقصد' },
-  { id: 'origins', label: 'مبدأها', href: '/admin/catalog?tab=origins', icon: Navigation, desc: 'شهرهای مبدأ حرکت تورها' },
+  { id: 'origins', label: 'مبدأها', href: '/admin/catalog?tab=origins', icon: Navigation, desc: 'فهرست مبدأهای فرم تورساز (فقط پنل)' },
   { id: 'hotels', label: 'هتل‌ها', href: '/admin/catalog?tab=hotels', icon: Building2, desc: 'بانک هتل‌ها و اقامتگاه‌ها' },
 ];
 

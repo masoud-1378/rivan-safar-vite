@@ -5,6 +5,13 @@ import { getDb } from '@/db/client';
 import { media } from '@/db/schema';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { and, desc, eq, isNull } from 'drizzle-orm';
+import {
+  ALLOWED_IMAGE_EXTS,
+  IMAGE_UPLOAD_BUCKET,
+  assertUploadImage,
+  cleanStorageSlug,
+  storagePathInBucket,
+} from '@/src/lib/upload-policy';
 
 /**
  * عکس‌های هتل — کتابچه §۳ (فاز ۲): «آپلودر عکس هتل، عکس را ذخیره نمی‌کند».
@@ -16,23 +23,8 @@ import { and, desc, eq, isNull } from 'drizzle-orm';
  * - پیش‌نمایش از URL عمومی واقعی سرو می‌شود، نه رشتهٔ نمایشی.
  */
 
-const BUCKET = 'hotel-photos';
+const BUCKET = IMAGE_UPLOAD_BUCKET;
 const MAX_BYTES = 5 * 1024 * 1024;
-
-// SEC-06: allowlist صریح پسوند — بدون svg (بردار XSS ذخیره‌شده). contentType
-// هرگز از file.type (قابل جعل توسط کاربر) خوانده نمی‌شود؛ از پسوند تأییدشده
-// مشتق می‌شود. SEC-12: slug هم sanitize می‌شود تا traversal مسیر ممکن نباشد.
-const ALLOWED_EXTS = ['jpg', 'jpeg', 'png', 'webp'] as const;
-const EXT_MIME: Record<string, string> = {
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  png: 'image/png',
-  webp: 'image/webp',
-};
-// SEC-12: sanitize مسیر استوریج — هر چیزی جز حرف (هر خطی، از جمله فارسی)،
-// عدد و خط‌تیره حذف می‌شود؛ پس `/` و `.` (مادهٔ traversal با `../../`) هرگز
-// به مسیر راه پیدا نمی‌کنند.
-const cleanSlug = (s: string) => (s || 'hotel').replace(/[^\p{L}\p{N}-]/gu, '') || 'hotel';
 
 export interface HotelPhoto {
   id: string;
@@ -74,29 +66,28 @@ export async function listHotelPhotos(slug: string): Promise<HotelPhoto[]> {
 }
 
 export async function uploadHotelPhoto(
-  rawSlug: string,
+  slug: string,
   nameFa: string,
   formData: FormData,
 ): Promise<HotelPhoto> {
   await requireAdmin(['owner', 'editor']);
   const file = formData.get('photo');
-  if (!(file instanceof File) || file.size === 0) throw new Error('فایلی انتخاب نشده است.');
-  if (!file.type.startsWith('image/')) throw new Error('فقط فایل تصویری مجاز است.');
-  if (file.size > MAX_BYTES) throw new Error('حجم عکس نباید از ۵ مگابایت بیشتر باشد.');
+  // قرارداد مشترک آپلود تصویر (میز ۳ — ایراد ۲۷): همان سیاست بنر تور؛
+  // SVG هم از روی پسوند هم از روی content-type رد می‌شود (ریسک XSS ذخیره‌شده).
+  await assertUploadImage(file as File);
+  const f = file as File;
 
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   const sb = serviceClient();
   await ensureBucket(sb);
 
-  const ext = (file.name.split('.').pop() || '').toLowerCase();
-  if (!(ALLOWED_EXTS as readonly string[]).includes(ext)) {
-    throw new Error('فرمت عکس مجاز نیست؛ فقط jpg، png یا webp.');
-  }
-  const slug = cleanSlug(rawSlug);
-  const path = `${slug}/${crypto.randomUUID()}.${ext}`;
-  const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, file, {
-    contentType: EXT_MIME[ext],
+  // پسوند این‌جا حتماً معتبر است (assertUploadImage ردش کرده) — همان را برای مسیر فایل برمی‌داریم.
+  // نامک هم مثل بنر تور تمیز می‌شود تا نویسهٔ نامعتبر وارد مسیر استوریج نشود.
+  const ext = (f.name.split('.').pop() || '').toLowerCase();
+  const path = `${cleanStorageSlug(slug, 'hotel')}/${crypto.randomUUID()}.${ext}`;
+  const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, f, {
+    contentType: f.type,
     upsert: false,
   });
   if (uploadError) throw new Error('آپلود عکس ناموفق بود.');
@@ -120,9 +111,12 @@ export async function deleteHotelPhoto(id: string): Promise<{ ok: true }> {
   if (!row) throw new Error('عکس پیدا نشد.');
   await db.update(media).set({ deletedAt: new Date() }).where(eq(media.id, id));
   // حذف فایل از استوریج؛ اگر نشد، رکورد بایگانی‌شده دیگر نمایش داده نمی‌شود.
+  // همان اعتبارسنج سخت‌گیرانهٔ پاک‌سازی بنر تور: فقط همین باکت، فقط زیرمسیرِ
+  // همین هتل، فقط URL عمومی استوریج همین پروژه — آدرس دست‌کاری‌شده رد می‌شود.
   try {
     const sb = serviceClient();
-    const path = row.url.split(`/${BUCKET}/`)[1];
+    const rawSlug = row.source.startsWith('hotel:') ? row.source.slice('hotel:'.length) : '';
+    const path = storagePathInBucket(row.url, BUCKET, `${cleanStorageSlug(rawSlug, 'hotel')}/`);
     if (path) await sb.storage.from(BUCKET).remove([path]);
   } catch {
     /* نادیده — بایگانی منطقی کافی است */

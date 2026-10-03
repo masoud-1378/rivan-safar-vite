@@ -5,6 +5,14 @@ import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { RichEditor, type PickedImage } from '@/components/ui/rich-editor';
+import {
+  cleanRichValue,
+  isRichEmpty,
+  normalizeRichValue,
+  richFromPlainText,
+  type JSONContent,
+} from '@/lib/rich-text';
 import { fa } from '@/lib/utils';
 
 /**
@@ -60,10 +68,20 @@ export function normalizeItem(kind: BlockEditorKind, raw: unknown): unknown {
 export function readItem(kind: BlockEditorKind, raw: unknown): Record<string, unknown> {
   const r = asRecord(normalizeItem(kind, raw));
   if (kind === 'section') {
-    return { heading: str(r.heading), content: str(r.content ?? r.text ?? r.body) };
+    return {
+      heading: str(r.heading),
+      content: str(r.content ?? r.text ?? r.body),
+      // متن غنی بخش (ستون content_rich داخل آبجکت؛ قرارداد تیم داده)
+      contentRich: (r.content_rich ?? null) as JSONContent | string | null,
+    };
   }
   if (kind === 'faq') {
-    return { question: str(r.question ?? r.q), answer: str(r.answer ?? r.a) };
+    return {
+      question: str(r.question ?? r.q),
+      answer: str(r.answer ?? r.a),
+      // پاسخ غنی (کلید answer_rich داخل آبجکت؛ قرارداد تیم داده)
+      answerRich: (r.answer_rich ?? null) as JSONContent | string | null,
+    };
   }
   if (kind === 'phase') {
     return {
@@ -75,6 +93,14 @@ export function readItem(kind: BlockEditorKind, raw: unknown): Record<string, un
   // lines
   if (typeof raw === 'string') return { text: raw };
   return { text: str(r.text ?? r.label ?? r.title ?? r.name ?? r.value) };
+}
+
+/** مقدار اولیهٔ ویرایشگر غنی: اول نسخهٔ غنی (`*_rich`)، اگر خالی بود متن تخت قدیمی. */
+function richInitial(richRaw: unknown, plainText: string): JSONContent | null {
+  const json = normalizeRichValue(richRaw as JSONContent | string | null | undefined);
+  if (json && !isRichEmpty(json)) return json;
+  const t = plainText.trim();
+  return t ? richFromPlainText(t) : null;
 }
 
 /** نوشتن فیلد ویرایش‌شده در آیتم خام با حفظ کلیدهای ناشناس. */
@@ -89,10 +115,20 @@ export function writeItem(kind: BlockEditorKind, raw: unknown, patch: Record<str
   return { ...asRecord(normalizeItem(kind, raw)), ...patch };
 }
 
+function hasRichText(raw: unknown): boolean {
+  return !isRichEmpty(normalizeRichValue(raw as JSONContent | string | null | undefined));
+}
+
 function isEmptyItem(kind: BlockEditorKind, raw: unknown): boolean {
   const f = readItem(kind, raw);
-  if (kind === 'section') return !str(f.heading).trim() && !str(f.content).trim();
-  if (kind === 'faq') return !str(f.question).trim() && !str(f.answer).trim();
+  // بخش: تیتر خالی و هم متن تخت و هم متن غنی خالی‌اند
+  if (kind === 'section') {
+    return !str(f.heading).trim() && !str(f.content).trim() && !hasRichText(f.contentRich);
+  }
+  // پرسش: سؤال خالی و هم پاسخ تخت و هم پاسخ غنی خالی‌اند
+  if (kind === 'faq') {
+    return !str(f.question).trim() && !str(f.answer).trim() && !hasRichText(f.answerRich);
+  }
   if (kind === 'phase') {
     const cats = f.categories as string[];
     return !str(f.name).trim() && !str(f.date).trim() && cats.length === 0;
@@ -114,10 +150,15 @@ export function validateBlocks(kind: BlockEditorKind, items: unknown[]): string 
     const n = fa(i + 1);
     const label = KIND_META[kind].itemLabel;
     if (kind === 'lines') continue;
-    if (kind === 'section' && str(f.content).trim() && !str(f.heading).trim()) {
+    // «متن» یعنی متن تخت یا متن غنی — هر کدام که پر باشد کافی است.
+    const sectionHasBody = kind === 'section'
+      && (str(f.content).trim() !== '' || hasRichText(f.contentRich));
+    const faqHasAnswer = kind === 'faq'
+      && (str(f.answer).trim() !== '' || hasRichText(f.answerRich));
+    if (kind === 'section' && sectionHasBody && !str(f.heading).trim()) {
       return `تیتر ${label} ${n} خالی است.`;
     }
-    if (kind === 'faq' && str(f.answer).trim() && !str(f.question).trim()) {
+    if (kind === 'faq' && faqHasAnswer && !str(f.question).trim()) {
       return `متن ${label} ${n} خالی است.`;
     }
     if (kind === 'phase') {
@@ -142,9 +183,32 @@ export interface BlockEditorProps {
   hint?: string;
   /** خطای سطح فیلد از والد (زیر ویرایشگر نمایش داده می‌شود). */
   error?: string;
+  /**
+   * ویرایشگر متن بخش: 'plain' همان textarea قدیمی؛ 'rich' ویرایشگر کامل
+   * تایپ‌تپ که در `content_rich` (داخل آبجکت بخش) ذخیره می‌شود.
+   */
+  sectionBodyEditor?: 'plain' | 'rich';
+  /**
+   * ویرایشگر پاسخ FAQ: 'plain' همان textarea قدیمی؛ 'rich-light' ویرایشگر
+   * سبک که در `answer_rich` (داخل آبجکت پرسش) ذخیره می‌شود.
+   */
+  faqAnswerEditor?: 'plain' | 'rich-light';
+  /** انتخاب عکس از کتابخانهٔ رسانه — برای دکمهٔ عکس ویرایشگر متن بخش. */
+  pickImage?: () => Promise<PickedImage | null>;
 }
 
-export default function BlockEditor({ kind, value, onChange, addLabel, title, hint, error }: BlockEditorProps) {
+export default function BlockEditor({
+  kind,
+  value,
+  onChange,
+  addLabel,
+  title,
+  hint,
+  error,
+  sectionBodyEditor = 'plain',
+  faqAnswerEditor = 'plain',
+  pickImage,
+}: BlockEditorProps) {
   const baseId = useId().replace(/:/g, '');
   const meta = KIND_META[kind];
   // یافتهٔ ۱۱: حافظهٔ فرم همیشه نرمال است — title قدیمی از همان اول به heading
@@ -186,13 +250,23 @@ export default function BlockEditor({ kind, value, onChange, addLabel, title, hi
             />
           </Field>
           <Field label="متن" htmlFor={`${baseId}-s${index}-c`}>
-            <Textarea
-              id={`${baseId}-s${index}-c`}
-              value={str(f.content)}
-              onChange={(e) => patch(index, { content: e.target.value })}
-              className="min-h-24"
-              placeholder="متن بخش…"
-            />
+            {sectionBodyEditor === 'rich' ? (
+              <RichEditor
+                variant="full"
+                value={richInitial(f.contentRich, str(f.content))}
+                onChange={(json) => patch(index, { content_rich: cleanRichValue(json) })}
+                pickImage={pickImage}
+                placeholder="متن بخش…"
+              />
+            ) : (
+              <Textarea
+                id={`${baseId}-s${index}-c`}
+                value={str(f.content)}
+                onChange={(e) => patch(index, { content: e.target.value })}
+                className="min-h-24"
+                placeholder="متن بخش…"
+              />
+            )}
           </Field>
         </>
       );
@@ -209,13 +283,22 @@ export default function BlockEditor({ kind, value, onChange, addLabel, title, hi
             />
           </Field>
           <Field label="پاسخ" htmlFor={`${baseId}-f${index}-a`}>
-            <Textarea
-              id={`${baseId}-f${index}-a`}
-              value={str(f.answer)}
-              onChange={(e) => patch(index, { answer: e.target.value })}
-              className="min-h-24"
-              placeholder="پاسخ…"
-            />
+            {faqAnswerEditor === 'rich-light' ? (
+              <RichEditor
+                variant="light"
+                value={richInitial(f.answerRich, str(f.answer))}
+                onChange={(json) => patch(index, { answer_rich: cleanRichValue(json) })}
+                placeholder="پاسخ…"
+              />
+            ) : (
+              <Textarea
+                id={`${baseId}-f${index}-a`}
+                value={str(f.answer)}
+                onChange={(e) => patch(index, { answer: e.target.value })}
+                className="min-h-24"
+                placeholder="پاسخ…"
+              />
+            )}
           </Field>
         </>
       );

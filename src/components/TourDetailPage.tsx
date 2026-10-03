@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { 
   Phone, Calendar, Clock, MapPin, Plane, ShieldCheck, CheckCircle2, 
   XCircle, Building2, User, Send, Check, AlertCircle, HelpCircle, 
-  ChevronLeft, Sparkles, FileText, CalendarDays, FileCheck2,
-  Headphones, Mic, Luggage, Wallet, BadgeCheck
+  ChevronLeft, Sparkles, FileText, ArrowRight, CalendarDays, FileCheck2,
+  Headphones, Mic, Luggage, Wallet, BadgeCheck, Users, Star, MessageSquareHeart, Images
 } from 'lucide-react';
 import { type TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
 import { useContent } from '@/src/lib/content-context';
@@ -12,9 +12,15 @@ import { safeCreateLead } from '../lib/lead-submit-safe';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import { fa } from '@/lib/utils';
+import { formatHotelStarsRange } from '@/lib/hotel-stars';
+// تیم «فرم تورها»: رندر متن‌های غنی تور (description_rich / faqs / why_this_tour)
+// با RichText + fallback متن تخت قدیمی.
+import { RichText } from '@/components/ui/rich-editor/RichText';
+import { faqRichAnswer, isRichEmpty, normalizeRichValue, richFallback, type JSONContent } from '@/lib/rich-text';
 import {
   liveExtras, isDomesticTour, faDateTime, boardLabel,
   transportLabel, transportSpecLabel, isValidMobile, normalizeMobile,
+  hotelPriceRows, bookingTypeLabel, findDestinationPlace, hasDestinationInfo,
 } from './tour-live';
 
 interface TourDetailPageProps {
@@ -61,8 +67,26 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
   // فیلدهای زنده تورساز (بسته A) — همه اختیاری و دفاعی
   const extras = liveExtras(tour);
   const itineraryDays = (extras.itineraryDays || []).filter(
-    (d) => d && (d.title || d.description)
+    (d) =>
+      d &&
+      (d.title ||
+        (d.description || '').trim() ||
+        !isRichEmpty(normalizeRichValue(d.descriptionRich as JSONContent | string | null | undefined)))
   );
+  // متن‌های غنی تور (مایگریشن 0030) — خالی یعنی بخش نمایش داده نمی‌شود.
+  const whyThisTourJson = normalizeRichValue(tour.whyThisTourRich);
+  const hasWhyThisTour = !isRichEmpty(whyThisTourJson);
+  const tourFaqs = (Array.isArray(tour.faqs) ? tour.faqs : [])
+    .filter((f) => f && typeof f.question === 'string' && f.question.trim() !== '')
+    .map((f) => ({
+      question: f.question.trim(),
+      answer: f.answer ?? '',
+      answerRich: normalizeRichValue(faqRichAnswer(f)),
+    }))
+    .filter((f) => f.answer.trim() !== '' || !isRichEmpty(f.answerRich));
+  // بلوک مالی واقعی (بسته A — موج ۳، مایگریشن 0027): همه اختیاری و دفاعی.
+  // فقط چیزی که مدیر واقعاً وارد کرده نمایش داده می‌شود؛ پلهٔ ناقص (یکی از سه
+  // عددش خالی) هرگز به مسافر نشان داده نمی‌شود.
   const trust = extras.trustSpecs || null;
   const hasTrust =
     !!trust &&
@@ -86,6 +110,14 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
     setErrors(errs);
     return !errs.name && !errs.phone;
   };
+
+  // موج ۱ قلم ۱: رکورد مقصد برای بخش «اطلاعات کاربردی مقصد»؛ فقط وقتی رکورد
+  // پیدا شود و دست‌کم یک فیلد کاربردی پر داشته باشد، بخش رندر می‌شود.
+  const destPlace = findDestinationPlace(tour, { ...countries, ...cities });
+  const hasDestInfo = !!destPlace && hasDestinationInfo(destPlace);
+  const destTips = destPlace
+    ? (destPlace.travelTips || []).filter((t) => t && t.trim()).slice(0, 4)
+    : [];
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,9 +202,9 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 {tour.title}
               </h1>
 
-              <p className="text-body text-text-secondary leading-relaxed mb-6">
-                {tour.description}
-              </p>
+              <div className="text-body text-text-secondary leading-relaxed mb-6">
+                <RichText value={richFallback(tour.descriptionRich, tour.description)} />
+              </div>
 
               {/* Specifications Box */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-surface-secondary rounded-card border border-border-default/80 mb-6 text-caption font-medium">
@@ -190,9 +222,22 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 </div>
                 <div>
                   <span className="text-text-muted block mb-0.5">درجه هتل‌ها:</span>
-                  <span className="text-text-heading font-bold">{tour.hotelStars ? `${fa(tour.hotelStars)} ستاره و بالاتر` : '—'}</span>
+                  <span className="text-text-heading font-bold">{formatHotelStarsRange((tour.hotelOptions ?? []).map((o) => o.stars), tour.hotelStars)}</span>
                 </div>
               </div>
+
+              {/* موج ۱ قلم ۱: مسیر پرواز — فیلد route دیتابیس که فقط در مودال
+                  فهرست تورها نمایش داده می‌شد. (جدول routeSegments خالی است؛
+                  رندر سگمنتی ممکن نیست و چیزی حدس زده نمی‌شود.) */}
+              {tour.route?.trim() && (
+                <div className="flex items-center gap-2 mb-6 text-body-sm">
+                  <Plane className="w-4 h-4 text-brand-orange shrink-0" />
+                  <span className="text-text-muted font-medium">
+                    {transportKind === 'air' ? 'مسیر پرواز:' : 'مسیر سفر:'}
+                  </span>
+                  <span className="text-text-heading font-bold">{tour.route}</span>
+                </div>
+              )}
 
               {/* Price & Status Card */}
               <div className="p-5 bg-surface-secondary/80 rounded-card border border-border-default mb-6">
@@ -267,6 +312,25 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
         </div>
       </section>
 
+      {/* ---------------- چرا همین تور (تیم «فرم تورها»؛ فقط وقتی داده هست) ---------------- */}
+      {hasWhyThisTour && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="bg-surface-primary border border-border-default rounded-card p-5 md:p-6 shadow-subtle">
+            <div className="text-right mb-4">
+              <h2 className="text-h2 text-text-heading font-bold mb-1.5">
+                چرا همین تور؟
+              </h2>
+              <p className="text-body-sm text-text-secondary">
+                نکته‌هایی که این تور را از تورهای مشابه جدا می‌کند.
+              </p>
+            </div>
+            <div className="text-body-sm text-text-secondary leading-relaxed">
+              <RichText value={whyThisTourJson} />
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ---------------- برنامه روزبه‌روز (از تورساز؛ فقط وقتی داده هست) ---------------- */}
       {itineraryDays.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
@@ -300,8 +364,10 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 {day.title && (
                   <h3 className="text-body font-bold text-text-heading mb-1.5">{day.title}</h3>
                 )}
-                {day.description && (
-                  <p className="text-body-sm text-text-secondary leading-relaxed">{day.description}</p>
+                {((day.description || '').trim() || !isRichEmpty(normalizeRichValue(day.descriptionRich as JSONContent | string | null | undefined))) && (
+                  <div className="text-body-sm text-text-secondary leading-relaxed">
+                    <RichText value={richFallback(day.descriptionRich, day.description)} />
+                  </div>
                 )}
                 {day.meals && (
                   <p className="text-caption text-text-muted mt-2">
@@ -310,6 +376,37 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 )}
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* ---------------- سوالات پرتکرار این تور (تیم «فرم تورها»؛ فقط وقتی داده هست) ---------------- */}
+      {tourFaqs.length > 0 && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="bg-surface-primary border border-border-default rounded-card p-5 md:p-6 shadow-subtle">
+            <div className="text-right mb-5">
+              <h2 className="text-h2 text-text-heading font-bold mb-1.5">
+                سوالات پرتکرار
+              </h2>
+              <p className="text-body-sm text-text-secondary">
+                پاسخ سؤال‌هایی که مسافرها دربارهٔ همین تور زیاد می‌پرسند.
+              </p>
+            </div>
+            <div className="space-y-2.5">
+              {tourFaqs.map((f, i) => (
+                <details
+                  key={i}
+                  className="rounded-control border border-border-default/70 bg-surface-secondary/40 px-4 py-3"
+                >
+                  <summary className="cursor-pointer text-body-sm font-bold text-text-heading">
+                    {f.question}
+                  </summary>
+                  <div className="pt-2 text-body-sm text-text-secondary leading-relaxed">
+                    <RichText value={richFallback(f.answerRich, f.answer)} />
+                  </div>
+                </details>
+              ))}
+            </div>
           </div>
         </section>
       )}
@@ -338,29 +435,141 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-default/60">
-                  {tour.hotelOptions.map((opt, idx) => (
-                    <tr key={idx} className="hover:bg-surface-secondary/40 transition-colors">
-                      <td className="py-4 px-4 sm:px-6 font-bold text-text-heading">
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-text-muted" />
-                          <span>{opt.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="inline-flex px-2 py-0.5 rounded bg-brand-warning-soft text-brand-warning font-bold text-caption border border-brand-warning/25">
-                          {opt.stars ? `${fa(opt.stars)} ستاره` : '—'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-center text-text-secondary">
-                        {boardLabel(opt.board)}
-                      </td>
-                      <td className="py-4 px-4 sm:px-6 text-end font-extrabold text-brand-orange">
-                        {opt.pricePerPerson}
-                      </td>
-                    </tr>
-                  ))}
+                  {tour.hotelOptions.map((opt, idx) => {
+                    // موج ۱ قلم ۱: تفکیک نرخ اتاق‌ها و نوع رزرو از دادهٔ تورساز
+                    // مرحلهٔ ۲ — فقط فیلدهای پر نمایش داده می‌شوند.
+                    const priceRows = hotelPriceRows(opt);
+                    const booking = bookingTypeLabel(opt.bookingType);
+                    return (
+                      <tr key={idx} className="hover:bg-surface-secondary/40 transition-colors">
+                        <td className="py-4 px-4 sm:px-6 font-bold text-text-heading">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {opt.photoUrl ? (
+                              <span className="relative h-11 w-16 shrink-0 overflow-hidden rounded-sm">
+                                <SmartImage src={opt.photoUrl} alt={opt.name} />
+                              </span>
+                            ) : (
+                              <Building2 className="w-4 h-4 text-text-muted" />
+                            )}
+                            <span>{opt.name}</span>
+                            {booking && (
+                              <span className="inline-flex px-2 py-0.5 rounded bg-sky-50 text-sky-700 font-bold text-caption border border-sky-200">
+                                رزرو {booking}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          <span className="inline-flex px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold text-caption border border-amber-200">
+                            {opt.stars ? `${fa(opt.stars)} ستاره` : '—'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-center text-text-secondary">
+                          {boardLabel(opt.board)}
+                        </td>
+                        <td className="py-4 px-4 sm:px-6 text-left">
+                          {priceRows.length === 0 ? (
+                            <span className="font-extrabold text-brand-orange">
+                              {opt.pricePerPerson?.trim() ? opt.pricePerPerson : '—'}
+                            </span>
+                          ) : priceRows.length === 1 ? (
+                            <span className="font-extrabold text-brand-orange">
+                              {priceRows[0].value}
+                            </span>
+                          ) : (
+                            <div className="space-y-1.5">
+                              {priceRows.map((row, i) => (
+                                <div key={i} className={i === 0 ? 'font-extrabold text-brand-orange' : ''}>
+                                  <span className="block text-caption text-text-muted font-medium">
+                                    {row.label}
+                                  </span>
+                                  <span className={i === 0 ? '' : 'text-body-sm font-bold text-text-heading'}>
+                                    {row.value}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ---------------- اطلاعات کاربردی مقصد (از رکورد مقصد؛ فقط وقتی داده هست) ---------------- */}
+      {hasDestInfo && destPlace && (
+        <section className="bg-surface-secondary/60 border-y border-border-default section-standard">
+          <div className="container-main px-4 sm:px-6 lg:px-8">
+            <div className="text-right mb-6">
+              <h2 className="text-h2 text-text-heading font-bold mb-1.5">
+                اطلاعات کاربردی {destPlace.name}
+              </h2>
+              <p className="text-body-sm text-text-secondary">
+                آنچه پیش از سفر به {destPlace.name} بد نیست بدانید.
+                {destPlace.lastVerifiedAt?.trim() && (
+                  <span className="text-caption text-text-muted"> (آخرین بازبینی: {destPlace.lastVerifiedAt})</span>
+                )}
+              </p>
+            </div>
+
+            <div className="bg-surface-primary border border-border-default rounded-card p-6 shadow-subtle">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-right">
+                {destPlace.currency?.trim() && (
+                  <div>
+                    <dt className="text-caption text-text-muted font-bold mb-0.5 flex items-center gap-1.5">
+                      <Wallet className="w-3.5 h-3.5" />
+                      واحد پول
+                    </dt>
+                    <dd className="text-body-sm font-bold text-text-heading">{destPlace.currency}</dd>
+                  </div>
+                )}
+                {destPlace.bestSeason?.trim() && (
+                  <div>
+                    <dt className="text-caption text-text-muted font-bold mb-0.5 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" />
+                      بهترین فصل سفر
+                    </dt>
+                    <dd className="text-body-sm font-bold text-text-heading">{destPlace.bestSeason}</dd>
+                  </div>
+                )}
+                {destPlace.flightDuration?.trim() && (
+                  <div>
+                    <dt className="text-caption text-text-muted font-bold mb-0.5 flex items-center gap-1.5">
+                      <Plane className="w-3.5 h-3.5" />
+                      مدت پرواز
+                    </dt>
+                    <dd className="text-body-sm font-bold text-text-heading">{destPlace.flightDuration}</dd>
+                  </div>
+                )}
+                {destPlace.visaType?.trim() && (
+                  <div>
+                    <dt className="text-caption text-text-muted font-bold mb-0.5 flex items-center gap-1.5">
+                      <FileCheck2 className="w-3.5 h-3.5" />
+                      وضعیت ویزا
+                    </dt>
+                    <dd className="text-body-sm font-bold text-text-heading">{destPlace.visaType}</dd>
+                  </div>
+                )}
+              </dl>
+
+              {destTips.length > 0 && (
+                <div className="mt-5 pt-5 border-t border-border-default/60">
+                  <h3 className="text-body font-bold text-text-heading mb-3">نکته‌های سفر</h3>
+                  <ul className="space-y-2.5">
+                    {destTips.map((tip, i) => (
+                      <li key={i} className="flex items-start gap-2 text-body-sm text-text-secondary">
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -478,19 +687,56 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
             </div>
           )}
 
-          <div className="bg-surface-primary border border-border-default rounded-card p-6">
-            <h3 className="text-h4 font-bold text-text-heading mb-2">قوانین کودک و تخت اضافه</h3>
-            <p className="text-caption text-text-secondary leading-relaxed">
-              کودکان زیر ۲ سال (نوزاد) هزینه ناچیز بیمه و پرواز دارند. کودکان ۲ تا ۱۲ سال با تخت یا بدون تخت با تخفیف محاسبه می‌شود.
-            </p>
-          </div>
-
-          <div className="bg-surface-primary border border-border-default rounded-card p-6">
-            <h3 className="text-h4 font-bold text-text-heading mb-2">شرایط تغییر و کنسلی</h3>
-            <p className="text-caption text-text-secondary leading-relaxed">
-              کنسلی و تغییر تاریخ بر اساس ضوابط سازمان هواپیمایی کشوری و قوانین هتل طرف قرارداد محاسبه شده و در قرارداد رسمی قید می‌شود.
-            </p>
-          </div>
+          {/* بلوک مالی واقعی (موج ۳): کارت «شرایط کنسلی و پیش‌پرداخت» — فقط دادهٔ
+              واقعی‌ای که مدیر در مرحلهٔ ۶ وارد کرده. پلهٔ ناقص هرگز نمایش داده
+              نمی‌شود؛ خالی بودن همه‌چیز یعنی کارت اصلاً رندر نمی‌شود. */}
+          {(() => {
+            const fin = tour.financialSpecs;
+            const tiers = (Array.isArray(fin?.cancellationTiers) ? fin!.cancellationTiers! : []).filter(
+              (t) =>
+                typeof t?.fromDays === 'number' && Number.isFinite(t.fromDays) &&
+                typeof t?.toDays === 'number' && Number.isFinite(t.toDays) &&
+                typeof t?.penaltyPercent === 'number' && Number.isFinite(t.penaltyPercent)
+            );
+            const visaNote = fin?.visaRejectionNote?.trim();
+            const deposit = fin?.depositAmount?.trim();
+            const deadline = fin?.depositDeadline?.trim();
+            if (tiers.length === 0 && !visaNote && !deposit) return null;
+            return (
+              <div className="bg-surface-primary border border-border-default rounded-card p-6">
+                <h3 className="text-h4 font-bold text-text-heading mb-4">شرایط کنسلی و پیش‌پرداخت</h3>
+                {tiers.length > 0 && (
+                  <>
+                    <p className="text-caption font-bold text-text-heading mb-2">جریمهٔ کنسلی پلکانی</p>
+                    <ul className="space-y-2 mb-4">
+                      {tiers.map((t, i) => (
+                        <li key={i} className="flex items-center justify-between gap-3 text-body-sm border-b border-border-default/60 pb-2 last:border-0 last:pb-0">
+                          <span className="text-text-secondary">از {fa(t.fromDays!)} تا {fa(t.toDays!)} روز مانده به حرکت</span>
+                          <span className="font-bold text-text-heading shrink-0">{fa(t.penaltyPercent!)}٪ جریمه</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                <dl className="space-y-2.5 text-caption">
+                  {visaNote && (
+                    <div className="flex items-start gap-2">
+                      <dt className="text-text-muted font-bold shrink-0">در صورت رد ویزا:</dt>
+                      <dd className="text-text-secondary leading-relaxed">{visaNote}</dd>
+                    </div>
+                  )}
+                  {deposit && (
+                    <div className="flex items-start gap-2">
+                      <dt className="text-text-muted font-bold shrink-0">پیش‌پرداخت:</dt>
+                      <dd className="text-text-secondary leading-relaxed">
+                        {deposit}{deadline ? ` — مهلت تسویه: ${deadline}` : ''}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
+            );
+          })()}
 
         </div>
       </section>
@@ -694,6 +940,116 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 </audio>
               </div>
             )}
+          </div>
+        </section>
+      )}
+
+      {/* ---------------- تورلیدر (موج ۴؛ فقط وقتی ثبت شده) ---------------- */}
+      {tour.leader && tour.leader.name && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="bg-surface-primary border border-border-default rounded-card p-6 shadow-subtle">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Users className="w-5 h-5 text-brand-orange" />
+              <h2 className="text-h3 text-text-heading font-bold">تورلیدر شما</h2>
+            </div>
+            <p className="text-body-sm text-text-secondary mb-5">
+              کسی که در این سفر همراهتان است.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 items-start">
+              {tour.leader.photo ? (
+                <div className="w-20 h-20 rounded-full overflow-hidden shrink-0">
+                  <SmartImage src={tour.leader.photo} alt={tour.leader.name} className="object-cover" sizes="80px" />
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-brand-orange/10 text-brand-orange flex items-center justify-center shrink-0">
+                  <Users className="w-9 h-9" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <div className="text-body font-bold text-text-heading flex items-center gap-1.5">
+                  {tour.leader.name}
+                  <BadgeCheck className="w-4 h-4 text-brand-orange" />
+                </div>
+                {tour.leader.languages && (
+                  <div className="text-caption text-text-secondary mt-0.5">زبان‌ها: {tour.leader.languages}</div>
+                )}
+                {tour.leader.joinMode && (
+                  <div className="text-caption text-text-secondary mt-0.5">
+                    {tour.leader.joinMode === 'at_destination' ? 'در مقصد به گروه می‌پیوندد' : 'از مبدأ همراه گروه است'}
+                  </div>
+                )}
+                {tour.leader.bio && (
+                  <p className="text-body-sm text-text-secondary mt-2">{tour.leader.bio}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ---------------- نظر مسافران (موج ۴؛ فقط وقتی نظر تأییدشده هست) ---------------- */}
+      {tour.reviews && tour.reviews.length > 0 && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="flex items-center gap-2 mb-1">
+            <MessageSquareHeart className="w-5 h-5 text-brand-orange" />
+            <h2 className="text-h3 text-text-heading font-bold">نظر مسافران این تور</h2>
+          </div>
+          {tour.ratingSummary && (
+            <div className="flex items-center gap-2 mb-5" dir="ltr">
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Star
+                    key={n}
+                    className={`w-4 h-4 ${n <= Math.round(tour.ratingSummary!.avg) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/40'}`}
+                  />
+                ))}
+              </div>
+              <span className="text-body-sm font-bold text-text-heading">{fa(tour.ratingSummary.avg)}</span>
+              <span className="text-caption text-text-secondary">از {fa(tour.ratingSummary.count)} نظر</span>
+            </div>
+          )}
+          <div className="grid gap-3 md:grid-cols-2">
+            {tour.reviews.slice(0, 6).map((r, i) => (
+              <div key={i} className="bg-surface-primary border border-border-default rounded-card p-4">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span className="text-body-sm font-bold text-text-heading">{r.name}</span>
+                  <div className="flex items-center gap-0.5" dir="ltr">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star
+                        key={n}
+                        className={`w-3.5 h-3.5 ${n <= r.rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/40'}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-body-sm text-text-secondary">{r.text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ---------------- گالری واقعی (موج ۴؛ فقط وقتی عکس هست) ---------------- */}
+      {tour.gallery && tour.gallery.length > 0 && (
+        <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
+          <div className="flex items-center gap-2 mb-1">
+            <Images className="w-5 h-5 text-brand-orange" />
+            <h2 className="text-h3 text-text-heading font-bold">گالری واقعی</h2>
+          </div>
+          <p className="text-body-sm text-text-secondary mb-5">
+            عکس‌های واقعی همین تور و مقصد — نه عکس تبلیغاتی.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {tour.gallery.map((g, i) => (
+              <figure key={i} className="rounded-card overflow-hidden border border-border-default bg-surface-primary">
+                <div className="aspect-[4/3] relative">
+                  <SmartImage src={g.url} alt={g.caption || tour.title} className="object-cover" sizes="(max-width: 640px) 50vw, 33vw" />
+                </div>
+                {g.caption && (
+                  <figcaption className="text-caption text-text-secondary p-2">{g.caption}</figcaption>
+                )}
+              </figure>
+            ))}
           </div>
         </section>
       )}

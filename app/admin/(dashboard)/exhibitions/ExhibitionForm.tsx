@@ -11,9 +11,33 @@ import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatJalali } from '@/lib/jalali';
 import { faSlug } from '@/lib/utils';
-import { saveExhibition, type ExhibitionInput, type ExhibitionRow, type ExhibitionStatus } from './actions';
+import { MediaField } from '@/components/ui/media-library/MediaField';
+import { mediaTag, type PickedImage } from '@/components/ui/media-library/types';
+import { openMediaPicker } from '@/components/ui/media-library/openMediaPicker';
+import { RichEditor } from '@/components/ui/rich-editor';
+import { ColumnNotice, useColumnGuard } from '@/components/ui/column-guard';
+import { SeoMetaFields } from '@/components/ui/seo-meta-fields';
+import {
+  cleanRichValue,
+  isRichEmpty,
+  normalizeRichValue,
+  richFromPlainText,
+  type JSONContent,
+} from '@/lib/rich-text';
+import { saveExhibition, checkExhibitionDescriptionCol, checkExhibitionSeoCols, type ExhibitionInput, type ExhibitionRow, type ExhibitionStatus } from './actions';
 import BlockEditor, { cleanBlocks, validateBlocks } from '@/components/ui/block-editor';
 import { safeErrorMessage } from '@/src/lib/error-message';
+
+/** مقدار اولیهٔ ویرایشگر: اول نسخهٔ غنی (`*_rich`)، اگر خالی بود متن تخت قدیمی. */
+function initialRich(
+  rich: JSONContent | string | null | undefined,
+  plain: string | null | undefined,
+): JSONContent | null {
+  const json = normalizeRichValue(rich ?? null);
+  if (json && !isRichEmpty(json)) return json;
+  const t = (plain ?? '').trim();
+  return t ? richFromPlainText(t) : null;
+}
 
 const STATUSES: Array<{ value: ExhibitionStatus; label: string }> = [
   { value: 'draft', label: 'پیش‌نویس' },
@@ -58,8 +82,22 @@ export default function ExhibitionForm({
   const [industrySlug, setIndustrySlug] = useState(initial?.industrySlug ?? '');
   const [industrySlugTouched, setIndustrySlugTouched] = useState(Boolean(initial?.industrySlug));
   const [heroTagline, setHeroTagline] = useState(initial?.heroTagline ?? '');
-  const [description, setDescription] = useState(initial?.description ?? '');
-  const [image, setImage] = useState(initial?.image ?? '');
+  // توضیحات کامل با ویرایشگر کامل؛ خوانش اول از description_rich، بعد متن تخت قدیمی.
+  const [descriptionRich, setDescriptionRich] = useState<JSONContent | null>(() =>
+    initialRich(initial?.descriptionRich, initial?.description),
+  );
+  const [metaTitle, setMetaTitle] = useState(initial?.metaTitle ?? '');
+  const [metaDescription, setMetaDescription] = useState(initial?.metaDescription ?? '');
+  // نگهبان ستون‌های تازه (الگوی مصوب QA): اگر مایگریشن 0030/0032 هنوز اجرا
+  // نشده، کنار همان فیلد اطلاع صادقانه و غیربلاک‌کننده نشان می‌دهیم.
+  const descriptionColReady = useColumnGuard(checkExhibitionDescriptionCol);
+  const seoColsReady = useColumnGuard(checkExhibitionSeoCols);
+  // تصویر نمایشگاه: آپلود تازه / انتخاب از کتابخانه / لینک دستی.
+  // فرم فقط url را ذخیره می‌کند؛ کپشن و alt در خودِ مقدار می‌ماند تا
+  // ستون‌هایش به دیتابیس اضافه شود.
+  const [hero, setHero] = useState<PickedImage | null>(
+    initial?.image ? { url: initial.image } : null,
+  );
   const [editionSlug, setEditionSlug] = useState(initial?.editionSlug ?? '');
   const [editionSlugTouched, setEditionSlugTouched] = useState(Boolean(initial?.editionSlug));
   // F1: «تاریخ شروع» و «تاریخ پایان (اختیاری)» هر دو DatePicker شمسی‌اند؛
@@ -127,6 +165,10 @@ export default function ExhibitionForm({
     if (d || startPicked) setDisplayText(buildDisplay(startPicked, d));
   };
 
+  // عکس داخل متن توضیحات از کتابخانهٔ رسانه (تگ نمایشگاه).
+  const pickDescriptionImage = () =>
+    openMediaPicker({ tag: mediaTag('exhibition', slug), title: 'انتخاب عکس برای متن توضیحات' });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -157,8 +199,13 @@ export default function ExhibitionForm({
       industry: industry.trim(),
       industrySlug: industrySlug.trim(),
       heroTagline: heroTagline.trim(),
-      description: description.trim(),
-      image: image.trim(),
+      // توضیحات کامل غنی در description_rich ذخیره می‌شود؛ ستون متنی قدیمی
+      // (description) دست نمی‌خورد و فقط fallback می‌ماند.
+      descriptionRich: cleanRichValue(descriptionRich),
+      metaTitle: metaTitle.trim(),
+      metaDescription: metaDescription.trim(),
+      faqsFormat: initial?.faqsFormat ?? 'array',
+      image: hero?.url.trim() ?? '',
       editionSlug: editionSlug.trim(),
       solarDate: displayText.trim(),
       gregorianDate: gregorianDate.trim(),
@@ -211,9 +258,14 @@ export default function ExhibitionForm({
         <Field label="صنعت" htmlFor="ex-industry">
           <Input id="ex-industry" value={industry} onChange={(e) => onIndustry(e.target.value)} placeholder="مثال: فناوری اطلاعات" />
         </Field>
-        <Field label="تصویر" htmlFor="ex-image">
-          <Input id="ex-image" value={image} onChange={(e) => setImage(e.target.value)} className="text-start" dir="ltr" placeholder="https://..." />
-        </Field>
+        <MediaField
+          label="تصویر"
+          htmlFor="ex-image"
+          value={hero}
+          onChange={setHero}
+          tag={mediaTag('exhibition', slug)}
+          tagLabel="نمایشگاه"
+        />
         <Field label="تاریخ شروع" htmlFor="ex-start">
           <DatePicker value={startPicked} onChange={onStartPick} placeholder="انتخاب تاریخ شروع" />
         </Field>
@@ -235,10 +287,48 @@ export default function ExhibitionForm({
         <Textarea id="ex-visa" value={visaDeadline} onChange={(e) => setVisaDeadline(e.target.value)} className="min-h-20" placeholder="توضیحات مربوط به مهلت و مدارک ویزا..." />
       </Field>
 
+      {/* محتوای اصلی (شعار + توضیحات کامل) بالای بخش تاشوی تکمیلی — ترتیب فکر کاربر: اول محتوا، بعد جزئیات کم‌کاربرد */}
+      <Field label="شعار اصلی" htmlFor="ex-tagline">
+        <Input id="ex-tagline" value={heroTagline} onChange={(e) => setHeroTagline(e.target.value)} placeholder="جمله کوتاه معرفی نمایشگاه..." />
+      </Field>
+
+      {/* توضیحات کامل با ویرایشگر غنی؛ بدون هیچ سقف کاراکتری (دستور مسعود). */}
+      <Field
+        label="توضیحات کامل"
+        htmlFor="ex-desc"
+        hint="معرفی کامل نمایشگاه؛ تیتر، لیست، لینک و عکس هم می‌شود گذاشت."
+      >
+        <RichEditor
+          variant="full"
+          value={descriptionRich}
+          onChange={setDescriptionRich}
+          pickImage={pickDescriptionImage}
+          placeholder="معرفی کامل نمایشگاه…"
+        />
+        {descriptionColReady === false && (
+          <ColumnNotice>ذخیرهٔ این فیلد به به‌روزرسانی دیتابیس نیاز دارد؛ فعلاً اعمال نمی‌شود.</ColumnNotice>
+        )}
+      </Field>
+
+      <div className="space-y-3 border-t pt-5">
+        <h3 className="text-sm font-semibold">سئو</h3>
+        {seoColsReady === false && (
+          <ColumnNotice>ذخیرهٔ این فیلد به به‌روزرسانی دیتابیس نیاز دارد؛ فعلاً اعمال نمی‌شود.</ColumnNotice>
+        )}
+        <SeoMetaFields
+          metaTitle={metaTitle}
+          onMetaTitleChange={setMetaTitle}
+          metaDescription={metaDescription}
+          onMetaDescriptionChange={setMetaDescription}
+          titleFallback={titleFa}
+          urlPreview={slug ? `/exhibition/${slug}` : ''}
+        />
+      </div>
+
       {/* E4: فیلدهای کم‌کاربرد در بخش تاشوی «تکمیلی» */}
       <Collapsible trigger="تکمیلی" openLabel="بستن بخش تکمیلی" className="rounded-sm border border-border bg-muted/20 p-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="نامک انگلیسی" htmlFor="ex-slug" hint="خودکار از عنوان فارسی ساخته می‌شود؛ فقط اگر لازم بود تغییرش دهید." error={slugError}>
+          <Field label="نامک انگلیسی" htmlFor="ex-slug" hint="خودکار از عنوان فارسی ساخته می‌شود؛ فقط حروف انگلیسی، عدد، خط تیره و آندرلاین." error={slugError}>
             <Input id="ex-slug" value={slug} onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); setSlugError(undefined); }} className="text-start" dir="ltr" placeholder="e.g. gitex-2025" />
           </Field>
           <Field label="عنوان انگلیسی" htmlFor="ex-title-en">
@@ -270,14 +360,6 @@ export default function ExhibitionForm({
           </Field>
         </div>
       </Collapsible>
-
-      <Field label="شعار اصلی" htmlFor="ex-tagline">
-        <Input id="ex-tagline" value={heroTagline} onChange={(e) => setHeroTagline(e.target.value)} placeholder="جمله کوتاه معرفی نمایشگاه..." />
-      </Field>
-
-      <Field label="توضیحات کامل" htmlFor="ex-desc">
-        <Textarea id="ex-desc" value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-20" placeholder="معرفی کامل نمایشگاه..." />
-      </Field>
 
       <BlockEditor
         kind="phase"
@@ -315,6 +397,7 @@ export default function ExhibitionForm({
           setFaqsError(undefined);
         }}
         error={faqsError}
+        faqAnswerEditor="rich-light"
       />
 
       <div className="flex items-center gap-3 pt-2">
