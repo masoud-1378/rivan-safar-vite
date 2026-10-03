@@ -15,6 +15,7 @@ import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
 import { formatHotelStars } from '@/lib/hotel-stars';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 interface HotelsManagerProps {
   initial: HotelRow[];
@@ -98,7 +99,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
       ]);
       setPhotos((prev) => [photo, ...prev]);
     } catch (err) {
-      toast({ variant: 'error', title: err instanceof Error ? err.message : 'آپلود ناموفق بود.' });
+      toast({ variant: 'error', title: safeErrorMessage(err, 'آپلود ناموفق بود.') });
     } finally {
       setUploading(false);
     }
@@ -127,7 +128,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
       await deleteHotelPhoto(id);
       setPhotos((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
-      toast({ variant: 'error', title: err instanceof Error ? err.message : 'حذف عکس ناموفق بود.' });
+      toast({ variant: 'error', title: safeErrorMessage(err, 'حذف عکس ناموفق بود.') });
     }
   };
 
@@ -155,7 +156,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
         setOpen(false);
         backToHotelsTab();
       } catch (e) {
-        const message = e instanceof Error ? e.message : 'خطا در ذخیره.';
+        const message = safeErrorMessage(e, 'خطا در ذخیره.');
         if (message === 'این نام قبلاً ثبت شده') {
           setNameError(message);
         } else if (message === 'ستارهٔ هتل باید بین ۰ تا ۷ باشد.') {
@@ -182,7 +183,7 @@ export default function HotelsManager({ initial, places, initialCitySlug = '' }:
       );
       backToHotelsTab();
     } catch (error) {
-      toast({ variant: 'error', title: error instanceof Error ? error.message : 'خطا در حذف.' });
+      toast({ variant: 'error', title: safeErrorMessage(error, 'خطا در حذف.') });
     }
   };
 

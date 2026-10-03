@@ -8,6 +8,7 @@ import { COUNTRIES, CITIES } from '@/src/data/destinationsData';
 import { GUIDES } from '@/src/data/guidesData';
 import { EXHIBITION_SERIES } from '@/src/data/exhibitionsData';
 import { getTour, getGuide, getExhibition, getSeoLandingByPath, getCountries, getCities } from '@/src/lib/db-content';
+import { isIndexingEnabled } from '@/src/lib/site-contact';
 
 export interface ResolvedSeo {
   title: string;
@@ -15,6 +16,32 @@ export interface ResolvedSeo {
   canonicalPath: string;
   robots: 'index,follow' | 'noindex,nofollow';
   breadcrumbs: BreadcrumbItem[];
+}
+
+/**
+ * P1-22: اتصال اجزای جمله با «،» و «و»؛ فقط فیلدهای پر وارد جمله می‌شوند
+ * تا با origin/duration/airline خالی جملهٔ ناقص («با حرکت از ، مدت  و ایرلاین .») ساخته نشود.
+ */
+function joinFa(parts: string[]): string {
+  if (parts.length <= 1) return parts.join('');
+  return `${parts.slice(0, -1).join('، ')} و ${parts[parts.length - 1]}`;
+}
+
+function tourMetaDescription(tour: {
+  title: string;
+  origin: string;
+  duration: string;
+  airline: string;
+}): string {
+  const bits: string[] = [];
+  const origin = tour.origin.trim();
+  const duration = tour.duration.trim();
+  const airline = tour.airline.trim();
+  if (origin) bits.push(`با حرکت از ${origin}`);
+  if (duration) bits.push(`مدت ${duration}`);
+  if (airline) bits.push(`ایرلاین ${airline}`);
+  const head = bits.length > 0 ? `${tour.title} ${joinFa(bits)}.` : tour.title;
+  return `${head} قیمت پایه و ظرفیت هر حرکت پیش از اقدام تأیید می‌شود.`;
 }
 
 /** نسخه سروری buildPageSeo — تنها مرجع Title/Description/Canonical همه صفحات */
@@ -34,7 +61,7 @@ export function resolveSeo(path: string): ResolvedSeo {
     const tour = SAMPLE_TOURS.find((t) => t.id === route.params.tourSlug);
     if (tour) {
       title = `${tour.title}؛ تاریخ، قیمت و شرایط · ریوان سفر`;
-      description = `${tour.title} با حرکت از ${tour.origin}، مدت ${tour.duration} و ایرلاین ${tour.airline}. قیمت پایه و ظرفیت هر حرکت پیش از اقدام تأیید می‌شود.`;
+      description = tourMetaDescription(tour);
       breadcrumbs[breadcrumbs.length - 1] = { name: tour.title };
     } else {
       robots = 'noindex,nofollow';
@@ -93,6 +120,8 @@ export function resolveSeo(path: string): ResolvedSeo {
       title = `ویزای ${country.name}؛ مدارک و مراحل برای ایرانیان · ریوان سفر`;
       description = `مدارک و مراحل ویزای ${country.name} برای ایرانیان با منبع رسمی و تاریخ بازبینی.`;
       breadcrumbs[breadcrumbs.length - 1] = { name: `ویزای ${country.name}` };
+    } else {
+      robots = 'noindex,nofollow';
     }
   }
 
@@ -103,6 +132,8 @@ export function resolveSeo(path: string): ResolvedSeo {
  * نسخهٔ زندهٔ resolveSeo (ردیف ۱-۳): برای سه شاخهٔ تور/راهنما/نمایشگاه اول
  * رکورد همان موجودیت را از DB می‌خواند (از همان getTours/getGuides/getExhibitions
  * که صفحه‌ها استفاده می‌کنند) و تایتل/توضیحات را از فیلدهای رکورد می‌سازد؛
+ * برای کشور/شهر/ویزا هم از getCountries/getCities زنده lookup گرفته می‌شود
+ * تا موجودیت‌های فقط-DB متای اختصاصی بگیرند.
  * اگر در DB نبود، به رجیستری استاتیک (همان resolveSeo) برمی‌گردد.
  *
  * لندینگ سئو (ایراد ۱ اتصال پنل به سایت): جدول seo_landings منبع حقیقت است
@@ -124,6 +155,8 @@ export async function resolveSeoLive(path: string): Promise<ResolvedSeo> {
     return crumbs;
   };
 
+  let seo: ResolvedSeo = fallback;
+
   try {
     // لندینگ DB اول: تصمیم پنل بر هر متای دیگری مقدم است.
     const dbLanding = await getSeoLandingByPath(route.canonicalPath);
@@ -141,10 +174,10 @@ export async function resolveSeoLive(path: string): Promise<ResolvedSeo> {
     if (route.type === 'tour_detail') {
       const tour = await getTour(route.params.tourSlug);
       if (tour) {
-        return {
+        seo = {
           ...fallback,
           title: `${tour.title}؛ تاریخ، قیمت و شرایط · ریوان سفر`,
-          description: `${tour.title} با حرکت از ${tour.origin}، مدت ${tour.duration} و ایرلاین ${tour.airline}. قیمت پایه و ظرفیت هر حرکت پیش از اقدام تأیید می‌شود.`,
+          description: tourMetaDescription(tour),
           robots: 'index,follow',
           breadcrumbs: withCrumb(tour.title),
         };
@@ -152,7 +185,7 @@ export async function resolveSeoLive(path: string): Promise<ResolvedSeo> {
     } else if (route.type === 'guide_detail') {
       const guide = await getGuide(route.params.guideSlug);
       if (guide) {
-        return {
+        seo = {
           ...fallback,
           title: `${guide.title} · ریوان سفر`,
           description: guide.summary,
@@ -164,7 +197,7 @@ export async function resolveSeoLive(path: string): Promise<ResolvedSeo> {
       const series = await getExhibition(route.params.eventSeriesSlug);
       if (series) {
         const solarLive = series.upcomingEdition.solarDate?.trim();
-        return {
+        seo = {
           ...fallback,
           title: `${series.title} · ریوان سفر`,
           description: solarLive
@@ -205,11 +238,30 @@ export async function resolveSeoLive(path: string): Promise<ResolvedSeo> {
           breadcrumbs: crumbs,
         };
       }
+    } else if (route.type === 'visa_country') {
+      // QA1-02: کشورهای فقط-DB در صفحهٔ ویزا هم متای اختصاصی می‌گیرند.
+      const country = (await getCountries())[route.params.countrySlug];
+      if (country) {
+        seo = {
+          ...fallback,
+          title: `ویزای ${country.name}؛ مدارک و مراحل برای ایرانیان · ریوان سفر`,
+          description: `مدارک و مراحل ویزای ${country.name} برای ایرانیان با منبع رسمی و تاریخ بازبینی.`,
+          robots: 'index,follow',
+          breadcrumbs: withCrumb(`ویزای ${country.name}`),
+        };
+      }
     }
   } catch {
-    // خطا در خواندن DB → همان fallback استاتیک برمی‌گردد.
+    // خطا در خواندن DB → همان fallback استاتیک می‌ماند.
   }
-  return fallback;
+
+  // P1-13 — لایهٔ دفاعی دوم گیت لانچ: تا ایندکس عمومی بسته است، همهٔ صفحه‌ها
+  // (حتی آن‌هایی که resolveSeo برایشان index داده) متای noindex,nofollow می‌گیرند.
+  // خود گیت دست نمی‌خورد؛ فقط متای robots به وضعیت آن وصل می‌شود.
+  if (!(await isIndexingEnabled())) {
+    seo = { ...seo, robots: 'noindex,nofollow' };
+  }
+  return seo;
 }
 
 export async function toMetadata(seo: ResolvedSeo): Promise<Metadata> {

@@ -104,7 +104,7 @@ export default function TourCard({
     : `هتل ${fa(hotelStars)}★`;
 
   const CardWrapper = ({ children }: { children: ReactNode }) => {
-    const baseClasses = `group bg-surface-primary border border-border-default rounded-[18px] shadow-subtle hover:shadow-card hover:border-border-brand/40 transition-all duration-300 flex flex-col overflow-hidden h-full cursor-pointer hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange ${soldOut ? 'opacity-85' : ''} ${className}`;
+    const baseClasses = `group bg-surface-primary border border-border-default rounded-card shadow-subtle hover:shadow-card hover:border-border-brand/40 transition-all duration-300 flex flex-col overflow-hidden h-full cursor-pointer hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange ${soldOut ? 'opacity-85' : ''} ${className}`;
     
     if (onClick) {
       return (
@@ -134,13 +134,13 @@ export default function TourCard({
 
         {/* Top Badges */}
         {effectiveBadge && (
-          <div className="absolute top-3 left-3 z-10">
+          <div className="absolute top-3 end-3 z-10">
             <div className={`backdrop-blur-md shadow-subtle text-[11.5px] font-extrabold px-2.5 py-1 rounded-full whitespace-nowrap ${
               soldOut 
                 ? 'bg-surface-dark/90 text-white' 
                 : limited
-                ? 'bg-amber-500/90 text-white'
-                : 'bg-surface-primary/95 text-brand-orange border border-white/20'
+                ? 'bg-brand-warning/90 text-white'
+                : 'bg-surface-primary/95 text-brand-orange border border-border-on-dark'
             }`}>
               <span>{effectiveBadge}</span>
             </div>
@@ -149,12 +149,12 @@ export default function TourCard({
       </div>
 
       {/* 2. Card Content Body */}
-      <div className="p-4 sm:p-5 flex flex-col justify-between flex-grow text-center dir-rtl">
+      <div className="p-4 sm:p-5 flex flex-col justify-between flex-grow text-center">
         <div>
           {/* Main Orange Tour Title */}
           <h3 
             title={title}
-            className="text-[16.5px] sm:text-[17.5px] font-bold text-brand-orange mb-1.5 group-hover:opacity-90 transition-opacity [text-wrap:balance]"
+            className="text-card-title text-brand-orange-strong mb-1.5 group-hover:opacity-90 transition-opacity [text-wrap:balance]"
           >
             {title}
           </h3>
@@ -172,12 +172,12 @@ export default function TourCard({
           </div>
 
           {/* Features Capsule Pill (Exact design from user screenshot: Flight + Transfer + Hotel + Visa) */}
-          <div className="w-full bg-[#f8fafc] border border-border-default/70 rounded-2xl py-2.5 px-3 flex items-center justify-between text-text-heading shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] mb-4">
+          <div className="w-full bg-surface-secondary border border-border-default/70 rounded-card py-2.5 px-3 flex items-center justify-between text-text-heading shadow-inset mb-4">
             
             {/* 1. Transport (نوع واقعی حمل‌ونقل تور) */}
             <div className="flex flex-col items-center justify-center gap-1 flex-1">
               <TransportIcon className="w-4 h-4 text-text-heading stroke-[1.8]" />
-              <span className="text-[11.5px] sm:text-[12px] font-bold text-text-heading whitespace-nowrap">{transportLabel(transportKind)}</span>
+              <span className="text-[12px] font-bold text-text-heading whitespace-nowrap">{transportLabel(transportKind)}</span>
             </div>
 
             <span className="text-border-default/90 text-[13px] font-light shrink-0 select-none">+</span>
@@ -185,7 +185,7 @@ export default function TourCard({
             {/* 2. Transfer (ترنسفر) */}
             <div className="flex flex-col items-center justify-center gap-1 flex-1">
               <Car className="w-4 h-4 text-text-heading stroke-[1.8]" />
-              <span className="text-[11.5px] sm:text-[12px] font-bold text-text-heading">ترنسفر</span>
+              <span className="text-[12px] font-bold text-text-heading">ترنسفر</span>
             </div>
 
             <span className="text-border-default/90 text-[13px] font-light shrink-0 select-none">+</span>
@@ -193,7 +193,7 @@ export default function TourCard({
             {/* 3. Hotel (هتل ۴★) */}
             <div className="flex flex-col items-center justify-center gap-1 flex-1">
               <Building2 className="w-4 h-4 text-text-heading stroke-[1.8]" />
-              <span className="text-[11.5px] sm:text-[12px] font-bold text-text-heading whitespace-nowrap">{hotelLabel}</span>
+              <span className="text-[12px] font-bold text-text-heading whitespace-nowrap">{hotelLabel}</span>
             </div>
 
             {/* 4. Visa (ویزا / بدون ویزا) - فقط برای تورهای خارجی */}
@@ -202,7 +202,7 @@ export default function TourCard({
                 <span className="text-border-default/90 text-[13px] font-light shrink-0 select-none">+</span>
                 <div className="flex flex-col items-center justify-center gap-1 flex-1">
                   <ShieldCheck className="w-4 h-4 text-text-heading stroke-[1.8]" />
-                  <span className="text-[11.5px] sm:text-[12px] font-bold text-text-heading whitespace-nowrap">
+                  <span className="text-[12px] font-bold text-text-heading whitespace-nowrap">
                     {requiresVisa ? 'ویزا' : 'بدون ویزا'}
                   </span>
                 </div>
@@ -213,7 +213,7 @@ export default function TourCard({
         </div>
 
         {/* 3. Footer Block - Price Row */}
-        <div className="mt-auto pt-3 border-t border-border-default/60 flex items-center justify-between gap-2 text-right">
+        <div className="mt-auto pt-3 border-t border-border-default/60 flex items-center justify-between gap-2 text-start">
           {soldOut ? (
             <>
               <span className="text-body-sm text-text-secondary font-medium">وضعیت تور</span>

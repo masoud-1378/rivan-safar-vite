@@ -28,6 +28,7 @@ import {
   replaceBlocks,
   type LinkInput,
 } from './actions';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 interface LandingContentProps {
   landingId: string;
@@ -129,10 +130,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
       );
       setGate(await checkQualityGate(landingId));
     } catch (e) {
-      // ریشهٔ #441: در پروداکشن e.message همان «Minified React error #441» است.
-      console.error('[seo] load landing content failed', (e as { digest?: unknown })?.digest ?? e);
-      toast({ variant: 'error', title: 'خطا در بارگذاری.' });
-    } finally {
+      toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در بارگذاری.') });    } finally {
       setLoading(false);
     }
   };
@@ -184,10 +182,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
         }
         await load();
       } catch (e) {
-        // ریشهٔ #441: در پروداکشن e.message همان «Minified React error #441» است.
-        console.error('[seo] save blocks failed', (e as { digest?: unknown })?.digest ?? e);
-        toast({ variant: 'error', title: 'خطا در ذخیره بلوک‌ها.' });
-      }
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در ذخیره بلوک‌ها.') });      }
     });
   };
 
@@ -222,10 +217,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
         toast({ variant: 'success', title: 'لینک داخلی ثبت شد.' });
         await load();
       } catch (e) {
-        // ریشهٔ #441: در پروداکشن e.message همان «Minified React error #441» است.
-        console.error('[seo] add link failed', (e as { digest?: unknown })?.digest ?? e);
-        toast({ variant: 'error', title: 'خطا در ثبت لینک.' });
-      }
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در ثبت لینک.') });      }
     });
   };
 
@@ -240,10 +232,7 @@ export default function LandingContent({ landingId, titleFa, urlPath, landings }
         }
         await load();
       } catch (e) {
-        // ریشهٔ #441: در پروداکشن e.message همان «Minified React error #441» است.
-        console.error('[seo] delete link failed', (e as { digest?: unknown })?.digest ?? e);
-        toast({ variant: 'error', title: 'خطا در حذف لینک.' });
-      }
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در حذف لینک.') });      }
     });
   };
 

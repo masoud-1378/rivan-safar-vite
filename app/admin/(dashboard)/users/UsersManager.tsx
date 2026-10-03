@@ -20,6 +20,7 @@ import {
   toggleUserActive,
   removeAdmin,
 } from './actions';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 type UserRow = Awaited<ReturnType<typeof listAdminUsers>>[number];
 
@@ -66,7 +67,7 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
       try {
         setUsers(await listAdminUsers());
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در بارگذاری کاربران.' });
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در بارگذاری کاربران.') });
       }
     });
   };
@@ -78,7 +79,7 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
         if (successTitle) toast({ variant: 'success', title: successTitle });
         loadUsers();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا' });
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا') });
       }
     });
   };
@@ -121,7 +122,7 @@ export default function UsersManager({ initial }: { initial: UserRow[] }) {
           toast({ variant: 'error', title: failure.message });
         }
       } catch (err) {
-        toast({ variant: 'error', title: err instanceof Error ? err.message : 'خطا در ساخت کاربر.' });
+        toast({ variant: 'error', title: safeErrorMessage(err, 'خطا در ساخت کاربر.') });
       }
     });
   };

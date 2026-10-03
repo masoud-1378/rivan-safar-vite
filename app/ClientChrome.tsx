@@ -49,7 +49,7 @@ export default function ClientChrome({
         navLinks={navLinks}
       />
       <main
-        className={`flex-1 pb-32 lg:pb-0 transition-[padding-top] duration-300 ${
+        className={`flex-1 pb-32 md:pb-0 transition-[padding-top] duration-300 ${
           isHomePage
             ? 'pt-0'
             : showAnnouncement

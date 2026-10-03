@@ -8,7 +8,7 @@ import {
 import { type TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
-import { submitLead } from '../../app/actions/lead';
+import { safeCreateLead } from '../lib/lead-submit-safe';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import { fa } from '@/lib/utils';
@@ -19,7 +19,7 @@ import { RichText } from '@/components/ui/rich-editor/RichText';
 import { faqRichAnswer, isRichEmpty, normalizeRichValue, richFallback, type JSONContent } from '@/lib/rich-text';
 import {
   liveExtras, isDomesticTour, faDateTime, boardLabel,
-  transportLabel, transportSpecLabel,
+  transportLabel, transportSpecLabel, isValidMobile, normalizeMobile,
   hotelPriceRows, bookingTypeLabel, findDestinationPlace, hasDestinationInfo,
 } from './tour-live';
 
@@ -39,16 +39,18 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
     phone: '',
     passengers: '2',
     hotelPreference: '',
-    datePreference: '',
     notes: ''
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
+  const [submitStored, setSubmitStored] = useState(true);
+  const [errors, setErrors] = useState({ name: '', phone: '' });
+  const [formError, setFormError] = useState('');
 
   if (!tour) {
     return (
-      <div className="container-main py-16 px-4 text-center dir-rtl">
+      <div className="container-main py-16 px-4 text-center">
         <h2 className="text-h3 font-bold mb-4">تور مورد نظر یافت نشد</h2>
         <button onClick={() => onNavigate('/tours')} className="btn btn-primary btn-medium">
           مشاهده فهرست تورها
@@ -101,6 +103,14 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
     !!consultant && !!(consultant.name || consultant.phone || consultant.audioUrl);
   const transportKind = extras.transportKind;
 
+  const validateForm = () => {
+    const errs = { name: '', phone: '' };
+    if (formData.name.trim().length < 3) errs.name = 'نام و نام خانوادگی را کامل وارد کنید.';
+    if (!isValidMobile(formData.phone)) errs.phone = 'شماره موبایل معتبر نیست؛ مثل ۰۹۱۲۳۴۵۶۷۸۹.';
+    setErrors(errs);
+    return !errs.name && !errs.phone;
+  };
+
   // موج ۱ قلم ۱: رکورد مقصد برای بخش «اطلاعات کاربردی مقصد»؛ فقط وقتی رکورد
   // پیدا شود و دست‌کم یک فیلد کاربردی پر داشته باشد، بخش رندر می‌شود.
   const destPlace = findDestinationPlace(tour, { ...countries, ...cities });
@@ -111,12 +121,13 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone) return;
+    setFormError('');
+    if (!validateForm()) return;
 
     setFormLoading(true);
-    const result = await submitLead({
-      fullName: formData.name,
-      phone: formData.phone,
+    const result = await safeCreateLead({
+      fullName: formData.name.trim(),
+      phone: normalizeMobile(formData.phone),
       sourcePath: `/tour/${tourSlug}`,
       tourContext: tour.title,
       destinationHint: tour.destination,
@@ -126,25 +137,30 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
         .join(' — '),
     });
     setFormLoading(false);
-    setSubmitMessage(result.message);
-    setFormSubmitted(result.ok);
-    if (result.ok) trackLeadSubmit(`/tour/${tourSlug}`, result.stored);
+    if (result.ok) {
+      setSubmitMessage(result.message);
+      setSubmitStored(result.stored);
+      setFormSubmitted(true);
+      trackLeadSubmit(`/tour/${tourSlug}`, result.stored);
+    } else {
+      setFormError(result.message);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       {/* ---------------- Breadcrumb ---------------- */}
       <div className="bg-surface-secondary border-b border-border-default/60 py-2.5">
         <div className="container-main px-4 sm:px-6 lg:px-8">
-          <nav className="flex items-center gap-2 text-caption text-text-secondary font-medium">
+          <nav aria-label="مسیر صفحه" className="flex items-center gap-2 text-caption text-text-secondary font-medium">
             <button onClick={() => onNavigate('/')} className="hover:text-brand-orange transition-colors">
               صفحه اصلی
             </button>
-            <span className="text-text-muted">/</span>
+            <span aria-hidden="true" className="text-text-muted">/</span>
             <button onClick={() => onNavigate('/tours')} className="hover:text-brand-orange transition-colors">
               تورها
             </button>
-            <span className="text-text-muted">/</span>
+            <span aria-hidden="true" className="text-text-muted">/</span>
             <span className="text-text-heading font-semibold truncate max-w-[200px] sm:max-w-none">{tour.title}</span>
           </nav>
         </div>
@@ -156,7 +172,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
             {/* Left/Main Column: Title, Quick Specs & Price (7 cols) */}
-            <div className="lg:col-span-7 text-right">
+            <div className="lg:col-span-7 text-start">
               {/* Badges */}
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 <span className="badge badge-standard">
@@ -229,20 +245,20 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   <div>
                     <span className="text-caption text-text-secondary block mb-1">شروع قیمت پایه:</span>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-h2 font-extrabold text-brand-orange">
+                      <span className="text-h2 font-extrabold text-brand-orange-strong">
                         {tour.formattedPrice}
                       </span>
                       <span className="text-body font-bold text-text-secondary">تومان</span>
                     </div>
                   </div>
 
-                  <div className="text-left">
+                  <div className="text-end">
                     <span className={`inline-flex px-2.5 py-1 rounded-md text-caption font-bold ${
-                      tour.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      tour.status === 'confirmed' ? 'bg-brand-success/15 text-brand-success' : 'bg-brand-warning/15 text-brand-warning'
                     }`}>
                       {tour.statusLabel}
                     </span>
-                    <div className="text-[11px] text-text-muted mt-1">{faDateTime(tour.updatedAt) ?? '—'}</div>
+                    <div className="text-caption text-text-secondary mt-1">{faDateTime(tour.updatedAt) ?? '—'}</div>
                   </div>
                 </div>
 
@@ -281,9 +297,9 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
               </div>
 
               {/* Key Guarantee Box */}
-              <div className="mt-4 p-4 bg-surface-primary rounded-card border border-border-default text-right space-y-2 text-caption text-text-secondary">
+              <div className="mt-4 p-4 bg-surface-primary rounded-card border border-border-default text-start space-y-2 text-caption text-text-secondary">
                 <div className="flex items-center gap-2 text-text-heading font-bold">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <ShieldCheck className="w-4 h-4 text-brand-success" />
                   <span>شفافیت خدمات ریوان سفر</span>
                 </div>
                 <p className="leading-relaxed">
@@ -318,7 +334,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
       {/* ---------------- برنامه روزبه‌روز (از تورساز؛ فقط وقتی داده هست) ---------------- */}
       {itineraryDays.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-          <div className="text-right mb-6">
+          <div className="text-start mb-6">
             <h2 className="text-h2 text-text-heading font-bold mb-1.5">
               برنامه روزبه‌روز سفر
             </h2>
@@ -398,7 +414,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
       {/* ---------------- Hotel Options Table ---------------- */}
       {tour.hotelOptions && tour.hotelOptions.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-          <div className="text-right mb-6">
+          <div className="text-start mb-6">
             <h2 className="text-h2 text-text-heading font-bold mb-1.5">
               گزینه‌های هتل و قیمت برای هر نفر
             </h2>
@@ -409,13 +425,13 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
 
           <div className="bg-surface-primary border border-border-default rounded-card overflow-hidden shadow-subtle">
             <div className="overflow-x-auto">
-              <table className="w-full text-right border-collapse text-body-sm">
+              <table className="w-full text-start border-collapse text-body-sm">
                 <thead>
                   <tr className="bg-surface-secondary border-b border-border-default text-text-heading font-bold">
                     <th className="py-3.5 px-4 sm:px-6">نام هتل</th>
                     <th className="py-3.5 px-4 text-center">ستاره</th>
                     <th className="py-3.5 px-4 text-center">نوع پذیرایی</th>
-                    <th className="py-3.5 px-4 sm:px-6 text-left">قیمت برای هر نفر</th>
+                    <th className="py-3.5 px-4 sm:px-6 text-end">قیمت برای هر نفر</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-default/60">
@@ -565,15 +581,15 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             
             {/* Included Services */}
-            <div className="bg-surface-secondary/60 border border-border-default rounded-card p-6 text-right">
+            <div className="bg-surface-secondary/60 border border-border-default rounded-card p-6 text-start">
               <div className="flex items-center gap-2 text-h3 text-text-heading font-bold mb-4">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <CheckCircle2 className="w-5 h-5 text-brand-success" />
                 <h3>خدمات شامل تور</h3>
               </div>
               <ul className="space-y-3 text-body-sm text-text-primary font-medium">
                 {tour.includedServices.map((srv, idx) => (
                   <li key={idx} className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <Check className="w-4 h-4 text-brand-success shrink-0 mt-0.5" />
                     <span>{srv}</span>
                   </li>
                 ))}
@@ -581,7 +597,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
             </div>
 
             {/* Excluded Services */}
-            <div className="bg-surface-secondary/60 border border-border-default rounded-card p-6 text-right">
+            <div className="bg-surface-secondary/60 border border-border-default rounded-card p-6 text-start">
               <div className="flex items-center gap-2 text-h3 text-text-heading font-bold mb-4">
                 <XCircle className="w-5 h-5 text-text-muted" />
                 <h3>خدمات غیرشامل (به عهده مسافر)</h3>
@@ -602,7 +618,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
 
       {/* ---------------- Important Policies (Child, Visa, Cancellation) ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-right">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-start">
           
           {hasTrust && trust ? (
             <div className="bg-surface-primary border border-border-default rounded-card p-6">
@@ -614,7 +630,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 <ul className="space-y-2 mb-4">
                   {trust.requiredDocs.map((doc, i) => (
                     <li key={i} className="flex items-start gap-2 text-body-sm text-text-heading">
-                      <FileCheck2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <FileCheck2 className="w-4 h-4 text-brand-success shrink-0 mt-0.5" />
                       <span>{doc}</span>
                     </li>
                   ))}
@@ -726,7 +742,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
       </section>
 
       {/* ---------------- Callback Request Form (Strictly "درخواست تماس", never "رزرو") ---------------- */}
-      <section id="booking-form" className="bg-surface-primary border-t border-border-default section-standard scroll-mt-12">
+      <section id="booking-form" className="bg-surface-primary border-t border-border-default section-standard scroll-mt-28">
         <div className="container-main px-4 sm:px-6 lg:px-8 max-w-2xl">
           <div className="text-center mb-6">
             <span className="badge badge-standard mb-2">پیگیری با کارشناس</span>
@@ -737,34 +753,56 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
           </div>
 
           {formSubmitted ? (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-card p-6 text-center text-emerald-900">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
-                <Check className="w-6 h-6" />
+            submitStored ? (
+              <div className="bg-brand-success-soft border border-brand-success/25 rounded-card p-6 text-center text-text-primary">
+                <div className="w-12 h-12 rounded-full bg-brand-success/15 text-brand-success flex items-center justify-center mx-auto mb-3">
+                  <Check className="w-6 h-6" />
+                </div>
+                <h4 className="text-h4 font-bold mb-2">درخواست تماس شما ثبت شد</h4>
+                <p className="text-body-sm text-brand-success mb-4">
+                  {submitMessage || `کارشناس ریوان سفر در ساعات کاری برای تأیید قیمت و ظرفیت ${tour.title} با شما تماس می‌گیرد.`}
+                </p>
+                <div className="text-caption text-brand-success">
+                  در صورت تمایل می‌توانید مستقیماً با تلفن <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a> تماس حاصل فرمایید.
+                </div>
               </div>
-              <h4 className="text-h4 font-bold mb-2">درخواست تماس شما ثبت شد</h4>
-              <p className="text-body-sm text-emerald-800 mb-4">
-                {submitMessage || `کارشناس ریوان سفر در ساعات کاری برای تأیید قیمت و ظرفیت ${tour.title} با شما تماس می‌گیرد.`}
-              </p>
-              <div className="text-caption text-emerald-700">
-                در صورت تمایل می‌توانید مستقیماً با تلفن <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a> تماس حاصل فرمایید.
+            ) : (
+              <div className="bg-brand-warning-soft border border-brand-warning/25 rounded-card p-6 text-center text-text-primary">
+                <div className="w-12 h-12 rounded-full bg-brand-warning/15 text-brand-warning flex items-center justify-center mx-auto mb-3">
+                  <Phone className="w-6 h-6" />
+                </div>
+                <h4 className="text-h4 font-bold mb-2">ثبت آنلاین ممکن نشد</h4>
+                <p className="text-body-sm text-brand-warning mb-4">
+                  {submitMessage}
+                </p>
+                <div className="text-caption text-brand-warning">
+                  برای پیگیری سریع، لطفاً با تلفن <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a> تماس بگیرید.
+                </div>
               </div>
-            </div>
+            )
           ) : (
-            <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-right space-y-4">
+            <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-start space-y-4">
+              {formError && (
+                <div className="p-3 bg-danger-soft border border-danger/25 rounded-control text-danger text-body-sm flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{formError}</span>
+                </div>
+              )}
               <div>
-                <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی <span className="text-red-500">*</span></label>
+                <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی <span className="text-danger">*</span></label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="مثال: مریم کریمی"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                 />
+                {errors.name && <p className="text-caption text-danger mt-1">{errors.name}</p>}
               </div>
 
               <div>
-                <label className="block text-caption font-bold text-text-heading mb-1">شماره موبایل <span className="text-red-500">*</span></label>
+                <label className="block text-caption font-bold text-text-heading mb-1">شماره موبایل <span className="text-danger">*</span></label>
                 <input
                   type="tel"
                   required
@@ -772,8 +810,9 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-right focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:shadow-focus focus:outline-none"
                 />
+                {errors.phone && <p className="text-caption text-danger mt-1">{errors.phone}</p>}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -782,7 +821,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   <select
                     value={formData.passengers}
                     onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   >
                     <option value="1">۱ نفر (اتاق یک تخته)</option>
                     <option value="2">۲ نفر (اتاق دو تخته)</option>
@@ -798,7 +837,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                     value={formData.hotelPreference}
                     onChange={(e) => setFormData({ ...formData, hotelPreference: e.target.value })}
                     placeholder="مثال: هتل ۵ ستاره یا نام هتل"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   />
                 </div>
               </div>
@@ -810,7 +849,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="مثال: تاریخ ترجیحی حرکت، سن همراهان کودک، درخواست گشت شهری اضافه…"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                 ></textarea>
               </div>
 
@@ -863,7 +902,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 sm:mr-auto">
+              <div className="flex flex-wrap items-center gap-2 sm:ms-auto">
                 {consultant.phone && (
                   <a
                     href={`tel:${consultant.phone.replace(/[^\d+]/g, '')}`}
@@ -1018,7 +1057,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
       {/* ---------------- Related Tours ---------------- */}
       {relatedTours.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-          <h3 className="text-h3 text-text-heading font-bold mb-6 text-right">
+          <h3 className="text-h3 text-text-heading font-bold mb-6 text-start">
             تورهای مشابه پیشنهادی
           </h3>
 
@@ -1028,7 +1067,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 key={rel.id}
                 href={`/tour/${rel.id}`}
                 onClick={(e) => { e.preventDefault(); onNavigate(`/tour/${rel.id}`); }}
-                className="bg-surface-primary border border-border-default rounded-card p-4 hover:shadow-card hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-4 text-right"
+                className="bg-surface-primary border border-border-default rounded-card p-4 hover:shadow-card hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-4 text-start"
               >
                 <div className="flex items-center gap-4 w-full sm:w-auto">
                   <div className="w-16 h-16 rounded-control overflow-hidden shrink-0 relative">
@@ -1041,7 +1080,7 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                 </div>
 
                 <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-border-default/40">
-                  <div className="text-left">
+                  <div className="text-end">
                     <span className="text-caption text-text-secondary block">شروع قیمت از:</span>
                     <span className="text-body font-extrabold text-brand-orange">{rel.formattedPrice} تومان</span>
                   </div>

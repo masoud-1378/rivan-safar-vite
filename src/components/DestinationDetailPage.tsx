@@ -5,7 +5,7 @@ import { RichText } from '@/components/ui/rich-editor/RichText';
 import { faqRichAnswer, richFallback } from '@/lib/rich-text';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
-import { submitLead } from '../../app/actions/lead';
+import { safeCreateLead } from '../lib/lead-submit-safe';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import TourListItem from './TourListItem';
@@ -37,7 +37,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
 
   if (!city) {
     return (
-      <div className="container-main py-16 px-4 text-center dir-rtl">
+      <div className="container-main py-16 px-4 text-center">
         <h2 className="text-h3 font-bold mb-4">مقصد مورد نظر یافت نشد</h2>
         <button onClick={() => onNavigate('/destinations')} className="btn btn-primary btn-medium">
           بازگشت به فهرست مقصدها
@@ -82,7 +82,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
     if (!formData.name || !formData.phone) return;
 
     setFormLoading(true);
-    const result = await submitLead({
+    const result = await safeCreateLead({
       fullName: formData.name,
       phone: formData.phone,
       sourcePath: `/destination/${countrySlug}/${placeSlug}`,
@@ -100,7 +100,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
   };
 
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       {/* ---------------- Breadcrumb ---------------- */}
       <div className="bg-surface-secondary border-b border-border-default/60 py-2.5">
         <div className="container-main px-4 sm:px-6 lg:px-8">
@@ -130,7 +130,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
       <section className="bg-surface-primary border-b border-border-default section-compact">
         <div className="container-main px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-7 text-right">
+            <div className="lg:col-span-7 text-start">
               <div className="flex items-center gap-2 mb-3">
                 <span className="badge badge-standard">
                   <MapPin className="w-3.5 h-3.5" />
@@ -151,7 +151,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
               </div>
 
               {/* Price & Basis Card */}
-              <div className="p-4 bg-surface-secondary rounded-card border border-border-default/80 mb-6 text-right">
+              <div className="p-4 bg-surface-secondary rounded-card border border-border-default/80 mb-6 text-start">
                 <div className="flex flex-wrap items-baseline justify-between gap-2 mb-2">
                   <div>
                     <span className="text-caption text-text-secondary block">شروع قیمت پایه:</span>
@@ -159,7 +159,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                       <span className="text-h3 font-extrabold text-brand-orange">{city.startingPrice}</span>
                     </div>
                   </div>
-                  <div className="text-left text-caption text-text-secondary">
+                  <div className="text-end text-caption text-text-secondary">
                     <span>آخرین بررسی:</span>
                     <div className="font-bold text-text-heading">{city.lastVerifiedAt}</div>
                   </div>
@@ -225,7 +225,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
 
       {/* ---------------- Active Tours List ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-        <div className="text-right mb-6">
+        <div className="text-start mb-6">
           <h2 className="text-h2 text-text-heading font-bold mb-1.5">
             تورهای فعال {city.name}
           </h2>
@@ -272,7 +272,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
       {city.popularDistricts && city.popularDistricts.length > 0 && (
         <section className="bg-surface-primary border-y border-border-default section-standard">
           <div className="container-main px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl text-right mb-6">
+            <div className="max-w-3xl text-start mb-6">
               <h2 className="text-h2 text-text-heading font-bold mb-2">
                 کدام منطقه {city.name} برای اقامت شما مناسب‌تر است؟
               </h2>
@@ -283,7 +283,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {city.popularDistricts.map((district, idx) => (
-                <div key={idx} className="bg-surface-secondary border border-border-default/60 rounded-control p-4 text-right">
+                <div key={idx} className="bg-surface-secondary border border-border-default/60 rounded-control p-4 text-start">
                   <div className="w-7 h-7 rounded-small bg-brand-orange/10 text-brand-orange font-bold flex items-center justify-center mb-2 text-caption">
                     {idx + 1}
                   </div>
@@ -298,19 +298,19 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
       {/* ---------------- Destination Highlights & Practical Tips ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-surface-primary border border-border-default rounded-card p-6 text-right">
+          <div className="bg-surface-primary border border-border-default rounded-card p-6 text-start">
             <h3 className="text-h3 font-bold text-text-heading mb-3">ویژگی‌های شاخص تور {city.name}</h3>
             <div className="space-y-2.5">
               {city.keyHighlights.map((hl, idx) => (
                 <div key={idx} className="flex items-center gap-2 text-body-sm text-text-primary">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-brand-success shrink-0" />
                   <span>{hl}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-surface-primary border border-border-default rounded-card p-6 text-right">
+          <div className="bg-surface-primary border border-border-default rounded-card p-6 text-start">
             <h3 className="text-h3 font-bold text-text-heading mb-3">نکات مهم پیش از سفر به {city.name}</h3>
             <div className="space-y-2.5">
               {city.travelTips.map((tip, idx) => (
@@ -326,17 +326,17 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
       {/* ---------------- FAQs Section ---------------- */}
       {city.faqs && city.faqs.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-compact">
-          <div className="text-right mb-6">
+          <div className="text-start mb-6">
             <h3 className="text-h3 text-text-heading font-bold">سؤالات متداول مسافران تور {city.name}</h3>
           </div>
           <div className="space-y-3">
             {city.faqs.map((faq, idx) => (
-              <div key={idx} className="bg-surface-primary border border-border-default rounded-card p-5 text-right">
+              <div key={idx} className="bg-surface-primary border border-border-default rounded-card p-5 text-start">
                 <h4 className="text-body font-bold text-text-heading mb-2 flex items-center gap-2">
                   <HelpCircle className="w-4 h-4 text-brand-orange" />
                   <span>{faq.question}</span>
                 </h4>
-                <div className="text-body-sm text-text-secondary leading-relaxed mr-6">
+                <div className="text-body-sm text-text-secondary leading-relaxed ms-6">
                   <RichText value={richFallback(faqRichAnswer(faq), faq.answer)} />
                 </div>
               </div>
@@ -398,34 +398,34 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
           </div>
 
           {formSubmitted ? (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-card p-6 text-center text-emerald-900">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
+            <div className="bg-brand-success-soft border border-brand-success/25 rounded-card p-6 text-center text-text-primary">
+              <div className="w-12 h-12 rounded-full bg-brand-success/15 text-brand-success flex items-center justify-center mx-auto mb-3">
                 <Check className="w-6 h-6" />
               </div>
               <h4 className="text-h4 font-bold mb-2">درخواست تماس شما با موفقیت ثبت شد</h4>
-              <p className="text-body-sm text-emerald-800 mb-4">
+              <p className="text-body-sm text-brand-success mb-4">
                 کارشناس ریوان سفر به‌زودی برای هماهنگی قیمت و ظرفیت تور {city.name} با شما تماس خواهد گرفت.
               </p>
-              <div className="text-caption text-emerald-700">
+              <div className="text-caption text-brand-success">
                 در صورت نیاز فوری، مستقیماً با تلفن <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a> تماس بگیرید.
               </div>
             </div>
           ) : (
-            <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-right space-y-4">
+            <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-start space-y-4">
               <div>
-                <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی <span className="text-red-500">*</span></label>
+                <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی <span className="text-danger">*</span></label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="مثال: علی محمدی"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-caption font-bold text-text-heading mb-1">شماره موبایل <span className="text-red-500">*</span></label>
+                <label className="block text-caption font-bold text-text-heading mb-1">شماره موبایل <span className="text-danger">*</span></label>
                 <input
                   type="tel"
                   required
@@ -433,7 +433,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-right focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:shadow-focus focus:outline-none"
                 />
               </div>
 
@@ -443,7 +443,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                   <select
                     value={formData.passengers}
                     onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   >
                     <option value="1">۱ نفر</option>
                     <option value="2">۲ نفر (اتاق دوتخته)</option>
@@ -459,7 +459,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                     value={formData.datePreference}
                     onChange={(e) => setFormData({ ...formData, datePreference: e.target.value })}
                     placeholder="مثال: نیمه دوم شهریور"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   />
                 </div>
               </div>
@@ -471,7 +471,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="مثال: ترجیح هتل ۵ ستاره نزدیک مترو، اتاق رو به دریا..."
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                 ></textarea>
               </div>
 
@@ -497,7 +497,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
       {/* ---------------- Alternative Destinations ---------------- */}
       {alternativeCities.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-          <h3 className="text-h3 text-text-heading font-bold mb-6 text-right">
+          <h3 className="text-h3 text-text-heading font-bold mb-6 text-start">
             مقصدهای پیشنهادی دیگر
           </h3>
 
@@ -507,7 +507,7 @@ export default function DestinationDetailPage({ countrySlug, placeSlug, onNaviga
                 key={alt.id}
                 href={`/destination/${alt.parentCountrySlug || alt.slug}/${alt.slug}`}
                 onClick={(e) => { e.preventDefault(); onNavigate(`/destination/${alt.parentCountrySlug || alt.slug}/${alt.slug}`); }}
-                className="bg-surface-primary border border-border-default rounded-card p-4 hover:shadow-card hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-4 text-right"
+                className="bg-surface-primary border border-border-default rounded-card p-4 hover:shadow-card hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-4 text-start"
               >
                 <div className="w-16 h-16 rounded-control overflow-hidden shrink-0 relative">
                   <SmartImage src={alt.image} alt={alt.name} className="object-cover" sizes="64px" />

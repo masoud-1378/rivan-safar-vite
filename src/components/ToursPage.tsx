@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Search, Filter, ChevronDown, Check, ArrowLeft, Phone, Calendar, 
@@ -10,11 +10,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { type TourItem, TOUR_FAQ_ITEMS } from '../data/toursData';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
-import { submitLead } from '../../app/actions/lead';
+import { safeCreateLead } from '../lib/lead-submit-safe';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import { fa, faSlug } from '@/lib/utils';
-import { uniqueOrigins } from './tour-live';
+import { uniqueOrigins, isValidMobile, normalizeMobile } from './tour-live';
 import TourListItem from './TourListItem';
 
 interface ToursPageProps {
@@ -59,8 +59,47 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
   const [selectedDetailTour, setSelectedDetailTour] = useState<TourItem | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false);
 
+  // QA2-5: مدیریت فوکوس و Escape برای مودال‌ها و شیت فیلتر موبایل
+  const compareCloseRef = useRef<HTMLButtonElement>(null);
+  const detailCloseRef = useRef<HTMLButtonElement>(null);
+  const sheetCloseRef = useRef<HTMLButtonElement>(null);
+  const modalOpenerRef = useRef<HTMLElement | null>(null);
+
+  // قفل اسکرول body + انتقال فوکوس به داخل مودال بازشده و برگرداندن آن هنگام بسته شدن
+  useEffect(() => {
+    const isOpen = showCompareModal || selectedDetailTour !== null || showMobileFilters;
+    if (!isOpen) {
+      document.body.style.overflow = 'unset';
+      modalOpenerRef.current?.focus();
+      modalOpenerRef.current = null;
+      return;
+    }
+    modalOpenerRef.current = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = 'hidden';
+    const closeBtn = showCompareModal
+      ? compareCloseRef.current
+      : selectedDetailTour !== null
+        ? detailCloseRef.current
+        : sheetCloseRef.current;
+    closeBtn?.focus();
+  }, [showCompareModal, selectedDetailTour, showMobileFilters]);
+
+  // بستن مودال/شیت باز با Escape (اولویت با بالایی‌ترین لایه)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (showMobileFilters) setShowMobileFilters(false);
+      else if (selectedDetailTour !== null) closeDetailModal();
+      else if (showCompareModal) setShowCompareModal(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showCompareModal, selectedDetailTour, showMobileFilters]);
+
   // Booking Form Modal State inside Detail Modal
   const [bookingSubmitted, setBookingSubmitted] = useState<boolean>(false);
+  const [bookingError, setBookingError] = useState<string>('');
+  const [bookingSuccess, setBookingSuccess] = useState<{ message: string; stored: boolean } | null>(null);
   const [bookingForm, setBookingForm] = useState({
     name: '',
     mobile: '',
@@ -77,6 +116,12 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
     const q = searchParams.get('origin');
     if (q && originOptions.some((o) => o.slug === q)) setOriginFilter(q);
   }, [searchParams, originOptions]);
+
+  // --- جست‌وجوی مقصد: پیش‌پر از پارامتر ?q= (از جست‌وجوی صفحه اصلی) ---
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) setSearchDestination(q);
+  }, [searchParams]);
 
   // --- ایرلاین: از مقادیر واقعی تورهای زنده ---
   const airlineOptions = useMemo(() => {
@@ -192,36 +237,61 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
     }
   };
 
+  /** بستن مودال جزئیات تور + ریست کامل وضعیت فرم رزرو */
+  const closeDetailModal = () => {
+    setSelectedDetailTour(null);
+    setBookingForm({ name: '', mobile: '', passengers: '2', selectedHotel: '', notes: '' });
+    setBookingSubmitted(false);
+    setBookingError('');
+    setBookingSuccess(null);
+  };
+
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await submitLead({
-      fullName: bookingForm.name,
-      phone: bookingForm.mobile,
+    if (bookingSubmitted) return;
+    // QA1-07: ولیدیشن کلاینتی قبل از سابمیت (همان الگوی TourDetailPage) —
+    // برای خطای سادهٔ نام/موبایل یک راندتریپ به سرور نمی‌زنیم.
+    if (bookingForm.name.trim().length < 3) {
+      setBookingError('نام و نام خانوادگی را کامل وارد کنید.');
+      return;
+    }
+    if (!isValidMobile(bookingForm.mobile)) {
+      setBookingError('شماره موبایل معتبر نیست؛ مثل ۰۹۱۲۳۴۵۶۷۸۹.');
+      return;
+    }
+    setBookingSubmitted(true);
+    setBookingError('');
+    const result = await safeCreateLead({
+      fullName: bookingForm.name.trim(),
+      phone: normalizeMobile(bookingForm.mobile),
       sourcePath: '/tours',
       tourContext: selectedDetailTour?.title,
       destinationHint: selectedDetailTour?.destination,
       passengers: bookingForm.passengers,
       notes: bookingForm.selectedHotel ? `هتل: ${bookingForm.selectedHotel}` : undefined,
     });
-    setSelectedDetailTour(null);
-    setBookingForm({ name: '', mobile: '', passengers: '2', selectedHotel: '', notes: '' });
-    if (result.ok) trackLeadSubmit('/tours', result.stored);
-    alert(result.message);
+    setBookingSubmitted(false);
+    if (result.ok) {
+      trackLeadSubmit('/tours', result.stored);
+      setBookingSuccess({ message: result.message, stored: result.stored });
+    } else {
+      setBookingError(result.message);
+    }
   };
 
   return (
-    <div className="bg-page-background text-text-primary min-h-screen pb-24 lg:pb-12 dir-rtl">
+    <div className="bg-page-background text-text-primary min-h-screen pb-24 lg:pb-12">
       
       {/* ---------------- 1. Breadcrumb ---------------- */}
       <div className="container-main px-4 sm:px-6 lg:px-8 pt-3 pb-2">
-        <nav className="flex items-center gap-2 text-caption md:text-body-sm text-text-secondary font-medium">
+        <nav aria-label="مسیر صفحه" className="flex items-center gap-2 text-caption md:text-body-sm text-text-secondary font-medium">
           <button 
             onClick={onGoHome}
             className="hover:text-brand-orange transition-colors focus:outline-none"
           >
             صفحه اصلی
           </button>
-          <span className="text-text-secondary/50">←</span>
+          <span aria-hidden="true" className="text-text-secondary/50">←</span>
           <span className="text-text-heading font-semibold">تورها</span>
         </nav>
       </div>
@@ -277,19 +347,20 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
             {/* Mobile filter button */}
             <button
               onClick={() => setShowMobileFilters(true)}
-              className="lg:hidden flex items-center gap-2 bg-surface-primary border border-border-default px-3.5 py-2 rounded-control text-body-sm font-bold text-text-heading shadow-subtle"
+              className="lg:hidden flex items-center gap-2 bg-surface-primary border border-border-default px-3.5 py-3 rounded-control text-body-sm font-bold text-text-heading shadow-subtle"
             >
               <SlidersHorizontal className="w-4 h-4 text-brand-orange" />
-              <span>فیلترها ({activeFiltersCount})</span>
+              <span>فیلترها ({fa(activeFiltersCount)})</span>
             </button>
 
             {/* Sorting */}
             <div className="flex items-center gap-2 text-body-sm">
-              <span className="text-text-secondary font-medium shrink-0 hidden sm:inline">مرتب‌سازی:</span>
+              <label htmlFor="tours-sort" className="text-text-secondary font-medium shrink-0 hidden sm:inline">مرتب‌سازی:</label>
               <select 
+                id="tours-sort"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="form-input form-select font-bold shadow-subtle !h-10"
+                className="form-input form-select font-bold shadow-subtle !h-11"
               >
                 <option value="default">پیشنهاد ریوان سفر</option>
                 <option value="price-low">قیمت پایه (کم به زیاد)</option>
@@ -307,36 +378,36 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
             {selectedType !== 'all' && (
               <span className="chip chip-small chip-selected">
                 {selectedType === 'foreign' ? 'خارجی' : selectedType === 'domestic' ? 'داخلی' : 'نمایشگاهی'}
-                <button onClick={() => setSelectedType('all')} className="mr-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setSelectedType('all')} aria-label="حذف فیلتر نوع سفر" className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {searchDestination && (
               <span className="chip chip-small chip-selected">
                 {searchDestination}
-                <button onClick={() => setSearchDestination('')} className="mr-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setSearchDestination('')} aria-label="حذف فیلتر جست‌وجوی مقصد" className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {originFilter !== 'all' && (
               <span className="chip chip-small chip-selected">
                 مبدأ: {originOptions.find((o) => o.slug === originFilter)?.label || originFilter}
-                <button onClick={() => setOriginFilter('all')} className="mr-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setOriginFilter('all')} aria-label="حذف فیلتر مبدأ" className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {visaFreeOnly && (
               <span className="chip chip-small chip-selected">
                 بدون ویزا
-                <button onClick={() => setVisaFreeOnly(false)} className="mr-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setVisaFreeOnly(false)} aria-label="حذف فیلتر بدون ویزا" className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             {priceRange !== 'all' && (
               <span className="chip chip-small chip-selected">
                 {priceRange === 'under-30m' ? 'تا ۳۰ میلیون' : priceRange === '30m-60m' ? '۳۰ تا ۶۰ میلیون' : 'بالای ۶۰ میلیون'}
-                <button onClick={() => setPriceRange('all')} className="mr-1 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setPriceRange('all')} aria-label="حذف فیلتر قیمت" className="ms-1 -me-1 flex items-center justify-center p-2 hover:text-brand-orange-hover"><X className="w-3.5 h-3.5" /></button>
               </span>
             )}
             <button
               onClick={clearAllFilters}
-              className="text-link text-caption mr-auto mr-4 shrink-0"
+              className="text-link text-caption ms-auto shrink-0"
             >
               پاک کردن همه
             </button>
@@ -363,7 +434,7 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
               )}
             </div>
 
-            <div className="space-y-5 text-right">
+            <div className="space-y-5 text-start">
               {/* Filter 1: Travel Type */}
               <div>
                 <label className="text-body-sm font-bold text-text-heading mb-2 block">نوع سفر</label>
@@ -469,7 +540,7 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
                       <select 
                         value={originFilter}
                         onChange={(e) => setOriginFilter(e.target.value)}
-                        className="form-input form-select text-body-sm"
+                        className="form-input form-select"
                       >
                         <option value="all">همه مبدأها</option>
                         {originOptions.map((o) => (
@@ -484,7 +555,7 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
                       <select 
                         value={hotelStarFilter}
                         onChange={(e) => setHotelStarFilter(e.target.value)}
-                        className="form-input form-select text-body-sm"
+                        className="form-input form-select"
                       >
                         <option value="all">همه درجه‌ها</option>
                         <option value="5">هتل‌های ۵ ستاره</option>
@@ -499,7 +570,7 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
                       <select 
                         value={airlineFilter}
                         onChange={(e) => setAirlineFilter(e.target.value)}
-                        className="form-input form-select text-body-sm"
+                        className="form-input form-select"
                       >
                         <option value="all">همه ایرلاین‌ها</option>
                         {airlineOptions.map((a) => (
@@ -581,14 +652,14 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
                 </div>
 
                   {/* Alternative destination options */}
-                  <div className="mt-8 pt-6 border-t border-border-default text-right">
+                  <div className="mt-8 pt-6 border-t border-border-default text-start">
                     <span className="text-caption font-bold text-text-heading block mb-3">مقصدهای جایگزین پیشنهادی:</span>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {tours.slice(0, 3).map(alt => (
                       <button
                         key={alt.id}
                         onClick={() => setSelectedDetailTour(alt)}
-                        className="bg-page-background p-3 rounded-control border border-border-default/60 hover:border-border-brand transition-colors text-right"
+                        className="bg-page-background p-3 rounded-control border border-border-default/60 hover:border-border-brand transition-colors text-start"
                       >
                         <span className="font-bold text-body-sm text-text-heading block">{alt.title}</span>
                         <span className="text-caption text-brand-orange font-semibold">{alt.formattedPrice} تومان</span>
@@ -621,19 +692,19 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
 
       {/* ---------------- 12. Comparison Floating Bar & Modal ---------------- */}
       {comparedTourIds.length > 0 && (
-        <div className="fixed bottom-16 md:bottom-6 left-1/2 -translate-x-1/2 z-40 bg-surface-dark text-white px-5 py-3 rounded-card shadow-2xl border border-white/20 flex items-center gap-4 dir-rtl">
+        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-6 left-1/2 -translate-x-1/2 z-40 bg-surface-dark text-white px-5 py-3 rounded-card shadow-floating border border-border-on-dark flex items-center justify-center flex-wrap gap-x-4 gap-y-2 max-w-[calc(100vw-2rem)]">
           <span className="text-body-sm font-bold">
             {fa(comparedTourIds.length)} تور برای مقایسه انتخاب شده
           </span>
           <button
             onClick={() => setShowCompareModal(true)}
-            className="btn btn-primary btn-small text-btn"
+            className="btn btn-primary btn-medium text-btn"
           >
             مشاهده مقایسه
           </button>
           <button
             onClick={() => setComparedTourIds([])}
-            className="text-link !text-white/80 hover:!text-white text-caption"
+            className="text-link !text-white/80 hover:!text-white text-caption px-3 py-3"
           >
             انصراف
           </button>
@@ -643,22 +714,22 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
       {/* Comparison Modal */}
       <AnimatePresence>
         {showCompareModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center p-4 dir-rtl">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-surface-primary rounded-card max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-right shadow-2xl"
+              className="bg-surface-primary rounded-card max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-start shadow-floating"
             >
               <div className="flex items-center justify-between mb-6 pb-3 border-b border-border-default">
                 <h3 className="text-h3 text-text-heading">جدول مقایسه تورهای انتخابی</h3>
-                <button onClick={() => setShowCompareModal(false)} className="icon-btn icon-btn-small text-text-secondary hover:text-text-heading">
+                <button ref={compareCloseRef} onClick={() => setShowCompareModal(false)} aria-label="بستن مقایسه تورها" className="icon-btn icon-btn-medium text-text-secondary hover:text-text-heading">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-right text-body-sm border-collapse">
+                <table className="w-full text-start text-body-sm border-collapse">
                   <thead>
                     <tr className="border-b border-border-default bg-page-background">
                       <th className="p-3 font-bold text-text-heading">معیار مقایسه</th>
@@ -751,8 +822,8 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
             { step: '۳', title: '۳. قیمت و ظرفیت تأیید می‌شود', desc: 'کارشناس وضعیت پرواز، هتل و ظرفیت را بررسی می‌کند.' },
             { step: '۴', title: '۴. قرارداد و هماهنگی نهایی انجام می‌شود', desc: 'پس از تأیید شرایط، قرارداد و مدارک سفر را دریافت می‌کنید.' }
           ].map((item) => (
-            <div key={item.step} className="bg-surface-primary p-5 rounded-card border border-border-default/60 shadow-subtle text-right relative">
-              <span className="w-8 h-8 rounded-full bg-brand-orange text-on-brand font-black text-body-sm flex items-center justify-center mb-3">
+            <div key={item.step} className="bg-surface-primary p-5 rounded-card border border-border-default/60 shadow-subtle text-start relative">
+              <span className="w-8 h-8 rounded-full bg-brand-orange text-text-on-brand font-black text-body-sm flex items-center justify-center mb-3">
                 {item.step}
               </span>
               <h3 className="text-h4 text-text-heading mb-1.5">{item.title}</h3>
@@ -764,8 +835,8 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
 
       {/* ---------------- 19. Tour Selection Guide ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-compact">
-        <h2 className="text-h2 text-text-heading mb-6 md:mb-8 text-right">برای انتخاب تور به چه چیزهایی توجه کنیم؟</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-right text-body-sm text-text-primary leading-relaxed">
+        <h2 className="text-h2 text-text-heading mb-6 md:mb-8 text-start">برای انتخاب تور به چه چیزهایی توجه کنیم؟</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-start text-body-sm text-text-primary leading-relaxed">
           <div className="bg-surface-primary p-4 rounded-control border border-border-default">
             <h4 className="text-h4 text-text-heading mb-1">تفاوت تور آماده و پرواز + هتل</h4>
             <p className="text-text-secondary">تور آماده شامل لیدر، گشت و ترانسفر است در حالی که ترکیب پرواز و هتل انعطاف برنامه‌ریزی شخصی بیشتری به شما می‌دهد.</p>
@@ -789,7 +860,7 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Object.values(guides).map(guide => (
-            <article key={guide.id} className="bg-surface-primary rounded-card border border-border-default overflow-hidden text-right shadow-subtle flex flex-col justify-between">
+            <article key={guide.id} className="bg-surface-primary rounded-card border border-border-default overflow-hidden text-start shadow-subtle flex flex-col justify-between">
               <div>
                 <div className="relative w-full h-40">
                   <SmartImage src={guide.heroImage} alt={guide.title} className="object-cover" />
@@ -812,7 +883,7 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
 
       {/* ---------------- 21. SEO Content ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 section-compact">
-        <div className="bg-surface-primary rounded-card border border-border-default p-6 md:p-8 text-right leading-relaxed">
+        <div className="bg-surface-primary rounded-card border border-border-default p-6 md:p-8 text-start leading-relaxed">
           <h2 className="text-h2 text-text-heading mb-6 md:mb-8">بررسی و انتخاب تور مسافرتی با ریوان سفر</h2>
           <p className="text-body-sm text-text-secondary mb-4">
             بررسی و مقایسه تور مسافرتی پیش از سفر، به برنامه‌ریزی بدون دغدغه کمک می‌کند. آژانس مسافرتی ریوان سفر با ارائه تنوع وسیعی از تورهای داخلی (کیش، مشهد، قشم)، تورهای خارجی (ترکیه، دبی، تایلند، روسیه، اروپا) و تورهای تخصصی نمایشگاهی، شرایطی را فراهم کرده تا مسافران عزیز بتوانند مناسب‌ترین گزینه را بر اساس بودجه و سلیقه خود انتخاب کنند.
@@ -830,12 +901,13 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
           <p className="text-body-sm text-text-secondary">پاسخ شفاف به متداول‌ترین ابهامات مسافران پیش از ثبت درخواست تماس</p>
         </div>
 
-        <div className="max-w-3xl mx-auto space-y-3 dir-rtl text-right">
+        <div className="max-w-3xl mx-auto space-y-3 text-start">
           {TOUR_FAQ_ITEMS.map((faq, idx) => (
             <div key={idx} className="bg-surface-primary rounded-control border border-border-default overflow-hidden">
               <button
                 onClick={() => setOpenFaqIndex(openFaqIndex === idx ? null : idx)}
-                className="w-full p-4 font-bold text-[14px] text-text-heading flex items-center justify-between text-right hover:text-brand-orange transition-colors"
+                aria-expanded={openFaqIndex === idx}
+                className="w-full p-4 font-bold text-[14px] text-text-heading flex items-center justify-between text-start hover:text-brand-orange transition-colors"
               >
                 <span>{faq.q}</span>
                 {openFaqIndex === idx ? <ChevronUp className="w-4 h-4 text-brand-orange" /> : <ChevronDown className="w-4 h-4 text-text-secondary" />}
@@ -853,16 +925,18 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
       {/* ---------------- Tour Detail & Reservation Modal ---------------- */}
       <AnimatePresence>
         {selectedDetailTour && (
-          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[90] flex items-center justify-center p-4 dir-rtl">
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-surface-primary rounded-card max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-right shadow-2xl"
+              className="bg-surface-primary rounded-card max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-start shadow-floating"
             >
               <button 
-                onClick={() => setSelectedDetailTour(null)}
-                className="absolute top-4 left-4 icon-btn icon-btn-medium bg-page-background text-text-secondary hover:text-text-heading rounded-full"
+                ref={detailCloseRef}
+                onClick={closeDetailModal}
+                aria-label="بستن جزئیات تور"
+                className="absolute top-4 end-4 icon-btn icon-btn-medium bg-page-background text-text-secondary hover:text-text-heading rounded-full"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -891,7 +965,7 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
                     <div key={i} className="flex items-center justify-between p-3 rounded-control border border-border-default bg-page-background text-body-sm">
                       <div>
                         <span className="font-bold text-text-heading">{h.name}</span>
-                        <span className="text-amber-500 font-bold ml-2">({'★'.repeat(h.stars)})</span>
+                        <span className="text-brand-warning font-bold me-2">({'★'.repeat(h.stars)})</span>
                         <span className="text-caption text-text-secondary block">{h.board}</span>
                       </div>
                       <span className="font-bold text-brand-orange">{h.pricePerPerson}</span>
@@ -902,23 +976,23 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
 
               {/* Services */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 text-caption">
-                <div className="bg-emerald-50/60 p-3 rounded-control border border-emerald-200">
-                  <span className="font-bold text-emerald-800 block mb-2">خدمات شامل:</span>
+                <div className="bg-brand-success-soft/60 p-3 rounded-control border border-brand-success/25">
+                  <span className="font-bold text-brand-success block mb-2">خدمات شامل:</span>
                   <ul className="space-y-1">
                     {selectedDetailTour.includedServices.map((s, i) => (
-                      <li key={i} className="flex items-center gap-1.5 text-emerald-900">
-                        <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <li key={i} className="flex items-center gap-1.5 text-text-primary">
+                        <Check className="w-3.5 h-3.5 text-brand-success shrink-0" />
                         <span>{s}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className="bg-rose-50/60 p-3 rounded-control border border-rose-200">
-                  <span className="font-bold text-rose-800 block mb-2">خدمات غیرشامل:</span>
+                <div className="bg-danger-soft/60 p-3 rounded-control border border-danger/25">
+                  <span className="font-bold text-danger block mb-2">خدمات غیرشامل:</span>
                   <ul className="space-y-1">
                     {selectedDetailTour.excludedServices.map((s, i) => (
-                      <li key={i} className="flex items-center gap-1.5 text-rose-900">
-                        <X className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                      <li key={i} className="flex items-center gap-1.5 text-text-primary">
+                        <X className="w-3.5 h-3.5 text-danger shrink-0" />
                         <span>{s}</span>
                       </li>
                     ))}
@@ -927,11 +1001,33 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
               </div>
 
               {/* Booking Request Form */}
-              <form onSubmit={handleBookingSubmit} className="bg-surface-dark text-white p-5 rounded-card text-right">
-                <h3 className="text-h4 mb-3">ثبت درخواست تماس برای این تور</h3>
-                <p className="text-caption text-white/80 mb-4">
-                  با ثبت این فرم، کارشناسان ریوان سفر در ساعات کاری ظرفیت نهایی و قیمت را با شما هماهنگ می‌کنند.
-                </p>
+              {bookingSuccess ? (
+                <div className={`p-5 rounded-card text-center border ${bookingSuccess.stored ? 'bg-brand-success-soft border-brand-success/25 text-text-primary' : 'bg-brand-warning-soft border-brand-warning/25 text-text-primary'}`}>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${bookingSuccess.stored ? 'bg-brand-success/15 text-brand-success' : 'bg-brand-warning/15 text-brand-warning'}`}>
+                    {bookingSuccess.stored ? <CheckCircle2 className="w-6 h-6" /> : <Phone className="w-6 h-6" />}
+                  </div>
+                  <h3 className="text-h4 font-bold mb-2">{bookingSuccess.stored ? 'درخواست تماس شما ثبت شد' : 'ثبت آنلاین ممکن نشد'}</h3>
+                  <p className="text-body-sm mb-4 leading-relaxed">{bookingSuccess.message}</p>
+                  <button
+                    type="button"
+                    onClick={closeDetailModal}
+                    className="btn btn-primary btn-medium"
+                  >
+                    بستن
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleBookingSubmit} className="bg-surface-dark text-white p-5 rounded-card text-start">
+                  <h3 className="text-h4 mb-3">ثبت درخواست تماس برای این تور</h3>
+                  <p className="text-caption text-white/80 mb-4">
+                    با ثبت این فرم، کارشناسان ریوان سفر در ساعات کاری ظرفیت نهایی و قیمت را با شما هماهنگ می‌کنند.
+                  </p>
+                  {bookingError && (
+                    <div className="mb-4 p-3 bg-danger/15 border border-danger/40 rounded-control text-danger-soft text-body-sm flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>{bookingError}</span>
+                    </div>
+                  )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div className="form-field">
@@ -942,7 +1038,7 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
                       placeholder="مثلاً علی احمدی" 
                       value={bookingForm.name}
                       onChange={(e) => setBookingForm({...bookingForm, name: e.target.value})}
-                      className="form-input !bg-white/10 !border-white/20 !text-white placeholder:!text-white/50 focus:!border-brand-orange"
+                      className="form-input !bg-white/10 !border-border-on-dark !text-white placeholder:!text-white/50 focus:!border-brand-orange"
                     />
                   </div>
                   <div className="form-field">
@@ -954,7 +1050,7 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
                       placeholder="مثلاً ۰۹۱۲۳۴۵۶۷۸۹" 
                       value={bookingForm.mobile}
                       onChange={(e) => setBookingForm({...bookingForm, mobile: e.target.value})}
-                      className="form-input !bg-white/10 !border-white/20 !text-white placeholder:!text-white/50 focus:!border-brand-orange text-left"
+                      className="form-input !bg-white/10 !border-border-on-dark !text-white placeholder:!text-white/50 focus:!border-brand-orange text-left"
                     />
                   </div>
                   <div className="form-field">
@@ -962,7 +1058,7 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
                     <select
                       value={bookingForm.passengers}
                       onChange={(e) => setBookingForm({...bookingForm, passengers: e.target.value})}
-                      className="form-input !bg-white/10 !border-white/20 !text-white focus:!border-brand-orange [&>option]:text-black"
+                      className="form-input !bg-white/10 !border-border-on-dark !text-white focus:!border-brand-orange [&>option]:text-black"
                     >
                       <option value="1">۱ نفر</option>
                       <option value="2">۲ نفر</option>
@@ -980,7 +1076,8 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
                 >
                   {bookingSubmitted ? 'در حال ارسال…' : 'ثبت درخواست تماس برای این تور'}
                 </button>
-              </form>
+                </form>
+              )}
 
             </motion.div>
           </div>
@@ -990,16 +1087,16 @@ export default function ToursPage({ onGoHome, initialPageSize, initialSort }: To
       {/* ---------------- Mobile Bottom Sheet Filters ---------------- */}
       <AnimatePresence>
         {showMobileFilters && (
-          <div className="fixed inset-0 bg-black/60 z-[95] flex items-end dir-rtl">
+          <div className="fixed inset-0 bg-black/60 z-[95] flex items-end">
             <motion.div 
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              className="bg-surface-primary rounded-t-3xl w-full max-h-[85vh] overflow-y-auto p-6 text-right"
+              className="bg-surface-primary rounded-t-card w-full max-h-[85vh] overflow-y-auto p-6 text-start"
             >
               <div className="filter-panel-header">
                 <h3 className="text-h4 text-text-heading">فیلترهای انتخاب تور</h3>
-                <button onClick={() => setShowMobileFilters(false)} className="icon-btn icon-btn-medium text-text-secondary hover:text-text-heading">
+                <button ref={sheetCloseRef} onClick={() => setShowMobileFilters(false)} aria-label="بستن فیلترها" className="icon-btn icon-btn-medium text-text-secondary hover:text-text-heading">
                   <X className="w-5 h-5 text-text-secondary" />
                 </button>
               </div>

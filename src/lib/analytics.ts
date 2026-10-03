@@ -19,7 +19,13 @@ export function gaId(): string | undefined {
 function send(event: string, params: Record<string, string>) {
   if (typeof window === 'undefined') return;
   if (!gaId() || typeof window.gtag !== 'function') return;
-  window.gtag('event', event, params);
+  try {
+    // میز P-B فاز ۲ (PB-06): اگر خود gtag خراب باشد، خطا نباید به هندلر
+    // رویداد (مثلاً ثبت لید) سرایت کند.
+    window.gtag('event', event, params);
+  } catch {
+    // آنالیتیکس حیاتی نیست؛ بی‌صدا رد می‌شود.
+  }
 }
 
 export function trackPhoneClick(page: string) {

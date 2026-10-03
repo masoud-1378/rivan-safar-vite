@@ -6,6 +6,7 @@ import { AmountInput } from '@/components/ui/amount-input';
 import { formatToman } from '@/lib/utils';
 import { updateTourPrice } from './actions';
 import { useToast } from '@/components/ui/toast';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 interface PriceCellProps {
   id: string;
@@ -63,7 +64,7 @@ export function PriceCell({ id, price, onSaved }: PriceCellProps) {
       onSaved(res.price, res.formattedPrice);
       toast({ title: 'قیمت به‌روز شد', description: `قیمت پایه ${formatToman(res.price)} ثبت شد.` });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'ذخیره نشد. دوباره تلاش کنید.');
+      setError(safeErrorMessage(e, 'ذخیره نشد. دوباره تلاش کنید.'));
     } finally {
       busyRef.current = false;
     }

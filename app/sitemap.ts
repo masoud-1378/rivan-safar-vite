@@ -1,7 +1,11 @@
 import type { MetadataRoute } from 'next';
 import { getSiteUrl } from '@/src/lib/site-contact';
 import { getIndexableLandings, getDynamicIndexablePaths } from '@/src/data/seoLandings';
-import { getTours, getGuides, getExhibitions, getSeoLandings, getDestinationsOnce, normalizeLandingPath } from '@/src/lib/db-content';
+import { getTours, getGuides, getExhibitions, getSeoLandings, getDestinationsOnce, getCountries, normalizeLandingPath } from '@/src/lib/db-content';
+
+// P1-12: سایت‌مپ باید هر درخواست تازه ساخته شود تا گیت لانچ و آیتم‌های تازه
+// بدون دیپلوی در آن اعمال شوند.
+export const dynamic = 'force-dynamic';
 
 /**
  * نقشه سایت داینامیک — لندینگ‌های published/index + مسیرهای داینامیک دارای داده واقعی.
@@ -47,6 +51,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (s.upcomingEdition?.editionSlug) {
         dbPaths.push(`/exhibition/${s.slug}/${s.upcomingEdition.editionSlug}`);
       }
+    }
+    // ویزا گیت انتشار ندارد (هم‌خوان با صفحهٔ /visa/[country])؛ فهرست زنده کشورها.
+    try {
+      const countries = await getCountries();
+      for (const c of Object.keys(countries)) dbPaths.push(`/visa/${c}`);
+    } catch {
+      // بی‌صدا رد می‌شود؛ بقیهٔ مسیرها می‌مانند.
     }
     // ایراد ۲۲: مقصدهای تازه هم وارد sitemap می‌شوند — کشورها همیشه،
     // شهرها فقط وقتی دست‌کم یک تور فعال دارند (صفحهٔ بدون تور محتوای نازک است).

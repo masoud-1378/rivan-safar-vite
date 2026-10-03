@@ -15,6 +15,10 @@
   --color-brand-orange-hover: #E85D00;
   --color-brand-orange-active: #D95500;
   --color-brand-orange-soft: #FFF0E6;
+  /* QA2-1: نسخهٔ تیره‌تر نارنجی برند فقط برای متن روی زمینهٔ روشن
+     (کنتراست ۵٫۱۸:۱ روی سفید؛ #FF6600 فقط ۲٫۹۴:۱ داشت). خود #FF6600
+     برای دکمه‌ها و سطوح گرافیکی می‌ماند. */
+  --color-brand-orange-strong: #C2410C;
 
   --color-brand-navy: #102A3A;
   --color-brand-navy-hover: #17384A;
@@ -72,6 +76,10 @@
   --shadow-card: 0 8px 24px rgba(16, 42, 58, 0.08);
   --shadow-floating: 0 16px 40px rgba(16, 42, 58, 0.12);
   --shadow-focus: 0 0 0 3px rgba(255, 102, 0, 0.16);
+  --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+
+  /* Brand accents خارج از پالت اصلی (مثل واتساپ) — توکن‌محور، نه hex پراکنده */
+  --color-whatsapp: #25D366;
 }
 
 /* --- سیستم فونت ریوان سفر --- */
@@ -126,6 +134,13 @@ html, body {
 @utility text-h4 {
   font-size: clamp(1.125rem, 1.4vw, 1.375rem);
   line-height: 1.55;
+  font-weight: var(--font-weight-semibold);
+  text-wrap: balance;
+}
+/* QA2-10: پلهٔ گمشدهٔ مقیاس تایپ — بین h4 (۱۸ تا ۲۲px) و بدنه (۱۶px) */
+@utility text-h5 {
+  font-size: clamp(1rem, 1.2vw, 1.25rem);
+  line-height: 1.6;
   font-weight: var(--font-weight-semibold);
   text-wrap: balance;
 }
@@ -194,6 +209,24 @@ html, body {
   font-size: 14px;
   line-height: 1.5;
   font-weight: var(--font-weight-semibold);
+}
+
+/* ناحیهٔ امن گوشی‌های ناچ‌دار: env(...) باید «پدینگ داخل» نوار باشد،
+   نه فاصله زیر/بالای آن — تا نوار به لبهٔ فیزیکی صفحه بچسبد. */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* مخفی‌کردن اسکرول‌بار بومی در ردیف‌های اسکرول افقی (مثل چیپ‌های فیلتر) */
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @utility text-form-label {
@@ -322,19 +355,19 @@ html, body {
 .btn-outline:hover:not(:disabled) {
   background-color: var(--color-brand-orange-soft);
   border-color: var(--color-brand-orange);
-  color: var(--color-brand-orange);
+  color: var(--color-brand-orange-strong);
 }
 
 .text-link {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--color-brand-orange);
+  color: var(--color-brand-orange-strong);
   font-weight: 600;
   transition: color 0.2s ease;
 }
 .text-link:hover {
-  color: var(--color-brand-orange-hover);
+  color: var(--color-brand-orange-strong);
 }
 .text-link:focus-visible {
   outline: none;
@@ -386,7 +419,15 @@ html, body {
 }
 .badge-brand {
   background-color: var(--color-brand-orange-soft);
-  color: var(--color-brand-orange);
+  color: var(--color-brand-orange-strong);
+}
+.badge-standard {
+  background-color: var(--color-surface-secondary);
+  color: var(--color-brand-navy);
+}
+.badge-warning {
+  background-color: var(--color-brand-warning-soft);
+  color: var(--color-brand-warning);
 }
 .badge-info {
   background-color: var(--color-brand-navy-soft);
@@ -464,7 +505,7 @@ html, body {
 .chip-selected {
   background-color: var(--color-brand-orange-soft);
   border-color: var(--color-brand-orange);
-  color: var(--color-brand-orange);
+  color: var(--color-brand-orange-strong);
 }
 .chip:disabled {
   background-color: var(--color-disabled-background);
@@ -524,7 +565,8 @@ html, body {
 }
 
 .form-input::placeholder {
-  color: var(--color-text-muted);
+  /* QA2-2: کنتراست placeholder روی سفید (۴٫۹۴:۱ به‌جای ۲٫۹۷:۱) */
+  color: var(--color-text-secondary);
 }
 
 .form-input:hover:not(:disabled) {
@@ -851,7 +893,7 @@ html, body {
 }
 
 .filter-panel-footer {
-  padding: 16px 20px;
+  padding: 16px 20px max(16px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--color-border-default);
   display: flex;
   align-items: center;
@@ -918,45 +960,7 @@ html, body {
   color: var(--color-text-heading);
 }
 
-.date-picker-day {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--color-text-primary);
-  transition: all 0.2s ease;
-}
-
-.date-picker-day:hover:not(:disabled) {
-  background-color: var(--color-surface-secondary);
-}
-
-.date-picker-day.today {
-  border: 1px solid var(--color-brand-orange);
-  color: var(--color-brand-orange);
-  font-weight: 600;
-}
-
-.date-picker-day.selected {
-  background-color: var(--color-brand-orange);
-  color: #FFFFFF;
-  font-weight: 700;
-}
-
-.date-picker-day.in-range {
-  background-color: var(--color-brand-orange-soft);
-  border-radius: 0;
-}
-
-.date-picker-day:disabled {
-  color: var(--color-text-muted);
-  cursor: not-allowed;
-  opacity: 0.5;
-}
+/* QA2-18: بلوک .date-picker-day حذف شد (بدون هیچ مصرفی در سایت) */
 
 /* Passenger Selector */
 .passenger-selector-panel {
@@ -984,29 +988,7 @@ html, body {
   gap: 12px;
 }
 
-.passenger-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1px solid var(--color-border-default);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-secondary);
-  background-color: var(--color-surface-primary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.passenger-btn:hover:not(:disabled) {
-  border-color: var(--color-brand-orange);
-  color: var(--color-brand-orange);
-}
-
-.passenger-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+/* QA2-18: بلوک .passenger-btn حذف شد (بدون هیچ مصرفی در سایت) */
 
 .passenger-val {
   font-weight: 600;
@@ -1795,3 +1777,17 @@ body:has(.admin-vibefarsi) {
   --font-sans: var(--font-body);
 }
 /* --- vibefarsi:font-end --- */
+
+/* QA2-6: احترام به prefers-reduced-motion در سایت عمومی —
+   انیمیشن‌ها و ترنزیشن‌ها برای کاربرانی که حرکت کمتر خواسته‌اند
+   عملاً غیرفعال می‌شوند (الگوی استاندارد). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

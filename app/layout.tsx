@@ -36,6 +36,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  // cover تا نوارهای fixed واقعاً به لبهٔ فیزیکی صفحه برسند (نه لبهٔ safe-area)؛
+  // فاصلهٔ امن با pb-safe/pt-safe به‌صورت پدینگ داخل نوارها جبران می‌شود.
+  viewportFit: 'cover',
   themeColor: '#102A3A',
 };
 

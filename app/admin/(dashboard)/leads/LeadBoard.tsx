@@ -16,6 +16,7 @@ import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 export interface LeadRow {
   id: string;
@@ -171,7 +172,7 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
         toast({ variant: 'success', title: `وضعیت ${fa(res.count)} درخواست تغییر کرد.` });
         setSelected(new Set());
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'تغییر گروهی اعمال نشد؛ دوباره تلاش کنید.' });
+        toast({ variant: 'error', title: safeErrorMessage(e, 'تغییر گروهی اعمال نشد؛ دوباره تلاش کنید.') });
       }
     });
   };
@@ -187,7 +188,7 @@ export function LeadBoard({ initial, variant = 'general', pageSize, total, page,
         toast({ variant: 'success', title: `مسئول پیگیری ${fa(res.count)} درخواست مشخص شد.` });
         setSelected(new Set());
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'مسئول تعیین نشد؛ دوباره تلاش کنید.' });
+        toast({ variant: 'error', title: safeErrorMessage(e, 'مسئول تعیین نشد؛ دوباره تلاش کنید.') });
       }
     });
   };

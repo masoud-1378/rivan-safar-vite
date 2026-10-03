@@ -10,7 +10,7 @@ import { AlertDialog } from '@/components/ui/alert-dialog';
 import { faSlug } from '@/lib/utils';
 import { createLanding, updateLanding, type LandingInput } from './actions';
 import type { PathCollision } from '@/src/lib/landing-path';
-
+import { safeErrorMessage } from '@/src/lib/error-message';
 const PAGE_TYPES = [
   { value: 'home', label: 'خانه' },
   { value: 'tours_all', label: 'همه تورها' },
@@ -157,11 +157,7 @@ export default function LandingForm({
         if (onSaved) onSaved();
         window.location.reload();
       } catch (e) {
-        // ریشهٔ #441: در پروداکشن e.message همان «Minified React error #441» است؛
-        // به کاربر نشانش نده. پیام عمومی + ثبت digest برای عیب‌یابی.
-        console.error('[seo] landing save failed', (e as { digest?: unknown })?.digest ?? e);
-        toast({ variant: 'error', title: 'خطا در ذخیره لندینگ.' });
-      }
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در ذخیره لندینگ.') });      }
     });
   };
 

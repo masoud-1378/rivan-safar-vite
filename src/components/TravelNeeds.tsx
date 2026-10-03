@@ -88,7 +88,7 @@ export default function TravelNeeds() {
                  </div>
                  
                  {/* Title & Description */}
-                 <div className="text-right">
+                 <div className="text-start">
                    <h3 className="text-body-lg font-extrabold text-text-heading group-hover:text-brand-orange transition-colors line-clamp-2 mb-1.5">
                      {item.title}
                    </h3>

@@ -84,7 +84,7 @@ export default function TourListItem({
     <a 
       href={href || '#'}
       onClick={handleClick}
-      className={`group block bg-surface-primary border border-border-default rounded-card shadow-subtle hover:-translate-y-0.5 hover:shadow-card hover:border-border-default/80 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col md:flex-row min-h-[100px] w-full dir-rtl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange ${soldOut ? 'opacity-85' : ''} ${className}`}
+      className={`group block bg-surface-primary border border-border-default rounded-card shadow-subtle hover:-translate-y-0.5 hover:shadow-card hover:border-border-default/80 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col md:flex-row min-h-[100px] w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange ${soldOut ? 'opacity-85' : ''} ${className}`}
     >
       {/* --- Image Area --- */}
       <div className="relative w-full md:w-[140px] lg:w-[160px] shrink-0 aspect-[16/9] md:aspect-auto">
@@ -96,13 +96,13 @@ export default function TourListItem({
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 md:hidden" />
         
         {/* Top Badges */}
-        <div className="absolute top-3 right-3 left-3 flex items-start justify-end gap-2 z-10 pointer-events-none">
+        <div className="absolute top-3 start-3 end-3 flex items-start justify-end gap-2 z-10 pointer-events-none">
           {/* Status Badge */}
           {(statusBadge || badge || featureElement) && (
             <div className="flex flex-col gap-1.5 items-end">
               {statusBadge && (
                 <span className={`inline-flex px-2 py-1 rounded-md text-caption font-bold text-white shadow-sm ${
-                  soldOut ? 'bg-red-500/90' : 'bg-brand-orange/90'
+                  soldOut ? 'bg-danger/90' : 'bg-brand-orange/90'
                 }`}>
                   {statusBadge}
                 </span>
@@ -147,13 +147,13 @@ export default function TourListItem({
 
       {/* --- Action Area (Desktop) --- */}
       <div className="hidden md:flex shrink-0 w-[140px] lg:w-[180px] p-4 lg:p-5 flex-col justify-center border-r border-border-subtle">
-        <div className="text-right">
+        <div className="text-start">
           <span className="block text-caption text-text-secondary mb-1">
             {pricePending || soldOut ? 'وضعیت قیمت' : 'شروع قیمت از'}
           </span>
           <div className="flex flex-wrap items-baseline gap-1">
             {pricePending ? (
-              <span className="text-body font-extrabold text-brand-orange">
+              <span className="text-body font-extrabold text-brand-orange-strong">
                 در حال بررسی
               </span>
             ) : soldOut ? (
@@ -162,7 +162,7 @@ export default function TourListItem({
               </span>
             ) : (
               <>
-                <span className="text-h5 lg:text-h4 font-extrabold text-brand-orange">
+                <span className="text-h5 lg:text-h4 font-extrabold text-brand-orange-strong">
                   {price}
                 </span>
                 <span className="text-caption text-text-secondary font-medium">
@@ -177,13 +177,13 @@ export default function TourListItem({
       {/* --- Action Area (Mobile) --- */}
       <div className="md:hidden flex flex-col px-4 pb-4">
         <div className="flex items-center justify-between mb-3">
-          <div className="text-right">
+          <div className="text-start">
             <span className="block text-caption text-text-secondary mb-0.5">
               {pricePending || soldOut ? 'وضعیت قیمت' : 'شروع قیمت از'}
             </span>
             <div className="flex items-baseline gap-1">
               {pricePending ? (
-                <span className="text-body font-extrabold text-brand-orange">
+                <span className="text-body font-extrabold text-brand-orange-strong">
                   در حال بررسی
                 </span>
               ) : soldOut ? (
@@ -192,7 +192,7 @@ export default function TourListItem({
                 </span>
               ) : (
                 <>
-                  <span className="text-body font-extrabold text-brand-orange">
+                  <span className="text-body font-extrabold text-brand-orange-strong">
                     {price}
                   </span>
                   <span className="text-caption text-text-secondary font-medium">

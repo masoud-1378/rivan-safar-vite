@@ -265,9 +265,9 @@ export default function Stage4TrustTerms({ data, onChange, excludeTourId }: Stag
                   value={trust.luggageKg || ''}
                   onChange={(e) => updateTrust({ luggageKg: Number(e.target.value) || 0 })}
                   placeholder="مثلاً: ۳۰"
-                  className="ps-14 max-md:text-base"
+                  className="pe-14 max-md:text-base"
                 />
-                <span className="absolute left-3 top-2.5 text-xs text-muted-foreground">کیلوگرم</span>
+                <span className="absolute end-3 top-2.5 text-xs text-muted-foreground">کیلوگرم</span>
               </div>
             </Field>
           </div>

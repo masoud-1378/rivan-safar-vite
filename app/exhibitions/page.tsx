@@ -7,7 +7,7 @@ import {
   breadcrumbJsonLd,
   itemListJsonLd,
 } from '../seo-helpers';
-import { getExhibitions } from '@/src/lib/db-content';
+import { getExhibitionsHubContent } from '@/src/lib/db-content';
 import { getContactInfo } from '@/src/lib/site-contact';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ExhibitionsPage() {
   const seo = resolveSeo('/exhibitions');
-  const [exhibitionsData, contact] = await Promise.all([getExhibitions(), getContactInfo()]);
+  const [hubContent, contact] = await Promise.all([getExhibitionsHubContent(), getContactInfo()]);
+  const exhibitionsData = hubContent.exhibitions;
   const series = Object.values(exhibitionsData).map((s) => ({
     name: s.title,
     url: `/exhibition/${s.slug}`,

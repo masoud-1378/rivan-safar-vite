@@ -11,6 +11,7 @@ import { fa } from '@/lib/utils';
 import { formatJalali } from '@/lib/jalali';
 import { useToast } from '@/components/ui/toast';
 import { hardDeleteArchived, restoreArchived, type ArchivedGroup } from './actions';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 interface Props {
   groups: ArchivedGroup[];
@@ -34,7 +35,7 @@ export default function ArchiveManager({ groups, isOwner }: Props) {
       toast({ variant: 'success', title: 'بازیابی شد' });
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'خطای ناشناخته');
+      setError(safeErrorMessage(e, 'خطای ناشناخته'));
     } finally {
       setBusy(false);
     }
@@ -48,7 +49,7 @@ export default function ArchiveManager({ groups, isOwner }: Props) {
       await hardDeleteArchived(pendingDelete.entity, pendingDelete.id);
       setPendingDelete(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'خطای ناشناخته');
+      setError(safeErrorMessage(e, 'خطای ناشناخته'));
     } finally {
       setBusy(false);
     }

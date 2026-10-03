@@ -26,6 +26,7 @@ import {
 } from '@/lib/rich-text';
 import { saveDestination, checkDestinationSlugUnique, checkDestinationDescriptionCol, checkDestinationSeoCols, checkDestinationGalleryCol, type DestinationInput, type DestinationRow, type FaqItem, type GalleryImage } from './actions';
 import { DESTINATION_CATEGORIES, isValidDestinationCategory } from './categories';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 /** مقدار اولیهٔ ویرایشگر: اول نسخهٔ غنی (`*_rich`)، اگر خالی بود متن تخت قدیمی. */
 function initialRich(
@@ -207,7 +208,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
         }
         onDone();
       } catch (e) {
-        toast({ variant: 'error', title: e instanceof Error ? e.message : 'ذخیره انجام نشد؛ دوباره تلاش کنید.' });
+        toast({ variant: 'error', title: safeErrorMessage(e, 'ذخیره انجام نشد؛ دوباره تلاش کنید.') });
       }
     });
   };
@@ -241,7 +242,7 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
         setShowAddCountry(false);
         toast({ title: `کشور «${name}» ثبت و انتخاب شد.` });
       } catch (e) {
-        setNewCountryError(e instanceof Error ? e.message : 'خطا در ثبت کشور.');
+        setNewCountryError(safeErrorMessage(e, 'خطا در ثبت کشور.'));
       }
     });
   };
@@ -528,12 +529,17 @@ export default function DestinationForm({ initial, editingId, onDone, countries:
         </Collapsible>
         </Collapsible>
 
-        <div className="sticky bottom-0 z-10 -mx-5 -mb-5 border-t border-border bg-card/95 px-5 py-3 backdrop-blur">
+        {/* نوار اکشن پایین — در موبایل با fixed واقعاً به کف ویوپورت می‌چسبد
+            (stickyِ bottom به‌عنوان آخرین فرزند هیچ‌وقت نمی‌چسبید)؛ در دسکتاپ
+            همان نوار چسبان لبهٔ کارت. */}
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:sticky md:bottom-0 md:z-10 md:-mx-5 md:-mb-5">
           <div className="flex gap-2">
             <Button onClick={submit} disabled={pending} className="min-h-11 flex-1 sm:min-h-0 sm:flex-none">{pending ? 'در حال ذخیره…' : editingId ? 'ذخیره تغییرات' : 'ثبت مقصد'}</Button>
             <Button type="button" variant="outline" onClick={onDone} className="min-h-11 flex-1 sm:min-h-0 sm:flex-none">انصراف</Button>
           </div>
         </div>
+        {/* فاصلهٔ نگه‌دارنده در موبایل: نوار fixed نباید روی محتوای پایانی کارت بیاید */}
+        <div aria-hidden="true" className="h-24 md:hidden" />
       </CardContent>
     </Card>
   );

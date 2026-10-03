@@ -12,6 +12,7 @@ import { fa, faSlug } from '@/lib/utils';
 import { deleteGuide, saveGuide, checkGuideRichCols, type GuideInput, type GuideRow, type GuideStatus } from './actions';
 import { ColumnNotice, useColumnGuard } from '@/components/ui/column-guard';
 import { DatePicker } from '@/components/ui/date-picker';
+import { safeErrorMessage } from '@/src/lib/error-message';
 import BlockEditor, { cleanBlocks, readItem, validateBlocks } from '@/components/ui/block-editor';
 import { MediaField } from '@/components/ui/media-library/MediaField';
 import { mediaTag, type PickedImage } from '@/components/ui/media-library/types';
@@ -317,7 +318,7 @@ export default function GuideForm({
         await saveGuide(editingId ?? null, payload);
         if (onSaved) onSaved();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'خطای نامشخص در ذخیره‌سازی.');
+        setError(safeErrorMessage(err, 'خطای نامشخص در ذخیره‌سازی.'));
       }
     });
   };

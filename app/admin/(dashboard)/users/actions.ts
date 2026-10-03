@@ -106,7 +106,7 @@ export async function createAdminUser(input: CreateAdminUserInput): Promise<Crea
     user_metadata: { username },
   });
   if (error || !data.user) {
-    console.error('[createAdminUser] خطای Supabase هنگام ساخت کاربر:', email, error);
+    console.error('[createAdminUser] خطای Supabase هنگام ساخت کاربر:', error);
     const msg = String(error?.message ?? '');
     if (error?.code === 'email_exists' || /already|registered|exists/i.test(msg)) {
       return { ok: false, field: 'email', message: 'این ایمیل از قبل در سیستم احراز هویت ثبت شده است.' };
@@ -129,7 +129,7 @@ export async function createAdminUser(input: CreateAdminUserInput): Promise<Crea
       `افزودن کاربر «${username}» با نقش ${role === 'owner' ? 'مالک' : 'ویراستار'}`,
     );
   } catch (e) {
-    console.error('[createAdminUser] ساخت در Auth موفق شد ولی ثبت در admin_users شکست خورد؛ حذف جبرانی:', email, e);
+    console.error('[createAdminUser] ساخت در Auth موفق شد ولی ثبت در admin_users شکست خورد؛ حذف جبرانی:', e);
     await admin.auth.admin
       .deleteUser(userId)
       .catch((delErr) => console.error('[createAdminUser] حذف جبرانی کاربر یتیم شکست خورد:', userId, delErr));

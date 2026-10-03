@@ -5,7 +5,7 @@ import { getDb } from '@/db/client';
 import { siteSettings, auditLogs } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
-import { settingDef, validateSetting, withDefaults } from '@/src/lib/settings';
+import { settingDef, validateSetting, withDefaults, SETTINGS_REGISTRY } from '@/src/lib/settings';
 
 export async function getSettings() {
   await requireAdmin(['owner', 'editor']);
@@ -75,12 +75,21 @@ export async function updateSettings(
 
 export async function getPublicSettings(): Promise<Record<string, string>> {
   const db = getDb();
-  if (!db) return withDefaults([]);
+  // SEC-10: کلیدهای ownerOnly (مثل site.maintenance) نباید بدون لاگین لو بروند؛
+  // خروجی عمومی فقط از روی رجیستری و بدون آن کلیدها ساخته می‌شود.
+  const publicDefs = SETTINGS_REGISTRY.filter((d) => !d.ownerOnly);
+  const build = (rows: Array<{ settingKey: string; settingValue: string }>) => {
+    const merged = withDefaults(rows);
+    const out: Record<string, string> = {};
+    for (const d of publicDefs) out[d.key] = merged[d.key];
+    return out;
+  };
+  if (!db) return build([]);
   try {
     const rows = await db.select().from(siteSettings);
-    return withDefaults(rows);
+    return build(rows);
   } catch {
-    return withDefaults([]);
+    return build([]);
   }
 }
 

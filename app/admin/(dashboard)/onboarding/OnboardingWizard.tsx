@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { cn, fa } from '@/lib/utils';
 import { completeOnboarding, getOnboardingState, runSampleSeed, type OnboardingState } from './actions';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 export default function OnboardingWizard({ initial }: { initial: OnboardingState }) {
   const [state, setState] = useState<OnboardingState>(initial);
@@ -63,7 +64,7 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
                   setState(next);
                   toast({ variant: 'success', title: 'دادهٔ نمونه وارد شد.' });
                 } catch (e) {
-                  toast({ variant: 'error', title: e instanceof Error ? e.message : 'ورود دادهٔ نمونه انجام نشد؛ دوباره تلاش کنید.' });
+                  toast({ variant: 'error', title: safeErrorMessage(e, 'ورود دادهٔ نمونه انجام نشد؛ دوباره تلاش کنید.') });
                 }
               })
             }
@@ -135,7 +136,7 @@ export default function OnboardingWizard({ initial }: { initial: OnboardingState
                 setHidden(true);
                 toast({ variant: 'success', title: 'راه‌اندازی تمام شد. موفق باشید!' });
               } catch (e) {
-                toast({ variant: 'error', title: e instanceof Error ? e.message : 'خطا در ثبت پایان راه‌اندازی.' });
+                toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در ثبت پایان راه‌اندازی.') });
               }
             })
           }

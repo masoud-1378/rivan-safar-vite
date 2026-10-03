@@ -292,6 +292,10 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
+  // QA2-4: مدیریت فوکوس دراور موبایل — رفت و برگشت بین دکمهٔ منو و دکمهٔ بستن
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+  const drawerWasOpenRef = useRef(false);
 
   // ایرادهای ۱۹ و ۲۳: لینک‌های منو از DB می‌آیند (فقط مقصدهای دارای تور فعال
   // و نمایشگاه‌های منتشرشده)؛ اگر لینک زنده‌ای نرسید، همان هاردکد قبلی.
@@ -323,11 +327,12 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
     }
   };
 
-  // Close megamenu on Escape key
+  // Close megamenu and mobile drawer on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setActiveMenu(null);
+        setMobileMenuOpen(false); // QA2-4: بستن دراور موبایل با Escape
       }
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -362,19 +367,31 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
     }
   }, [mobileMenuOpen]);
 
+  // QA2-4: انتقال فوکوس به دکمهٔ بستن هنگام باز شدن دراور و برگرداندن
+  // آن به دکمهٔ منو هنگام بسته شدن
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      drawerWasOpenRef.current = true;
+      drawerCloseRef.current?.focus();
+    } else if (drawerWasOpenRef.current) {
+      drawerWasOpenRef.current = false;
+      menuButtonRef.current?.focus();
+    }
+  }, [mobileMenuOpen]);
+
   return (
     <>
       {/* Top Announcement Bar */}
       {showAnnouncement && (
-        <div className="fixed top-0 left-0 right-0 z-[51]">
+        <div className="fixed top-0 end-0 start-0 z-[51] bg-surface-dark pt-safe">
           <AnnouncementBar onClose={() => setShowAnnouncement(false)} />
         </div>
       )}
 
       {/* Desktop & Tablet Navbar */}
       <header
-        className={`fixed left-0 right-0 z-50 transition-all duration-300 border-b border-border-default ${
-          showAnnouncement ? 'top-[38px] md:top-[34px]' : 'top-0'
+        className={`fixed end-0 start-0 z-50 transition-all duration-300 border-b border-border-default ${
+          showAnnouncement ? 'top-[calc(38px+env(safe-area-inset-top))] md:top-[calc(34px+env(safe-area-inset-top))]' : 'top-[env(safe-area-inset-top)]'
         } ${
           isScrolled
             ? 'bg-surface-primary/95 backdrop-blur-md shadow-subtle h-[70px]'
@@ -404,9 +421,9 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
             <div className="hidden flex items-center gap-2 md:gap-3 group">
               <div className="relative text-brand-orange">
                 <span className="text-3xl md:text-5xl font-black font-sans tracking-tighter">R</span>
-                <Plane className="w-4 h-4 md:w-5 md:h-5 absolute -top-1 -right-3 md:-right-5 transform rotate-45 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                <Plane className="w-4 h-4 md:w-5 md:h-5 absolute -top-1 -start-3 md:-start-5 transform rotate-45 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               </div>
-              <div className="flex flex-col border-r-2 border-border-default pr-2 md:pr-3">
+              <div className="flex flex-col border-s-2 border-border-default ps-2 md:ps-3">
                 <span className="text-base md:text-price-lg text-text-heading leading-tight">{contact.brand}</span>
               </div>
             </div>
@@ -429,7 +446,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                       onClick={(e) => handleNavClick(item.path, e)}
                       onFocus={item.hasMegamenu ? () => handleMouseEnter(item.name) : undefined}
                       onBlur={item.hasMegamenu ? handleMouseLeave : undefined}
-                      className={`flex items-center gap-1.5 h-full text-[15px] font-semibold transition-colors relative focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange focus-visible:rounded-small px-2.5 -mx-1 ${
+                      className={`flex items-center gap-1.5 h-full text-nav transition-colors relative focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange focus-visible:rounded-small px-2.5 -mx-1 ${
                         isActive ? 'text-brand-orange' : 'text-surface-dark-raised hover:text-brand-orange'
                       }`}
                     >
@@ -449,14 +466,14 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                     {/* Mega Menu */}
                     {item.hasMegamenu && item.name === 'تورهای خارجی' && (
                       <div
-                        className={`absolute top-[100%] left-1/2 -translate-x-1/2 w-[1000px] xl:w-[1200px] bg-surface-primary rounded-b-[14px] shadow-floating transition-all duration-300 z-50 overflow-hidden border-t border-border-default ${
+                        className={`absolute top-[100%] left-1/2 -translate-x-1/2 w-[1000px] xl:w-[1200px] bg-surface-primary rounded-b-control shadow-floating transition-all duration-300 z-50 overflow-hidden border-t border-border-default ${
                           activeMenu === item.name ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
                         }`}
                       >
                         <div className="p-7 lg:p-8 grid grid-cols-5 gap-6">
                           {foreignCols.map((col) => (
                             <div key={col.title}>
-                              <h3 className="text-[15px] font-bold text-text-heading mb-4 border-r-2 border-border-brand pr-2.5 leading-snug">
+                              <h3 className="text-[15px] font-bold text-text-heading mb-4 border-s-2 border-border-brand ps-2.5 leading-snug">
                                 {col.title}
                               </h3>
                               <ul className="flex flex-col gap-3">
@@ -521,14 +538,14 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
 
                     {item.hasMegamenu && item.name === 'تورهای داخلی' && (
                       <div
-                        className={`absolute top-[100%] right-0 w-[560px] bg-surface-primary rounded-b-[14px] shadow-floating transition-all duration-300 z-50 overflow-hidden border-t border-border-default ${
+                        className={`absolute top-[100%] start-0 w-[560px] bg-surface-primary rounded-b-control shadow-floating transition-all duration-300 z-50 overflow-hidden border-t border-border-default ${
                           activeMenu === item.name ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
                         }`}
                       >
                         <div className="p-7 grid grid-cols-2 gap-8">
                           {domesticCols.map((col) => (
                             <div key={col.title}>
-                              <h3 className="text-[15px] font-bold text-text-heading mb-4 border-r-2 border-border-brand pr-2.5 leading-snug">
+                              <h3 className="text-[15px] font-bold text-text-heading mb-4 border-s-2 border-border-brand ps-2.5 leading-snug">
                                 {col.title}
                               </h3>
                               <ul className="flex flex-col gap-3">
@@ -565,13 +582,13 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
 
                     {item.hasMegamenu && item.name === 'تورهای نمایشگاهی' && (
                       <div
-                        className={`absolute top-[100%] right-0 w-[500px] bg-surface-primary rounded-b-[14px] shadow-floating transition-all duration-300 z-50 overflow-hidden border-t border-border-default ${
+                        className={`absolute top-[100%] start-0 w-[500px] bg-surface-primary rounded-b-control shadow-floating transition-all duration-300 z-50 overflow-hidden border-t border-border-default ${
                           activeMenu === item.name ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
                         }`}
                       >
                         <div className="p-7 grid grid-cols-2 gap-8">
                           <div>
-                            <h3 className="text-[15px] font-bold text-text-heading mb-4 border-r-2 border-border-brand pr-2.5 leading-snug">
+                            <h3 className="text-[15px] font-bold text-text-heading mb-4 border-s-2 border-border-brand ps-2.5 leading-snug">
                               {exhibitionToursData.title}
                             </h3>
                             <ul className="flex flex-col gap-3">
@@ -640,9 +657,11 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
 
             {/* Mobile / Tablet Menu Toggle */}
             <button
+              ref={menuButtonRef}
               className="lg:!hidden flex items-center justify-center w-11 h-11 rounded-control text-text-heading hover:text-brand-orange hover:bg-page-background transition-colors"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="باز کردن منو"
+              aria-expanded={mobileMenuOpen}
             >
               <Menu className="w-7 h-7" />
             </button>
@@ -669,18 +688,23 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="fixed top-0 right-0 bottom-0 w-[85%] max-w-[400px] bg-surface-primary z-[70] shadow-2xl flex flex-col lg:hidden"
+              className="fixed top-0 start-0 bottom-0 w-[85%] max-w-[400px] bg-surface-primary z-[70] shadow-floating flex flex-col lg:hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-label="منوی موبایل"
             >
               {/* Drawer Header */}
-              <div className="flex items-center justify-center p-5 border-b border-border-default relative">
+              <div className="flex items-center justify-center p-5 pt-[calc(1.25rem+env(safe-area-inset-top))] border-b border-border-default relative">
                 <div className="flex items-center gap-2 relative text-brand-orange">
                   <span className="text-3xl font-black font-sans tracking-tighter">R</span>
-                  <Plane className="w-4 h-4 absolute -top-1 -right-3 transform rotate-45" />
-                  <span className="text-lg font-black text-text-heading mr-2 border-r-2 border-border-default pr-2">{contact.brand}</span>
+                  <Plane className="w-4 h-4 absolute -top-1 -start-3 transform rotate-45" />
+                  <span className="text-lg font-black text-text-heading ms-2 border-s-2 border-border-default ps-2">{contact.brand}</span>
                 </div>
                 <button
+                  ref={drawerCloseRef}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="icon-btn icon-btn-medium absolute left-5 bg-page-background text-text-secondary hover:bg-brand-orange-soft hover:text-brand-orange"
+                  aria-label="بستن منو"
+                  className="icon-btn icon-btn-medium absolute end-5 bg-page-background text-text-secondary hover:bg-brand-orange-soft hover:text-brand-orange"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -720,7 +744,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                           >
-                            <div className="pt-2 pb-2 pl-4 pr-2 space-y-2 border-r-2 border-border-brand/30 mr-2 mt-2">
+                            <div className="pt-2 pb-2 pe-4 ps-2 space-y-2 border-s-2 border-border-brand/30 ms-2 mt-2">
                               {item.subcategories.map((sub) => {
                                 const isAlwaysOpen = item.name === 'تورهای نمایشگاهی';
                                 const isExpanded = isAlwaysOpen || mobileSubExpanded === sub.title;
@@ -751,12 +775,12 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                                         exit={isAlwaysOpen ? undefined : { height: 0, opacity: 0 }}
                                         className="overflow-hidden"
                                       >
-                                        <div className="flex flex-col gap-2 pt-2 pb-1 pr-4">
+                                        <div className="flex flex-col gap-2 pt-2 pb-1 ps-4">
                                           {sub.links.map(link => (
                                             <button
                                               key={link.name}
                                               onClick={() => handleNavClick(link.path)}
-                                              className="text-body-sm text-right text-text-secondary hover:text-brand-orange py-1.5 transition-colors"
+                                              className="text-body-sm text-start text-text-secondary hover:text-brand-orange py-3 transition-colors"
                                             >
                                               {link.name}
                                             </button>
@@ -764,7 +788,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
                                           {sub.viewAll && sub.path && (
                                             <button
                                               onClick={() => handleNavClick(sub.path!)}
-                                              className="text-body-sm font-medium text-text-heading hover:text-brand-orange py-1.5 transition-colors inline-flex items-center gap-1.5 mt-3"
+                                              className="text-body-sm font-medium text-text-heading hover:text-brand-orange py-3 transition-colors inline-flex items-center gap-1.5 mt-3"
                                             >
                                               <span>{sub.viewAll}</span>
                                               <ArrowLeft className="w-3.5 h-3.5" />
@@ -796,7 +820,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
               </div>
 
               {/* Drawer Footer CTA */}
-              <div className="p-5 border-t border-border-default bg-surface-primary shadow-subtle">
+              <div className="p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] border-t border-border-default bg-surface-primary shadow-subtle">
                 <div className="bg-page-background rounded-card p-4 border border-border-default text-center">
                   <p className="text-body-sm text-text-heading font-bold mb-3">برای انتخاب تور نیاز به راهنمایی دارید؟</p>
                   <a
@@ -815,22 +839,22 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
       </AnimatePresence>
 
       {/* Mobile Bottom Navigation Bar (Persistent across all pages) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-primary shadow-card z-[45] rounded-t-2xl border-t border-border-default h-14 px-6 flex justify-between items-center pb-safe">
+      <div className="md:hidden fixed bottom-0 start-0 end-0 bg-surface-primary shadow-card z-[45] rounded-t-card border-t border-border-default min-h-14 px-6 flex justify-between items-center pb-safe">
 
           {/* Menu Button (Opens Drawer) */}
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="flex flex-col items-center justify-center gap-1 text-text-secondary hover:text-brand-orange transition-colors"
+            className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 text-text-secondary hover:text-brand-orange transition-colors"
           >
             <Compass className="w-5 h-5" />
             <span className="text-caption font-bold">منو</span>
           </button>
 
           {/* Main CTA: Call */}
-          <div className="absolute left-1/2 -translate-x-1/2 bottom-2 flex flex-col items-center gap-1.5 pointer-events-none">
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] flex flex-col items-center gap-1.5 pointer-events-none">
             <a
               href={contact.phoneHref}
-              className="pointer-events-auto bg-brand-orange text-on-brand w-14 h-14 rounded-card flex items-center justify-center shadow-card border-[3px] border-white hover:scale-105 transition-transform"
+              className="pointer-events-auto bg-brand-orange text-text-on-brand w-14 h-14 rounded-card flex items-center justify-center shadow-card border-[3px] border-white hover:scale-105 transition-transform"
             >
               <Phone className="w-6 h-6" />
             </a>
@@ -845,7 +869,7 @@ export default function Navbar({ showAnnouncement, setShowAnnouncement, onNaviga
             })()}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col items-center justify-center gap-1 text-text-secondary hover:text-[#25D366] transition-colors"
+            className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 text-text-secondary hover:text-whatsapp transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.663-2.06-.177-.298-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>

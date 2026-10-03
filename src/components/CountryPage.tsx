@@ -20,7 +20,7 @@ import {
 import { type Place } from '../data/destinationsData';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
-import { submitLead } from '../../app/actions/lead';
+import { safeCreateLead } from '../lib/lead-submit-safe';
 import { trackLeadSubmit } from '../lib/analytics';
 import SmartImage from './SmartImage';
 import TourListItem from './TourListItem';
@@ -49,7 +49,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
 
   if (!country) {
     return (
-      <div className="container-main py-16 px-4 text-center dir-rtl">
+      <div className="container-main py-16 px-4 text-center">
         <div className="max-w-md mx-auto bg-surface-primary border border-border-default rounded-card p-8 shadow-card">
           <Globe className="w-12 h-12 text-text-muted mx-auto mb-4" />
           <h2 className="text-h3 font-bold text-text-heading mb-2">کشور مورد نظر یافت نشد</h2>
@@ -91,7 +91,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
     if (!inquiryPhone.trim()) return;
 
     setIsSubmitting(true);
-    const result = await submitLead({
+    const result = await safeCreateLead({
       fullName: inquiryName,
       phone: inquiryPhone,
       sourcePath: `/destination/${country.slug}`,
@@ -105,7 +105,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
   };
 
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       
       {/* ---------------- 1. Breadcrumb ---------------- */}
       <div className="bg-surface-secondary border-b border-border-default/60 py-2.5">
@@ -173,7 +173,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
 
             {/* Left Column: Modern Hero Image with Clean Floating Badge */}
             <div className="lg:col-span-5">
-              <div className="relative rounded-2xl overflow-hidden border border-border-default/80 shadow-card bg-surface-secondary group">
+              <div className="relative rounded-card overflow-hidden border border-border-default/80 shadow-card bg-surface-secondary group">
                 <div className="aspect-[4/3] relative">
                   <SmartImage
                     src={country.image}
@@ -186,10 +186,10 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                 </div>
 
                 {/* Floating Modern Badge (Only Tour Count) */}
-                <div className="absolute top-3.5 right-3.5">
-                  <div className="backdrop-blur-md bg-brand-navy/85 text-white border border-white/20 px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+                <div className="absolute top-3.5 start-3.5">
+                  <div className="backdrop-blur-md bg-brand-navy/85 text-white border border-border-on-dark px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-brand-orange" />
-                    <span className="text-caption font-bold ">{country.activeToursCount} تور فعال</span>
+                    <span className="text-caption font-bold ">{fa(country.activeToursCount)} تور فعال</span>
                   </div>
                 </div>
               </div>
@@ -243,7 +243,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                     {city.nameEn}
                   </div>
 
-                  <div className="pt-2 sm:pt-2.5 border-t border-white/20 flex items-center justify-between">
+                  <div className="pt-2 sm:pt-2.5 border-t border-border-on-dark flex items-center justify-between">
                     <div>
                       <div className="text-[10px] sm:text-caption text-white/70 leading-none mb-0.5">شروع از</div>
                       <div className="flex items-baseline gap-1 whitespace-nowrap">
@@ -363,7 +363,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
 
                     {isOpen && (
                       <div className="p-4 md:p-5 pt-0 text-body-sm text-text-secondary leading-relaxed border-t border-border-default/40 bg-surface-primary">
-                        <div className="pr-8 pt-2">
+                        <div className="ps-8 pt-2">
                           {faq.answer}
                         </div>
                       </div>
@@ -390,10 +390,10 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
             </div>
 
             {isSubmitted ? (
-              <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-card text-center my-4">
-                <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto mb-2" />
-                <h4 className="text-h4 font-bold text-emerald-800 mb-1">درخواست شما ثبت شد</h4>
-                <p className="text-body-sm text-emerald-700">
+              <div className="p-6 bg-brand-success-soft border border-brand-success/25 rounded-card text-center my-4">
+                <CheckCircle2 className="w-12 h-12 text-brand-success mx-auto mb-2" />
+                <h4 className="text-h4 font-bold text-brand-success mb-1">درخواست شما ثبت شد</h4>
+                <p className="text-body-sm text-brand-success">
                   {submitMessage || `کارشناس تور ${country.name} به زودی با شماره ${inquiryPhone} تماس خواهد گرفت.`}
                 </p>
               </div>
@@ -409,7 +409,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                       placeholder="مثال: علی رضایی"
                       value={inquiryName}
                       onChange={(e) => setInquiryName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-control border border-border-default bg-surface-secondary text-body-sm text-text-primary focus:outline-none focus:border-brand-orange focus:bg-surface-primary transition-colors"
+                      className="w-full px-3.5 py-2.5 rounded-control border border-border-default bg-surface-secondary text-form-input text-text-primary focus:outline-none focus:border-brand-orange focus:shadow-focus focus:bg-surface-primary transition-colors"
                       required
                     />
                   </div>
@@ -424,7 +424,7 @@ export default function CountryPage({ countrySlug, onNavigate }: CountryPageProp
                       value={inquiryPhone}
                       onChange={(e) => setInquiryPhone(e.target.value)}
                       dir="ltr"
-                      className="w-full px-3.5 py-2.5 rounded-control border border-border-default bg-surface-secondary text-body-sm text-text-primary focus:outline-none focus:border-brand-orange focus:bg-surface-primary transition-colors text-start"
+                      className="w-full px-3.5 py-2.5 rounded-control border border-border-default bg-surface-secondary text-form-input text-text-primary focus:outline-none focus:border-brand-orange focus:shadow-focus focus:bg-surface-primary transition-colors text-start"
                       required
                     />
                   </div>

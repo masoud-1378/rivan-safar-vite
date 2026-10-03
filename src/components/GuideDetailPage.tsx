@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  BookOpen, Calendar, Clock, ChevronLeft, ArrowRight, 
+  BookOpen, Calendar, Clock, ChevronLeft, 
   CheckCircle2, AlertCircle, ShieldCheck, Phone, MapPin, 
   Building2, Sparkles, Share2
 } from 'lucide-react';
@@ -37,7 +37,7 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
 
   if (!guide) {
     return (
-      <div className="container-main py-16 px-4 text-center dir-rtl">
+      <div className="container-main py-16 px-4 text-center">
         <h2 className="text-h3 font-bold mb-4">راهنمای مورد نظر یافت نشد</h2>
         <button onClick={() => onNavigate('/guides')} className="btn btn-primary btn-medium">
           بازگشت به فهرست راهنماها
@@ -81,7 +81,7 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
   })();
 
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       {/* ---------------- Breadcrumb ---------------- */}
       <div className="bg-surface-secondary border-b border-border-default/60 py-2.5">
         <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl">
@@ -101,7 +101,7 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
 
       {/* ---------------- Article Header ---------------- */}
       <section className="bg-surface-primary border-b border-border-default section-compact">
-        <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl text-right">
+        <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl text-start">
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="badge badge-standard">{guide.categoryLabel}</span>
             <span className="flex items-center gap-1 text-caption text-text-muted">
@@ -132,7 +132,7 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
           )}
 
           {/* Key Takeaway Box */}
-          <div className="p-5 bg-surface-secondary border border-brand-orange/30 rounded-card text-right">
+          <div className="p-5 bg-surface-secondary border border-brand-orange/30 rounded-card text-start">
             <div className="flex items-center gap-2 font-bold text-text-heading mb-2">
               <Sparkles className="w-4 h-4 text-brand-orange" />
               <span>خلاصه و نتیجه‌گیری سریع برای مسافر</span>
@@ -146,17 +146,25 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
 
       {/* ---------------- Main Content & Sidebar ---------------- */}
       <section className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl section-standard">
-        <div className="space-y-8 text-right">
+        <div className="space-y-8 text-start">
           {/* Featured Image */}
           <div className="aspect-[21/9] rounded-card overflow-hidden border border-border-default shadow-card relative">
-            <SmartImage src={guide.heroImage} alt={guide.title} priority className="object-cover" />
+              <SmartImage
+                src={guide.heroImage}
+                alt={guide.title}
+                priority
+                // هیرو تقریباً تمام عرض کانتینر max-w-4xl (۸۹۶px) است؛ sizes
+                // پیش‌فرض کارتی (۳۳vw) کاندیدای کوچک‌تر از واقعیت می‌داد (LCP تار).
+                sizes="(max-width: 896px) 100vw, 896px"
+                className="object-cover"
+              />
           </div>
 
           {/* Article Sections */}
           <div className="bg-surface-primary border border-border-default rounded-card p-6 md:p-8 space-y-8">
             {guide.sections.map((sec, idx) => (
               <div key={idx} className="space-y-3">
-                <h2 className="text-h3 font-bold text-text-heading border-r-4 border-brand-orange pr-3">
+                <h2 className="text-h3 font-bold text-text-heading border-s-4 border-brand-orange ps-3">
                   {sec.heading}
                 </h2>
                 <div className="text-body text-text-secondary leading-relaxed">
@@ -164,10 +172,10 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
                 </div>
 
                 {sec.checkpoints && sec.checkpoints.length > 0 && (
-                  <ul className="space-y-2 pt-2 pr-2">
+                  <ul className="space-y-2 pt-2 ps-2">
                     {sec.checkpoints.map((pt, pIdx) => (
                       <li key={pIdx} className="flex items-start gap-2.5 text-body-sm text-text-primary">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-1" />
+                        <CheckCircle2 className="w-4 h-4 text-brand-success shrink-0 mt-1" />
                         <span className="leading-relaxed">{pt}</span>
                       </li>
                     ))}
@@ -212,7 +220,7 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
           )}
 
           {/* Consultation CTA Inside Article */}
-          <div className="p-6 bg-surface-primary border border-border-default rounded-card text-right flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="p-6 bg-surface-primary border border-border-default rounded-card text-start flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
               <h3 className="text-h4 font-bold text-text-heading mb-1">سؤالی درباره این موضوع دارید؟</h3>
               <p className="text-body-sm text-text-secondary">کارشناسان ریوان سفر در ساعات کاری پاسخگوی شما هستند.</p>
@@ -236,7 +244,7 @@ export default function GuideDetailPage({ guideSlug, onNavigate }: GuideDetailPa
                     key={rg.id}
                     href={`/guide/${rg.slug}`}
                     onClick={(e) => { e.preventDefault(); onNavigate(`/guide/${rg.slug}`); }}
-                    className="p-4 bg-surface-primary border border-border-default rounded-card hover:shadow-card hover:-translate-y-0.5 transition-all cursor-pointer text-right flex items-center gap-3"
+                    className="p-4 bg-surface-primary border border-border-default rounded-card hover:shadow-card hover:-translate-y-0.5 transition-all cursor-pointer text-start flex items-center gap-3"
                   >
                     <div className="w-16 h-16 rounded-control overflow-hidden shrink-0 relative">
                       <SmartImage src={rg.heroImage} alt={rg.title} className="object-cover" sizes="64px" />

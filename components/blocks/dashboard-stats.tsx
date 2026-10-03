@@ -19,7 +19,8 @@ export function DashboardStats({ items, className }: { items: DashboardStat[]; c
         const max = s.trend ? Math.max(...s.trend, 1) : 1;
         return (
           <div key={s.label} className="rounded-2xl border border-border bg-card p-5">
-            <Stat label={s.label} value={s.value} unit={s.unit} delta={s.delta} size="sm" />
+            {/* کانتینر همین کارت بیرونی است؛ حاشیهٔ داخلی Stat خنثی می‌شود تا «کادر تو در تو» نشود. */}
+            <Stat label={s.label} value={s.value} unit={s.unit} delta={s.delta} size="sm" className="border-0 bg-transparent p-0" />
             {s.trend && (
               <div aria-hidden className="mt-4 flex h-8 items-end gap-1">
                 {s.trend.map((v, i) => <span key={i} className={cn("flex-1 rounded-sm bg-foreground/15", i === s.trend!.length - 1 && "bg-brand")} style={{ height: `${Math.max(8, (v / max) * 100)}%` }} />)}

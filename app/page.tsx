@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import RouteView from './RouteView';
 import JsonLd from './JsonLd';
 import { metadataFor, resolveSeo, breadcrumbJsonLd } from './seo-helpers';
-import { getLiveContent } from '@/src/lib/db-content';
+import { getHomeContent } from '@/src/lib/db-content';
 import { getContactInfo } from '@/src/lib/site-contact';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const seo = resolveSeo('/');
-  const [content, contact] = await Promise.all([getLiveContent(), getContactInfo()]);
+  const [content, contact] = await Promise.all([getHomeContent(), getContactInfo()]);
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(seo.breadcrumbs)} />

@@ -539,6 +539,8 @@ export const leadRequests = pgTable('lead_requests', {
   id: uuid('id').primaryKey().defaultRandom(),
   fullName: varchar('full_name', { length: 160 }).notNull(),
   phone: varchar('phone', { length: 20 }).notNull(),
+  // SEC-04: آی‌پی ثبت‌کننده برای rate limit دیتابیسی (مایگریشن 0021)
+  ip: varchar('ip', { length: 64 }),
   sourcePath: varchar('source_path', { length: 300 }).notNull(),
   tourContext: varchar('tour_context', { length: 220 }),
   destinationHint: varchar('destination_hint', { length: 120 }),
@@ -549,6 +551,15 @@ export const leadRequests = pgTable('lead_requests', {
   status: leadStatusEnum('status').notNull().default('new'),
   assignee: varchar('assignee', { length: 160 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// SEC-08: لاگ تلاش‌های ورود ادمین برای throttling (مایگریشن 0020)
+export const loginAttempts = pgTable('login_attempts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: varchar('email', { length: 320 }).notNull(),
+  ip: varchar('ip', { length: 64 }).notNull().default('unknown'),
+  succeeded: boolean('succeeded').notNull().default(false),
+  attemptedAt: timestamp('attempted_at').defaultNow().notNull(),
 });
 
 /**

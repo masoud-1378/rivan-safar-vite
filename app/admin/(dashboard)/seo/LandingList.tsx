@@ -16,6 +16,7 @@ import { listLandings, checkQualityGate, setLandingWorkflow, deleteLanding } fro
 import LandingForm, { type LandingFormInitial } from './LandingForm';
 import LandingContent from './LandingContent';
 import SectionSettingsDialog from '../SectionSettingsDialog';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 type LandingRow = Awaited<ReturnType<typeof listLandings>>[number];
 type Workflow = 'draft' | 'review' | 'published' | 'paused' | 'archived';
@@ -58,10 +59,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
     try {
       setData(await listLandings());
     } catch (e) {
-      // ریشهٔ #441: در پروداکشن e.message همان «Minified React error #441» است.
-      console.error('[seo] load landings failed', (e as { digest?: unknown })?.digest ?? e);
-      toast({ variant: 'error', title: 'خطا در بارگذاری لندینگ‌ها.' });
-    }
+      toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در بارگذاری لندینگ‌ها.') });    }
   });
 
   const onDelete = () => {
@@ -73,10 +71,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
         setDeleting(null);
         refresh();
       } catch (e) {
-        // ریشهٔ #441: در پروداکشن e.message همان «Minified React error #441» است.
-        console.error('[seo] delete landing failed', (e as { digest?: unknown })?.digest ?? e);
-        toast({ variant: 'error', title: 'حذف انجام نشد؛ دوباره تلاش کنید.' });
-      }
+        toast({ variant: 'error', title: safeErrorMessage(e, 'حذف انجام نشد؛ دوباره تلاش کنید.') });      }
     });
   };
 
@@ -110,12 +105,7 @@ export default function LandingList({ initial, sectionSettings }: { initial: Lan
         toast({ variant: 'success', title: `وضعیت به «${WORKFLOW_MAP[workflow].label}» تغییر کرد.` });
         refresh();
       } catch (e) {
-        // ریشهٔ #441: در پروداکشن e.message همان «Minified React error #441» است؛
-        // به کاربر نشانش نده. پیام عمومی + ثبت digest برای عیب‌یابی.
-        console.error('[seo] workflow change failed', (e as { digest?: unknown })?.digest ?? e);
-        rollback();
-        toast({ variant: 'error', title: 'خطا در تغییر وضعیت.' });
-      }
+        toast({ variant: 'error', title: safeErrorMessage(e, 'خطا در تغییر وضعیت.') });      }
     });
   };
 

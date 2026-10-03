@@ -10,6 +10,10 @@ export default function TravelGuide() {
   const { tours, countries, cities, guides, exhibitions } = useContent();
   /** کارت‌های صفحه اصلی فقط از رجیستری راهنماهای واقعی تغذیه می‌شوند (سند ۰۴) */
   const guideList = Object.values(guides);
+  // میز P-B فاز ۲ (PB-04): اگر دیتابیس سالم است ولی هیچ راهنمایی منتشرشده
+  // نیست، guideList خالی می‌شود و guideList[0] کرش می‌کرد. در این حالت سکشن
+  // اصلاً رندر نمی‌شود.
+  if (guideList.length === 0) return null;
   const MAIN_ARTICLE = guideList[0];
   const SUB_ARTICLES = guideList.slice(1);
   return (
@@ -17,7 +21,7 @@ export default function TravelGuide() {
       <div className="container-main px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 text-right gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 text-start gap-4">
           <motion.div 
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -34,7 +38,7 @@ export default function TravelGuide() {
 
           {/* Desktop Link to all guides */}
           <motion.a 
-            href="#all-guides"
+            href="/guides"
             initial={{ opacity: 0, x: -10 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -134,7 +138,7 @@ export default function TravelGuide() {
         {/* Mobile Action Button */}
         <div className="mt-8 md:hidden text-center">
           <a 
-            href="#all-guides"
+            href="/guides"
             className="text-link text-btn w-full justify-center mt-6"
           >
             <span>مشاهده همه راهنماهای سفر</span>

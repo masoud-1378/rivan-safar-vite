@@ -41,6 +41,7 @@ import type { DestinationTree, OriginRow, TourInput, TourCategorySuggestion, Tou
 import { getDestinationContent, getTourCategorySuggestion, getTourPriceSuggestion, checkTourRichCols, checkTourMetaCols } from '../actions';
 import { SmartSuggestion } from '../SmartSuggestion';
 import type { TourDraftErrors } from '../tour-helpers';
+import { safeErrorMessage } from '@/src/lib/error-message';
 // تیم «فرم تورها» (۱۴۰۵/۰۷/۱۱): ویرایشگر غنی توضیحات تور + پیش‌نمایش واقعی +
 // متای سئو با الگوی «نگهبان + اطلاع» برای ستون‌های 0030/0033.
 import { RichEditor } from '@/components/ui/rich-editor/RichEditor';
@@ -338,7 +339,7 @@ export default function Stage1Identity({
       toast({
         variant: 'error',
         title: 'بنر آپلود نشد',
-        description: e instanceof Error ? e.message : 'دوباره تلاش کنید.',
+        description: safeErrorMessage(e, 'دوباره تلاش کنید.'),
       });
     } finally {
       uploadingRef.current = false;

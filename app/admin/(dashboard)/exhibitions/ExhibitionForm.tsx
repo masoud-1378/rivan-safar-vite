@@ -26,6 +26,7 @@ import {
 } from '@/lib/rich-text';
 import { saveExhibition, checkExhibitionDescriptionCol, checkExhibitionSeoCols, type ExhibitionInput, type ExhibitionRow, type ExhibitionStatus } from './actions';
 import BlockEditor, { cleanBlocks, validateBlocks } from '@/components/ui/block-editor';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 /** مقدار اولیهٔ ویرایشگر: اول نسخهٔ غنی (`*_rich`)، اگر خالی بود متن تخت قدیمی. */
 function initialRich(
@@ -224,7 +225,7 @@ export default function ExhibitionForm({
         await saveExhibition(editingId ?? null, payload);
         if (onSaved) onSaved();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'خطای نامشخص در ذخیره‌سازی.');
+        setError(safeErrorMessage(err, 'خطای نامشخص در ذخیره‌سازی.'));
       }
     });
   };

@@ -37,7 +37,13 @@ export default async function CityPage({
 }) {
   const { country, city } = await params;
   const [content, contact] = await Promise.all([getLiveContent(), getContactInfo()]);
-  if (!content.cities[city]) notFound();
+  const cityPlace = content.cities[city];
+  if (!cityPlace) notFound();
+  // QA1-01: ترکیب نامعتبر کشور/شهر نباید رندر شود — هر شهر فقط زیر
+  // کشور والد خودش آدرس‌پذیر است (جلوگیری از محتوای تکراری با URL متفاوت).
+  if (cityPlace.parentCountrySlug && cityPlace.parentCountrySlug !== country) {
+    notFound();
+  }
   const seo = resolveSeo(`/destination/${country}/${city}`);
   return (
     <>

@@ -14,6 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
+import { safeErrorMessage } from '@/src/lib/error-message';
 
 export default function CatalogManager({ initial, tourCounts = {} }: { initial: DestinationRow[]; tourCounts?: Record<string, number> }) {
   const [destinations, setDestinations] = useState(initial);
@@ -45,7 +46,7 @@ export default function CatalogManager({ initial, tourCounts = {} }: { initial: 
         try { await deleteDestination(deleting.id); resolve(); } catch (error) { reject(error); }
       }));
       window.location.reload();
-    } catch (error) { toast({ variant: 'error', title: error instanceof Error ? error.message : 'خطا در حذف.' }); }
+    } catch (error) { toast({ variant: 'error', title: safeErrorMessage(error, 'خطا در حذف.') }); }
   };
   const onPublish = async () => {
     if (!publishing) return;

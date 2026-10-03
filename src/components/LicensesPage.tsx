@@ -9,9 +9,9 @@ interface LicensesPageProps {
 export default function LicensesPage({ onNavigate }: LicensesPageProps) {
   const contact = useContact();
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       <section className="bg-surface-primary border-b border-border-default section-compact">
-        <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl text-right">
+        <div className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl text-start">
           <span className="badge badge-standard mb-3">
             <Award className="w-3.5 h-3.5" />
             <span>مجوزها و اصالت فعالیت</span>
@@ -25,7 +25,7 @@ export default function LicensesPage({ onNavigate }: LicensesPageProps) {
         </div>
       </section>
 
-      <section className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl section-standard space-y-6 text-right">
+      <section className="container-main px-4 sm:px-6 lg:px-8 max-w-4xl section-standard space-y-6 text-start">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-surface-primary border border-border-default rounded-card p-6">
             <div className="w-10 h-10 rounded-control bg-brand-orange/10 text-brand-orange flex items-center justify-center mb-4">

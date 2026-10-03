@@ -11,6 +11,7 @@ import { JALALI_MONTHS, toJalali, formatJalali } from '@/lib/jalali';
 import { checkSlugUnique, saveTour, getTourById, type TourRow, type TourRichFields } from './actions';
 import { useToast } from '@/components/ui/toast';
 import { DepartureDateField } from './DepartureDateField';
+import { safeErrorMessage } from '@/src/lib/error-message';
 import { SmartSuggestion } from './SmartSuggestion';
 
 interface DuplicateTourDialogProps {
@@ -246,7 +247,7 @@ export function DuplicateTourDialog({ tour, onClose, onDone }: DuplicateTourDial
       console.error('[tour-duplicate] unexpected error', digest ? { digest } : e);
       toast({
         title: 'کپی ناموفق بود',
-        description: 'دوباره تلاش کنید.',
+        description: safeErrorMessage(e, 'دوباره تلاش کنید.'),
         variant: 'error',
       });
       setBusy(false);

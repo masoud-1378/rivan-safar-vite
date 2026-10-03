@@ -20,7 +20,7 @@ export default function Breadcrumb({ items, onNavigate }: BreadcrumbProps) {
   return (
     <nav 
       aria-label="مسیر راهنما (Breadcrumb)" 
-      className="bg-surface-secondary/80 border-b border-border-default/60 py-2.5 px-4 sm:px-6 lg:px-8 text-caption text-text-secondary dir-rtl"
+      className="bg-surface-secondary/80 border-b border-border-default/60 py-2.5 px-4 sm:px-6 lg:px-8 text-caption text-text-secondary"
     >
       <div className="container-main flex items-center flex-wrap gap-1.5 sm:gap-2">
         {items.map((item, index) => {

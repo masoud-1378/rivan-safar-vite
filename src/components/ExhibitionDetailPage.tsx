@@ -16,7 +16,7 @@ import {
 } from '@/lib/rich-text';
 import { useContent } from '@/src/lib/content-context';
 import { useContact } from '@/src/lib/contact-context';
-import { createLead } from '../../app/actions/lead';
+import { safeCreateLead } from '../lib/lead-submit-safe';
 import { trackLeadSubmit } from '../lib/analytics';
 import { isValidMobile, normalizeMobile } from './tour-live';
 import SmartImage from './SmartImage';
@@ -49,7 +49,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
 
   if (!ex) {
     return (
-      <div className="container-main py-16 px-4 text-center dir-rtl">
+      <div className="container-main py-16 px-4 text-center">
         <h2 className="text-h3 font-bold mb-4">نمایشگاه مورد نظر یافت نشد</h2>
         <button onClick={() => onNavigate('/exhibitions')} className="btn btn-primary btn-medium">
           مشاهده فهرست نمایشگاه‌ها
@@ -72,7 +72,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
     if (!validateForm()) return;
 
     setFormLoading(true);
-    const result = await createLead({
+    const result = await safeCreateLead({
       fullName: formData.name.trim(),
       phone: normalizeMobile(formData.phone),
       sourcePath: `/exhibition/${eventSeriesSlug}`,
@@ -120,7 +120,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
       : null;
 
   return (
-    <div className="min-h-screen bg-page-background text-text-primary dir-rtl">
+    <div className="min-h-screen bg-page-background text-text-primary">
       {faqJsonLd && (
         <script
           type="application/ld+json"
@@ -149,7 +149,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
       {/* دوره درخواستی با دوره پیش‌رو نمی‌خواند؛ اطلاع‌رسانی صادقانه */}
       {editionMismatch && (
         <div className="container-main px-4 sm:px-6 lg:px-8 mt-4">
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-card text-amber-900 text-body-sm leading-relaxed">
+          <div className="p-4 bg-brand-warning-soft border border-brand-warning/25 rounded-card text-text-primary text-body-sm leading-relaxed">
             اطلاعات این دوره ({editionSlug}) هنوز منتشر نشده است؛ جزئیات زیر مربوط به دوره پیش‌روست.
             برای هماهنگی سفر به دوره‌های دیگر، با کارشناسان ما در تماس باشید.
           </div>
@@ -161,7 +161,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
         <div className="container-main px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            <div className="lg:col-span-7 text-right">
+            <div className="lg:col-span-7 text-start">
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 <span className="badge badge-standard">{ex.industry}</span>
                 <span className="badge">
@@ -172,7 +172,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   href={ex.officialWebsite}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-caption text-brand-orange hover:underline inline-flex items-center gap-1 font-bold mr-2"
+                  className="text-caption text-brand-orange hover:underline inline-flex items-center gap-1 font-bold ms-2"
                 >
                   <span>سایت رسمی نمایشگاه</span>
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -212,7 +212,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     <span>منطقه پیشنهادی اقامت: {ex.upcomingEdition.hotelArea}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-red-600 font-bold">
+                <div className="flex items-center gap-2 text-danger font-bold">
                   <Clock className="w-4 h-4 shrink-0" />
                   <span>مهلت اقدام برای ویزا: {ex.upcomingEdition.visaDeadline}</span>
                 </div>
@@ -250,9 +250,9 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                 />
               </div>
 
-              <div className="mt-4 p-4 bg-surface-primary rounded-card border border-border-default text-right text-caption text-text-secondary space-y-2">
+              <div className="mt-4 p-4 bg-surface-primary rounded-card border border-border-default text-start text-caption text-text-secondary space-y-2">
                 <div className="flex items-center gap-2 font-bold text-text-heading">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <ShieldCheck className="w-4 h-4 text-brand-success" />
                   <span>پشتیبانی کامل ویزا و اقامت</span>
                 </div>
                 <p className="leading-relaxed">
@@ -268,7 +268,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
       {/* ---------------- Phases Breakdown ---------------- */}
       {ex.upcomingEdition.phases && ex.upcomingEdition.phases.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-          <div className="text-right mb-6">
+          <div className="text-start mb-6">
             <h2 className="text-h2 text-text-heading font-bold mb-1.5">
               فازها و دسته‌بندی کالایی نمایشگاه
             </h2>
@@ -279,7 +279,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {ex.upcomingEdition.phases.map((phase, idx) => (
-              <div key={idx} className="bg-surface-primary border border-border-default rounded-card p-6 text-right flex flex-col justify-between">
+              <div key={idx} className="bg-surface-primary border border-border-default rounded-card p-6 text-start flex flex-col justify-between">
                 <div>
                   <div className="inline-flex px-2.5 py-1 rounded-md bg-brand-orange/10 text-brand-orange font-bold text-caption mb-3">
                     {phase.name}
@@ -310,7 +310,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
       {/* ---------------- Included Travel Services ---------------- */}
       <section className="bg-surface-primary border-y border-border-default section-standard">
         <div className="container-main px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl text-right mb-6">
+          <div className="max-w-3xl text-start mb-6">
             <h2 className="text-h2 text-text-heading font-bold mb-2">
               خدمات سفر تجاری ریوان سفر
             </h2>
@@ -321,8 +321,8 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {ex.servicesIncluded.map((srv, idx) => (
-              <div key={idx} className="p-4 bg-surface-secondary rounded-card border border-border-default/60 flex items-center gap-3 text-right">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <div key={idx} className="p-4 bg-surface-secondary rounded-card border border-border-default/60 flex items-center gap-3 text-start">
+                <CheckCircle2 className="w-5 h-5 text-brand-success shrink-0" />
                 <span className="text-body-sm font-medium text-text-primary">{srv}</span>
               </div>
             ))}
@@ -333,7 +333,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
       {/* ---------------- Business Preparation Tips ---------------- */}
       {ex.businessTips && ex.businessTips.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-          <div className="bg-surface-primary border border-border-default rounded-card p-6 md:p-8 text-right">
+          <div className="bg-surface-primary border border-border-default rounded-card p-6 md:p-8 text-start">
             <h3 className="text-h3 font-bold text-text-heading mb-4">نکات مهم برای موفقیت در این سفر تجاری</h3>
             <div className="space-y-3">
               {ex.businessTips.map((tip, idx) => (
@@ -350,7 +350,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
       {/* ---------------- پرسش‌های پرتکرار (از داده زنده) ---------------- */}
       {faqs.length > 0 && (
         <section className="container-main px-4 sm:px-6 lg:px-8 section-standard">
-          <div className="text-right mb-6">
+          <div className="text-start mb-6">
             <h2 className="text-h2 text-text-heading font-bold mb-1.5">
               سؤال‌های پرتکرار درباره {ex.title}
             </h2>
@@ -371,7 +371,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   <button
                     type="button"
                     onClick={() => setOpenFaqIndex(open ? null : idx)}
-                    className="w-full flex items-center justify-between gap-3 p-4 sm:p-5 text-right"
+                    className="w-full flex items-center justify-between gap-3 p-4 sm:p-5 text-start"
                     aria-expanded={open}
                   >
                     <span className="flex items-center gap-2.5 text-body font-bold text-text-heading">
@@ -406,20 +406,20 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
           </div>
 
           {formSubmitted ? (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-card p-6 text-center text-emerald-900">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
+            <div className="bg-brand-success-soft border border-brand-success/25 rounded-card p-6 text-center text-text-primary">
+              <div className="w-12 h-12 rounded-full bg-brand-success/15 text-brand-success flex items-center justify-center mx-auto mb-3">
                 <Check className="w-6 h-6" />
               </div>
               <h4 className="text-h4 font-bold mb-2">درخواست شما ثبت شد</h4>
-              <p className="text-body-sm text-emerald-800 mb-4">
+              <p className="text-body-sm text-brand-success mb-4">
                 کارشناس دپارتمان نمایشگاهی ریوان سفر برای ارائهٔ شرایط و مدارک ویزا به‌زودی با شما تماس خواهد گرفت.
               </p>
-              <div className="text-caption text-emerald-700">
+              <div className="text-caption text-brand-success">
                 تماس مستقیم با بخش نمایشگاهی: <a href={contact.phoneHref} className="font-bold underline">{contact.phoneDisplay}</a>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-right space-y-4">
+            <form onSubmit={handleFormSubmit} className="bg-surface-secondary border border-border-default rounded-card p-6 text-start space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-caption font-bold text-text-heading mb-1">نام شرکت / کسب‌وکار (اختیاری)</label>
@@ -428,27 +428,27 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                     placeholder="مثال: بازرگانی البرز"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی مسئول <span className="text-red-500">*</span></label>
+                  <label className="block text-caption font-bold text-text-heading mb-1">نام و نام خانوادگی مسئول <span className="text-danger">*</span></label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="مثال: مهندس راد"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   />
-                  {formErrors.name && <p className="text-red-500 text-caption mt-1">{formErrors.name}</p>}
+                  {formErrors.name && <p className="text-danger text-caption mt-1">{formErrors.name}</p>}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-caption font-bold text-text-heading mb-1">شماره تلفن همراه <span className="text-red-500">*</span></label>
+                  <label className="block text-caption font-bold text-text-heading mb-1">شماره تلفن همراه <span className="text-danger">*</span></label>
                   <input
                     type="tel"
                     required
@@ -456,9 +456,9 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-body-sm text-text-heading text-right focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2.5 text-form-input text-text-heading text-start focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   />
-                  {formErrors.phone && <p className="text-red-500 text-caption mt-1">{formErrors.phone}</p>}
+                  {formErrors.phone && <p className="text-danger text-caption mt-1">{formErrors.phone}</p>}
                 </div>
 
                 <div>
@@ -466,7 +466,7 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   <select
                     value={formData.passengers}
                     onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                    className="w-full bg-surface-primary border border-border-default rounded-control px-3 py-2.5 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                   >
                     <option value="1">۱ نفر</option>
                     <option value="2">۲ نفر</option>
@@ -483,12 +483,12 @@ export default function ExhibitionDetailPage({ eventSeriesSlug, editionSlug, onN
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="حوزه کاری، فاز مد نظر، درخواست مترجم…"
-                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-body-sm text-text-heading focus:border-brand-orange focus:outline-none"
+                  className="w-full bg-surface-primary border border-border-default rounded-control px-4 py-2 text-form-input text-text-heading focus:border-brand-orange focus:shadow-focus focus:outline-none"
                 ></textarea>
               </div>
 
               <div className="pt-2">
-                {submitError && <p className="text-red-500 text-caption mb-2">{submitError}</p>}
+                {submitError && <p className="text-danger text-caption mb-2">{submitError}</p>}
                 <button
                   type="submit"
                   disabled={formLoading}
