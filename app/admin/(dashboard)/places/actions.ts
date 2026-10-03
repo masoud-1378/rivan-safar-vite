@@ -205,7 +205,7 @@ export async function listDestinations() {
     const ids = rows.map((r) => r.id);
     const res = await db.execute(sql`
       select id, ${sql.raw(wantCols.map((c) => `"${c}"`).join(', '))}
-      from site_destinations where id = any(${ids})
+      from site_destinations where id = any(${ids}::uuid[])
     `);
     for (const row of res as unknown as Array<Record<string, unknown>>) {
       richById.set(String(row.id), {

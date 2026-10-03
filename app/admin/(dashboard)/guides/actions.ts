@@ -146,7 +146,7 @@ export async function listGuides() {
   if (richColsReady && rows.length > 0) {
     const ids = rows.map((r) => r.id);
     const res = await db.execute(sql`
-      select id, summary_rich, direct_answer_rich from guides where id = any(${ids})
+      select id, summary_rich, direct_answer_rich from guides where id = any(${ids}::uuid[])
     `);
     for (const row of res as unknown as Array<{ id: string; summary_rich: unknown; direct_answer_rich: unknown }>) {
       richById.set(row.id, {
