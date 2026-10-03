@@ -10,6 +10,7 @@ import * as React from 'react';
 import { Node, mergeAttributes } from '@tiptap/core';
 import { NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from '@tiptap/react';
 import { Pencil, Trash2, Phone } from 'lucide-react';
+import { fa } from '@/lib/utils';
 import { formatFaPrice } from './format';
 import {
   TourPickerDialog,
@@ -96,18 +97,29 @@ function TourCardView({ node, updateAttributes, deleteNode }: NodeViewProps) {
     <NodeViewWrapper className="rich-block rich-block-tourcard" data-drag-handle>
       <BlockActions onEdit={() => setEditOpen(true)} onDelete={deleteNode} />
       {s ? (
-        <div className="rich-block-tourcard__card">
-          {s.image && <img src={s.image} alt="" className="rich-block-tourcard__img" />}
-          <div className="rich-block-tourcard__body">
-            <p className="rich-block-tourcard__title">{s.title || 'کارت تور'}</p>
-            <p className="rich-block-tourcard__meta">
-              {[s.destination, s.duration, s.statusLabel].filter(Boolean).join(' · ')}
+        <div className="rich-block-tourcard__static">
+          {s.image && (
+            <div className="rich-block-tourcard__static-media">
+              <img src={s.image} alt="" className="rich-block-tourcard__static-img" />
+              {s.badge && <span className="rich-block-tourcard__static-badge">{s.badge}</span>}
+            </div>
+          )}
+          <div className="rich-block-tourcard__static-body">
+            <p className="rich-block-tourcard__static-title">{s.title || 'کارت تور'}</p>
+            <p className="rich-block-tourcard__static-meta">
+              {[s.duration, s.destination].filter(Boolean).join(' | ')}
             </p>
-            <p className="rich-block-tourcard__price">{price ? `${price} تومان` : 'استعلام قیمت'}</p>
+            <p className="rich-block-tourcard__static-price">
+              {price ? (
+                <>شروع قیمت از <b>{price} تومان</b></>
+              ) : (
+                'استعلام قیمت'
+              )}
+            </p>
           </div>
         </div>
       ) : (
-        <p className="rich-block-empty">کارت تور — توری انتخاب نشده است.</p>
+        <p className="rich-block-empty">کارت تور: هنوز توری انتخاب نشده است.</p>
       )}
       <TourPickerDialog
         open={editOpen}
@@ -190,10 +202,10 @@ function PriceTableView({ node, updateAttributes, deleteNode }: NodeViewProps) {
           </tbody>
         </table>
       ) : (
-        <p className="rich-block-empty">جدول قیمت — ردیفی ندارد.</p>
+        <p className="rich-block-empty">جدول قیمت: هنوز ردیفی ندارد.</p>
       )}
       {attrs.rows.length > preview.length && (
-        <p className="rich-block-more">و {attrs.rows.length - preview.length} ردیف دیگر…</p>
+        <p className="rich-block-more">و {fa(attrs.rows.length - preview.length)} ردیف دیگر…</p>
       )}
       <PriceTableDialog
         open={editOpen}
@@ -261,10 +273,10 @@ function FaqView({ node, updateAttributes, deleteNode }: NodeViewProps) {
           ))}
         </div>
       ) : (
-        <p className="rich-block-empty">پرسش‌وپاسخ — پرسشی ندارد.</p>
+        <p className="rich-block-empty">پرسش‌وپاسخ: هنوز پرسشی ندارد.</p>
       )}
       {attrs.items.length > preview.length && (
-        <p className="rich-block-more">و {attrs.items.length - preview.length} پرسش دیگر…</p>
+        <p className="rich-block-more">و {fa(attrs.items.length - preview.length)} پرسش دیگر…</p>
       )}
       <FaqDialog
         open={editOpen}
@@ -335,10 +347,10 @@ function PhotoGalleryView({ node, updateAttributes, deleteNode }: NodeViewProps)
           ))}
         </div>
       ) : (
-        <p className="rich-block-empty">گالری عکس — عکسی ندارد.</p>
+        <p className="rich-block-empty">گالری عکس: هنوز عکسی ندارد.</p>
       )}
       {attrs.images.length > preview.length && (
-        <p className="rich-block-more">و {attrs.images.length - preview.length} عکس دیگر…</p>
+        <p className="rich-block-more">و {fa(attrs.images.length - preview.length)} عکس دیگر…</p>
       )}
       <GalleryDialog
         open={editOpen}

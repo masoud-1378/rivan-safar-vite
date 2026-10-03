@@ -6,7 +6,7 @@ import { Pencil, Plus, Archive, Building2, Megaphone, MegaphoneOff } from 'lucid
 import { buttonClasses } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import DestinationForm from './DestinationForm';
-import { deleteDestination, countDestinationTours, setDestinationPublishStatus, type DestinationRow } from './actions';
+import { deleteDestination, countDestinationTours, setDestinationPublishStatus, type DestinationRow, type DestinationSyncHints } from './actions';
 import { DESTINATION_CATEGORIES } from './categories';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import { useToast } from '@/components/ui/toast';
 import { fa } from '@/lib/utils';
 import { safeErrorMessage } from '@/src/lib/error-message';
 
-export default function CatalogManager({ initial, tourCounts = {} }: { initial: DestinationRow[]; tourCounts?: Record<string, number> }) {
+export default function CatalogManager({ initial, tourCounts = {}, syncHints }: { initial: DestinationRow[]; tourCounts?: Record<string, number>; syncHints?: DestinationSyncHints }) {
   const [destinations, setDestinations] = useState(initial);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<DestinationRow | null>(null);
@@ -86,11 +86,25 @@ export default function CatalogManager({ initial, tourCounts = {} }: { initial: 
     { key: 'startingPrice', header: 'قیمت شروع', cell: (destination) => destination.startingPrice || '—' },
     // ایراد ۲۱: قرارداد انتشار مقصدها همین‌جا به چشم ادمین می‌آید — مقصدِ
     // بایگانی‌نشده روی سایت است، ولی صفحه‌اش وقتی کامل است که تور فعال داشته باشد.
+    // موج ۶ (ایراد ۱۴): پیشنهادهای لینک هوشمند هم زیر همان سلول می‌آیند.
     { key: 'slug', header: 'وضعیت سایت', cell: (destination) => {
       const n = tourCounts[destination.slug] ?? 0;
-      return n > 0
-        ? <span className="text-panel-caption font-semibold text-emerald-700 dark:text-emerald-400">فعال روی سایت · {fa(n)} تور</span>
-        : <span className="text-panel-caption font-semibold text-amber-600 dark:text-amber-400">بدون تور فعال</span>;
+      const sug = syncHints?.suggestions[destination.slug] ?? [];
+      return (
+        <div>
+          {n > 0
+            ? <span className="text-panel-caption font-semibold text-emerald-700 dark:text-emerald-400">فعال روی سایت · {fa(n)} تور</span>
+            : <span className="text-panel-caption font-semibold text-amber-600 dark:text-amber-400">بدون تور فعال</span>}
+          {sug.length > 0 ? (
+            <span
+              className="mt-1 block text-panel-caption text-sky-700 dark:text-sky-400"
+              title={`این تورها نام «${destination.name}» را در عنوان یا مسیر دارند ولی به این مقصد لینک نشده‌اند: ${sug.map((s) => s.title).join('، ')}`}
+            >
+              {fa(sug.length)} پیشنهاد لینک
+            </span>
+          ) : null}
+        </div>
+      );
     } },
     { key: 'id', header: 'عملیات', className: 'w-56', cell: (destination) => <div className="flex flex-wrap gap-1">
       {destination.publishStatus === 'published'
@@ -110,6 +124,25 @@ export default function CatalogManager({ initial, tourCounts = {} }: { initial: 
       <p className="rounded-sm border border-border bg-muted/30 px-4 py-3 text-panel-caption leading-relaxed text-muted-foreground">
         گیت انتشار مقصد: فقط مقصدهای «منتشرشده» روی سایت دیده می‌شوند. انتشار نیازمند نام، کشور/ناحیه و دست‌کم توضیح یا تصویر است؛ «بازگشت به پیش‌نویس» مقصد را از سایت پنهان می‌کند ولی از فهرست حذف نمی‌کند.
       </p>
+      {/* موج ۶ (ایراد ۱۴، جهت «مقصد از تورها»): نامک‌های یتیم — در تورها استفاده
+          شده‌اند ولی در کاتالوگ مقصدی با همین نامک نیست. فقط خواندن و نمایش. */}
+      {syncHints && syncHints.orphans.length > 0 ? (
+        <div className="rounded-sm border border-amber-500/40 bg-amber-500/10 p-4">
+          <p className="text-panel-caption font-semibold text-amber-700 dark:text-amber-300">نامک‌های بدون مقصد</p>
+          <p className="mt-1 text-panel-caption leading-relaxed text-amber-700/90 dark:text-amber-400/90">
+            این نامک‌ها در تورها استفاده شده‌اند ولی در کاتالوگ مقصدی با همین نامک نیست؛ یا نامک مقصد عوض شده، یا مقصد بایگانی شده است.
+          </p>
+          <ul className="mt-2 space-y-1">
+            {syncHints.orphans.map((o) => (
+              <li key={o.slug} className="text-panel-caption text-amber-700 dark:text-amber-300">
+                <span dir="ltr" className="font-mono">{o.slug}</span>
+                {' · '}{fa(o.tourCount)} تور
+                {o.tourTitles.length > 0 ? <span className="opacity-80"> — {o.tourTitles.join('، ')}</span> : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <Card><CardContent className="p-5"><h2 className="mb-4 text-panel-heading">مقصدها ({fa(destinations.length)})</h2><DataTable rows={destinations} columns={columns} rowKey={(destination) => destination.id} searchKeys={['name', 'nameEn', 'type', 'category']} searchPlaceholder="جست‌وجوی نام، نوع یا دسته‌بندی…" emptyTitle="مقصدی ثبت نشده است" emptyDescription="برای شروع، مقصد جدیدی اضافه کنید." emptyAction={destinations.length === 0 ? { label: 'افزودن اولین مقصد', onClick: () => { setEditing(null); setShowForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); } } : undefined} /></CardContent></Card>
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => { if (!open) { setDeleting(null); setUsage(null); setUsageFailed(false); } }} title="بایگانی مقصد" description={deleting ? (<span className="block space-y-2"><span className="block">مقصد «{deleting.name}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌ماند؛ بعداً از صفحهٔ بایگانی می‌توانید آن را برگردانید.</span>{usageFailed ? <span className="block font-medium text-destructive">شمارش ارجاع‌ها ناموفق بود؛ با احتیاط بایگانی کنید.</span> : null}{usage !== null && usage > 0 ? <span className="block font-medium text-amber-600 dark:text-amber-400">این مقصد در {fa(usage)} تور استفاده شده است؛ آن تورها سر جایشان می‌مانند و فقط این مقصد از دسترس خارج می‌شود.</span> : null}</span>) : ''} confirmText="بایگانی مقصد" destructive onConfirm={onDelete} />
       <AlertDialog

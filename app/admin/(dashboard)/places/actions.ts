@@ -566,6 +566,106 @@ export async function deleteDestination(id: string) {
   return { ok: true };
 }
 
+/** نامکی که در destination_slugs تورها هست ولی در کاتالوگ مقصدی با آن نیست. */
+export interface OrphanDestinationSlug {
+  slug: string;
+  tourCount: number;
+  /** حداکثر ۳ عنوان نمونه برای تشخیص سریع */
+  tourTitles: string[];
+}
+
+/** پیشنهاد لینک: توری که نام مقصد را در عنوان/مسیر دارد ولی نامک مقصد را لینک نکرده. */
+export interface DestinationLinkSuggestion {
+  tourId: string;
+  title: string;
+}
+
+export interface DestinationSyncHints {
+  /** جهت «مقصد از تورها»: نامک‌های یتیم کشف‌شده از روی تورها */
+  orphans: OrphanDestinationSlug[];
+  /** جهت «تور از مقصد»: برای هر نامک مقصد، تورهای هم‌نامِ بدون لینک */
+  suggestions: Record<string, DestinationLinkSuggestion[]>;
+}
+
+/** نرمال‌سازی سبک فارسی برای تطبیق نام مقصد با عنوان تور. */
+function normFaName(s: string): string {
+  return (s || '')
+    .replace(/ي/g, 'ی')
+    .replace(/ك/g, 'ک')
+    .replace(/‌/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * همگام‌سازی هوشمند کاتالوگ↔تورها (ایراد ۱۴ مسعود، موج ۶) — فقط خواندن و
+ * نمایش؛ هیچ تغییری در دیتابیس نمی‌دهد و مدل داده دست نمی‌خورد.
+ *
+ * دو جهت واقعی:
+ * ۱. «مقصد از تورها»: نامک‌هایی که در destination_slugs تورها هستند ولی در
+ *    جدول مقصدها نیستند (نامک عوض شده، مقصد بایگانی شده، یا اشتباه تایپی).
+ * ۲. «تور از مقصد»: تورهایی که نام فارسی مقصد را در عنوان یا مسیر دارند ولی
+ *    نامک آن مقصد را لینک نکرده‌اند — پیشنهاد لینک برای ادمین.
+ */
+export async function getDestinationSyncHints(): Promise<DestinationSyncHints> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const empty: DestinationSyncHints = { orphans: [], suggestions: {} };
+  try {
+    const [dests, tours] = await Promise.all([
+      db
+        .select({ slug: siteDestinations.slug, name: siteDestinations.name })
+        .from(siteDestinations)
+        .where(isNull(siteDestinations.deletedAt)),
+      db
+        .select({
+          id: siteTours.id,
+          title: siteTours.title,
+          destination: siteTours.destination,
+          destinationSlugs: siteTours.destinationSlugs,
+        })
+        .from(siteTours)
+        .where(isNull(siteTours.deletedAt)),
+    ]);
+    const known = new Set(dests.map((d) => d.slug));
+    const names = dests.map((d) => ({ slug: d.slug, name: normFaName(d.name) }));
+    const orphanMap = new Map<string, { count: number; titles: string[] }>();
+    const sugMap = new Map<string, DestinationLinkSuggestion[]>();
+    for (const t of tours) {
+      const slugs = asStringArray(t.destinationSlugs);
+      // جهت ۱: نامک یتیم
+      for (const s of slugs) {
+        if (known.has(s)) continue;
+        const e = orphanMap.get(s) ?? { count: 0, titles: [] };
+        e.count += 1;
+        if (e.titles.length < 3 && (t.title || '').trim()) e.titles.push(t.title.trim());
+        orphanMap.set(s, e);
+      }
+      // جهت ۲: پیشنهاد لینک — نام مقصد در عنوان/مسیر هست ولی نامکش لینک نشده
+      const hay = normFaName(`${t.title || ''} ${t.destination || ''}`);
+      if (hay.length < 3) continue;
+      for (const d of names) {
+        if (d.name.length < 3) continue;
+        if (slugs.includes(d.slug)) continue;
+        if (!hay.includes(d.name)) continue;
+        const list = sugMap.get(d.slug) ?? [];
+        if (list.length < 5) list.push({ tourId: t.id, title: (t.title || '').trim() || 'بدون عنوان' });
+        sugMap.set(d.slug, list);
+      }
+    }
+    const orphans: OrphanDestinationSlug[] = [...orphanMap.entries()]
+      .map(([slug, e]) => ({ slug, tourCount: e.count, tourTitles: e.titles }))
+      .sort((a, b) => b.tourCount - a.tourCount || a.slug.localeCompare(b.slug));
+    const suggestions: Record<string, DestinationLinkSuggestion[]> = {};
+    for (const [k, v] of sugMap) suggestions[k] = v;
+    return { orphans, suggestions };
+  } catch {
+    // خطا → خالی؛ صفحهٔ کاتالوگ نباید به‌خاطر یک راهنمای هوشمند بشکند.
+    return empty;
+  }
+}
+
 export async function checkDestinationSlugUnique(slug: string, excludeId?: string | null) {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();

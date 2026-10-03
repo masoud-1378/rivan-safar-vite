@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useEditor, EditorContent, type Editor } from '@tiptap/react';
+import { useEditor, EditorContent, NodeViewWrapper, ReactNodeViewRenderer, type Editor, type NodeViewProps } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
@@ -69,7 +69,27 @@ const CaptionedImage = Image.extend({
       caption: { default: null },
     };
   },
+  /**
+   * نمای داخل ویرایشگر: همان figure سایت (عکس + زیرنویس وسط‌چین).
+   * فقط نمایش است؛ مدل داده همان نود img با attrs است و عوض نمی‌شود.
+   */
+  addNodeView() {
+    return ReactNodeViewRenderer(CaptionedImageView);
+  },
 });
+
+function CaptionedImageView({ node }: NodeViewProps) {
+  const src = typeof node.attrs.src === 'string' ? node.attrs.src : '';
+  const alt = typeof node.attrs.alt === 'string' ? node.attrs.alt : '';
+  const caption = typeof node.attrs.caption === 'string' ? node.attrs.caption.trim() : '';
+  return (
+    <NodeViewWrapper as="figure" className="rich-editor-figure">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} />
+      {caption && <figcaption>{caption}</figcaption>}
+    </NodeViewWrapper>
+  );
+}
 
 /* ————————————————— ابزارها ————————————————— */
 

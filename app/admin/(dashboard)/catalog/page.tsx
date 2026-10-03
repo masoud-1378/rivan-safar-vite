@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { countDestinations, listDestinations, getDestinationTourCounts } from '../places/actions';
+import { countDestinations, listDestinations, getDestinationTourCounts, getDestinationSyncHints } from '../places/actions';
 import { countOrigins, listOriginsAdmin } from '../origins/actions';
 import { countHotels, listHotels } from '../hotels/actions';
 import { listDestinationTree } from '../tours/actions';
@@ -43,8 +43,13 @@ export default async function AdminCatalogPage({
 async function DestinationsTab() {
   // ایراد ۲۱: شمار تورهای منتشرشدهٔ هر مقصد هم کشیده می‌شود تا ستون
   // «وضعیت سایت» قرارداد انتشار را به ادمین نشان بدهد.
-  const [destinations, tourCounts] = await Promise.all([listDestinations(), getDestinationTourCounts()]);
-  return <CatalogManager initial={destinations} tourCounts={tourCounts} />;
+  // موج ۶ (ایراد ۱۴): راهنماهای هوشمند همگام‌سازی کاتالوگ↔تورها — فقط خواندن.
+  const [destinations, tourCounts, syncHints] = await Promise.all([
+    listDestinations(),
+    getDestinationTourCounts(),
+    getDestinationSyncHints(),
+  ]);
+  return <CatalogManager initial={destinations} tourCounts={tourCounts} syncHints={syncHints} />;
 }
 
 async function OriginsTab() {

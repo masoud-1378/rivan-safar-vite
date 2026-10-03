@@ -44,17 +44,15 @@ import { getDestinationContent, getTourCategorySuggestion, getTourPriceSuggestio
 import { SmartSuggestion } from '../SmartSuggestion';
 import type { TourDraftErrors } from '../tour-helpers';
 import { safeErrorMessage } from '@/src/lib/error-message';
-// تیم «فرم تورها» (۱۴۰۵/۰۷/۱۱): ویرایشگر غنی توضیحات تور + پیش‌نمایش واقعی +
+// تیم «فرم تورها» (۱۴۰۵/۰۷/۱۱): ویرایشگر غنی و سایت‌وفادار توضیحات تور +
 // متای سئو با الگوی «نگهبان + اطلاع» برای ستون‌های 0030/0033.
 import { RichEditor } from '@/components/ui/rich-editor/RichEditor';
-import { RichText } from '@/components/ui/rich-editor/RichText';
 import { SeoMetaFields } from '@/components/ui/seo-meta-fields';
 import { ColumnNotice, useColumnGuard } from '@/components/ui/column-guard';
 import { mediaTag } from '@/components/ui/media-library/types';
 import { openMediaPicker } from '@/components/ui/media-library/openMediaPicker';
 import {
   normalizeRichValue,
-  richFallback,
   richFromPlainText,
   richToPlainText,
   type JSONContent,
@@ -1096,7 +1094,7 @@ export default function Stage1Identity({
       </div>
 
       {/* توضیحات کلی تور (T17): همان متن مرحلهٔ ۵، انتهای مرحلهٔ ۱ —
-          تیم «فرم تورها»: ویرایشگر کامل (ستون description_rich) + پیش‌نمایش واقعی */}
+          تیم «فرم تورها»: ویرایشگر کامل و سایت‌وفادار (ستون description_rich) */}
       <div className="rounded-sm border border-border bg-card p-5 space-y-3">
         <h4 className="text-xs font-bold text-foreground flex items-center gap-2">
           <FileCheck2 className="size-4 text-brand" />
@@ -1104,7 +1102,7 @@ export default function Stage1Identity({
         </h4>
         <Field
           label="متن توضیحات تور"
-          hint="درشت، کج، لیست، نقل‌قول، لینک، جدول، عکس با توضیح و ویدیو — همان‌طور که روی سایت دیده می‌شود."
+          hint="هرچه این‌جا می‌نویسید، همان‌طور روی سایت دیده می‌شود: درشت، کج، لیست، نقل‌قول، لینک، جدول، عکس با توضیح و ویدیو."
         >
           <RichEditor
             variant="full"
@@ -1119,13 +1117,8 @@ export default function Stage1Identity({
             </ColumnNotice>
           )}
         </Field>
-        {/* پیش‌نمایش واقعی متن — همان رندرری که روی سایت متن را چاپ می‌کند */}
-        <div className="rounded-sm border border-border/70 bg-background p-4">
-          <p className="mb-2 text-caption font-bold text-muted-foreground">نمای واقعی متن در سایت</p>
-          <div className="text-xs leading-relaxed text-foreground">
-            <RichText value={richFallback(data.descriptionRich, data.description)} />
-          </div>
-        </div>
+        {/* پیش‌نمایش واقعی متن — حذف شد (موج ۶، تیم ۴): خود ویرایشگر
+            سایت‌وفادار است و همان‌جا ویرایش می‌شود؛ بلاک جدا لازم نیست. */}
         {/* توضیحات پیشنهادی از متن مقصد (موج ۱، قلم ۶ — فرصت ۱-۵): دکمهٔ صریح
             با پیش‌نمایش و تأیید؛ متن خالیِ مدیر هرگز بازنویسی نمی‌شود. */}
         {needDesc && destContent?.description && (
