@@ -85,6 +85,9 @@ export async function listDestinations() {
     startingPriceNote: r.startingPriceNote,
     lastVerifiedAt: r.lastVerifiedAt,
     activeToursCount: r.activeToursCount,
+    // گیت انتشار مقصد (مایگریشن 0023، قلم ۳ موج ۱): ردیف‌های قدیمی‌تر از
+    // ستون هم draft حساب می‌شوند (پیش‌فرض DB).
+    publishStatus: (r.publishStatus ?? 'draft') as 'draft' | 'published',
     popularDistricts: asStringArray(r.popularDistricts),
     keyHighlights: asStringArray(r.keyHighlights),
     travelTips: asStringArray(r.travelTips),
@@ -244,6 +247,73 @@ export async function getDestinationTourCounts(): Promise<Record<string, number>
     }
   }
   return counts;
+}
+
+/**
+ * گیت انتشار جدا برای مقصد (قلم ۳ موج ۱، تصمیم ۶ ثبت‌شدهٔ ۱۴۰۵/۰۷/۱۱).
+ *
+ * - 'published' یعنی مقصد واقعاً روی سایت دیده می‌شود؛ 'draft' یعنی پنهان است.
+ * - انتشار فقط وقتی انجام می‌شود که «شرایط گیت» برقرار باشد؛ وگرنه خطا با
+ *   فهرست دقیقِ مواردِ ناقص برمی‌گردد تا ادمین همان‌ها را کامل کند.
+ *
+ * شرایط گیت (فقط از مدل مقصد؛ چیزی حدس زده نشده):
+ *  ۱. نام فارسی دست‌کم ۲ نویسه (همان قانون saveDestination).
+ *  ۲. کشور/ناحیه: نوع باید «country» یا «city» باشد (همان دو نوعی که فرم
+ *     می‌سازد)؛ اگر «city» است، «کشور مادر» باید به یک رکورد زندهٔ نوع
+ *     «country» اشاره کند.
+ *  ۳. توضیح (description) یا تصویر (image) — دست‌کم یکی پر باشد.
+ */
+export async function setDestinationPublishStatus(id: string, next: 'draft' | 'published') {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  if (next !== 'draft' && next !== 'published') throw new Error('وضعیت انتشار نامعتبر است.');
+  const cleanId = (id || '').trim();
+  if (!cleanId) throw new Error('مقصد مشخص نیست.');
+  const [row] = await db.select().from(siteDestinations).where(eq(siteDestinations.id, cleanId)).limit(1);
+  if (!row) throw new Error('مقصد پیدا نشد.');
+  const displayName = row.name || cleanId;
+
+  if (next === 'published') {
+    const missing: string[] = [];
+    if ((row.name || '').trim().length < 2) missing.push('نام');
+    if (row.type === 'city') {
+      const parent = (row.parentCountrySlug || '').trim();
+      if (!parent) {
+        missing.push('کشور مادر');
+      } else {
+        const [country] = await db
+          .select({ id: siteDestinations.id })
+          .from(siteDestinations)
+          .where(
+            and(
+              eq(siteDestinations.slug, parent),
+              eq(siteDestinations.type, 'country'),
+              isNull(siteDestinations.deletedAt),
+            ),
+          )
+          .limit(1);
+        if (!country) missing.push('کشور مادر (مقصدِ مادرِ معتبر پیدا نشد)');
+      }
+    } else if (row.type !== 'country') {
+      // نوع‌های قدیمی (مثل region) در مدل فعلی فرم نیستند؛ انتشارشان نیازمند
+      // تعیین نوع «کشور» یا «شهر» است.
+      missing.push('نوع (باید «کشور» یا «شهر» باشد)');
+    }
+    if (!(row.description || '').trim() && !(row.image || '').trim()) missing.push('توضیح یا تصویر');
+    if (missing.length > 0) {
+      throw new Error(`انتشار «${displayName}» ممکن نیست؛ اول این‌ها را کامل کنید: ${missing.join('، ')}.`);
+    }
+  }
+
+  await db
+    .update(siteDestinations)
+    .set({ publishStatus: next, updatedAt: new Date() })
+    .where(eq(siteDestinations.id, cleanId));
+  // ایراد ۲۰: انتشار/لغو انتشار هم کش مقصدهای سایت را باطل می‌کند.
+  invalidateDestinationsCache();
+  revalidatePath('/admin/places');
+  return { ok: true, publishStatus: next };
 }
 
 export async function deleteDestination(id: string) {

@@ -141,6 +141,10 @@ export const siteDestinations = pgTable(
     travelTips: jsonb('travel_tips').default('[]').notNull(), // string[]
     faqs: jsonb('faqs').default('[]').notNull(), // Array<{ question, answer }>
     relatedGuides: jsonb('related_guides').default('[]').notNull(), // string[]
+    // گیت انتشار مقصد (مایگریشن 0023، قلم ۳ موج ۱): 'draft' = پیش‌نویس
+    // (پنهان از سایت)، 'published' = منتشرشده (زنده روی سایت) — همان enum
+    // آمادهٔ publish_status که مایگریشن 0011 برای تورها ساخت.
+    publishStatus: publishStatusEnum('publish_status').notNull().default('draft'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
     deletedAt: timestamp('deleted_at'),

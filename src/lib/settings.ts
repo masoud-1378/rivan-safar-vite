@@ -50,6 +50,10 @@ export const SETTINGS_REGISTRY: SettingDef[] = [
   { key: 'tours.default_price_note', label: 'یادداشت پیش‌فرض قیمت', hint: 'زیر قیمت هر تور نمایش داده می‌شود.', kind: 'text', tab: 'general', defaultValue: 'برای هر بزرگسال در اتاق دو تخته' },
   { key: 'tours.page_size', label: 'تعداد تور در هر صفحه', hint: 'بین ۴ تا ۴۸', kind: 'number', tab: 'general', defaultValue: '12', min: 4, max: 48 },
   { key: 'tours.default_sort', label: 'مرتب‌سازی پیش‌فرض', hint: 'ترتیب نمایش فهرست تورها.', kind: 'select', tab: 'general', defaultValue: 'default', options: [{ value: 'default', label: 'پیش‌فرض' }, { value: 'price_asc', label: 'ارزان‌ترین' }, { value: 'price_desc', label: 'گران‌ترین' }] },
+  // قلم ۴ موج ۱ (تصمیم ۴، ۱۴۰۵/۰۷/۱۱): وقتی هیچ تور منتشرشده‌ای روی سایت نیست،
+  // سایت بر اساس همین جوابِ ذخیره‌شده رفتار می‌کند. 'unanswered' یعنی مدیر هنوز
+  // جواب نداده — پنل همان لحظه از او می‌پرسد، نه این‌که حدس بزند.
+  { key: 'tours.all_draft_fallback', label: 'سایت وقتی هیچ توری منتشر نیست', hint: 'وقتی آخرین تور منتشرشده هم از سایت برداشته شود، این انتخاب اعمال می‌شود.', kind: 'select', tab: 'general', defaultValue: 'unanswered', options: [{ value: 'unanswered', label: 'هنوز انتخاب نشده' }, { value: 'sample', label: 'تور نمونه نمایش داده شود' }, { value: 'empty', label: 'صفحه خالی بماند' }] },
   { key: 'leads.success_message', label: 'پیام موفقیت فرم', hint: 'بعد از ثبت درخواست تماس نمایش داده می‌شود.', kind: 'text', tab: 'notify', defaultValue: 'درخواست شما ثبت شد؛ کارشناس ما به‌زودی تماس می‌گیرد.' },
   { key: 'leads.auto_assign', label: 'تخصیص خودکار', hint: 'نام کارشناس پیش‌فرض برای لیدهای جدید.', kind: 'text', tab: 'notify', defaultValue: '' },
   { key: 'leads.page_size', label: 'تعداد لید در هر صفحه', hint: 'بین ۵ تا ۱۰۰', kind: 'number', tab: 'notify', defaultValue: '20', min: 5, max: 100 },

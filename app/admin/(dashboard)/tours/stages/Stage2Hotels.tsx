@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { 
   Building2, 
   Plus, 
@@ -26,13 +26,15 @@ import { Button } from '@/components/ui/button';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { cn, en, fa, faNumber } from '@/lib/utils';
 import { normalizeFaSearch } from '@/lib/persian';
-import type { HotelBookingType, TourHotelOptionItem, TourInput } from '../actions';
+import type { HotelBookingType, TourHotelOptionItem, TourInput, DestinationTree } from '../actions';
 import type { HotelPickerItem } from '../../hotels/actions';
 
 interface Stage2HotelsProps {
   data: TourInput;
   onChange: (fields: Partial<TourInput>) => void;
   hotels: HotelPickerItem[];
+  /** درخت مقصدها — برای فیلتر «فقط هتل‌های همین مقصد» (موج ۱، قلم ۶). */
+  tree: DestinationTree;
 }
 
 const BOARD_OPTIONS = [
@@ -43,6 +45,20 @@ const BOARD_OPTIONS = [
   { value: 'UALL', label: 'سرویس ۲۴ ساعته نامحدود (UALL)' },
   { value: 'RO', label: 'فقط اتاق بدون پذیرایی (RO)' },
 ];
+
+/**
+ * برچسب فارسی نوع پذیرایی هتل — برای پیشنهاد «وعده‌ها از هتل» در مرحلهٔ ۳
+ * (موج ۱، قلم ۶). متن همان برچسبِ دیده‌شده در همین مرحله است؛ حدسی در کار نیست.
+ */
+export function boardDisplayLabel(board?: string | null): string {
+  const code = (board || 'BB').toUpperCase();
+  return BOARD_OPTIONS.find((b) => b.value === code)?.label ?? code;
+}
+
+/** متن وعده برای فیلد «وعده‌های غذایی» روزها: برچسب، بدون کد لاتین داخل پرانتز. */
+export function boardMealsText(board?: string | null): string {
+  return boardDisplayLabel(board).replace(/\s*\([A-Z]+\)\s*$/, '').trim();
+}
 
 // کتابچه §۳ (فاز ۲، قلم ۷): سه نوع رزرو — هر کدام زیرفیلد نرخ خودش را نشان می‌دهد.
 // مقدار ذخیره‌شده کد لاتین است؛ برچسب فارسی در UI.
@@ -356,11 +372,46 @@ function HotelCard({ hotel, idx, onUpdate, onRemove, onUnlink }: HotelCardProps)
   );
 }
 
-export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: Stage2HotelsProps) {
+export default function Stage2Hotels({ data, onChange, hotels: catalogHotels, tree }: Stage2HotelsProps) {
   const hotels: TourHotelOptionItem[] = Array.isArray(data.hotelOptions) ? data.hotelOptions : [];
   const [showHotelPicker, setShowHotelPicker] = useState(false);
   const [hotelQuery, setHotelQuery] = useState('');
   const pickerRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * فیلتر «فقط هتل‌های همین مقصد» (موج ۱، قلم ۶ — فرصت ۲-۱ ممیزی هوشمندسازی):
+   * وقتی مقصد ست شده، پیش‌فرض روشن است و با یک کلیک خاموش می‌شود.
+   * دامنه = مقصدهای انتخاب‌شده + زیرمجموعه‌هایشان در درخت (مثلاً با انتخاب
+   * «ترکیه»، هتل‌های «استانبول» هم می‌آیند)؛ فقط تطبیق دقیق اسلاگ، بدون حدس.
+   */
+  const destSlugs = useMemo(
+    () => (Array.isArray(data.destinationSlugs) ? data.destinationSlugs.filter((s) => (s || '').trim()) : []),
+    [data.destinationSlugs]
+  );
+  const destScope = useMemo(() => {
+    if (destSlugs.length === 0) return null;
+    const children = new Map<string, string[]>();
+    for (const a of tree?.all ?? []) {
+      if (!a.parent) continue;
+      const arr = children.get(a.parent);
+      if (arr) arr.push(a.slug);
+      else children.set(a.parent, [a.slug]);
+    }
+    const out = new Set<string>(destSlugs);
+    const stack = [...destSlugs];
+    while (stack.length > 0) {
+      const s = stack.pop() as string;
+      for (const c of children.get(s) ?? []) {
+        if (!out.has(c)) {
+          out.add(c);
+          stack.push(c);
+        }
+      }
+    }
+    return out;
+  }, [tree, destSlugs]);
+  // پیش‌فرضِ دیده‌شونده: مقصد که ست باشد، فیلتر از اول روشن است.
+  const [destOnly, setDestOnly] = useState(() => destSlugs.length > 0);
 
   // گشت (ایراد ۵): باز شدن پنل باید غیرقابل‌چشم‌پوشی باشد — دکمه حالت فعال می‌گیرد،
   // پنل به دید اسکرول می‌شود و جست‌وجو فوکوس می‌گیرد تا «هیچ اتفاقی نیفتاد» تکرار نشود.
@@ -429,9 +480,30 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
   };
 
   const catalogQuery = normalizeFaSearch(hotelQuery);
+  // فهرست پایهٔ پیکر: با فیلتر مقصدی فقط هتل‌هایی که placeSlugشان در دامنهٔ
+  // مقصدهای همین تور است؛ هتل بی‌شهر (placeSlug خالی) در حالت فیلتر نمی‌آید.
+  const scopedHotels = useMemo(
+    () =>
+      destOnly && destScope
+        ? catalogHotels.filter((h) => h.placeSlug && destScope.has(h.placeSlug))
+        : catalogHotels,
+    [catalogHotels, destOnly, destScope]
+  );
   const catalogResults = catalogQuery
-    ? catalogHotels.filter((h) => normalizeFaSearch(h.nameFa).includes(catalogQuery)).slice(0, 30)
-    : catalogHotels.slice(0, 30);
+    ? scopedHotels.filter((h) => normalizeFaSearch(h.nameFa).includes(catalogQuery)).slice(0, 30)
+    : scopedHotels.slice(0, 30);
+  // گروه‌بندی با سرفصل شهر (فرصت ۲-۱): فهرست ۵۰۰تاییِ پشت‌سرهم، بزرگ‌ترین عامل
+  // «قاطی‌کردن» فرم بود؛ حالا هم در حالت فیلتر و هم در حالت همه، شهر سرفصل دارد.
+  const groupedResults = useMemo(() => {
+    const map = new Map<string, HotelPickerItem[]>();
+    for (const h of catalogResults) {
+      const key = h.cityName || 'شهر ثبت‌نشده';
+      const arr = map.get(key);
+      if (arr) arr.push(h);
+      else map.set(key, [h]);
+    }
+    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], 'fa'));
+  }, [catalogResults]);
 
   const handleUpdateHotel = (index: number, patch: Partial<TourHotelOptionItem>) => {
     const next = [...hotels];
@@ -491,6 +563,22 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
       {/* انتخاب هتل از جدول ثبت‌شده‌ها: نام و ستاره از رکورد پر می‌شود؛ قیمت همان‌جا دستی (ویژهٔ این تور) */}
       {showHotelPicker && (
         <div ref={pickerRef} className="rounded-sm border border-border bg-card p-4 space-y-3">
+          {/* فیلتر «فقط هتل‌های همین مقصد» (موج ۱، قلم ۶): پیش‌فرضِ دیده‌شونده و
+              قابل‌خاموش؛ برداشتن تیک یعنی «همهٔ هتل‌ها». */}
+          {destScope && (
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-sm border border-brand/20 bg-brand/5 px-3 py-2.5">
+              <input
+                type="checkbox"
+                checked={destOnly}
+                onChange={(e) => setDestOnly(e.target.checked)}
+                className="size-4 shrink-0 cursor-pointer accent-brand"
+              />
+              <span className="text-xs font-bold text-foreground">فقط هتل‌های همین مقصد</span>
+              <span className="text-[11px] text-muted-foreground">
+                ({fa(scopedHotels.length)} هتل)
+              </span>
+            </label>
+          )}
           <div className="relative">
             <Input
               value={hotelQuery}
@@ -504,31 +592,51 @@ export default function Stage2Hotels({ data, onChange, hotels: catalogHotels }: 
             <p className="text-xs text-muted-foreground text-center py-3">
               هنوز هتلی در جدول ثبت نشده است؛ از «افزودن هتل جدید» به‌صورت دستی وارد کنید.
             </p>
+          ) : destOnly && scopedHotels.length === 0 ? (
+            <div className="py-3 text-center">
+              <p className="text-xs text-muted-foreground">
+                برای این مقصد هتلی ثبت نشده است.
+              </p>
+              <button
+                type="button"
+                onClick={() => setDestOnly(false)}
+                className="mt-2 text-xs font-bold text-brand hover:underline"
+              >
+                نمایش همهٔ هتل‌ها
+              </button>
+            </div>
           ) : (
-            <div className="max-h-64 overflow-y-auto rounded-sm border border-border/60 divide-y divide-border/40">
+            <div className="max-h-64 overflow-y-auto rounded-sm border border-border/60">
               {catalogResults.length === 0 ? (
                 <p className="px-3 py-4 text-xs text-muted-foreground text-center">چیزی پیدا نشد.</p>
               ) : (
-                catalogResults.map((h) => (
-                  <button
-                    key={h.id}
-                    type="button"
-                    onClick={() => handleAddHotelFromTable(h)}
-                    className="flex w-full items-center justify-between px-3 py-2.5 text-xs transition-colors hover:bg-accent/40 min-h-11"
-                  >
-                    <span className="flex items-center gap-2 text-foreground">
-                      <Building2 className="size-3.5 text-blue-600 shrink-0" />
-                      <span className="font-medium">{h.nameFa}</span>
-                      {h.cityName ? (
-                        <span className="text-[10px] text-muted-foreground">({h.cityName})</span>
-                      ) : null}
-                      <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                        <Star className="size-3 text-amber-500 fill-amber-500" />
-                        {h.stars ?? '—'}
-                      </span>
-                    </span>
-                    <Plus className="size-4 text-muted-foreground shrink-0" />
-                  </button>
+                groupedResults.map(([city, items]) => (
+                  <div key={city}>
+                    <div className="sticky top-0 bg-secondary/60 px-3 py-1.5 text-[11px] font-bold text-foreground">
+                      {city}
+                      <span className="ms-1.5 font-normal text-muted-foreground">({fa(items.length)})</span>
+                    </div>
+                    <div className="divide-y divide-border/40">
+                      {items.map((h) => (
+                        <button
+                          key={h.id}
+                          type="button"
+                          onClick={() => handleAddHotelFromTable(h)}
+                          className="flex w-full items-center justify-between px-3 py-2.5 text-xs transition-colors hover:bg-accent/40 min-h-11"
+                        >
+                          <span className="flex items-center gap-2 text-foreground">
+                            <Building2 className="size-3.5 text-blue-600 shrink-0" />
+                            <span className="font-medium">{h.nameFa}</span>
+                            <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                              <Star className="size-3 text-amber-500 fill-amber-500" />
+                              {h.stars ?? '—'}
+                            </span>
+                          </span>
+                          <Plus className="size-4 text-muted-foreground shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))
               )}
             </div>

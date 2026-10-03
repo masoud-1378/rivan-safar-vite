@@ -77,6 +77,18 @@ export interface TourItem {
     hotelId?: string | null;
     /** عکس هتل از جدول media؛ خالی یعنی عکسی ثبت نشده. */
     photoUrl?: string;
+    /**
+     * تفکیک نرخ اتاق‌ها (تورساز مرحلهٔ ۲ — actions.ts). خالی یعنی مدیر ثبت
+     * نکرده و روی سایت نمایش داده نمی‌شود (قانون: هیچ حدس بی‌صدایی).
+     */
+    priceDouble?: string;
+    priceSingle?: string;
+    priceChildWithBed?: string;
+    priceChildNoBed?: string;
+    /** نوع رزرو هتل (گارانتی/نیم‌چارتر/درخواستی)؛ خالی یعنی ثبت نشده. */
+    bookingType?: 'guarantee' | 'semi_charter' | 'on_request' | string;
+    /** یادداشت موقعیت/ترانسفر هتل؛ فعلاً روی صفحهٔ تور نمایش داده نمی‌شود. */
+    locationNote?: string;
   }>;
   description: string;
 }

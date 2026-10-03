@@ -16,6 +16,7 @@ import { formatHotelStarsRange } from '@/lib/hotel-stars';
 import {
   liveExtras, isDomesticTour, faDateTime, boardLabel,
   transportLabel, transportSpecLabel,
+  hotelPriceRows, bookingTypeLabel, findDestinationPlace, hasDestinationInfo,
 } from './tour-live';
 
 interface TourDetailPageProps {
@@ -77,6 +78,14 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
   const hasConsultant =
     !!consultant && !!(consultant.name || consultant.phone || consultant.audioUrl);
   const transportKind = extras.transportKind;
+
+  // موج ۱ قلم ۱: رکورد مقصد برای بخش «اطلاعات کاربردی مقصد»؛ فقط وقتی رکورد
+  // پیدا شود و دست‌کم یک فیلد کاربردی پر داشته باشد، بخش رندر می‌شود.
+  const destPlace = findDestinationPlace(tour, { ...countries, ...cities });
+  const hasDestInfo = !!destPlace && hasDestinationInfo(destPlace);
+  const destTips = destPlace
+    ? (destPlace.travelTips || []).filter((t) => t && t.trim()).slice(0, 4)
+    : [];
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,6 +187,19 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   <span className="text-text-heading font-bold">{formatHotelStarsRange((tour.hotelOptions ?? []).map((o) => o.stars), tour.hotelStars)}</span>
                 </div>
               </div>
+
+              {/* موج ۱ قلم ۱: مسیر پرواز — فیلد route دیتابیس که فقط در مودال
+                  فهرست تورها نمایش داده می‌شد. (جدول routeSegments خالی است؛
+                  رندر سگمنتی ممکن نیست و چیزی حدس زده نمی‌شود.) */}
+              {tour.route?.trim() && (
+                <div className="flex items-center gap-2 mb-6 text-body-sm">
+                  <Plane className="w-4 h-4 text-brand-orange shrink-0" />
+                  <span className="text-text-muted font-medium">
+                    {transportKind === 'air' ? 'مسیر پرواز:' : 'مسیر سفر:'}
+                  </span>
+                  <span className="text-text-heading font-bold">{tour.route}</span>
+                </div>
+              )}
 
               {/* Price & Status Card */}
               <div className="p-5 bg-surface-secondary/80 rounded-card border border-border-default mb-6">
@@ -323,35 +345,141 @@ export default function TourDetailPage({ tourSlug, onNavigate }: TourDetailPageP
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-default/60">
-                  {tour.hotelOptions.map((opt, idx) => (
-                    <tr key={idx} className="hover:bg-surface-secondary/40 transition-colors">
-                      <td className="py-4 px-4 sm:px-6 font-bold text-text-heading">
-                        <div className="flex items-center gap-2">
-                          {opt.photoUrl ? (
-                            <span className="relative h-11 w-16 shrink-0 overflow-hidden rounded-sm">
-                              <SmartImage src={opt.photoUrl} alt={opt.name} />
+                  {tour.hotelOptions.map((opt, idx) => {
+                    // موج ۱ قلم ۱: تفکیک نرخ اتاق‌ها و نوع رزرو از دادهٔ تورساز
+                    // مرحلهٔ ۲ — فقط فیلدهای پر نمایش داده می‌شوند.
+                    const priceRows = hotelPriceRows(opt);
+                    const booking = bookingTypeLabel(opt.bookingType);
+                    return (
+                      <tr key={idx} className="hover:bg-surface-secondary/40 transition-colors">
+                        <td className="py-4 px-4 sm:px-6 font-bold text-text-heading">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {opt.photoUrl ? (
+                              <span className="relative h-11 w-16 shrink-0 overflow-hidden rounded-sm">
+                                <SmartImage src={opt.photoUrl} alt={opt.name} />
+                              </span>
+                            ) : (
+                              <Building2 className="w-4 h-4 text-text-muted" />
+                            )}
+                            <span>{opt.name}</span>
+                            {booking && (
+                              <span className="inline-flex px-2 py-0.5 rounded bg-sky-50 text-sky-700 font-bold text-caption border border-sky-200">
+                                رزرو {booking}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          <span className="inline-flex px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold text-caption border border-amber-200">
+                            {opt.stars ? `${fa(opt.stars)} ستاره` : '—'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-center text-text-secondary">
+                          {boardLabel(opt.board)}
+                        </td>
+                        <td className="py-4 px-4 sm:px-6 text-left">
+                          {priceRows.length === 0 ? (
+                            <span className="font-extrabold text-brand-orange">
+                              {opt.pricePerPerson?.trim() ? opt.pricePerPerson : '—'}
+                            </span>
+                          ) : priceRows.length === 1 ? (
+                            <span className="font-extrabold text-brand-orange">
+                              {priceRows[0].value}
                             </span>
                           ) : (
-                            <Building2 className="w-4 h-4 text-text-muted" />
+                            <div className="space-y-1.5">
+                              {priceRows.map((row, i) => (
+                                <div key={i} className={i === 0 ? 'font-extrabold text-brand-orange' : ''}>
+                                  <span className="block text-caption text-text-muted font-medium">
+                                    {row.label}
+                                  </span>
+                                  <span className={i === 0 ? '' : 'text-body-sm font-bold text-text-heading'}>
+                                    {row.value}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
                           )}
-                          <span>{opt.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="inline-flex px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold text-caption border border-amber-200">
-                          {opt.stars ? `${fa(opt.stars)} ستاره` : '—'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-center text-text-secondary">
-                        {boardLabel(opt.board)}
-                      </td>
-                      <td className="py-4 px-4 sm:px-6 text-left font-extrabold text-brand-orange">
-                        {opt.pricePerPerson}
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ---------------- اطلاعات کاربردی مقصد (از رکورد مقصد؛ فقط وقتی داده هست) ---------------- */}
+      {hasDestInfo && destPlace && (
+        <section className="bg-surface-secondary/60 border-y border-border-default section-standard">
+          <div className="container-main px-4 sm:px-6 lg:px-8">
+            <div className="text-right mb-6">
+              <h2 className="text-h2 text-text-heading font-bold mb-1.5">
+                اطلاعات کاربردی {destPlace.name}
+              </h2>
+              <p className="text-body-sm text-text-secondary">
+                آنچه پیش از سفر به {destPlace.name} بد نیست بدانید.
+                {destPlace.lastVerifiedAt?.trim() && (
+                  <span className="text-caption text-text-muted"> (آخرین بازبینی: {destPlace.lastVerifiedAt})</span>
+                )}
+              </p>
+            </div>
+
+            <div className="bg-surface-primary border border-border-default rounded-card p-6 shadow-subtle">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-right">
+                {destPlace.currency?.trim() && (
+                  <div>
+                    <dt className="text-caption text-text-muted font-bold mb-0.5 flex items-center gap-1.5">
+                      <Wallet className="w-3.5 h-3.5" />
+                      واحد پول
+                    </dt>
+                    <dd className="text-body-sm font-bold text-text-heading">{destPlace.currency}</dd>
+                  </div>
+                )}
+                {destPlace.bestSeason?.trim() && (
+                  <div>
+                    <dt className="text-caption text-text-muted font-bold mb-0.5 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" />
+                      بهترین فصل سفر
+                    </dt>
+                    <dd className="text-body-sm font-bold text-text-heading">{destPlace.bestSeason}</dd>
+                  </div>
+                )}
+                {destPlace.flightDuration?.trim() && (
+                  <div>
+                    <dt className="text-caption text-text-muted font-bold mb-0.5 flex items-center gap-1.5">
+                      <Plane className="w-3.5 h-3.5" />
+                      مدت پرواز
+                    </dt>
+                    <dd className="text-body-sm font-bold text-text-heading">{destPlace.flightDuration}</dd>
+                  </div>
+                )}
+                {destPlace.visaType?.trim() && (
+                  <div>
+                    <dt className="text-caption text-text-muted font-bold mb-0.5 flex items-center gap-1.5">
+                      <FileCheck2 className="w-3.5 h-3.5" />
+                      وضعیت ویزا
+                    </dt>
+                    <dd className="text-body-sm font-bold text-text-heading">{destPlace.visaType}</dd>
+                  </div>
+                )}
+              </dl>
+
+              {destTips.length > 0 && (
+                <div className="mt-5 pt-5 border-t border-border-default/60">
+                  <h3 className="text-body font-bold text-text-heading mb-3">نکته‌های سفر</h3>
+                  <ul className="space-y-2.5">
+                    {destTips.map((tip, i) => (
+                      <li key={i} className="flex items-start gap-2 text-body-sm text-text-secondary">
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         </section>

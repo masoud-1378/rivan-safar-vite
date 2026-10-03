@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Copy, Pencil, Plus, Archive, Plane, Train, Bus, Ship, Route, ShieldCheck, Eye } from 'lucide-react';
 import { deleteTour, setToursPublishStatusBulk, archiveToursBulk, type TourRow } from './actions';
+import { getAllDraftFallbackAnswer } from '../settings/actions';
+import { AllDraftFallbackDialog } from './AllDraftFallbackDialog';
 import { CAPACITY_OPTIONS } from './tour-helpers';
 import SectionSettingsDialog from '../SectionSettingsDialog';
 import { AlertDialog } from '@/components/ui/alert-dialog';
@@ -89,8 +91,26 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<null | 'publish' | 'unpublish' | 'archive'>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
+  // قلم ۴ موج ۱: دیالوگ سؤال «همه پیش‌نویس» — وقتی آخرین تور منتشرشده هم
+  // از سایت برداشته می‌شود و مدیر هنوز جواب نداده، همان لحظه باز می‌شود.
+  const [askFallbackOpen, setAskFallbackOpen] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+
+  /**
+   * قلم ۴ موج ۱: اگر با این عملیات شمار تورهای منتشرشده به صفر رسید و جوابی
+   * ذخیره نشده، دیالوگ سؤال همان لحظه باز می‌شود. بستن بدون انتخاب = بنر
+   * صفحه (بعد از رفرش) سؤال را یادآوری می‌کند.
+   */
+  const maybeAskAllDraftFallback = async (publishedRemaining: number) => {
+    if (publishedRemaining !== 0) return;
+    try {
+      const answer = await getAllDraftFallbackAnswer();
+      if (answer === null) setAskFallbackOpen(true);
+    } catch {
+      // خطا در خواندن جواب → بنر سرور سؤال را یادآوری می‌کند؛ دیالوگ نه.
+    }
+  };
 
   const toggleSelected = (key: string) => {
     setSelected((prev) => {
@@ -119,17 +139,38 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
     setBulkBusy(true);
     try {
       if (bulkAction === 'archive') {
-        await archiveToursBulk([...selected]);
+        const res = await archiveToursBulk([...selected]);
         setTours((ts) => ts.filter((t) => !selected.has(t.id)));
         toast({ title: `${fa(selected.size)} تور بایگانی شد`, description: 'از سایت پنهان شدند؛ از صفحهٔ بایگانی می‌توانید بازیابی‌شان کنید.' });
+        await maybeAskAllDraftFallback(res.publishedRemaining);
       } else {
         const next = bulkAction === 'publish' ? 'published' : 'draft';
-        await setToursPublishStatusBulk([...selected], next);
-        setTours((ts) => ts.map((t) => (selected.has(t.id) ? { ...t, publishStatus: next } : t)));
-        toast({
-          title: bulkAction === 'publish' ? `${fa(selected.size)} تور منتشر شد` : `انتشار ${fa(selected.size)} تور لغو شد`,
-          description: bulkAction === 'publish' ? 'منتشر شدند و روی سایت دیده می‌شوند.' : 'از سایت پنهان شدند.',
-        });
+        const res = await setToursPublishStatusBulk([...selected], next);
+        // گیت انتشار گروهی (موج ۱، قلم ۲): تورهای ناقص منتشر نمی‌شوند؛
+        // فقط تورهای واقعاً منتشرشده در فهرست به‌روز می‌شوند.
+        const skippedIds = new Set(res.skipped.map((s) => s.id));
+        setTours((ts) => ts.map((t) => (selected.has(t.id) && !skippedIds.has(t.id) ? { ...t, publishStatus: next } : t)));
+        if (bulkAction === 'publish') {
+          if (res.skipped.length === 0) {
+            toast({
+              title: `${fa(res.count)} تور منتشر شد`,
+              description: 'منتشر شدند و روی سایت دیده می‌شوند.',
+            });
+          } else {
+            const shown = res.skipped.slice(0, 3).map((s) => `«${s.title}»: ${s.missing.join('، ')}`);
+            toast({
+              title: `${fa(res.count)} تور منتشر شد و ${fa(res.skipped.length)} تور ناقص ماند`,
+              description: `ناقص ماندند و منتشر نشدند — ${shown.join('؛ ')}${res.skipped.length > 3 ? `؛ و ${fa(res.skipped.length - 3)} تور دیگر` : ''}`,
+            });
+          }
+        } else {
+          toast({
+            title: `انتشار ${fa(selected.size)} تور لغو شد`,
+            description: 'از سایت پنهان شدند.',
+          });
+        }
+        // قلم ۴ موج ۱: اگر لغو انتشار گروهی به صفر تور منتشرشده رسید، همان لحظه بپرس.
+        await maybeAskAllDraftFallback(res.publishedRemaining);
       }
       setSelected(new Set());
       setBulkAction(null);
@@ -152,9 +193,18 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
   const onDelete = async () => {
     if (!deleting) return;
     try {
-      await new Promise<void>((resolve, reject) => startTransition(async () => {
-        try { await deleteTour(deleting.id); resolve(); } catch (error) { reject(error); }
+      const res = await new Promise<{ publishedRemaining: number }>((resolve, reject) => startTransition(async () => {
+        try { resolve(await deleteTour(deleting.id)); } catch (error) { reject(error); }
       }));
+      if (res.publishedRemaining === 0) {
+        // قلم ۴ موج ۱: بدون ریلود — تور از فهرست محلی حذف می‌شود و دیالوگ
+        // سؤال همان لحظه باز می‌شود (اگر جوابی ذخیره نشده باشد).
+        const goneId = deleting.id;
+        setDeleting(null);
+        setTours((ts) => ts.filter((t) => t.id !== goneId));
+        await maybeAskAllDraftFallback(0);
+        return;
+      }
       window.location.reload();
     } catch (error) { toast({ variant: 'error', title: error instanceof Error ? error.message : 'حذف انجام نشد؛ دوباره تلاش کنید.' }); }
   };
@@ -340,7 +390,7 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
               )}
               <p className="pt-1 text-xs font-bold text-foreground">
                 {bulkAction === 'publish'
-                  ? 'این تورها منتشر می‌شوند و روی سایت دیده می‌شوند.'
+                  ? 'تورهایی که گیت انتشار را پاس کنند منتشر می‌شوند و روی سایت دیده می‌شوند؛ تورهای ناقص منتشر نمی‌شوند.'
                   : bulkAction === 'unpublish'
                     ? 'این تورها از سایت پنهان می‌شوند.'
                     : 'این تورها بایگانی می‌شوند و از سایت پنهان می‌شوند؛ بعداً از صفحهٔ بایگانی می‌توانید بازیابی‌شان کنید.'}
@@ -357,6 +407,15 @@ export default function ToursManager({ initial, sectionSettings }: ToursManagerP
         />
       )}
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)} title="بایگانی تور" description={deleting ? `تور «${deleting.title}» بایگانی می‌شود و از سایت و فهرست‌ها پنهان می‌شود؛ بعداً از صفحهٔ بایگانی می‌توانید آن را بازیابی کنید.` : ''} confirmText="بایگانی تور" destructive onConfirm={onDelete} />
+      {/* قلم ۴ موج ۱: دیالوگ سؤال «همه پیش‌نویس». بستن بدون انتخاب → رفرش تا بنر سرور سؤال را یادآوری کند. */}
+      <AllDraftFallbackDialog
+        open={askFallbackOpen}
+        onOpenChange={(open) => {
+          setAskFallbackOpen(open);
+          if (!open) router.refresh();
+        }}
+        onSaved={() => toast({ title: 'ذخیره شد' })}
+      />
     </div>
   );
 }

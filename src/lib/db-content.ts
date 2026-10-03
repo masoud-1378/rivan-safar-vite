@@ -20,6 +20,24 @@ const num = (v: unknown, fallback = 0): number => {
   return Number.isFinite(n) ? n : fallback;
 };
 const arr = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+/**
+ * مثل arr ولی رشته-کدشده را هم می‌فهمد: چند ستون jsonb در دیتابیس واقعی به‌جای
+ * آرایه، رشتهٔ حاوی JSON ذخیره شده‌اند (مثلاً hotel_options در ۱۱ از ۱۲ تور و
+ * travel_tips برخی مقصدها). این فقط خواندن سمت سرور است و رکوردها دست نمی‌خورند؛
+ * تمیزکاری ریشه‌ایِ دیتابیس کار موج دیگری است.
+ */
+const arrParsed = <T>(v: unknown): T[] => {
+  if (Array.isArray(v)) return v as T[];
+  if (typeof v === 'string' && v.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(v);
+      return Array.isArray(parsed) ? (parsed as T[]) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
 const iso = (v: unknown): string => {
   if (typeof v === 'string' && v) return v;
   if (v instanceof Date) return v.toISOString();
@@ -61,7 +79,7 @@ function restToTour(r: Row): TourItem {
     airline: str(r.airline),
     includedServices: arr<string>(r.included_services),
     excludedServices: arr<string>(r.excluded_services),
-    hotelOptions: arr<TourItem['hotelOptions'][number]>(r.hotel_options),
+    hotelOptions: arrParsed<TourItem['hotelOptions'][number]>(r.hotel_options),
     description: str(r.description),
     // پنج ستون جاافتاده (ردیف ۲-۱)؛ jsonbها خام عبور می‌کنند، نرمالایز با کامپوننت.
     destinationSlugs: arr<string>(r.destination_slugs),
@@ -120,6 +138,29 @@ async function getHotelMeta(): Promise<Map<string, { archived: boolean; photoUrl
 }
 
 /**
+ * قلم ۴ موج ۱ (تصمیم ۴، ۱۴۰۵/۰۷/۱۱): حالت فالبک «همه پیش‌نویس» از تنظیمات سایت.
+ * 'empty' یعنی مدیر انتخاب کرده وقتی هیچ تور منتشرشده‌ای نیست صفحه خالی بماند؛
+ * هر مقدار دیگر (یا نبود ردیف/خطا) یعنی رفتار قدیمی: تور نمونه.
+ * خواندن عمومی است (مثل getContactInfo) و نیاز به نشست ادمین ندارد.
+ */
+export const getToursFallbackMode = cache(async (): Promise<'sample' | 'empty'> => {
+  try {
+    const rest = getRest();
+    if (!rest) return 'sample';
+    const { data, error } = await rest
+      .from('site_settings')
+      .select('setting_value')
+      .eq('setting_key', 'tours.all_draft_fallback')
+      .limit(1);
+    if (error) throw error;
+    const v = (data as Array<{ setting_value: string }> | null)?.[0]?.setting_value;
+    return v === 'empty' ? 'empty' : 'sample';
+  } catch {
+    return 'sample';
+  }
+});
+
+/**
  * با `cache()` ری‌اکت: در یک ریکوئست یک‌بار خوانده می‌شود (مثلاً layout هم
  * getNavLinks را می‌خواهد هم getToursِ داخلش را) — فراخوانی REST تکراری نه.
  */
@@ -133,7 +174,11 @@ export const getTours = cache(async (): Promise<TourItem[]> => {
       .is('deleted_at', null)
       .order('created_at', { ascending: true });
     if (error) throw error;
-    if (!data || data.length === 0) return SAMPLE_TOURS;
+    // قلم ۴ موج ۱: جدول کاملاً خالی (نصب تازه) هم تابع جوابِ ذخیره‌شده است؛
+    // بی‌جواب یعنی رفتار قدیمی (تور نمونه).
+    if (!data || data.length === 0) {
+      return (await getToursFallbackMode()) === 'empty' ? [] : SAMPLE_TOURS;
+    }
     const hotelMeta = await getHotelMeta();
     const tours = (data as Row[]).map(restToTour);
     // میز ۳ — ایراد ۱۲: گزینه‌ای که به هتل بایگانی‌شده اشاره می‌کند روی سایت
@@ -162,7 +207,14 @@ export const getTours = cache(async (): Promise<TourItem[]> => {
     // گیت انتشار تور (مایگریشن 0011): فقط «منتشرشده»ها روی سایت دیده می‌شوند.
     // ردیف‌های قدیمی‌تر از ستون publish_status (undefined) منتشرشده حساب می‌شوند
     // تا پیش از اجرای مایگریشن، رفتار سایت عوض نشود.
-    return tours.filter((t) => t.publishStatus === undefined || t.publishStatus === 'published');
+    const published = tours.filter((t) => t.publishStatus === undefined || t.publishStatus === 'published');
+    // قلم ۴ موج ۱ (تصمیم ۴): وقتی هیچ تور منتشرشده‌ای نیست، سایت بر اساس جوابِ
+    // ذخیره‌شدهٔ مدیر رفتار می‌کند — نه سیاست ثابت، نه حدس:
+    // - 'empty' → فهرست خالی (پرچم toursFallback در getLiveContent جلوی
+    //   جایگزینیِ خودکارِ تور نمونه در ContentProvider را می‌گیرد).
+    // - 'sample' یا بی‌جواب → رفتار قدیمی: تورهای نمونه.
+    if (published.length > 0) return published;
+    return (await getToursFallbackMode()) === 'empty' ? [] : SAMPLE_TOURS;
   } catch (error) {
     console.error('[db-content] tours read failed:', (error as Error).message);
     return SAMPLE_TOURS;
@@ -204,9 +256,11 @@ function restToPlace(r: Row): Place {
     activeToursCount: num(r.active_tours_count),
     popularDistricts: arr<string>(r.popular_districts),
     keyHighlights: arr<string>(r.key_highlights),
-    travelTips: arr<string>(r.travel_tips),
+    travelTips: arrParsed<string>(r.travel_tips),
     faqs: arr<Place['faqs'][number]>(r.faqs),
     relatedGuides: arr<string>(r.related_guides),
+    // گیت انتشار مقصد (مایگریشن 0023)؛ ستون ممکن است هنوز روی دیتابیس نباشد.
+    publishStatus: (r.publish_status as Place['publishStatus']) ?? undefined,
   };
 }
 
@@ -221,7 +275,12 @@ export async function getDestinations(): Promise<Place[]> {
       .order('created_at', { ascending: true });
     if (error) throw error;
     if (!data || data.length === 0) return [...Object.values(COUNTRIES), ...Object.values(CITIES)];
-    const places = (data as Row[]).map(restToPlace);
+    // گیت انتشار مقصد (مایگریشن 0023، قلم ۳ موج ۱): فقط «منتشرشده»ها روی
+    // سایت دیده می‌شوند. ردیف‌های قدیمی‌تر از ستون publish_status (undefined)
+    // منتشرشده حساب می‌شوند تا پیش از اجرای مایگریشن، رفتار سایت عوض نشود.
+    const places = (data as Row[]).map(restToPlace).filter(
+      (p) => p.publishStatus === undefined || p.publishStatus === 'published',
+    );
     // ردیف ۳-۴: نام کشورِ شهرها از روی parentCountrySlug و از همین فهرست
     // resolve می‌شود (ستون parent_country_name از DB حذف شد).
     try {
@@ -518,6 +577,8 @@ export async function getExhibition(slug: string): Promise<ExhibitionSeries | nu
 
 export async function getLiveContent(): Promise<{
   tours: TourItem[];
+  /** قلم ۴ موج ۱: 'empty' یعنی مدیر «صفحه خالی» را انتخاب کرده — ContentProvider نباید تور نمونه جایگزین کند. */
+  toursFallback: 'sample' | 'empty';
   countries: Record<string, Place>;
   cities: Record<string, Place>;
   guides: Record<string, GuideItem>;
@@ -525,6 +586,7 @@ export async function getLiveContent(): Promise<{
 }> {
   // ترتیبی و سبک: هر خواندن یک درخواست HTTPS بدون حالت است.
   const tours = await getTours();
+  const toursFallback = await getToursFallbackMode();
   const allPlaces = await getDestinationsOnce();
   const countries =
     allPlaces.filter((p) => p.type === 'country').length > 0
@@ -536,7 +598,7 @@ export async function getLiveContent(): Promise<{
       : CITIES;
   const guides = await getGuides();
   const exhibitions = await getExhibitions();
-  return { tours, countries, cities, guides, exhibitions };
+  return { tours, toursFallback, countries, cities, guides, exhibitions };
 }
 
 /* ------------------------------------------------------------------ */

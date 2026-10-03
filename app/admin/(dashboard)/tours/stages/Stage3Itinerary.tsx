@@ -20,7 +20,8 @@ import { Button } from '@/components/ui/button';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/toast';
 import { cn, fa, faNumber } from '@/lib/utils';
-import type { TourItineraryDayItem, TourInput } from '../actions';
+import type { TourHotelOptionItem, TourItineraryDayItem, TourInput } from '../actions';
+import { boardMealsText } from './Stage2Hotels';
 
 interface Stage3ItineraryProps {
   data: TourInput;
@@ -65,6 +66,8 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
   const itinerary: TourItineraryDayItem[] = Array.isArray(data.itineraryDays) ? data.itineraryDays : [];
   const included: string[] = Array.isArray(data.includedServices) ? data.includedServices : [];
   const excluded: string[] = Array.isArray(data.excludedServices) ? data.excludedServices : [];
+  const hotelOptions: TourHotelOptionItem[] = Array.isArray(data.hotelOptions) ? data.hotelOptions : [];
+  const nights = Number(data.nights) || 0;
   const { toast } = useToast();
 
   const handleAddDay = () => {
@@ -99,6 +102,87 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
   // دیالوگ تأیید حذف روز برنامه (C3-2): شماره/عنوان روز + پیامد شماره‌گذاری مجدد روز‌های بعدی.
   const [confirmRemoveDay, setConfirmRemoveDay] = React.useState<number | null>(null);
   const removeDayTarget = confirmRemoveDay === null ? undefined : itinerary[confirmRemoveDay];
+
+  /**
+   * ساخت N روز خالی (موج ۱، قلم ۶ — فرصت ۳-۱ ممیزی): به تعداد شب‌های تور،
+   * کارتِ خالیِ قابل‌ویرایش می‌سازد (قالب خالی، نه محتوای حدسی). روزهایی که
+   * از قبل ساخته شده‌اند دست نمی‌خورند؛ فقط شماره‌های جاافتاده ساخته می‌شوند.
+   */
+  const [confirmBuildDays, setConfirmBuildDays] = React.useState<number[] | null>(null);
+  const buildEmptyDays = (missing: number[]) => {
+    const next: TourItineraryDayItem[] = [...itinerary];
+    for (const d of missing) {
+      next.push({
+        day: d,
+        title: '',
+        city: data.destination || '',
+        description: '',
+        activityType: d === 1 ? 'transit' : 'guided',
+        meals: '',
+      });
+    }
+    next.sort((a, b) => a.day - b.day);
+    onChange({ itineraryDays: next });
+    setConfirmBuildDays(null);
+    toast({
+      title: `${fa(missing.length)} روز خالی ساخته شد`,
+      description: 'عنوان و شرح هر روز را خودتان بنویسید.',
+    });
+  };
+  const handleBuildEmptyDays = () => {
+    if (nights <= 0) return;
+    const existing = new Set(itinerary.map((d) => d.day));
+    const missing: number[] = [];
+    for (let d = 1; d <= nights; d++) {
+      if (!existing.has(d)) missing.push(d);
+    }
+    if (missing.length === 0) {
+      toast({ title: 'همهٔ روزها از قبل ساخته شده‌اند', variant: 'warning' });
+      return;
+    }
+    // برنامه که خالی است، خودِ دکمه تأیید صریح است؛ وگرنه دیالوگ می‌پرسد.
+    if (itinerary.length === 0) buildEmptyDays(missing);
+    else setConfirmBuildDays(missing);
+  };
+
+  /**
+   * وعده‌ها از هتل (موج ۱، قلم ۶ — فرصت ۳-۲ ممیزی): وقتی هتلی با وعدهٔ مشخص
+   * انتخاب شده، پیشنهاد می‌دهد همان وعده در برنامهٔ روزها تیک بخورد —
+   * با تأیید مدیر، نه خودکار. RO (بدون پذیرایی) وعده‌ای برای پیشنهاد ندارد.
+   */
+  const [mealsDismissed, setMealsDismissed] = React.useState(false);
+  const hotelBoards = React.useMemo(() => {
+    // نکته: نام Mapِ لوسیید (آیکون سربرگ) روی Map سراسری سایه انداخته؛ پس globalThis.
+    const map = new globalThis.Map<string, string[]>();
+    for (const h of hotelOptions) {
+      const code = ((h.board || 'BB') as string).toUpperCase();
+      if (code === 'RO') continue;
+      const name = (h.name || '').trim() || 'هتل بدون نام';
+      const arr = map.get(code);
+      if (arr) {
+        if (!arr.includes(name)) arr.push(name);
+      } else {
+        map.set(code, [name]);
+      }
+    }
+    return [...map.entries()];
+  }, [hotelOptions]);
+  const showMealsSuggestion =
+    !mealsDismissed &&
+    hotelBoards.length > 0 &&
+    itinerary.length > 0 &&
+    hotelBoards.some(([code]) =>
+      itinerary.some((d) => (d.meals || '').trim() !== boardMealsText(code))
+    );
+  const applyBoardMeals = (code: string) => {
+    const text = boardMealsText(code);
+    onChange({ itineraryDays: itinerary.map((d) => ({ ...d, meals: text })) });
+    setMealsDismissed(true);
+    toast({
+      title: `وعدهٔ «${text}» در همهٔ روزها ثبت شد`,
+      description: 'هر روز را جداگانه هم می‌توانید عوض کنید.',
+    });
+  };
 
   // Service helpers
   const [newIncluded, setNewIncluded] = React.useState('');
@@ -153,16 +237,83 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
             </p>
           </div>
         </div>
-        <Button
-          type="button"
-          variant="brand"
-          onClick={handleAddDay}
-          className="w-full gap-2 text-xs sm:w-auto"
-        >
-          <Plus className="size-4" />
-          افزودن روز برنامه
-        </Button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          {/* ساخت N روز خالی (موج ۱، قلم ۶): فقط وقتی تعداد شب‌ها معلوم است */}
+          {nights > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleBuildEmptyDays}
+              className="w-full gap-2 text-xs sm:w-auto"
+            >
+              <CalendarDays className="size-4" />
+              ساخت {fa(nights)} روز خالی
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="brand"
+            onClick={handleAddDay}
+            className="w-full gap-2 text-xs sm:w-auto"
+          >
+            <Plus className="size-4" />
+            افزودن روز برنامه
+          </Button>
+        </div>
       </div>
+
+      {/* پیشنهاد وعده‌ها از هتل (موج ۱، قلم ۶): فقط پیشنهاد با تأیید صریح */}
+      {showMealsSuggestion && (
+        <div className="rounded-sm border border-brand/25 bg-brand/5 p-4 space-y-2.5">
+          <div className="flex items-start gap-2.5">
+            <Utensils className="mt-0.5 size-4 shrink-0 text-brand" />
+            <div className="text-xs leading-relaxed">
+              {hotelBoards.length === 1 ? (
+                <p className="text-foreground">
+                  هتل «{hotelBoards[0][1].join('، ')}» وعدهٔ «{boardMealsText(hotelBoards[0][0])}» دارد.
+                </p>
+              ) : (
+                <div className="text-foreground">
+                  <p>هتل‌ها وعده‌های متفاوتی دارند:</p>
+                  <ul className="mt-1 list-disc space-y-0.5 ps-4">
+                    {hotelBoards.map(([code, names]) => (
+                      <li key={code}>
+                        «{boardMealsText(code)}» — {names.join('، ')}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p className="mt-1 text-muted-foreground">
+                همین وعده در همهٔ روزها ثبت شود؟ متن فعلی وعدهٔ روزها جایگزین می‌شود.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {hotelBoards.map(([code]) => (
+              <Button
+                key={code}
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => applyBoardMeals(code)}
+                className="text-xs"
+              >
+                ثبت «{boardMealsText(code)}» در روزها
+              </Button>
+            ))}
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setMealsDismissed(true)}
+              className="text-xs text-muted-foreground"
+            >
+              فعلاً نه
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Day by Day list */}
       {itinerary.length === 0 ? (
@@ -389,6 +540,16 @@ export default function Stage3Itinerary({ data, onChange }: Stage3ItineraryProps
           </div>
         </div>
       </div>
+
+      {/* دیالوگ تأیید ساخت روزهای خالی (موج ۱، قلم ۶): وقتی برنامه روز دارد */}
+      <AlertDialog
+        open={confirmBuildDays !== null}
+        onOpenChange={(open) => { if (!open) setConfirmBuildDays(null); }}
+        title={confirmBuildDays ? `${fa(confirmBuildDays.length)} روز خالی ساخته شود؟` : ''}
+        description={confirmBuildDays ? `روزهای ${confirmBuildDays.map((d) => fa(d)).join('، ')} به برنامه اضافه می‌شوند؛ روزهای فعلی دست نمی‌خورند.` : ''}
+        confirmText="ساخت روزها"
+        onConfirm={() => { if (confirmBuildDays) buildEmptyDays(confirmBuildDays); }}
+      />
 
       {/* دیالوگ تأیید حذف روز برنامه (C3-2): شماره/عنوان روز + پیامد شماره‌گذاری مجدد */}
       <AlertDialog

@@ -5,6 +5,7 @@ import { listHotels } from '../hotels/actions';
 import { getSettingsMap } from '../settings/actions';
 import ToursManager from './ToursManager';
 import TourHubNav from './TourHubNav';
+import { AllDraftFallbackBanner } from './AllDraftFallbackBanner';
 
 export const metadata: Metadata = {
   title: 'تورها | پنل ریوان سفر',
@@ -29,6 +30,8 @@ export default async function AdminToursPage({ searchParams }: Props) {
   return (
     <div className="space-y-6">
       <TourHubNav counts={{ tours: tours.length, hotels: hotels.length, origins: origins.length }} />
+      {/* قلم ۴ موج ۱: اگر هیچ تور منتشرشده‌ای نیست و مدیر هنوز جواب نداده، بنر سؤال */}
+      <AllDraftFallbackBanner />
       <ToursManager initial={tours} sectionSettings={settings} />
     </div>
   );

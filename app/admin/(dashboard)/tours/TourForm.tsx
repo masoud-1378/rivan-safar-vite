@@ -16,7 +16,8 @@ import {
   X,
   Send,
   EyeOff,
-  ExternalLink
+  ExternalLink,
+  Flag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,8 +32,12 @@ import type {
   TourItineraryDayItem,
 } from './actions';
 import { saveTour, checkSlugUnique } from './actions';
+import { getAllDraftFallbackAnswer } from '../settings/actions';
+import { AllDraftFallbackDialog } from './AllDraftFallbackDialog';
 import type { HotelPickerItem } from '../hotels/actions';
-import { validateDraft, getStageCompletion } from './tour-helpers';
+import { validateDraft } from './tour-helpers';
+import { checkPublishReadiness, stageTicksFromGate, type PublishCheck } from './publish-gate';
+import { MissingChecksDialog, PublishConfirmDialog } from './PublishGateDialog';
 import { DOMESTIC_SLUGS, DOMESTIC_NAME_RE, guessVisaRequired } from '@/src/lib/domestic';
 
 // 5 Modular Stage Components
@@ -41,6 +46,8 @@ import Stage2Hotels from './stages/Stage2Hotels';
 import Stage3Itinerary from './stages/Stage3Itinerary';
 import Stage4TrustTerms from './stages/Stage4TrustTerms';
 import Stage5Consultant from './stages/Stage5Consultant';
+// ایستگاه پایانی (موج ۱، قلم ۵): جمع‌بندی خودکار + انتشارِ گیت‌دار.
+import StageFinalStation from './stages/StageFinalStation';
 import SmartImage from '@/src/components/SmartImage';
 
 export interface TourFormProps {
@@ -60,7 +67,7 @@ export interface TourFormProps {
   hotels: HotelPickerItem[];
 }
 
-export type StageId = 1 | 2 | 3 | 4 | 5;
+export type StageId = 1 | 2 | 3 | 4 | 5 | 7;
 
 const LAST_ORIGIN_KEY = 'rivan-last-origin';
 
@@ -93,7 +100,13 @@ const STAGES: StageTabConfig[] = [
   { id: 3, shortTitle: '۳. برنامه سفر', label: 'برنامه روزبه‌روز و خدمات', icon: Map, description: 'تایم‌لاین گشت‌ها و ترانسفر' },
   { id: 4, shortTitle: '۴. سپر اعتماد', label: 'سپر اعتماد و مدارک', icon: ShieldCheck, description: 'ویزا، عوارض شهری، بار مجاز' },
   { id: 5, shortTitle: '۵. کارشناس', label: 'کارشناس و انتشار', icon: UserCheck, description: 'پادکست، مشاور مسیر، تأیید' },
+  // ایستگاه پایانی (موج ۱، قلم ۵): در معماری ۷مرحله‌ایِ موج ۲ می‌شود مرحلهٔ ۷؛
+  // فعلاً آخرین گام ویزاردِ ۵مرحله‌ای است.
+  { id: 7, shortTitle: '۷. ایستگاه پایانی', label: 'ایستگاه پایانی', icon: Flag, description: 'جمع‌بندی و انتشار' },
 ];
+
+/** ترتیب واقعی گام‌های ویزارد (۵ گام فعلی + ایستگاه پایانی). */
+const STAGE_ORDER: StageId[] = [1, 2, 3, 4, 5, 7];
 
 export default function TourForm({
   initial,
@@ -115,6 +128,12 @@ export default function TourForm({
   // انصراف با فرم کثیف (T11): قبل از خروج، دیالوگ «تغییرات ذخیره‌نشده از دست می‌رود».
   const [dirty, setDirty] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  // گیت انتشار (موج ۱، قلم ۲): دیالوگ ناقصی‌ها / دیالوگ تأیید انتشار.
+  const [missingChecks, setMissingChecks] = useState<PublishCheck[] | null>(null);
+  const [showPublishConfirm, setShowPublishConfirm] = useState(false);
+  // قلم ۴ موج ۱: دیالوگ سؤال «همه پیش‌نویس» — وقتی لغو انتشارِ این تور شمار
+  // منتشرشده‌ها را به صفر می‌رساند و مدیر هنوز جواب نداده، همان لحظه باز می‌شود.
+  const [askFallbackOpen, setAskFallbackOpen] = useState(false);
 
   // Initial State mapping
   const [formData, setFormData] = useState<TourInput>(() => {
@@ -221,22 +240,10 @@ export default function TourForm({
     });
   };
 
-  // تیک واقعی تکمیل هر مرحله: بر اساس پر بودن فیلدهای الزامی همان مرحله، نه موقعیت در ویزارد
-  const stageDone = useMemo(
-    () =>
-      getStageCompletion({
-        title: formData.title,
-        slug: formData.slug,
-        price: formData.price,
-        destinations: formData.destinationSlugs.length,
-        origin: formData.origin,
-        hotelOptions: formData.hotelOptions,
-        itineraryDays: formData.itineraryDays,
-        trustSpecs: formData.trustSpecs,
-        consultantSpec: formData.consultantSpec,
-      }),
-    [formData]
-  );
+  // گیت انتشار + تیک‌های واقعی تکمیل هر مرحله (موج ۱، قلم ۲): تیک هر مرحله
+  // از همین چک‌های گیت می‌آید — نه تزئینی، نه محاسبه‌ای جدا از گیت.
+  const readiness = useMemo(() => checkPublishReadiness(formData), [formData]);
+  const stageDone = useMemo(() => stageTicksFromGate(readiness), [readiness]);
 
   // Validation
   const errors = useMemo(() => {
@@ -252,6 +259,21 @@ export default function TourForm({
   }, [formData, touched]);
 
   // Handle Save
+  /**
+   * دکمهٔ «انتشار» اول گیت را صدا می‌زند (موج ۱، قلم ۲): اگر ناقصی هست،
+   * دیالوگ فهرست ناقصی‌ها با ارجاع به مرحلهٔ مربوط و انتشار انجام نمی‌شود؛
+   * وگرنه دیالوگ تأیید با نام تور + جملهٔ «بعد از انتشار روی سایت دیده می‌شود».
+   */
+  const requestPublish = () => {
+    setTouched(true);
+    const gate = checkPublishReadiness(formData);
+    if (!gate.ready) {
+      setMissingChecks(gate.missing);
+      return;
+    }
+    setShowPublishConfirm(true);
+  };
+
   /**
    * نیت ذخیره:
    * - 'draft': ذخیره به‌عنوان پیش‌نویس (روی سایت دیده نمی‌شود)
@@ -330,6 +352,16 @@ export default function TourForm({
             title: 'انتشار لغو شد',
             description: `تور «${tourTitle}» دیگر روی سایت دیده نمی‌شود.`,
           });
+          // قلم ۴ موج ۱: اگر با این لغو انتشار هیچ تور منتشرشده‌ای نماند و
+          // مدیر هنوز جواب نداده، دیالوگ سؤال همان لحظه باز می‌شود.
+          if (res.publishedRemaining === 0) {
+            try {
+              const answer = await getAllDraftFallbackAnswer();
+              if (answer === null) setAskFallbackOpen(true);
+            } catch {
+              // خطا در خواندن جواب → بنر صفحهٔ تورها سؤال را یادآوری می‌کند.
+            }
+          }
         } else if (intent === 'draft') {
           toast({
             title: editingId ? 'پیش‌نویس ذخیره شد' : 'پیش‌نویس ثبت شد',
@@ -394,13 +426,14 @@ export default function TourForm({
         )}
       </div>
 
-      {/* 5-Stage Step Navigation Header */}
+      {/* Step Navigation Header (۵ گام + ایستگاه پایانی) */}
       <div className="rounded-sm border border-border bg-card p-2 sm:p-3">
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
           {STAGES.map((stage) => {
             const Icon = stage.icon;
             const isActive = activeStage === stage.id;
-            const isPassed = stageDone[stage.id - 1];
+            // تیک ایستگاه پایانی: وقتی همهٔ چک‌های گیت سبزند (همان readiness قلم ۲).
+            const isPassed = stage.id === 7 ? readiness.ready : stageDone[stage.id - 1];
 
             return (
               <button
@@ -470,6 +503,7 @@ export default function TourForm({
               data={formData}
               onChange={updateFormData}
               hotels={hotels}
+              tree={tree}
             />
           )}
 
@@ -494,6 +528,17 @@ export default function TourForm({
             />
           )}
 
+          {activeStage === 7 && (
+            <StageFinalStation
+              data={formData}
+              tree={tree}
+              onGoToStage={(s) => setActiveStage(s)}
+              // انتشارِ گیت‌دار: همان مسیر دکمهٔ «انتشار» نوار چسبان (قلم ۲).
+              onRequestPublish={requestPublish}
+              onSaveIntent={(intent) => handleSave(intent)}
+            />
+          )}
+
           {/* Bottom Sticky Action Bar — یافتهٔ ۲۴: shadow-overlay حذف شد؛ زبان paper
               بدون سایه است و جداسازی نوار با border + bg-card/95 + backdrop-blur
               انجام می‌شود. در موبایل هر گروه دکمه تمام‌عرض و دکمه‌ها ۴۴px. */}
@@ -505,7 +550,10 @@ export default function TourForm({
                 variant="outline"
                 size="sm"
                 disabled={activeStage === 1}
-                onClick={() => setActiveStage((p) => Math.max(1, p - 1) as StageId)}
+                onClick={() => {
+                  const i = STAGE_ORDER.indexOf(activeStage);
+                  setActiveStage(STAGE_ORDER[Math.max(0, i - 1)]);
+                }}
                 className="h-11 flex-1 gap-1.5 text-xs sm:h-8 sm:flex-none"
               >
                 <ChevronRight className="size-4" />
@@ -516,8 +564,11 @@ export default function TourForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={activeStage === 5}
-                onClick={() => setActiveStage((p) => Math.min(5, p + 1) as StageId)}
+                disabled={activeStage === 7}
+                onClick={() => {
+                  const i = STAGE_ORDER.indexOf(activeStage);
+                  setActiveStage(STAGE_ORDER[Math.min(STAGE_ORDER.length - 1, i + 1)]);
+                }}
                 className="h-11 flex-1 gap-1.5 text-xs sm:h-8 sm:flex-none"
               >
                 مرحله بعدی
@@ -568,7 +619,7 @@ export default function TourForm({
                     type="button"
                     size="sm"
                     disabled={isPending}
-                    onClick={() => handleSave('published')}
+                    onClick={requestPublish}
                     className="h-11 flex-1 gap-2 bg-brand px-4 text-xs text-brand-foreground hover:bg-brand/90 sm:h-8 sm:flex-none"
                   >
                     <Send className="size-4" />
@@ -669,6 +720,28 @@ export default function TourForm({
         confirmText="خارج شوید"
         cancelText="بازگشت"
         onConfirm={() => { setShowCancelConfirm(false); (onCancel ?? onDone)(); }}
+      />
+
+      {/* گیت انتشار (موج ۱، قلم ۲): ناقصی‌ها با ارجاع به مرحلهٔ مربوط، تأیید با نام تور */}
+      {missingChecks && (
+        <MissingChecksDialog
+          open
+          onOpenChange={(open) => !open && setMissingChecks(null)}
+          missing={missingChecks}
+          onGoToStage={(stageId) => setActiveStage(stageId as StageId)}
+        />
+      )}
+      <PublishConfirmDialog
+        open={showPublishConfirm}
+        onOpenChange={setShowPublishConfirm}
+        tourTitle={formData.title.trim()}
+        onConfirm={() => handleSave('published')}
+      />
+      {/* قلم ۴ موج ۱: دیالوگ سؤال «همه پیش‌نویس» */}
+      <AllDraftFallbackDialog
+        open={askFallbackOpen}
+        onOpenChange={setAskFallbackOpen}
+        onSaved={() => toast({ title: 'ذخیره شد' })}
       />
     </div>
   );

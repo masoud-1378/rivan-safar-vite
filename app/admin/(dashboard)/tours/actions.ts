@@ -1,9 +1,9 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDb } from '@/db/client';
+import { getDb, type AppDb } from '@/db/client';
 import { accommodations, auditLogs, originCities, siteDestinations, siteTours } from '@/db/schema';
-import { asc, desc, eq, inArray, isNull } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { requireAdmin } from '@/src/lib/admin-auth';
 import { archiveOne } from '@/src/lib/archive';
 import { assertRenderableImageUrl } from '@/src/lib/site-image-hosts';
@@ -11,6 +11,7 @@ import { DOMESTIC_SLUGS, DOMESTIC_NAME_RE } from '@/src/lib/domestic';
 import { getSettingsMap } from '../settings/actions';
 import { assertLatinSlug } from '@/src/lib/slug-format';
 import { cleanupReplacedBanner } from './banner-upload';
+import { checkPublishReadiness, type PublishGateInput } from './publish-gate';
 
 export type HotelBookingType = 'guarantee' | 'semi_charter' | 'on_request';
 
@@ -295,6 +296,30 @@ export async function listDestinationTree(): Promise<DestinationTree> {
   return { regions: list, all };
 }
 
+/**
+ * محتوای نمایشی یک مقصد برای پیشنهادهای هوشمند مرحلهٔ ۱ تورساز
+ * (موج ۱، قلم ۶: بنر و توضیحات پیشنهادی از مقصد).
+ * فقط خواندن؛ هیچ تغییری در دیتابیس نمی‌دهد.
+ */
+export async function getDestinationContent(
+  slug: string
+): Promise<{ name: string; image: string; heroTagline: string; description: string } | null> {
+  await requireAdmin(['owner', 'editor']);
+  const db = getDb();
+  if (!db) throw new Error('DB_NOT_CONFIGURED');
+  const s = (slug || '').trim();
+  if (!s) return null;
+  const rows = await db.select().from(siteDestinations).where(eq(siteDestinations.slug, s)).limit(1);
+  const r = rows[0];
+  if (!r || r.deletedAt) return null;
+  return {
+    name: r.name,
+    image: r.image || '',
+    heroTagline: r.heroTagline || '',
+    description: r.description || '',
+  };
+}
+
 export async function listOrigins(): Promise<OriginRow[]> {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
@@ -322,7 +347,9 @@ export async function listOrigins(): Promise<OriginRow[]> {
  * به‌صورت مقدار برمی‌گردند، چون در بیلد پروداکشن پیامِ throw به کلاینت نمی‌رسد
  * و کاربر فقط «Minified React error #441» می‌بیند (ریشهٔ مشترک bugfix-441).
  */
-export type SaveTourResult = { ok: true; id: string | null } | { ok: false; error: string };
+export type SaveTourResult =
+  | { ok: true; id: string | null; publishedRemaining: number }
+  | { ok: false; error: string };
 
 export async function saveTour(id: string | undefined | null, data: TourInput): Promise<SaveTourResult> {
   await requireAdmin(['owner', 'editor']);
@@ -464,6 +491,31 @@ export async function saveTour(id: string | undefined | null, data: TourInput): 
     emergencyPhone: String(rawConsultant.emergencyPhone ?? ''),
   };
 
+  // گیت سرورِ انتشار (موج ۱، قلم ۲ — رفع ایراد QA سایه): مسیر تکیِ اصلی
+  // (requestPublish → تأیید → handleSave('published') → saveTour) قبلاً روی
+  // سرور راستی‌آزمایی نمی‌شد. همان منطق خالص `checkPublishReadiness` این‌جا
+  // هم اجرا می‌شود تا منبع حقیقت یکی بماند. خطای قابل‌پیش‌بینی throw نمی‌شود
+  // (قرارداد bugfix-441) — به‌صورت مقدار برمی‌گردد.
+  if (data.publishStatus === 'published') {
+    const gateInput: PublishGateInput = {
+      title,
+      price,
+      image: data.image || '',
+      destinationSlugs: destSlugs,
+      hotelOptions: normalizedHotels,
+      itineraryDays: normalizedItinerary,
+      trustSpecs: normalizedTrust,
+      consultantSpec: normalizedConsultant,
+    };
+    const gate = checkPublishReadiness(gateInput);
+    if (!gate.ready) {
+      return {
+        ok: false,
+        error: `انتشار «${title}» ممکن نیست؛ این قلم‌ها ناقص‌اند: ${gate.missing.map((c) => c.label).join('، ')}.`,
+      };
+    }
+  }
+
   const values = {
     slug,
     title,
@@ -525,27 +577,30 @@ export async function saveTour(id: string | undefined | null, data: TourInput): 
   }
   revalidatePath('/admin/tours');
   if (id) revalidatePath(`/admin/tours/${id}`);
-  return { ok: true, id: id ?? null };
+  // قلم ۴ موج ۱: باقی‌ماندهٔ منتشرشده‌ها تا UI بفهمد «به صفر رسید» یا نه.
+  return { ok: true, id: id ?? null, publishedRemaining: await countPublishedTours(db) };
 }
 
 /**
- * تغییر وضعیت انتشار یک تور (شرایط انتشار، مایگریشن 0011).
- * 'published' یعنی تور واقعاً روی سایت دیده می‌شود؛ 'draft' یعنی پنهان است.
+ * قلم ۴ موج ۱ (تصمیم ۴): تعداد تورهای منتشرشدهٔ زنده (حذف‌نشده).
+ * تعریف «منتشرشده» دقیقاً همان گیت سایت است (مایگریشن 0011): فقط
+ * publish_status='published'. ستون notNull است و مایگریشن همهٔ ردیف‌های قدیمی
+ * را 'published' بک‌فیل کرده، پس حالت undefined عملاً پیش نمی‌آید.
  */
-export async function setTourPublishStatus(id: string, next: 'draft' | 'published') {
+async function countPublishedTours(db: AppDb): Promise<number> {
+  const rows = await db
+    .select({ n: count() })
+    .from(siteTours)
+    .where(and(isNull(siteTours.deletedAt), eq(siteTours.publishStatus, 'published')));
+  return rows[0]?.n ?? 0;
+}
+
+/** تعداد تورهای منتشرشده — برای بنر «همه پیش‌نویس» در صفحهٔ تورها. */
+export async function getPublishedToursCount(): Promise<number> {
   await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
-  if (next !== 'draft' && next !== 'published') throw new Error('وضعیت انتشار نامعتبر است.');
-  const cleanId = (id || '').trim();
-  if (!cleanId) throw new Error('شناسهٔ تور نامعتبر است.');
-  await db
-    .update(siteTours)
-    .set({ publishStatus: next, updatedAt: new Date() })
-    .where(eq(siteTours.id, cleanId));
-  revalidatePath('/admin/tours');
-  revalidatePath(`/admin/tours/${cleanId}`);
-  return { ok: true, publishStatus: next };
+  return countPublishedTours(db);
 }
 
 /**
@@ -586,7 +641,8 @@ export async function deleteTour(id: string) {
     reasonFa: `بایگانی تور «${rows[0]?.title ?? id}»`,
   });
   revalidatePath('/admin/tours');
-  return { ok: true };
+  // قلم ۴ موج ۱: باقی‌ماندهٔ منتشرشده‌ها تا UI بفهمد «به صفر رسید» یا نه.
+  return { ok: true, publishedRemaining: await countPublishedTours(db) };
 }
 
 export async function checkSlugUnique(slug: string, excludeId?: string | null) {
@@ -602,7 +658,9 @@ export async function checkSlugUnique(slug: string, excludeId?: string | null) {
 
 /**
  * عملیات گروهی تورها (T15): انتشار / لغو انتشار / بایگانی برای چند تور با هم.
- * - انتشار گروهی: تورها روی سایت دیده می‌شوند.
+ * - انتشار گروهی: گیت انتشار کامل روی هر تور اجرا می‌شود (موج ۱، قلم ۲ — بخش ۴
+ *   پلن: «انتشار گروهی بدون گیت» ممنوع است). تورهای ناقص منتشر نمی‌شوند و در
+ *   `skipped` با نامِ قلم‌های ناقص برمی‌گردند تا پنل به مدیر نشان بدهد.
  * - لغو انتشار گروهی: تورها از سایت پنهان می‌شوند ولی در فهرست می‌مانند.
  * - بایگانی گروهی: مستقیم انجام می‌شود (حتی برای تور منتشرشده)؛ تورها از سایت
  *   و فهرست‌ها پنهان می‌شوند و بعداً از صفحهٔ بایگانی برمی‌گردند.
@@ -610,18 +668,41 @@ export async function checkSlugUnique(slug: string, excludeId?: string | null) {
 export async function setToursPublishStatusBulk(
   ids: string[],
   next: 'draft' | 'published',
-): Promise<{ ok: true; count: number }> {
+): Promise<{ ok: true; count: number; skipped: Array<{ id: string; title: string; missing: string[] }>; publishedRemaining: number }> {
   const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
   if (next !== 'draft' && next !== 'published') throw new Error('وضعیت انتشار نامعتبر است.');
   const clean = [...new Set((ids || []).map((i) => (i || '').trim()).filter(Boolean))];
   if (clean.length === 0) throw new Error('توری انتخاب نشده است.');
-  for (const id of clean) {
-    await db
-      .update(siteTours)
-      .set({ publishStatus: next, updatedAt: new Date() })
-      .where(eq(siteTours.id, id));
+  const skipped: Array<{ id: string; title: string; missing: string[] }> = [];
+  let count = 0;
+  if (next === 'published') {
+    // گیت انتشار گروهی: هر تور جداگانه با همان چک‌لیست واحد سنجیده می‌شود.
+    const rows = await db
+      .select()
+      .from(siteTours)
+      .where(inArray(siteTours.id, clean));
+    for (const r of rows) {
+      const gate = checkPublishReadiness(toTourRow(r));
+      if (!gate.ready) {
+        skipped.push({ id: r.id, title: r.title, missing: gate.missing.map((c) => c.label) });
+        continue;
+      }
+      await db
+        .update(siteTours)
+        .set({ publishStatus: next, updatedAt: new Date() })
+        .where(eq(siteTours.id, r.id));
+      count++;
+    }
+  } else {
+    for (const id of clean) {
+      await db
+        .update(siteTours)
+        .set({ publishStatus: next, updatedAt: new Date() })
+        .where(eq(siteTours.id, id));
+    }
+    count = clean.length;
   }
   // F2: رکورد جمعی حسابرسی، مثل bulkUpdateLeads.
   await db.insert(auditLogs).values({
@@ -632,10 +713,11 @@ export async function setToursPublishStatusBulk(
     reasonFa: `عملیات گروهی (${next === 'published' ? 'انتشار' : 'لغو انتشار'})`,
   });
   revalidatePath('/admin/tours');
-  return { ok: true, count: clean.length };
+  // قلم ۴ موج ۱: باقی‌ماندهٔ منتشرشده‌ها تا UI بفهمد «به صفر رسید» یا نه.
+  return { ok: true, count, skipped, publishedRemaining: await countPublishedTours(db) };
 }
 
-export async function archiveToursBulk(ids: string[]): Promise<{ ok: true; count: number }> {
+export async function archiveToursBulk(ids: string[]): Promise<{ ok: true; count: number; publishedRemaining: number }> {
   const session = await requireAdmin(['owner', 'editor']);
   const db = getDb();
   if (!db) throw new Error('DB_NOT_CONFIGURED');
@@ -655,5 +737,6 @@ export async function archiveToursBulk(ids: string[]): Promise<{ ok: true; count
     });
   }
   revalidatePath('/admin/tours');
-  return { ok: true, count: clean.length };
+  // قلم ۴ موج ۱: باقی‌ماندهٔ منتشرشده‌ها تا UI بفهمد «به صفر رسید» یا نه.
+  return { ok: true, count: clean.length, publishedRemaining: await countPublishedTours(db) };
 }

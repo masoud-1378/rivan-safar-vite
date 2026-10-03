@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { 
   Compass, 
   Plane, 
@@ -35,6 +35,7 @@ import { DepartureDateField } from '../DepartureDateField';
 import { uploadTourBanner } from '../banner-upload';
 import SmartImage from '@/src/components/SmartImage';
 import type { DestinationTree, OriginRow, TourInput } from '../actions';
+import { getDestinationContent } from '../actions';
 import type { TourDraftErrors } from '../tour-helpers';
 
 interface Stage1IdentityProps {
@@ -124,6 +125,47 @@ export default function Stage1Identity({
   const [showTree, setShowTree] = useState(false);
   const [capacity, setCapacity] = useState('');
   const { toast } = useToast();
+
+  /**
+   * پیشنهادهای هوشمند از مقصد (موج ۱، قلم ۶ — فرصت‌های ۱-۴ و ۱-۵ ممیزی):
+   * وقتی دقیقاً یک مقصد انتخاب شده و تور بنر یا توضیح ندارد، محتوای آمادهٔ
+   * همان مقصد پیشنهاد می‌شود — با پیش‌نمایش و تأیید صریح، نه بی‌صدا.
+   * قانون طلایی: اگر مقصد محتوایی نداشت، چیزی حدس زده نمی‌شود.
+   */
+  const singleDestSlug = selectedSlugs.length === 1 ? selectedSlugs[0] : null;
+  const needBanner = !data.image.trim();
+  const needDesc = !data.description.trim();
+  const [destContent, setDestContent] = useState<{
+    name: string;
+    image: string;
+    heroTagline: string;
+    description: string;
+  } | null>(null);
+  const [dismissedBannerFor, setDismissedBannerFor] = useState<string | null>(null);
+  const [showDescPreview, setShowDescPreview] = useState(false);
+  useEffect(() => {
+    if (!singleDestSlug || (!needBanner && !needDesc)) {
+      setDestContent(null);
+      return;
+    }
+    let alive = true;
+    getDestinationContent(singleDestSlug)
+      .then((c) => {
+        if (alive) setDestContent(c);
+      })
+      .catch(() => {
+        if (alive) setDestContent(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [singleDestSlug, needBanner, needDesc]);
+
+  /** مدت اقامت پیشنهادی از روی تعداد شب‌ها (فرصت ۱-۲): فقط پیشنهاد، نه پرکردن خودکار. */
+  const suggestedDuration =
+    data.nights > 0 && !data.duration.trim()
+      ? `${fa(data.nights)} شب و ${fa(data.nights + 1)} روز`
+      : null;
   // آپلود بنر تور (T6): همان باکت عکس هتل‌ها، کنار فیلد URL.
   const [uploading, setUploading] = useState(false);
   const uploadingRef = useRef(false);
@@ -618,6 +660,23 @@ export default function Stage1Identity({
               </div>
             </div>
           </Field>
+          {/* مدت اقامت پیشنهادی از روی شب‌ها (موج ۱، قلم ۶ — فرصت ۱-۲):
+              فقط نمایش و پیشنهاد با دکمهٔ صریح؛ اگر شب‌ها معلوم نیست چیزی حدس زده نمی‌شود. */}
+          {suggestedDuration && (
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-sm border border-dashed border-brand/30 bg-brand/5 px-3 py-2">
+              <Sparkles className="size-3.5 shrink-0 text-brand" />
+              <span className="text-[11px] text-foreground">
+                بر اساس {fa(data.nights)} شب: «{suggestedDuration}»
+              </span>
+              <button
+                type="button"
+                onClick={() => onChange({ duration: suggestedDuration })}
+                className="text-[11px] font-bold text-brand hover:underline"
+              >
+                اعمال شود
+              </button>
+            </div>
+          )}
         </div>
 
         {/* تاریخ حرکت بعدی (T3): همان ستون closestDeparture؛ DatePicker شمسی فقط میان‌بر نوشتن متن است. */}
@@ -712,6 +771,45 @@ export default function Stage1Identity({
             />
           </div>
         </Field>
+        {/* بنر پیشنهادی از تصویر مقصد (موج ۱، قلم ۶ — فرصت ۱-۴): با پیش‌نمایش و
+            تأیید صریح؛ اگر مقصد تصویری نداشت، چیزی پیشنهاد نمی‌شود. */}
+        {needBanner && destContent?.image && dismissedBannerFor !== singleDestSlug && (
+          <div className="mt-2 flex gap-3 rounded-sm border border-brand/25 bg-brand/5 p-3">
+            <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-sm border border-border/60">
+              <SmartImage src={destContent.image} alt={`بنر ${destContent.name}`} className="object-cover" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-foreground">
+                بنر آمادهٔ «{destContent.name}» را بگذارم؟
+              </p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                از تصویر مقصد می‌آید؛ بعداً می‌توانید عوضش کنید.
+              </p>
+              <div className="mt-2 flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    onChange({ image: destContent.image });
+                    toast({ title: 'بنر مقصد گذاشته شد', description: 'هر وقت خواستید عوضش کنید.' });
+                  }}
+                  className="text-xs"
+                >
+                  بله، همین بنر
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setDismissedBannerFor(singleDestSlug)}
+                  className="text-xs text-muted-foreground"
+                >
+                  نه
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         {/* پیش‌نمایش بنر: عمداً با همان SmartImageِ سایت رندر می‌شود تا اگر آدرس
             روی سایت باز نشود، این‌جا هم خراب دیده شود (نه سالمِ دروغین). */}
         {data.image.trim() ? (
@@ -734,6 +832,18 @@ export default function Stage1Identity({
           placeholder="روایت جذاب و صادقانه از حال و هوای سفر، تجربیات خاص این مسیر و این‌که چرا مسافر باید همین تور را انتخاب کند…"
           className="w-full rounded-sm border border-input bg-background p-3 text-xs leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
+        {/* توضیحات پیشنهادی از متن مقصد (موج ۱، قلم ۶ — فرصت ۱-۵): دکمهٔ صریح
+            با پیش‌نمایش و تأیید؛ متن خالیِ مدیر هرگز بازنویسی نمی‌شود. */}
+        {needDesc && destContent?.description && (
+          <button
+            type="button"
+            onClick={() => setShowDescPreview(true)}
+            className="inline-flex items-center gap-1.5 text-[11px] font-bold text-brand hover:underline"
+          >
+            <Sparkles className="size-3.5" />
+            شروع از متن «{destContent.name}»
+          </button>
+        )}
       </div>
 
       {/* دیالوگ تأیید تیک قاره (B-15): پیامد با تعداد واقعی مقصدهایی که اضافه یا کم می‌شود */}
@@ -747,6 +857,32 @@ export default function Stage1Identity({
         confirmText={confirmRegion ? `${confirmRemoveRegion ? 'حذف' : 'افزودن'} ${fa(confirmRegion.count)} مقصد` : ''}
         destructive={confirmRemoveRegion}
         onConfirm={() => { if (confirmRegion) toggleMany(confirmRegion.desc); }}
+      />
+
+      {/* پیش‌نمایش متن مقصد (موج ۱، قلم ۶ — فرصت ۱-۵): درج فقط با تأیید صریح */}
+      <AlertDialog
+        open={showDescPreview}
+        onOpenChange={setShowDescPreview}
+        title={destContent ? `متن «${destContent.name}» در توضیحات بیاید؟` : ''}
+        description={destContent ? (
+          <span className="block max-h-64 space-y-1.5 overflow-y-auto rounded-sm border border-border/60 bg-secondary/20 p-3 text-start">
+            {destContent.heroTagline.trim() ? (
+              <span className="block text-xs font-bold text-foreground">{destContent.heroTagline}</span>
+            ) : null}
+            <span className="block text-xs leading-relaxed text-foreground/90">{destContent.description}</span>
+          </span>
+        ) : ''}
+        confirmText="درج در توضیحات"
+        cancelText="انصراف"
+        onConfirm={() => {
+          if (!destContent) return;
+          const text = [destContent.heroTagline.trim(), destContent.description.trim()]
+            .filter(Boolean)
+            .join('\n\n');
+          onChange({ description: text });
+          setShowDescPreview(false);
+          toast({ title: 'متن مقصد درج شد', description: 'بخوانید و ویرایشش کنید.' });
+        }}
       />
     </div>
   );

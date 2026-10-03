@@ -24,6 +24,9 @@ export interface Place {
   travelTips: string[];
   faqs: Array<{ question: string; answer: string }>;
   relatedGuides?: string[];
+  /** گیت انتشار مقصد (مایگریشن 0023، قلم ۳ موج ۱). ردیف‌های استاتیک و
+      قدیمی‌تر از ستون، undefined دارند و منتشرشده حساب می‌شوند. */
+  publishStatus?: 'draft' | 'published';
 }
 
 export const COUNTRIES: Record<string, Place> = {
