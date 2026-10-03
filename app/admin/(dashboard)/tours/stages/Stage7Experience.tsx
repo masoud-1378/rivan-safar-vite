@@ -19,6 +19,7 @@ import {
 import { Field, Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { AlertDialog } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/toast';
 import type { TourInput } from '../actions';
 import {
@@ -80,6 +81,7 @@ export default function Stage7Experience({ data, onChange }: Stage7ExperiencePro
   const [leaderForm, setLeaderForm] = useState<LeaderInput>(EMPTY_LEADER);
   const [leaderSaving, setLeaderSaving] = useState(false);
   const [leaderUploading, setLeaderUploading] = useState(false);
+  const [deletingLeaderId, setDeletingLeaderId] = useState<string | null>(null);
   const leaderFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -142,9 +144,17 @@ export default function Stage7Experience({ data, onChange }: Stage7ExperiencePro
   }
 
   async function removeLeader(id: string) {
-    if (!window.confirm('این تورلیدر حذف شود؟')) return;
+    // دیالوگ درون‌برنامه‌ای (نه window.confirm که در اتوماسیون/موبایل گم می‌شود).
+    setDeletingLeaderId(id);
+  }
+
+  async function confirmRemoveLeader() {
+    const id = deletingLeaderId;
+    setDeletingLeaderId(null);
+    if (!id) return;
     const res = await deleteLeader(id);
     if (res.ok === false) {
+      // لیدرِ وصل به تور: پیام صادقانهٔ سرور حتماً دیده می‌شود.
       toast({ variant: 'error', title: res.error });
       return;
     }
@@ -513,6 +523,16 @@ export default function Stage7Experience({ data, onChange }: Stage7ExperiencePro
           اگر گالری خالی بماند، این بخش روی سایت نمایش داده نمی‌شود.
         </p>
       </section>
+
+      <AlertDialog
+        open={deletingLeaderId !== null}
+        onOpenChange={(open) => { if (!open) setDeletingLeaderId(null); }}
+        title="این تورلیدر حذف شود؟"
+        description="اگر لیدر به توری وصل باشد، حذف نمی‌شود و پیامش را می‌بینید."
+        confirmText="حذف"
+        destructive
+        onConfirm={confirmRemoveLeader}
+      />
     </div>
   );
 }

@@ -34,6 +34,8 @@ import type {
   TourRichFields,
   TourFaqItem,
   TourItineraryDayItem,
+  TourFinancialSpecsItem,
+  TourCancellationTier,
 } from './actions';
 import type { TourGalleryItem, TourReviewItem } from './experience-types';
 import { saveTour, checkSlugUnique } from './actions';
@@ -338,6 +340,19 @@ export default function TourForm({
         audioUrl: initial?.consultantSpec?.audioUrl || '',
         emergencyPhone: initial?.consultantSpec?.emergencyPhone || '',
       },
+      // موج ۳ (رفع باگ ۱۴۰۵/۰۷/۱۱): بلوک مالی هم از تورِ در حال ویرایش
+      // بارگذاری می‌شود؛ وگرنه بعد از ریلود خالی نشان می‌داد و ذخیرهٔ بعدی
+      // بی‌صدا مقدار دیتابیس را با خالی رونویسی می‌کرد.
+      financialSpecs: {
+        cancellationTiers: Array.isArray(initial?.financialSpecs?.cancellationTiers)
+          ? (initial.financialSpecs.cancellationTiers as TourCancellationTier[])
+          : [],
+        visaRejectionNote: initial?.financialSpecs?.visaRejectionNote || '',
+        depositAmount: initial?.financialSpecs?.depositAmount || '',
+        depositDeadline: initial?.financialSpecs?.depositDeadline || '',
+      } as TourFinancialSpecsItem,
+      // موج ۳ (همان باگ): مشخصات پرواز هم باید از اول در فرم بنشیند.
+      flightDetails: initial?.flightDetails ?? undefined,
       // موج ۴: تورلیدر، نظر مسافران، گالری واقعی.
       leaderId: initial?.leaderId ?? null,
       gallery: Array.isArray(initial?.gallery) ? (initial.gallery as TourGalleryItem[]) : [],
